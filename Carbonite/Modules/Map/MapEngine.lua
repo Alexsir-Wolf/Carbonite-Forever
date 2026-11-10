@@ -1991,12 +1991,44 @@ function Nx.Map:GetInstanceMapCanvas()
     return canvas, width, height
 end
 
+-- Classic Era based clients (Classic, Forever) assign no UI map to most
+-- dungeon interiors: GetBestMapForUnit("player") returns nil there and
+-- MapUtil falls back to the cosmic/world map (947). Carbonite then has
+-- neither art nor coordinates for the interior, so Blizzard's live minimap,
+-- which still renders the indoor layout and the player arrow, is the only
+-- correct surface. Cached per frame: GetTime() is constant within a frame.
+local unmappedInstanceTime, unmappedInstanceValue
+
+function Nx.Map:IsUnmappedInstance()
+    local now = GetTime()
+    if unmappedInstanceTime == now then
+        return unmappedInstanceValue
+    end
+
+    local value = false
+    if IsInInstance and C_Map and C_Map.GetBestMapForUnit then
+        local ok, inInstance = pcall(IsInInstance)
+        if ok and inInstance then
+            local mapOK, mapID = pcall(C_Map.GetBestMapForUnit, "player")
+            value = not mapOK or type(mapID) ~= "number" or mapID <= 0
+        end
+    end
+
+    unmappedInstanceTime, unmappedInstanceValue = now, value
+    return value
+end
+
 -- Classification alone does not mean that any instance artwork was drawn.
 -- Suppress the regular layers only after this window owns the selected map's
 -- canvas. RMapId can still describe the previous map during a transition.
+-- An unmapped instance also suppresses them: the fallback world map is not
+-- where the player is, and the full-size live minimap replaces it.
 function Nx.Map:IsInstanceOverlayActive()
     if self:UsesModernInstanceCanvas(self.MapId) then
         return self:GetInstanceMapCanvas() ~= nil
+    end
+    if self:IsUnmappedInstance() then
+        return true
     end
     return self.CurOpts and self.CurOpts.NXInstanceMaps
         and (self:IsInstanceMap(self.MapId) or self:IsBattleGroundMap(self.MapId)) or false
@@ -2698,9 +2730,23 @@ end
 --
 function Nx.Map:MinimapOnMouseWheel(value)
     local map = Nx.Map.Maps[1]
-    if map then
-        map:MouseWheel(value)
+    if not map then
+        return
     end
+
+    -- In an unmapped instance the Carbonite map is suppressed and the live
+    -- minimap is the whole surface, so the wheel zooms the minimap itself.
+    local mm = map.MMFrm
+    if map.MMOwn and mm and map:IsUnmappedInstance() then
+        local levels = mm.GetZoomLevels and mm:GetZoomLevels() or 6
+        local zoom = mm:GetZoom() + (value > 0 and 1 or -1)
+        zoom = max(0, min(zoom, levels - 1))
+        mm:SetZoom(zoom)
+        map.MMInstanceZoom = zoom
+        return
+    end
+
+    map:MouseWheel(value)
 end
 
 ---
@@ -3113,6 +3159,7 @@ function Nx.Map:MinimapSyncPlayerArrowLayer()
     end
 
     local fullSize = self.LOpts and self.LOpts.NXMMFull
+        or self:IsUnmappedInstance()
     local hideCarbonitePlayerArrow = surfaceVisible
         and fullSize and useBlizzardPlayerArrow
 
@@ -3373,6 +3420,14 @@ function Nx.Map:MinimapUpdate()
         dock = true
     end
 
+    -- No player map inside the instance: the overlay position would come
+    -- from the stale outdoor coordinates, so keep the minimap docked and
+    -- show it full-size below.
+    local unmappedInstance = self:IsUnmappedInstance()
+    if unmappedInstance then
+        dock = true
+    end
+
     -- Position minimap on the main map if not docked
     if not dock and not self.InstanceId
             and self.ScaleDraw > lOpts.NXMMDockOnAtScale then
@@ -3476,10 +3531,30 @@ function Nx.Map:MinimapUpdate()
             al = 1
         end
 
-        -- Modifier key overrides
-        if IsControlKeyDown() or IsIndoors() or Nx.Map.Indoors then
+        -- Modifier key overrides. Skipped for an unmapped instance: indoors
+        -- this requested a zoom reset on every frame, which kept snapping
+        -- the full-size minimap back to DockZoom and froze its view.
+        if not unmappedInstance
+                and (IsControlKeyDown() or IsIndoors() or Nx.Map.Indoors) then
             al = IsAltKeyDown() and 1 or .8
             self.MMZoomChanged = true
+        end
+    end
+
+    -- The live minimap is the whole map surface here; nothing useful is
+    -- drawn beneath it, so it stays docked and opaque.
+    if unmappedInstance then
+        zoomType = 0
+        al = 1
+    end
+
+    -- Refresh the minimap once when it is resized for/after an unmapped
+    -- instance; Blizzard redraws a resized minimap only on a zoom change.
+    if self.MMUnmappedInstance ~= unmappedInstance then
+        self.MMUnmappedInstance = unmappedInstance
+        self.MMZoomChanged = true
+        if not unmappedInstance then
+            self.MMInstanceZoom = nil
         end
     end
 
@@ -3539,7 +3614,9 @@ function Nx.Map:MinimapUpdate()
         local sc = self.MMFScale
 
         self.MMFScale = Nx.InBG and lOpts.NXMMDockScaleBG or lOpts.NXMMDockScale
-        if lOpts.NXMMFull then
+        -- Unmapped instances use full size without changing the saved
+        -- NXMMFull preference, so outdoor docking returns unchanged.
+        if lOpts.NXMMFull or unmappedInstance then
             self.MMFScale = min(self.MapW, self.MapH) / 140
         end
     end
@@ -3609,12 +3686,19 @@ function Nx.Map:MinimapUpdateEnd()
         local x = 0
         local y = 0
         local sz = 140 * self.MMFScale
+        local unmappedInstance = self:IsUnmappedInstance()
 
-        if Nx.db.profile.MiniMap.DockRight then
-            x = (self.MapW - sz + 1)
-        end
-        if Nx.db.profile.MiniMap.DockBottom then
-            y = (self.MapH - sz + 1)
+        if unmappedInstance then
+            -- Full-size replacement for the missing instance map: center it.
+            x = (self.MapW - sz) / 2
+            y = (self.MapH - sz) / 2
+        else
+            if Nx.db.profile.MiniMap.DockRight then
+                x = (self.MapW - sz + 1)
+            end
+            if Nx.db.profile.MiniMap.DockBottom then
+                y = (self.MapH - sz + 1)
+            end
         end
 
         local positioned = self:PositionOwnedMinimap(
@@ -3634,7 +3718,8 @@ function Nx.Map:MinimapUpdateEnd()
         mm:Show()
 
         local lvl
-        if (self:IsInstanceMap(Nx.Map.RMapId) or self:IsBattleGroundMap(Nx.Map.RMapId)) and self.CurOpts.NXInstanceMaps then
+        if unmappedInstance
+            or (self:IsInstanceMap(Nx.Map.RMapId) or self:IsBattleGroundMap(Nx.Map.RMapId)) and self.CurOpts.NXInstanceMaps then
             lvl = self.Level + 50
         else
             lvl = self.Level
@@ -3661,6 +3746,10 @@ function Nx.Map:MinimapUpdateEnd()
 
         if self.MMZoomType == 0 then
             zoom = Nx.db.profile.MiniMap.DockZoom
+            -- Keep the zoom chosen with the mouse wheel inside the instance.
+            if self.MMUnmappedInstance and self.MMInstanceZoom then
+                zoom = self.MMInstanceZoom
+            end
         end
 
         local z = zoom - 1
@@ -5180,6 +5269,13 @@ function Nx.Map:MouseWheel(value)
         return
     end
 
+    -- Unmapped instance: the outdoor map behind is suppressed, so the wheel
+    -- zooms the live minimap anywhere over the window.
+    if map:IsUnmappedInstance() then
+        Nx.Map.MinimapOnMouseWheel(map.MMFrm, value)
+        return
+    end
+
     -- Handle minimap zoom when hovering over docked minimap
     if map.MMZoomType == 0 and Nx.Util_IsMouseOver(map.MMFrm) then
         map.MMZoomChanged = true
@@ -5653,6 +5749,13 @@ function Nx.Map.OnUpdate(this, elapsed)
                 title = title .. format (" %4.1f, %4.1f", map.PlyrRZX, map.PlyrRZY)
             end
         end
+    end
+
+    -- Unmapped instance: the map name and coordinates above describe the
+    -- outdoor fallback map, not the dungeon (UnmappedInstance.lua).
+    local instanceTitle = map.GetUnmappedInstanceTitle and map:GetUnmappedInstanceTitle()
+    if instanceTitle then
+        title = instanceTitle
     end
 
     if map.PlyrSpeed > 0 and Nx.db.profile.Map.ShowTitleSpeed then
@@ -6458,9 +6561,20 @@ function Nx.Map:Update (elapsed)
     elseif (Nx.Map:IsInstanceMap(Nx.Map.RMapId) or Nx.Map:IsBattleGroundMap(Nx.Map.RMapId)) and self.CurOpts.NXInstanceMaps then
         Nx.Map.MoveWorldMap()
         Nx.Map:GetMap(1).PlyrFrm:Hide()
+    elseif self:IsUnmappedInstance() then
+        -- PlyrX/PlyrY still hold the last outdoor position; Blizzard's
+        -- full-size minimap shows the real arrow instead.
+        Nx.Map.RestoreWorldMap(true)
+        self.PlyrFrm:Hide()
     else
         Nx.Map.RestoreWorldMap(true)
         Nx.Map:GetMap(1).PlyrFrm:Show()
+    end
+    -- Cover and title around the live minimap of an unmapped instance
+    -- (UnmappedInstance.lua); hides itself everywhere else. Runs before
+    -- DungeonChart:Update, which stays closed while this view is active.
+    if self.UpdateUnmappedInstanceView then
+        self:UpdateUnmappedInstanceView()
     end
     if (Nx.Map.RMapId ~= Nx.Map.UpdateMapID) then
         plZX = 0
@@ -7753,6 +7867,13 @@ function Nx.Map:Update (elapsed)
 
     self.TextScFrm:SetFrameLevel (self.Level)
     self.PlyrFrm:SetFrameLevel (self.Level + 1)
+
+    -- The unmapped-instance cover (UnmappedInstance.lua) goes above every
+    -- outdoor icon and label drawn this frame (world-quest icons use up to
+    -- +120); the toolbar, location tip and live minimap below stay above it.
+    if self.UInstViewActive and self.RaiseUnmappedInstanceView then
+        self.Level = self:RaiseUnmappedInstanceView(self.Level + 130)
+    end
 
     self.ToolBar:SetLevels (self.Level + 2)
 
@@ -9846,7 +9967,7 @@ function Nx.Map:UpdateZones()
     local isInstanceWithOverlay = self:IsInstanceOverlayActive()
     if isInstanceWithOverlay then
         self:MoveCurZoneTiles(true)  -- Clear tiles
-        if modernInstanceCanvas then
+        if modernInstanceCanvas or self:IsUnmappedInstance() then
             self:HideMiniFrames()
             self.Mini3D, self.View3DBaseH = nil, 0
         else
