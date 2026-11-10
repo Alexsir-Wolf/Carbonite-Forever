@@ -119,6 +119,10 @@ function DC:Current(src)
         return self.Browse.src == src and self.Browse.value or nil
     end
     if self.Native then return nil end
+    -- Without a game map for the dungeon, the window shows the live minimap
+    -- (UnmappedInstance.lua): the chart then opens only from the map menu.
+    local map = Nx.Map.Maps and Nx.Map.Maps[1]
+    if map and map.UInstViewActive then return nil end
     local here = self.Here and self.Here[src]
     if here and not self.Dismissed and prefs().DungeonChartAuto then return here end
 end
