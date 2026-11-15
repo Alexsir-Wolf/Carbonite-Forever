@@ -8,6 +8,10 @@
 -- not Spoken's public API (Spoken/API.lua), so every call is guarded: a failure turns the buttons
 -- off for the session with one chat line instead of raising inside the list update.
 --
+-- Play sits inside the window, between Carbonite's quest icon and the title, as Spoken's own
+-- button sits left of the title: the icon column is widened by one button while any listed quest
+-- has a recording, so every row's text moves right by the same amount and none is covered.
+--
 -- Spoken's own "Play button on the tracker" option decides whether a button shows, and Spoken
 -- only offers it for quests it has a recording of. Nothing here runs without Spoken loaded.
 --
@@ -28,10 +32,15 @@ local ORIGIN = "Carbonite's watch list"
 -- ShowsTrackerButton asks Spoken's voice packs; the list redraws several times a second.
 local CACHE_SECONDS = 5
 local NEEDED = { "MakePlayButton", "ShowsTrackerButton", "BindPlayButton", "SetPlayButtonState" }
+-- Room added to the icon column for Play, and Play's largest size within it.
+local COLUMN_EXTRA = 18
+local MAX_SIZE = 16
+-- Nx.List draws its text columns this far from the list's left edge.
+local LIST_PAD = 1
 
 local buttons = {}      -- by position among the buttons shown, reused as the list scrolls
 local shows = {}        -- questID -> { shows, time asked }
-local failed, callbacksSet
+local failed, callbacksSet, relaying
 
 local function HideFrom(first)
     for i = first, #buttons do
@@ -39,11 +48,43 @@ local function HideFrom(first)
     end
 end
 
+-- Column 1 holds Carbonite's quest icon (WatchWindow.lua, ColumnAdd). Widened once; the width it
+-- had is kept to put it back, and a width set again by Carbonite is taken as the new one.
+-- Each returns whether the width changed, so the list must be laid out again.
+local function Widen(list)
+    local column = list.Columns and list.Columns[1]
+    if not column or column.Width == list.NxSpokenWidth then return false end
+    list.NxSpokenBaseW = column.Width
+    column.Width = column.Width + COLUMN_EXTRA
+    list.NxSpokenWidth = column.Width
+    return true
+end
+
+local function Narrow(list)
+    local column = list.Columns and list.Columns[1]
+    local widened = list.NxSpokenWidth
+    list.NxSpokenWidth = nil
+    if not column or not widened or column.Width ~= widened then return false end
+    column.Width = list.NxSpokenBaseW
+    return true
+end
+
+-- Lays the list out again after its icon column changed width; the hook runs once more inside.
+local function Relayout(list)
+    if relaying then return end
+    relaying = true
+    pcall(list.Update, list)
+    relaying = false
+end
+
 local function Fail(err)
     if failed then return end
     failed = true
     HideFrom(1)
     Nx.prt("Spoken Play button turned off for this session: %s", tostring(err))
+    local watch = Nx.Quest.Watch
+    local list = watch and watch.List
+    if list and Narrow(list) then Relayout(list) end
 end
 
 -- Spoken's quest overlay, or nil when Spoken_Quests is not loaded. One that lost a call this
@@ -109,25 +150,22 @@ local function GetButton(ui, index, parent)
     return button
 end
 
--- Distance from the list's right edge. The modern look draws the quest item button at the right
--- edge of the row (Nx.List:Update, "WatchItem~...~R"); the Play button goes to its left.
-local function RightInset(list, line, lineH)
-    local slider = list.Slider and list.Slider.Frm
-    local data = list.FrmData and list.FrmData[line]
-    if type(data) == "string" and data:sub(1, 10) == "WatchItem~" and data:sub(-2) == "~R" then
-        local sliderW = slider and slider:GetWidth() or 0
-        local scale = (list.ItemFrameScale or 1) * .07 * lineH / 13
-        return 2 + sliderW + 29 * scale + 2
-    end
-    local sliderW = slider and slider:IsShown() and slider:GetWidth() or 0
-    return 2 + sliderW
-end
-
 -- Row data is qId * 0x10000 + qi for a quest's title and adds ln * 0x100 for its objectives.
 local function TitleQuestID(data)
     if type(data) ~= "number" or data <= 0 or floor(data / 0x100) % 0x100 ~= 0 then return nil end
     local questID = floor(data / 0x10000)
     return questID > 0 and questID or nil
+end
+
+-- Whether any quest in the list, shown or scrolled away, gets Play. Keeps the column steady
+-- while the list scrolls.
+local function AnyShows(ui, list)
+    for line = 1, list.Num or 0 do
+        local questID = TitleQuestID(list.Data[line])
+        if questID and Shows(ui, questID) then return true end
+        if failed then return false end
+    end
+    return false
 end
 
 function SP:Reset()
@@ -153,18 +191,24 @@ end
 
 function SP:Sweep(list)
     local ui = Overlay()
-    if not ui then
+    if not ui or not AnyShows(ui, list) then
         HideFrom(1)
+        if Narrow(list) then Relayout(list) end
         return
     end
     SetCallbacks()
+    if Widen(list) and not relaying then
+        Relayout(list)      -- lays the buttons out from inside
+        return
+    end
 
     local frm = list.Frm
     local lineH = list:GetLineH()
     local hdrH = list.HdrH or 0
     local top = list.Top or 1
     local last = min(top + (list.Vis or 0) - 1, list.Num or 0)
-    local size = max(12, min(20, lineH + 2))
+    local size = max(12, min(MAX_SIZE, lineH + 2))
+    local x = LIST_PAD + (list.NxSpokenBaseW or 0) + COLUMN_EXTRA / 2
     local used = 0
 
     for line = top, last do
@@ -174,10 +218,10 @@ function SP:Sweep(list)
             if failed then return end
             if button then
                 used = used + 1
+                local offX = list.Offsets and list.Offsets[line] or 0
                 button:SetSize(size, size)
                 button:ClearAllPoints()
-                button:SetPoint("RIGHT", frm, "TOPRIGHT", -RightInset(list, line, lineH),
-                    -((line - top) * lineH + hdrH + lineH / 2))
+                button:SetPoint("CENTER", frm, "TOPLEFT", x + offX, -((line - top) * lineH + hdrH + lineH / 2))
                 if button.NxQuestID ~= questID then
                     local _, ok = Call(ui, "BindPlayButton", button, questID, Title(questID), ORIGIN)
                     if not ok then return end
