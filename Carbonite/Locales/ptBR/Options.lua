@@ -339,6 +339,8 @@ L["Auto Track Corpse"] = "Rastrear Corpo Automaticamente"
 L["When Enabled, Will automatically track your corpse upon death"] = "Quando ativado, rastreará automaticamente o seu corpo ao morrer"
 L["Enable TomTom Emulation"] = "Ativar Emulação do TomTom"
 L["When Enabled, Attempts to emulate tomtom's features (requires reload)"] = "Quando ativado, tenta emular os recursos do TomTom (requer recarregar)"
+L["Show the game's 3D pin on the destination"] = "Mostrar o pino 3D do jogo no destino"
+L["When enabled, the game's waypoint pin, with the distance, marks Carbonite's navigation target in the world"] = "Quando ativado, o pino de destino do jogo, com a distância, marca no mundo o destino de navegação do Carbonite-Forever"
 
 -- Configuration Headers
 L["General"] = "Geral"

@@ -2967,6 +2967,20 @@ local function trackConfig()
                         Nx.HUD:UpdateOptions()
                     end,
                 },
+                blizzardpin = {
+                    order = 20,
+                    type = "toggle",
+                    width = "full",
+                    name = L["Show the game's 3D pin on the destination"],
+                    desc = L["When enabled, the game's waypoint pin, with the distance, marks Carbonite's navigation target in the world"],
+                    get = function()
+                        return Nx.db.profile.Track.BlizzardPin
+                    end,
+                    set = function()
+                        Nx.db.profile.Track.BlizzardPin = not Nx.db.profile.Track.BlizzardPin
+                        Carbonite.Modules.Map.BlizzardPin:Sync()
+                    end,
+                },
             },
         }
     end
