@@ -8,3 +8,7 @@ move-folders:
 manual-changelog:
   filename: CHANGELOG-FOREVER.md
   markup-type: markdown
+ignore:
+  - tests
+  - .luacheckrc
+  - .github
