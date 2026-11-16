@@ -1899,19 +1899,9 @@ function CarboniteQuest:OnQuestUpdate (event, ...)
                 CloseQuest();
             end
         end]]--
-        -- Get the stable questID from the client-specific event payload.
-        -- Retail 12.x sends questID as arg1. Classic families send
-        -- questLogIndex as arg1 and questID as arg2; only resolve the index as
-        -- a fallback for older branches that omit arg2.
-        local questId
-        if Nx.isRetail then
-            questId = arg1
-        else
-            questId = arg2
-            if (not questId or questId <= 0) and arg1 and arg1 > 0 then
-                questId = Nx.Quest:GetQuestID(arg1)
-            end
-        end
+        -- The stable questID from the client-specific event payload
+        -- (Compat/Api.lua: Retail and Forever send only the questID).
+        local questId = QuestAPI and QuestAPI:GetAcceptedQuestID (arg1, arg2)
 
         if questId and questId > 0 then
             -- Snapshot existing watches before Blizzard re-indexes the log.
@@ -2455,7 +2445,7 @@ function Nx.Quest.List:Update()
 
             if qn > 0 then
                 for n = 1, 4 do
-                    if IsUnitOnQuest (qn, "party"..n) then
+                    if Nx.Quest.IsUnitOnQuestByIndex (qn, "party"..n) then
                         if onQ > 0 then
                             onQStr = onQStr .. "," .. UnitName ("party" .. n)
                         else

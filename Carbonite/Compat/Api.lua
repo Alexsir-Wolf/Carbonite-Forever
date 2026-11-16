@@ -571,6 +571,40 @@ function Quest:GetQuestIDForLogIndex(logIndex)
     return info and info.questID or nil
 end
 
+-- QUEST_ACCEPTED payload: Classic families send (questLogIndex, questID); Retail and
+-- Forever send only the questID, in arg1. Decided by the data, not by a client flag.
+function Quest:GetAcceptedQuestID(arg1, arg2)
+    if type(arg2) == "number" and arg2 > 0 then
+        return arg2
+    end
+    if type(arg1) == "number" and arg1 > 0 then
+        return arg1
+    end
+    return nil
+end
+
+-- ShowQuestComplete takes the questID on Retail and Forever (mainline code base) and the
+-- log index on the other Classic clients.
+function Quest:ShowCompleteTakesQuestID()
+    return Carbonite.isRetail or Carbonite.isCamelot or false
+end
+
+function Quest:ShowComplete(questID, logIndex)
+    local show = _G.ShowQuestComplete
+    if not show then
+        return false
+    end
+    if self:ShowCompleteTakesQuestID() then
+        if not questID or questID <= 0 then return false end
+        show(questID)
+    else
+        logIndex = logIndex or self:GetLogIndexForQuestID(questID)
+        if not logIndex or logIndex <= 0 then return false end
+        show(logIndex)
+    end
+    return true
+end
+
 function Quest:GetLogIndexForQuestID(questID)
     if not questID then
         return 0
