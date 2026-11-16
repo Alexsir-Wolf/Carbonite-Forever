@@ -27,20 +27,20 @@ local function backdrop(edgeFile, tile, tileSize, edgeSize, insets)
 end
 
 Skin.themes = {
-    -- The game's own window look (character sheet, options): the metal frame
-    -- with the title bar drawn by NineSlice, the dark rock background, bronze
-    -- separators and the gold highlight of Blizzard's lists. Clients without
-    -- that NineSlice layout get the dialog border instead.
+    -- The game's own window look: the dialog border and dark rock background of
+    -- Blizzard's frames, bronze separators and the gold highlight of its lists.
+    -- The NineSlice frame of the character sheet was tried and does not fit
+    -- Carbonite's windows (its title bar covers their first lines, and on the
+    -- map its edges break into stray marks), so the border is a backdrop.
     ["Blizzard"] = {
-        nineSlice = "ButtonFrameTemplateNoPortrait",
         backdrop = {
             bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
+            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
             tile     = true,
             tileSize = 256,
-            insets   = { left = 2, right = 2, top = 2, bottom = 2 },
+            edgeSize = 16,
+            insets   = { left = 4, right = 4, top = 4, bottom = 4 },
         },
-        fallbackBackdrop = backdrop("Interface\\DialogFrame\\UI-DialogBox-Border", true, 256, 16,
-            { left = 4, right = 4, top = 4, bottom = 4 }),
         borderColor = "1|1|1|1",
         bgColor     = "1|1|1|1",
         tokens = {
@@ -183,19 +183,8 @@ function Skin:GetActive()
     return self.themes[self.activeName] or self.themes["Blizzard"]
 end
 
--- Whether this client has the theme's NineSlice frame (Nx.Window draws it).
-function Skin:HasNineSlice()
-    local layout = self:GetActive().nineSlice
-    return layout and NineSliceUtil and NineSliceUtil.ApplyLayoutByName
-        and NineSliceLayouts and NineSliceLayouts[layout] and true or false
-end
-
 function Skin:GetBackdrop()
-    local t = self:GetActive()
-    if t.nineSlice and t.fallbackBackdrop and not self:HasNineSlice() then
-        return t.fallbackBackdrop
-    end
-    return t.backdrop
+    return self:GetActive().backdrop
 end
 
 -- The color the player picked in the options, saved in the profile. Picking a
