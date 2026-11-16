@@ -1065,7 +1065,6 @@ function Nx.Quest:ScanBlizzQuestDataZone(WatchUpdate)
                     qObjl = #quest["Objectives"]
                 end
                 local needEnd = isComplete and not quest["End"]
-                local fac = UnitFactionGroup ("player") == "Horde" and 1 or 2
 
                 -- Enter the patch block whenever Blizzard's API has objectives
                 -- to contribute (lbCnt > 0) — even if we already have static
@@ -1080,7 +1079,8 @@ function Nx.Quest:ScanBlizzQuestDataZone(WatchUpdate)
                         y = y * 100
 --                        Nx.prt ("%s #%s %s %s %s %s", mapId, n, id, x or "nil", y or "nil", objective and objective.text or "nil")
                         if not quest["Quest"] then
-                            quest["Quest"] = format ("[[%s|%s|%s|0|0|0]]",title,fac,level)
+                            quest["Quest"] = Nx.Quest:SynthHeader (title, level)
+                            quest.Synth = true
                         end
                         if needEnd or bit_band (patch, 1) then
                             if not quest["End"] then --or (bit_band(patch,1) and mapId == MapUtil.GetDisplayableMapForPlayer()) then --disable this check as it's logic fails when there's no objectives defined in QuestDB for QuestID

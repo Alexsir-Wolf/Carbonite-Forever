@@ -10,7 +10,7 @@
 -- Goto and the quest window treat it like any other quest.
 --
 -- * Carbonite's own records are never changed. A record Carbonite synthesized from the quest
---   log for a quest it had no data for (header starting "[[", Tooltips.lua) is replaced.
+--   log for a quest it had no data for (marked Synth, Nx.Quest:SynthHeader) is replaced.
 -- * The work runs in batches over frames; quests in the player's log go first. No chat output
 --   except one line when the installed QuestieDB speaks an incompatible contract.
 -- * Nothing runs without QuestieDB. Loaded by the Forever (camelot) TOC only.
@@ -310,7 +310,7 @@ end
 --------------------------------------------------------------------------------------------
 
 local function IsSynthesized(q)
-    return type(q) == "table" and type(q.Quest) == "string" and q.Quest:sub(1, 2) == "[["
+    return type(q) == "table" and q.Synth == true
 end
 
 local function Inject(qId, entry)

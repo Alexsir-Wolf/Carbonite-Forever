@@ -86,6 +86,22 @@ function Nx.Quest:GetLocalizedName (qId, fallback)
 end
 
 -------------------------------------------------------------------------------
+-- Header for a quest Carbonite has no data for, built from the quest log.
+-- Same layout as the data files (name|side|level|minLvl|nextId|category),
+-- side 1 Alliance and 2 Horde. Callers mark the record Synth = true so
+-- QuestieSource knows it may replace it.
+-------------------------------------------------------------------------------
+
+function Nx.Quest:SynthHeader (title, level)
+    local name = (title or "?"):gsub ("|", "")
+    if name == "" then
+        name = "?"
+    end
+    local side = UnitFactionGroup ("player") == "Horde" and 2 or 1
+    return format ("%s|%d|%d|0|0|0", name, side, tonumber (level) or 0)
+end
+
+-------------------------------------------------------------------------------
 -- Unpack quest name
 -------------------------------------------------------------------------------
 
