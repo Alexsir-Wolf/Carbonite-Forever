@@ -222,6 +222,20 @@ function Nx.Quest:GetOptionsConfig()
                                 Nx.qdb.profile.Quest.AddTooltip = not Nx.qdb.profile.Quest.AddTooltip
                             end,
                         },
+                        qnameplate = {
+                            order = 15.5,
+                            type = "toggle",
+                            width = "full",
+                            name = L["Mark Quest Enemies on Nameplates"],
+                            desc = L["When enabled, shows a quest icon on the nameplate of enemies a quest in your log still needs"],
+                            get = function()
+                                return Nx.qdb.profile.Quest.NameplateIcon
+                            end,
+                            set = function()
+                                Nx.qdb.profile.Quest.NameplateIcon = not Nx.qdb.profile.Quest.NameplateIcon
+                                Nx.Quest.Nameplates:RefreshAll()
+                            end,
+                        },
                         qparty = {
                             order = 16,
                             type = "toggle",
