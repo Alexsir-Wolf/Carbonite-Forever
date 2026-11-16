@@ -9,8 +9,11 @@
 -- ProcessQuestDB builds (sorted list, quest givers per map, chains), so the map, the watch list,
 -- Goto and the quest window treat it like any other quest.
 --
--- * Carbonite's own records are never changed. A record Carbonite synthesized from the quest
---   log for a quest it had no data for (marked Synth, Nx.Quest:SynthHeader) is replaced.
+-- * Carbonite's own records keep what they have; only fields they lack (Start, End,
+--   Objectives) are filled. A record Carbonite synthesized from the quest log for a quest it
+--   had no data for (marked Synth, Nx.Quest:SynthHeader) is replaced.
+-- * Forever redrew Mulgore, Eastern Plaguelands, Redridge and Stormwind. As each data file
+--   loads, Carbonite's Classic Era points there are projected with EraToForeverByUiMapId.
 -- * The work runs in batches over frames; quests in the player's log go first. No chat output
 --   except one line when the installed QuestieDB speaks an incompatible contract.
 -- * Nothing runs without QuestieDB. Loaded by the Forever (camelot) TOC only.
@@ -25,6 +28,9 @@
 --   QS.Convert(qId)      Carbonite record for one QuestieDB quest, or nil
 --   QS:Start()           convert and add the missing quests (runs after ProcessQuestDB)
 --   QS.added             quest ids added by the last completed run
+--   QS.filled            quest ids whose missing fields the last completed run filled
+--   QS.ForeverLoc(f, s)  one location string projected with f(uiMapId, x, y)
+--   QS.ConvertLoadedCoords(lib)  project the Era points of records not yet converted
 
 local Nx = _G.Nx
 if not Nx or not Nx.Quest then return end
@@ -47,6 +53,7 @@ local zoneMap, zoneParents
 local said, generation = false, 0
 
 QS.added = {}
+QS.filled = {}
 
 local function Say(msg)
     if said then return end
@@ -306,6 +313,65 @@ function QS.Convert(qId, lib)
 end
 
 --------------------------------------------------------------------------------------------
+-- Era coordinates in Carbonite's own data
+--------------------------------------------------------------------------------------------
+
+local POINT, AREA = 32, 35
+
+-- "desc|uiMapId|type|x|y[|w|h]" with x, y projected by convert(uiMapId, x, y). Points keep
+-- their trailing fields; an area is projected corner to corner, which keeps it exact because
+-- the projection is linear. Other types and unknown maps come back unchanged.
+function QS.ForeverLoc(convert, loc)
+    if type(loc) ~= "string" then return loc end
+    local desc, map, typ, x, y, rest = loc:match("^([^|]*)|(%d+)|(%d+)|([^|]+)|([^|]+)(.*)$")
+    map, typ, x, y = tonumber(map), tonumber(typ), tonumber(x), tonumber(y)
+    if not (map and x and y) or (typ ~= POINT and typ ~= AREA) then return loc end
+    local fx, fy = convert(map, x, y)
+    if fx == x and fy == y then return loc end
+    if typ == POINT then
+        return format("%s|%d|%d|%.2f|%.2f%s", desc, map, typ, fx, fy, rest)
+    end
+    local w, h = rest:match("^|([^|]+)|([^|]+)$")
+    w, h = tonumber(w), tonumber(h)
+    if not (w and h) then return loc end
+    local ex, ey = convert(map, x + w, y + h)
+    return format("%s|%d|%d|%.2f|%.2f|%.2f|%.2f", desc, map, typ, fx, fy, ex - fx, ey - fy)
+end
+
+local function ProjectRecord(convert, q)
+    q.Start = QS.ForeverLoc(convert, q.Start)
+    q.End = QS.ForeverLoc(convert, q.End)
+    for _, locs in pairs(type(q.Objectives) == "table" and q.Objectives or {}) do
+        if type(locs) == "table" then
+            for n, loc in ipairs(locs) do locs[n] = QS.ForeverLoc(convert, loc) end
+        end
+    end
+end
+
+-- Records come from the data files as fresh tables, so ForeverCoords marks the ones already
+-- handled: each point is projected once. Synthesized records hold live (Forever) points.
+function QS.ConvertLoadedCoords(lib)
+    local convert = lib and lib.EraToForeverByUiMapId
+    if type(convert) ~= "function" then return end
+    for _, q in pairs(Nx.Quests) do
+        if type(q) == "table" and not q.ForeverCoords then
+            if not q.Synth then pcall(ProjectRecord, convert, q) end
+            q.ForeverCoords = true
+        end
+    end
+end
+
+-- Each data file loads through Nx.ModQuests:LoadN (SuperTrack.lua), before quest-log patches
+-- can add live points to those records.
+if hooksecurefunc and type(Nx.ModQuests) == "table" then
+    for name, fn in pairs(Nx.ModQuests) do
+        if type(fn) == "function" and name:match("^Load%d+$") then
+            hooksecurefunc(Nx.ModQuests, name, function() QS.ConvertLoadedCoords(Lib()) end)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------------------
 -- Adding to Carbonite
 --------------------------------------------------------------------------------------------
 
@@ -317,7 +383,7 @@ local function Inject(qId, entry)
     local record, extra = entry[1], entry[2]
     -- A fresh table each time: ProcessQuestDB-style indexing writes CNum/CLvlMax into it.
     Nx.Quests[qId] = { Quest = record.Quest, Start = record.Start, End = record.End,
-        Objectives = record.Objectives }
+        Objectives = record.Objectives, ForeverCoords = true }
     Nx.Quests[-qId] = nil
 
     if extra.classes then
@@ -341,22 +407,54 @@ local function Inject(qId, entry)
     end
 end
 
+-- The quest giver on its map (Quest.QGivers), as ProcessQuestDB indexes it.
+local function AddGiver(qId, q)
+    local Quest = Nx.Quest
+    local giver, zone, x, y = Quest:GetSEPos(q.Start)
+    if zone and x and y and x ~= 0 and y ~= 0 then
+        Quest.QGivers = Quest.QGivers or {}
+        local key = format("%s=%d%d", giver, floor(x), floor(y))
+        local onMap = Quest.QGivers[zone] or {}
+        Quest.QGivers[zone] = onMap
+        onMap[key] = (onMap[key] or "") .. format("%6x", qId)
+    end
+end
+
+-- Whether ProcessQuestDB lists the quest for this character (side and level filter).
+local function Listed(q)
+    local profile = Nx.qdb and Nx.qdb.profile and Nx.qdb.profile.Quest or {}
+    local enemySide = Nx.PlFactionNum == 1 and 1 or 2
+    local loadLevel = max(1, (UnitLevel and UnitLevel("player") or 1) + (profile.LevelsToLoad or 0))
+    local _, side, level = Nx.Quest:Unpack(q.Quest)
+    level = level or 0
+    return not (side == enemySide or level > 0 and profile.maxLoadLevel and level > loadLevel)
+end
+
+-- Fills the fields a Carbonite record lacks from the QuestieDB record; keeps the rest.
+local function Fill(qId, q, record)
+    local filled = false
+    for _, key in ipairs({ "Start", "End", "Objectives" }) do
+        if q[key] == nil and record[key] ~= nil then
+            q[key] = record[key]
+            filled = true
+        end
+    end
+    if filled and q.Start == record.Start and Listed(q) then AddGiver(qId, q) end
+    return filled
+end
+
 -- What ProcessQuestDB does for each quest (SuperTrack.lua), for the added ones only: the
 -- sorted list, chain numbers and quest givers per map. Re-running ProcessQuestDB instead would
 -- print its "Quests Loaded" line again.
 local function Index(ids)
     local Quest = Nx.Quest
-    local profile = Nx.qdb and Nx.qdb.profile and Nx.qdb.profile.Quest or {}
-    local enemySide = Nx.PlFactionNum == 1 and 1 or 2
-    local loadLevel = max(1, (UnitLevel and UnitLevel("player") or 1) + (profile.LevelsToLoad or 0))
     Quest.Sorted = Quest.Sorted or {}
-    Quest.QGivers = Quest.QGivers or {}
 
     for _, qId in ipairs(ids) do
         local q = Nx.Quests[qId]
-        local _, side, level, _, nextId = Quest:Unpack(q.Quest)
-        level = level or 0
-        if not (side == enemySide or level > 0 and profile.maxLoadLevel and level > loadLevel) then
+        if Listed(q) then
+            local _, _, level, _, nextId = Quest:Unpack(q.Quest)
+            level = level or 0
             tinsert(Quest.Sorted, qId)
             if not q.CNum and nextId and nextId > 0 then
                 local maxLevel, qc, count, seen = level, q, 0, {}
@@ -371,13 +469,7 @@ local function Index(ids)
                 end
                 q.CLvlMax = maxLevel
             end
-            local giver, zone, x, y = Quest:GetSEPos(q.Start)
-            if zone and x and y and x ~= 0 and y ~= 0 then
-                local key = format("%s=%d%d", giver, floor(x), floor(y))
-                local onMap = Quest.QGivers[zone] or {}
-                Quest.QGivers[zone] = onMap
-                onMap[key] = (onMap[key] or "") .. format("%6x", qId)
-            end
+            AddGiver(qId, q)
         end
     end
 
@@ -414,14 +506,17 @@ function QS:Start()
     local queue = LogQuestIds()
     for _, qId in ipairs(all) do queue[#queue + 1] = qId end
 
-    local added, seen, i = {}, {}, 1
+    local added, filled, seen, i = {}, {}, {}, 1
     local function step()
         if run ~= generation then return end      -- Carbonite reloaded its data meanwhile
         local last = min(i + BATCH - 1, #queue)
         for k = i, last do
             local qId = queue[k]
             local q = Nx.Quests[qId]
-            if not seen[qId] and (q == nil or IsSynthesized(q)) then
+            local replace = q == nil or IsSynthesized(q)
+            local incomplete = not replace and type(q) == "table"
+                and (q.Start == nil or q.End == nil or q.Objectives == nil)
+            if not seen[qId] and (replace or incomplete) then
                 seen[qId] = true
                 local entry = built[qId]
                 if entry == nil then
@@ -429,9 +524,11 @@ function QS:Start()
                     entry = ok and record and { record, extra } or false
                     built[qId] = entry
                 end
-                if entry then
+                if entry and replace then
                     Inject(qId, entry)
                     added[#added + 1] = qId
+                elseif entry and Fill(qId, q, entry[1]) then
+                    filled[#filled + 1] = qId
                 end
             end
         end
@@ -440,6 +537,7 @@ function QS:Start()
             C_Timer.After(0, step)
         else
             QS.added = added
+            QS.filled = filled
             if added[1] then
                 local ok, err = pcall(Index, added)
                 if not ok then Say(err) end
