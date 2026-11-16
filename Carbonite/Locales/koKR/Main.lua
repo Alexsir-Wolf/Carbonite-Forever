@@ -205,9 +205,6 @@ L["CLICK (.+):"] = true
 L["Key %s %s #%s %s"] = "키 %s %s #%s %s"
 L["shift left/right click to change size"] = "Shift+왼쪽/오른쪽 클릭: 크기 변경"
 L["Reset old tool bar data"] = "오래된 도구 모음 데이터 초기화"
-L["|cffffff00%dg"] = "|cffffff00%d골"
-L["%s |cffbfbfbf%ds"] = "%s |cffbfbfbf%d실"
-L["%s |cff7f7f00%dc"] = "%s |cff7f7f00%d동"
 
 -- NxTravel.lua
 L["Connection: %s to %s"] = "연결: %s → %s"
