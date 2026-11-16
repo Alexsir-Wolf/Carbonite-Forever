@@ -1537,7 +1537,7 @@ function Nx.Com:MonitorZone(mapId, enable)
                     if zs and zs.ChanName then
                         Nx.prt(" %s", Nx.Map:GetMapNameByID(mapId))
                     else
-                        Nx.prt(" %s (pending)", Nx.Map:GetMapNameByID(mapId))
+                        Nx.prt(L[" %s (pending)"], Nx.Map:GetMapNameByID(mapId))
                     end
                 end
             end

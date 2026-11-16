@@ -445,7 +445,7 @@ function Nx.Warehouse:OnListEvent (eventName, sel, val2, click)
             local profT = ch and ch["Profs"] and ch["Profs"][prof]
 
             if profT and profT["Link"] and not WarehouseAPI.InsertChatLink(profT["Link"], true) then
-                Nx.prt ("Unable to open profession link")
+                Nx.prt (L["Unable to open profession link"])
             end
 
         elseif id >= 1 and id <= #Nx.RealmChars then
@@ -555,7 +555,7 @@ function Nx.Warehouse:OnItemListEvent (eventName, sel, val2, click)
                         AuctionFrameBrowse_Search()
                     end
                 else
-                    Nx.prt ("No edit box open!")
+                    Nx.prt (L["No edit box open!"])
                 end
             end
 --        end
@@ -3001,7 +3001,7 @@ function Nx.Map.Guide.OnTrade_skill_show()    -- Your own trade window
 
 --    local self = Nx.Map.Guide
 
-    Nx.prt ("OnTRADE_SKILL_SHOW")
+    Nx.prtD ("OnTRADE_SKILL_SHOW")
 
     Nx.prtStrHex ("Trade", GetTradeSkillListLink())
     local link = GetTradeSkillListLink()

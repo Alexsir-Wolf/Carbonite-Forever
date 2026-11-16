@@ -10,6 +10,9 @@ local function rootWith(provider)
     env.LibStub = function(name)
         if name == "AceConfig-3.0" then
             return { RegisterOptionsTable = function(_, _, fn) build = fn end }
+        elseif name == "AceLocale-3.0" then
+            local locale = setmetatable({}, { __index = function(_, k) return k end })
+            return { GetLocale = function() return locale end }
         end
         return wow.anything()
     end

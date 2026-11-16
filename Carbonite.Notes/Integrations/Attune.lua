@@ -1,5 +1,6 @@
 local Nx = _G.Nx
 if not Nx then return end
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite.Notes", true)
 
 local function canonMid(uiMapID)
     local MapIDs = Carbonite and Carbonite.Modules and Carbonite.Modules.Map and Carbonite.Modules.Map.MapIDs
@@ -43,7 +44,7 @@ end
 local function showCopyBox(text)
     if not StaticPopupDialogs["NxAttuneCoords"] then
         StaticPopupDialogs["NxAttuneCoords"] = {
-            text = "Ctrl+C:",
+            text = L["Ctrl+C:"],
             button1 = OKAY or "Okay",
             hasEditBox = 1,
             editBoxWidth = 280,

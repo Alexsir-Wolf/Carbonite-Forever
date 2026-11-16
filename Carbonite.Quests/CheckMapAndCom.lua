@@ -185,7 +185,7 @@ function Nx.Quest:Goto (qId)
     local quest = Nx.Quests[qId]
 
     if not quest["Start"] then
-        Nx.prt ("No quest starter")
+        Nx.prt (L["No quest starter"])
         return
     end
 
