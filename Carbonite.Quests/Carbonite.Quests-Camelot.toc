@@ -1,9 +1,13 @@
 ## Interface: 16001
 ## X-Camelot-Toc: dash
 ## Title: Carbonite Quest - Camelot (Forever) @project-version@
+## Title-ptBR: Carbonite Quests - Camelot (Forever) @project-version@
 ## Version: @project-version@
-## Author: No One
-## Notes: Released Under GPL
+## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
+## Notes: Quest database and tracking for Carbonite
+## Notes-ptBR: Base e acompanhamento de quests do Carbonite
+## X-License: GPL-3.0
+## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: NXQuest

@@ -3,7 +3,7 @@
 -- Carbonite.lua. Owns:
 --   * the Nx.Whatsnew data table (categories + per-category dated
 --     changelog entries)
---   * Nx.WhatsNewUnread() (reads against Nx.db.profile.Whatsnew.lastreadtime)
+--   * Nx.Whatsnew:ShouldAutoShow() (login check against Nx.db.profile.Whatsnew.lastreadtime)
 --   * Nx.Whatsnew:ToggleShow / :Create / :Recordtime / :Cat_button /
 --     :OnListEvent / :Update
 --
@@ -18,122 +18,41 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 -- Data: changelog categories and entries
 -------------------------------------------------------------------------------
 
+-- Lines wider than this get wrapped: the detail list shows one line per row.
+local WRAP = 55
+
+--- Split each bullet into rows of at most WRAP characters, indenting the
+--- continuation rows, and put a blank row between bullets.
+local function entry(title, bullets)
+    local rows = { title, "" }
+    for i, text in ipairs(bullets) do
+        local row = ""
+        for word in text:gmatch("%S+") do
+            if row ~= "" and #row + 1 + #word > WRAP then
+                rows[#rows + 1] = row
+                row = "   " .. word
+            else
+                row = row == "" and word or row .. " " .. word
+            end
+        end
+        rows[#rows + 1] = row
+        if i < #bullets then rows[#rows + 1] = "" end
+    end
+    return rows
+end
+
 Nx.Whatsnew = {}
-Nx.Whatsnew.Categories = {"Maps"}
-Nx.Whatsnew.Maps = {
-    [1568657164] = {
-        "Sept 16th 2019", "",
-        "This is Alpha version of Carbonite Classic, all bugs/issues please report to",
-        "GitHub repo: https://github.com/IrcDirk/Carbonite-Classic."
-    },
-    [1653631200] = {
-        "May 27th 2022", "",
-        "Fixed map path generation using FlightMasters",
-        "Fixed HandyNotes icons disappearing while standing still",
-        "Fixed Carbonite Map causing errors while trying to open map in combat",
-        "Fixed Carbonite maps going out while traveling between islands/subcontinents in Kalimdor/Eastern Kingdoms/Outlands",
-        "Fixed Warehouse module not showing equipped wands",
-        "Add tracking of goods bought in Auction House in Warehouse module",
-        "Add localizations for various strings (need translators for some languages)",
-        "Updated translations for some of the Carbonite modules"
-    },
-    [1660510987] = {
-        "Aug 14th 2022", "",
-        "Implemented WotLK Classic support for Pre-patch",
-        "Updated Flight Masters data",
-        "Updated Flight Masters locales for DE,ES,FR,KO,PT,RU,TW Languages",
-        "Fixed various small errors caused by division by zero."
-    },
-    [1790892000] = {
-        "Oct 2nd 2026", "",
-        "Added GatherLite integration: its gathering nodes",
-        "   (ore, herbs, chests, fishing pools - both its",
-        "   bundled database and what you gathered yourself)",
-        "   show on the Carbonite map. New toolbar button:",
-        "   left click toggles the icons, right click opens",
-        "   GatherLite's menu of node types to show.",
-    },
-    [1790632800] = {
-        "Sept 29th 2026", "",
-        "Experimental 3D map view: toggle it with the new 3D",
-        "   toolbar button or in Map Options > 3D View. Minimap",
-        "   tiles are drawn in perspective with real terrain",
-        "   relief baked from the game's map files; icons, pins,",
-        "   goto arrows and paths follow the terrain, and pins",
-        "   behind a ridge can be hidden. Tilt, distance, height",
-        "   scale, tile detail and zoom limits are adjustable.",
-        "",
-        "Subzone names (Goldshire, Stormwind Harbor, ...) are",
-        "   shown on the map in the 3D view, optionally on the",
-        "   flat map too (Map Options > 3D View).",
-        "",
-        "Minimap tiles are now taken straight from the game",
-        "   client for every flavor, so retail-only areas no",
-        "   longer show up on Classic maps.",
-        "",
-        "Window fade sliders renamed: \"Fade In / Fade Out",
-        "   Transparency\" now mean opacity with and without",
-        "   the mouse over the window.",
-    },
-    [1779796800] = {
-        "May 26th 2026", "",
-        "New map rendering engine (Pin / Layer system plus a",
-        "   Map Provider API) that third-party add-ons can",
-        "   plug into",
-        "",
-        "Added Carbonite-map integrations for Questie,",
-        "   HandyNotes and RareScanner, each with a toolbar",
-        "   toggle button and localized tooltips",
-        "",
-        "Added RXPGuides integration: its step waypoints now",
-        "   show on the Carbonite map, and its navigation",
-        "   arrow can be routed through Carbonite's own travel",
-        "   arrow with the current step's description (new",
-        "   option in the Notes settings)",
-        "",
-        "Retail & Mists quest database overhaul: rewrote",
-        "   ~13,400 outdated map IDs and backfilled ~8,400",
-        "   missing quest turn-in points and ~1,500 objective",
-        "   locations",
-        "",
-        "Quest tracking fixes: smoother tracking arrow,",
-        "   track-to-end, multi-zone objective handling,",
-        "   fewer combat crashes, and a reliable \"?\"",
-        "   auto-complete button",
-        "",
-        "Fixed map icon flickering (world-quest and",
-        "   bonus-objective icons blinking on retail)",
-        "",
-        "Instance maps: correct icon sizing plus",
-        "   boss-encounter pins from the Encounter Journal",
-        "",
-        "Performance: removed per-frame memory allocations in",
-        "   path building and the main update loop; pooled",
-        "   POIs and throttled title updates",
-        "",
-        "Various tooltip taint, clipping and localization",
-        "   fixes"
-    }
+Nx.Whatsnew.Categories = {"Forever"}
+Nx.Whatsnew.Forever = {
+    [1794744000] = entry("v12.1.0-00023-forever.1", {
+        L["Forever quests from QuestieDB: with QuestieDB enabled, Carbonite shows the giver, turn-in and objectives of about 1,300 Forever quests it did not have."],
+        L["Spoken narration in the quest list: a play button next to the icon of the quests Spoken narrates."],
+        L["Live minimap in dungeons: the map window shows Blizzard's minimap with the dungeon name instead of a blank or wrong map."],
+        L["The add-on files no longer carry CurseForge and WoWInterface ids, so add-on managers do not swap this edition for the official one."],
+    }),
 }
 Nx.Whatsnew.WhichCat = 1
 Nx.Whatsnew.HasWhatsNew = nil
-
--------------------------------------------------------------------------------
--- Unread check (called from Carbonite.lua's NXOnUpdate; kept as Nx.*)
--------------------------------------------------------------------------------
-
---- Return true if any changelog entry is newer than the saved
---- last-read timestamp.
-function Nx:WhatsNewUnread()
-    for _, b in pairs(Nx.Whatsnew.Categories) do
-        for c in pairs(Nx.Whatsnew[b]) do
-            if Nx.db.profile.Whatsnew.lastreadtime < c then
-                return true
-            end
-        end
-    end
-    return false
-end
 
 -------------------------------------------------------------------------------
 -- Window
@@ -232,6 +151,18 @@ end
 --- bigger max timestamp) re-arms it.
 function Nx.Whatsnew:DismissedCurrent()
     return (Nx.db.profile.Whatsnew.lastreadtime or 0) == self:GetMaxTime()
+end
+
+--- Login check for opening the window by itself. A fresh install has no
+--- history to catch up on: it starts with the current changelog marked
+--- read, and only a newer entry opens the window.
+function Nx.Whatsnew:ShouldAutoShow()
+    local saved = Nx.db.profile.Whatsnew
+    if (saved.lastreadtime or 0) == 0 then
+        saved.lastreadtime = self:GetMaxTime()
+        return false
+    end
+    return not self:DismissedCurrent()
 end
 
 --- "Don't show this update again": pin lastreadtime to the newest entry

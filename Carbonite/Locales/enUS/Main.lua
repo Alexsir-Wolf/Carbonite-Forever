@@ -186,3 +186,7 @@ L["Carbonite What's New"] = true
 L["Carbonite.Gathermate2_Data addon is not loaded!"] = true
 L["nodes from Carbonite.Gathermate2_Data"] = true
 L["Health"] = true
+L["Forever quests from QuestieDB: with QuestieDB enabled, Carbonite shows the giver, turn-in and objectives of about 1,300 Forever quests it did not have."] = true
+L["Spoken narration in the quest list: a play button next to the icon of the quests Spoken narrates."] = true
+L["Live minimap in dungeons: the map window shows Blizzard's minimap with the dungeon name instead of a blank or wrong map."] = true
+L["The add-on files no longer carry CurseForge and WoWInterface ids, so add-on managers do not swap this edition for the official one."] = true

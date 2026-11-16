@@ -143,9 +143,9 @@ function Nx:NXOnUpdate (elapsed)
         -- player clicks "Don't show this update again" (which pins
         -- lastreadtime to the newest entry); a newer entry re-arms it.
         -- Closing with the X does not dismiss, so it reappears next login.
+        -- A fresh install never opens it (see ShouldAutoShow).
         local function showWhatsNew()
-            if Nx.Whatsnew and Nx.Whatsnew.DismissedCurrent and not Nx.Whatsnew:DismissedCurrent()
-                and Nx.Whatsnew.ToggleShow
+            if Nx.Whatsnew:ShouldAutoShow()
                 and not (Nx.Whatsnew.Win and Nx.Whatsnew.Win:IsShown()) then
                 Nx.Whatsnew:ToggleShow()
             end
