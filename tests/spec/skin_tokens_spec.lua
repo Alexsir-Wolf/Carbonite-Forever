@@ -23,6 +23,7 @@ describe("tema", function()
 
     it("trocar para o Modern Light recolore o que foi pintado com tokens", function()
         local Skin = load()
+        Skin:Set("Modern Dark", true)
         local bar = texture()
         Skin:Paint(bar, "scrollTrack")
         expect(bar.color[1]).toBe(0.3)
@@ -58,5 +59,28 @@ describe("tema", function()
         expect(Skin:GetBackgroundColor()[1]).toBe(0.88)
         expect(loader.read("Carbonite/Modules/PlayerCharacter/Defaults.lua"):find("WinBdColor", 1, true)).toBeNil()
         expect(loader.read("Carbonite/Modules/Options/OptionsEngine.lua"):find("Carbonite.UI.Skin:GetBorderColor()", 1, true) ~= nil).toBe(true)
+    end)
+end)
+
+describe("tema Blizzard", function()
+    it("é o padrão de quem nunca escolheu um tema e usa a moldura do jogo", function()
+        local Skin = load({ Name = "" })
+        Skin:Set("", true)
+        expect(Skin.activeName).toBe("Blizzard")
+        expect(Skin:GetActive().nineSlice).toBe("ButtonFrameTemplateNoPortrait")
+    end)
+
+    it("sem a moldura no cliente, cai para a borda de diálogo", function()
+        local Skin, env = load({ Name = "Blizzard" })
+        Skin:Set("Blizzard", true)
+        env.NineSliceLayouts = {}
+        expect(Skin:GetBackdrop().edgeFile:find("UI-DialogBox-Border", 1, true) ~= nil).toBe(true)
+        env.NineSliceUtil = { ApplyLayoutByName = function() end }
+        env.NineSliceLayouts = { ButtonFrameTemplateNoPortrait = {} }
+        expect(Skin:GetBackdrop().edgeFile).toBeNil()
+    end)
+
+    it("a lista de temas das opções vem dos próprios temas", function()
+        expect(loader.read("Carbonite/Modules/Options/OptionsEngine.lua"):find("Carbonite.UI.Skin:ListThemes()", 1, true) ~= nil).toBe(true)
     end)
 end)

@@ -27,6 +27,33 @@ local function backdrop(edgeFile, tile, tileSize, edgeSize, insets)
 end
 
 Skin.themes = {
+    -- The game's own window look (character sheet, options): the metal frame
+    -- with the title bar drawn by NineSlice, the dark rock background, bronze
+    -- separators and the gold highlight of Blizzard's lists. Clients without
+    -- that NineSlice layout get the dialog border instead.
+    ["Blizzard"] = {
+        nineSlice = "ButtonFrameTemplateNoPortrait",
+        backdrop = {
+            bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
+            tile     = true,
+            tileSize = 256,
+            insets   = { left = 2, right = 2, top = 2, bottom = 2 },
+        },
+        fallbackBackdrop = backdrop("Interface\\DialogFrame\\UI-DialogBox-Border", true, 256, 16,
+            { left = 4, right = 4, top = 4, bottom = 4 }),
+        borderColor = "1|1|1|1",
+        bgColor     = "1|1|1|1",
+        tokens = {
+            hover       = "0.22|0.17|0.04|1",
+            pressed     = "0.45|0.36|0.12|1",
+            rowHover    = "1|0.82|0|0.12",
+            listBg      = "0|0|0|0.35",
+            tabBarBg    = "0|0|0|0.45",
+            separator   = "0.45|0.36|0.20|1",
+            scrollTrack = "0.08|0.07|0.05|0.85",
+            scrollThumb = "0.60|0.48|0.24|1",
+        },
+    },
     ["Blackout"] = {
         backdrop = backdrop("Interface\\Addons\\Carbonite\\Gfx\\Skin\\EdgeSquare", true, 8, 8, { left=0, right=0, top=0, bottom=0 }),
         borderColor = "0|0|0|1",
@@ -114,7 +141,7 @@ Skin.themes = {
     },
 }
 
-Skin.activeName = "Modern Dark"
+Skin.activeName = "Blizzard"
 
 -- Colors of the parts every window shares. A theme overrides the ones it
 -- needs in its own `tokens`; the rest come from here (the dark look).
@@ -145,11 +172,22 @@ local function parseColor(s)
 end
 
 function Skin:GetActive()
-    return self.themes[self.activeName] or self.themes["Modern Dark"]
+    return self.themes[self.activeName] or self.themes["Blizzard"]
+end
+
+-- Whether this client has the theme's NineSlice frame (Nx.Window draws it).
+function Skin:HasNineSlice()
+    local layout = self:GetActive().nineSlice
+    return layout and NineSliceUtil and NineSliceUtil.ApplyLayoutByName
+        and NineSliceLayouts and NineSliceLayouts[layout] and true or false
 end
 
 function Skin:GetBackdrop()
-    return self:GetActive().backdrop
+    local t = self:GetActive()
+    if t.nineSlice and t.fallbackBackdrop and not self:HasNineSlice() then
+        return t.fallbackBackdrop
+    end
+    return t.backdrop
 end
 
 -- The color the player picked in the options, saved in the profile. Picking a
@@ -212,7 +250,8 @@ local OLD_BACKGROUNDS = {
 }
 
 function Skin:Set(name, init)
-    if not self.themes[name] then name = "Modern Dark" end
+    -- A profile that never picked a theme gets the game's own look.
+    if not self.themes[name] then name = "Blizzard" end
     self.activeName = name
     local skin = _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.Skin
     if skin then

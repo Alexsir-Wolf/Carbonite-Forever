@@ -3125,11 +3125,8 @@ function Nx.Opts:Init()
         "Left", "Center", "Right",
         "BottomLeft", "Bottom", "BottomRight",
     }
-    self.Skins = {
-        "Modern Dark","Modern Light","Glass","Class Color","Faction",
-        "Blackout","Blackout Blues","Dialog Blue",
-        "Dialog Gold","Simple Blue","Stone","Tool Blue",
-    }
+    -- The theme list comes from the themes themselves (Carbonite/UI/Skin.lua).
+    self.Skins = Carbonite.UI.Skin:ListThemes()
     self.ChoicesCorner = { "TopLeft", "TopRight", "BottomLeft", "BottomRight", }
 
     self.ChoicesQArea = {
