@@ -143,7 +143,7 @@ function Nx.Warehouse:GetOptionsConfig()
                         WareFontSize = {
                             order = 7,
                             type = "range",
-                            name = L["Warehouse Font Size"],
+                            name = Nx.Opts.Unit(L["Warehouse Font Size"], "px"),
                             desc = L["Sets the size of the warehouse font"],
                             min = 6,
                             max = 14,
@@ -160,7 +160,7 @@ function Nx.Warehouse:GetOptionsConfig()
                         WareFontSpacing = {
                             order = 8,
                             type = "range",
-                            name = L["Warehouse Font Spacing"],
+                            name = Nx.Opts.Unit(L["Warehouse Font Spacing"], "px"),
                             desc = L["Sets the spacing of the warehouse font"],
                             min = -10,
                             max = 20,

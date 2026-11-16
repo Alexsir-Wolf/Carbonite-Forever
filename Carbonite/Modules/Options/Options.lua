@@ -51,6 +51,18 @@ local function unavailableGroup(name, reason)
     }
 end
 
+-- AceGUI cuts a slider label at the widget width, so a normal-width
+-- slider shows "Watch Delay Ti...". Double width fits every label.
+local function widenSliders(group)
+    for _, opt in pairs(group.args) do
+        if opt.type == "range" and (opt.width == nil or opt.width == "normal") then
+            opt.width = "double"
+        elseif opt.type == "group" then
+            widenSliders(opt)
+        end
+    end
+end
+
 -- Root group: built lazily each time AceConfig asks for the table so
 -- providers registered after OnEnable (e.g. by plugins loaded later)
 -- still appear. The legacy NxOptions section provides a "Main" tab
@@ -97,6 +109,7 @@ local function buildRootGroup()
                 end)
             end
         end
+        widenSliders(table_)
         args[id] = table_
         args[id].order = entry.order or 100
         args[id].name  = entry.displayName or id
