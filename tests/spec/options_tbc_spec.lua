@@ -1,0 +1,10 @@
+-- TBC herb and ore options in Carbonite/Modules/Options/OptionsEngine.lua (#22)
+
+describe("opções de ervas e minérios de TBC", function()
+    it("ficam ocultas pelo TBCMaps, que é falso no Forever", function()
+        local src = loader.read("Carbonite/Modules/Options/OptionsEngine.lua")
+        expect(src:find("return Nx.isClassicEra end", 1, true)).toBeNil()
+        local _, count = src:gsub("hidden = function%(%) return not Nx%.TBCMaps end", "")
+        expect(count).toBe(20)
+    end)
+end)
