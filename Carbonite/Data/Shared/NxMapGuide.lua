@@ -1679,7 +1679,10 @@ function Nx.Map.Guide:UpdateMapIcons()
                                     end
                                     s = format ("%s\n|cffbfbfbf%d%s %s", s, lvl, col, qname)
                                     if quest.CNum then
-                                        s = s .. format (" (Part %d)", quest.CNum)
+                                        s = s .. format (L[" (Part %d)"], quest.CNum)
+                                    end
+                                    if Quest.XPText then
+                                        s = s .. Quest:XPText (qId)
                                     end
                                     if daily then
                                         s = s .. " (" .. (Quest.QuestFreqLabels[daily] or "Daily")
