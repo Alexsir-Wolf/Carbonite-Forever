@@ -17,6 +17,7 @@
 local Carbonite = _G.Carbonite
 local Pin = Carbonite.Modules.Map.Pin
 local Layer = Carbonite.Modules.Map.Layer
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 
 local Renderer = {}
 Carbonite.Modules.Map.Renderer = Renderer
@@ -610,7 +611,7 @@ local function ensureHoverTicker()
             local isHandy   = layerName == "!HandyNotesPath"
             local sourceTag = isQuestie and "|cff80ff80Questie|r"
                 or isHandy and "|cff60c0ffHandyNotes|r"
-                or "Patrol"
+                or L["Patrol"]
 
             -- Both HandyNotes and Questie integrations pre-scrape /
             -- build the source addon's own tooltip into pin.tip:
@@ -641,10 +642,10 @@ local function ensureHoverTicker()
                 if name then
                     tt:AddDoubleLine(name, sourceTag, 1, 1, 1, 0.7, 0.7, 0.7)
                 else
-                    tt:AddLine(sourceTag .. " patrol")
+                    tt:AddLine(L["%s patrol"]:format(sourceTag))
                 end
                 if bestPin.npcId then
-                    tt:AddLine("NPC #" .. tostring(bestPin.npcId), 0.6, 0.6, 0.6)
+                    tt:AddLine(L["NPC #%s"]:format(tostring(bestPin.npcId)), 0.6, 0.6, 0.6)
                 end
             end
             tt:Show()

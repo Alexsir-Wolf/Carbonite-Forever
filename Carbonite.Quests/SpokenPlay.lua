@@ -21,6 +21,7 @@
 
 local Nx = _G.Nx
 if not Nx or not Nx.List or not Nx.Quest then return end
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite.Quest", true)
 
 local SP = {}
 Nx.Quest.SpokenPlay = SP
@@ -87,7 +88,7 @@ local function Fail(err)
     if failed then return end
     failed = true
     HideFrom(1)
-    Nx.prt("Spoken Play button turned off for this session: %s", tostring(err))
+    Nx.prt(L["Spoken Play button turned off for this session: %s"], tostring(err))
     local watch = Nx.Quest.Watch
     local list = watch and watch.List
     if list and Narrow(list) then Relayout(list) end

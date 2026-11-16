@@ -452,7 +452,7 @@ function CarboniteWarehouse:EventHandler(event, arg1, arg2, arg3)
     elseif event == "AUCTION_HOUSE_CLOSED" then
         Nx.Warehouse.PendingBuyouts = nil
     else
-        Nx.prt("ERROR: Event " .. event .. " triggered without function.")
+        Nx.prtD("ERROR: Event " .. event .. " triggered without function.")
     end
 end
 
@@ -470,8 +470,8 @@ end
 function Nx.Warehouse:OnTime_played_msg(event, arg1, arg2)
     Nx.Warehouse.TimePlayed = arg1
     if Nx.RequestTime == false then
-        Nx.prt("Total Time Played: " .. Nx.Util_SecondsToDays(arg1))
-        Nx.prt("Time played this level: " .. Nx.Util_SecondsToDays(arg2))
+        Nx.prt(L["Total Time Played: %s"], Nx.Util_SecondsToDays(arg1))
+        Nx.prt(L["Time played this level: %s"], Nx.Util_SecondsToDays(arg2))
     end
     Nx.RequestTime = false
     local ch = Nx.Warehouse.CurCharacter

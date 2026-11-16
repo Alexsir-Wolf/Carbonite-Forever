@@ -3793,7 +3793,7 @@ function Nx.Window:OnEvent (event, ...)
     local win = self.NxWin
 --    local win = self
 
-    Nx.prt ("Win Event %s %s", win.Name, event)
+    Nx.prtD ("Win Event %s %s", win.Name, event)
 
     if win.Events and win.Events[event] then
         securecall(win.Events[event], win.User, event, ...)
@@ -8107,15 +8107,15 @@ function Nx.ToolBar:Init()
 --    self.MenuIDn = menu:AddItem (0, "Move Down", self.Menu_OnDn, self)
 --    self.MenuIRemove = menu:AddItem (0, "Remove", self.Menu_OnRemove, self)
 
-    self.MenuISize = menu:AddItem (0, "Size", self.Menu_OnSize, self)
+    self.MenuISize = menu:AddItem (0, L["Size"], self.Menu_OnSize, self)
     self.MenuISize:SetSlider (8, 8, 32)
-    self.MenuISpace = menu:AddItem (0, "Spacing", self.Menu_OnSpace, self)
+    self.MenuISpace = menu:AddItem (0, L["Spacing"], self.Menu_OnSpace, self)
     self.MenuISpace:SetSlider (0, 0, 15)
-    self.MenuIAlignR = menu:AddItem (0, "Align Right", self.Menu_OnAlignR, self)
+    self.MenuIAlignR = menu:AddItem (0, L["Align Right"], self.Menu_OnAlignR, self)
     self.MenuIAlignR:SetChecked (true)
-    self.MenuIAlignB = menu:AddItem (0, "Align Bottom", self.Menu_OnAlignB, self)
+    self.MenuIAlignB = menu:AddItem (0, L["Align Bottom"], self.Menu_OnAlignB, self)
     self.MenuIAlignB:SetChecked (true)
-    self.MenuIVert = menu:AddItem (0, "Vertical", self.Menu_OnVertical, self)
+    self.MenuIVert = menu:AddItem (0, L["Vertical"], self.Menu_OnVertical, self)
     self.MenuIVert:SetChecked (true)
 end
 

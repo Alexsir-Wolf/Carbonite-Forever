@@ -787,7 +787,7 @@ function Nx.Quest:ShowWowheadLink (qId, qIndex)
     local url = self:WowheadURL (qId)
     if not StaticPopupDialogs["NxWowheadLink"] then
         StaticPopupDialogs["NxWowheadLink"] = {
-            text = "Wowhead (Ctrl+C):",
+            text = L["Wowhead (Ctrl+C):"],
             button1 = OKAY or "Okay",
             hasEditBox = 1,
             editBoxWidth = 280,

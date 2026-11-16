@@ -1102,7 +1102,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                     f.Name = format ("%s%s", color, name)
                     f.Column2 = infoStr
                     if not Map.MapWorldInfo[id] then
-                    Nx.prt("err: " .. id)
+                    Nx.prtD("err: " .. id)
                     end
                     f.T = "#Map" .. id
                     f.Tx = parent.Tx
@@ -1129,7 +1129,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                     local cont = Nx.Map:IdToContZone (mapId)
                     if tonumber(cont) == tonumber(fcont) then
                         if nxid == 16 then
-                            Nx.prt ("%s [%s] %s", longname, nxid, v)
+                            Nx.prtD ("%s [%s] %s", longname, nxid, v)
                         end
                         local f = {}
                         local numPlyrStr = numPlyr
@@ -1152,7 +1152,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                         if (numPlyrStr) then
                             plStr = format ("|cffff4040%s", numPlyrStr)
                         else
-                            Nx.prt("err: " .. nxid)
+                            Nx.prtD("err: " .. nxid)
                         end
                         f.Name = format ("%s", longname)
                         f.Column3 = plStr
@@ -1317,7 +1317,7 @@ function Nx.Map.Guide:AddShowFolders (folder, remove, filter)
             end
         end
     else
-    Nx.prt("error")
+    Nx.prtD("error")
     end
 end
 function Nx.Map.Guide:IsShowFolders (folder)
@@ -1779,7 +1779,7 @@ function Nx.Map.Guide:UpdateMapGeneralIcons (cont, showType, hideFac, tx, name, 
     local Map = Nx.Map
     local map = self.Map
     if not Nx.GuideData[showType] then
-        Nx.prt ("No guide data for %s", showType)
+        Nx.prt (L["No guide data for %s"], showType)
         return
     end
 
@@ -1789,7 +1789,7 @@ function Nx.Map.Guide:UpdateMapGeneralIcons (cont, showType, hideFac, tx, name, 
             for a,b in pairs(Nx.NPCData) do
                 local npcStr = b
                 if not npcStr then
-                    Nx.prt ("%s", name)
+                    Nx.prtD ("%s", name)
                 end
                 local fac,name,locName,zone,x,y,level = Nx.Split("|",npcStr)
                 fac,zone,x,y = tonumber(fac),tonumber(zone),tonumber(x),tonumber(y)
@@ -1799,7 +1799,7 @@ function Nx.Map.Guide:UpdateMapGeneralIcons (cont, showType, hideFac, tx, name, 
                     if not mapId then
                         local name, minLvl, maxLvl, faction, cont = Nx.Split ("|", Nx.Zones[zone])
                         if tonumber (faction) ~= 3 then
-                            Nx.prt ("Guide icon err %s %d", locName, zone)
+                            Nx.prtD ("Guide icon err %s %d", locName, zone)
                         end
                     elseif not showMapId or mapId == showMapId then
                         local mapName = map:GetMapNameByID(mapId) or "Unknown"
@@ -1839,7 +1839,7 @@ function Nx.Map.Guide:UpdateMapGeneralIcons (cont, showType, hideFac, tx, name, 
                                     icon = map:AddIconPt (iconType, wx, wy, level, nil, tx)
                                     --end
                                     if not map:GetMapNameByID(mapId) then
-                                        Nx.prt("Guide Icon Err mapID: " .. mapId)
+                                        Nx.prtD("Guide Icon Err mapID: " .. mapId)
                                     else
                                         local str = format ("%s\n%s %.1f %.1f", name, map:GetMapNameByID(mapId), x, y)
                                         map:SetIconTip (icon, str)
@@ -2422,7 +2422,7 @@ function Nx.Map.Guide:UpdateVisitedVendors()
                 if not name then
                     if Nx.Item:Load (id) then
                         tremove (links, n)
-                        Nx.prt ("Removed old vendor item %s", id)
+                        Nx.prtD ("Removed old vendor item %s", id)
                         n = n - 1
                     end
                 end
@@ -3458,7 +3458,7 @@ function Nx.Map.Guide:ItemsAddItem (folder, id)
     local root = CarboniteItems
     local info, stats, statsExtra, src = Nx.Split ("\t", root["Items"][id])
     if not info then
-        Nx.prt ("bad %s", id)
+        Nx.prtD ("bad %s", id)
     end
     local flags = strbyte (info, 2) - 35
     local unique = bit.band (flags, 4) > 0
@@ -3662,14 +3662,14 @@ function Nx.Map.Guide:ItemsLoad()
         return
     end
     if not LoadAddOn ("CarboniteItems") then
-        Nx.prt ("CarboniteItems addon could not be loaded!")
+        Nx.prt (L["CarboniteItems addon could not be loaded!"])
         return
     end
     if not CarboniteItems then
-        Nx.prt ("CarboniteItems addon error!")
+        Nx.prt (L["CarboniteItems addon error!"])
         return
     end
-    Nx.prt ("CarboniteItems loaded")
+    Nx.prt (L["CarboniteItems loaded"])
 end
 function Nx.Map.Guide:ItemsFree()
     local folder = self:FindFolder ("Items")
