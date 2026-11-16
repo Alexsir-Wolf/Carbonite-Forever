@@ -27,6 +27,7 @@
 	<Include file="RogueTrainer.lua" />
 	<Include file="ShamanTrainer.lua" />
 	<Include file="SkinningTrainer.lua" />
+	<Include file="SpiritHealer.lua" />
 	<Include file="TailoringTrainer.lua" />
 	<Include file="WarlockTrainer.lua" />
 	<Include file="WarriorTrainer.lua" />
