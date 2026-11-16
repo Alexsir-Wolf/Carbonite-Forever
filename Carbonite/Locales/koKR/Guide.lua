@@ -70,8 +70,6 @@ L["Mana Loom"] = "마나 베틀"
 L["Moonwell"] = "달샘"
 L["Name"] = "이름"
 L["Info"] = "정보"
-L["Info2"] = "정보2"
-L["Info3"] = "정보3"
 L["Back "] = "뒤로 "
 
 -- Menus

@@ -67,8 +67,6 @@ L["Mana Loom"] = true
 L["Moonwell"] = true
 L["Name"] = true
 L["Info"] = true
-L["Info2"] = true
-L["Info3"] = true
 L["Back "] = true
 
 -- Menus
@@ -104,3 +102,11 @@ L["Khaz Algar"] = true
 L["Quel'Talas"] = true
 L["Demon Hunter Trainer"] = true
 L["Evoker Trainer"] = true
+L["Players"] = true
+L["Repair"] = true
+L["Price"] = true
+L["Type"] = true
+L["Source"] = true
+L["Group"] = true
+L["Found"] = true
+L["%d players"] = true
