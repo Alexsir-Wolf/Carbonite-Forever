@@ -28,6 +28,7 @@ include_files = {
     "Carbonite.Quests/SpokenPlay.lua",
     "Carbonite.Quests/Nameplates.lua",
     "Carbonite.Notes/Integrations/TomTomArrow.lua",
+    "Carbonite/Modules/Map/BlizzardPin.lua",
     "Carbonite/Modules/Map/UnmappedInstance.lua",
     "Carbonite/Modules/Map/Battleground.lua",
     "Carbonite/Modules/Map/ViewState.lua",
