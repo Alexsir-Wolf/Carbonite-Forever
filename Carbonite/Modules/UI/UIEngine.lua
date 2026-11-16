@@ -6277,10 +6277,7 @@ function Nx.List:Resize (width, height)
                     offX = self.Offsets[line] or 0
                 end
 
-                -- A list sized to its text (the watch list) grows by the width a row-end
-                -- button reserves, instead of the button covering the text.
-                local endPad = k == #self.Columns and self.RowRightPad and self.RowRightPad (self, line) or 0
-                maxCW = max (maxCW, self.Strs[strNum]:GetWidth() + offX + endPad)
+                maxCW = max (maxCW, self.Strs[strNum]:GetWidth() + offX)
 --                Nx.prt ("maxCW %s %f", line, maxCW)
                 strNum = strNum + 1
             end
@@ -6397,12 +6394,7 @@ function Nx.List:CreateStrings()
             fstr:SetPoint ("TOPLEFT", padW + x + offX, -(n - 1) * lineH - hdrH - padH - offY)
 
             if not self.ShowAll then
-                local line = self.Top + n - 1
-                local pad = lastCol and rightPads and rightPads[line] or 0
-                -- A module drawing a button at the row's end (ShowOnMap) reserves its width.
-                if lastCol and self.RowRightPad then
-                    pad = pad + self.RowRightPad (self, line)
-                end
+                local pad = lastCol and rightPads and rightPads[self.Top + n - 1] or 0
                 fstr:SetWidth (colW - offX - pad)
             end
 

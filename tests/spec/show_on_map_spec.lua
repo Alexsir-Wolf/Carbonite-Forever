@@ -1,80 +1,36 @@
--- Carbonite.Quests/ShowOnMap.lua: "Show on map" button on each quest of the watch list (#72)
+-- Carbonite.Quests/ShowOnMap.lua: "Show on map" button on the journal's quest details (#72)
 
 local function load(cur, quest)
     local env = wow.lenientEnv()
     env.Nx = wow.namespace({
-        List = {},
         Quests = { [100] = quest },
         Quest = wow.namespace({
             FindCur = function() return 1, cur end,
             UnpackSE = function(_, s) return (s:match("^([^|]*)")) end,
         }),
     })
-    loader.run(env, "Carbonite.Quests/SpokenPlay.lua")
     loader.run(env, "Carbonite.Quests/ShowOnMap.lua")
-    return env.Nx.Quest
+    return env.Nx.Quest.ShowOnMap
 end
 
 describe("Mostrar no mapa", function()
     it("quest em andamento mostra os objetivos", function()
-        local Quest = load({ Complete = false }, {})
-        expect(Quest.ShowOnMap:Target(100)).toBe("objectives")
+        expect(load({ Complete = false }, {}):Target(100)).toBe("objectives")
     end)
 
     it("quest completa mostra para quem entregar", function()
-        local Quest = load({ Complete = true }, { End = "Maggran Ata Terra|1412|32|30|40" })
-        local kind, npc = Quest.ShowOnMap:Target(100)
+        local kind, npc = load({ Complete = true }, { End = "Maggran Ata Terra|1412|32|30|40" }):Target(100)
         expect(kind).toBe("turnin")
         expect(npc).toBe("Maggran Ata Terra")
     end)
 
     it("sem nome conhecido de quem recebe, não inventa um", function()
-        local Quest = load({ Complete = true }, { End = "3441|1412|32|30|40" })
-        local _, npc = Quest.ShowOnMap:Target(100)
+        local _, npc = load({ Complete = true }, { End = "3441|1412|32|30|40" }):Target(100)
         expect(npc).toBeNil()
     end)
 
-    it("só as linhas de título de quest ganham o botão", function()
-        local Quest = load({}, {})
-        local title = Quest.SpokenPlay.TitleQuestID
-        expect(title(100 * 0x10000 + 3)).toBe(100)
-        expect(title(100 * 0x10000 + 2 * 0x100 + 3)).toBeNil()
-        expect(title(0)).toBeNil()
-    end)
-
-    it("entra em todos os TOCs depois do SpokenPlay", function()
-        for _, flavor in ipairs({ "-Camelot", "-Classic", "-Tbc", "-Wrath", "-Cata", "-Mists", "" }) do
-            local toc = loader.read("Carbonite.Quests/Carbonite.Quests" .. flavor .. ".toc")
-            expect(toc:find("SpokenPlay.lua\r?\nShowOnMap.lua") ~= nil).toBe(true)
-        end
-    end)
-end)
-
-describe("Mostrar no mapa: espaço do botão", function()
-    it("a linha de título reserva o espaço do alfinete e as outras não", function()
-        local Quest = load({}, {})
-        local list = { Data = { 100 * 0x10000 + 1, 100 * 0x10000 + 0x100 + 1 } }
-        expect(Quest.ShowOnMap.RowRightPad(list, 1) > 0).toBe(true)
-        expect(Quest.ShowOnMap.RowRightPad(list, 2)).toBe(0)
-    end)
-
-    it("a lista corta o texto antes do botão", function()
-        local src = loader.read("Carbonite/Modules/UI/UIEngine.lua")
-        expect(src:find("pad = pad + self.RowRightPad (self, line)", 1, true) ~= nil).toBe(true)
-    end)
-end)
-
-describe("Mostrar no mapa: lista do tamanho do texto", function()
-    it("o monitor cresce pela largura do alfinete, em vez de o alfinete cobrir o texto", function()
-        local src = loader.read("Carbonite/Modules/UI/UIEngine.lua")
-        expect(src:find("self.Strs[strNum]:GetWidth() + offX + endPad", 1, true) ~= nil).toBe(true)
-    end)
-end)
-
-describe("Mostrar no mapa no diário", function()
-    it("o botão mostra a quest selecionada e some sem quest", function()
-        local Quest = load({}, {})
-        local SM = Quest.ShowOnMap
+    it("o botão do diário mostra a quest selecionada e some sem quest", function()
+        local SM = load({}, {})
         local shown
         SM.DetailsButton = { SetShown = function(_, v) shown = v end }
         SM:SetDetailsQuest(100, 3)
@@ -89,5 +45,16 @@ describe("Mostrar no mapa no diário", function()
         local src = loader.read("Carbonite.Quests/QuestWindow.lua")
         expect(src:find("Nx.Quest.ShowOnMap:AttachToDetails (f)", 1, true) ~= nil).toBe(true)
         expect(src:find("Quest.ShowOnMap:SetDetailsQuest (qId, qIndex)", 1, true) ~= nil).toBe(true)
+    end)
+
+    it("o monitor de missões não tem botão próprio", function()
+        expect(loader.read("Carbonite.Quests/ShowOnMap.lua"):find("hooksecurefunc", 1, true)).toBeNil()
+    end)
+
+    it("entra em todos os TOCs depois do SpokenPlay", function()
+        for _, flavor in ipairs({ "-Camelot", "-Classic", "-Tbc", "-Wrath", "-Cata", "-Mists", "" }) do
+            local toc = loader.read("Carbonite.Quests/Carbonite.Quests" .. flavor .. ".toc")
+            expect(toc:find("SpokenPlay.lua\r?\nShowOnMap.lua") ~= nil).toBe(true)
+        end
     end)
 end)
