@@ -2536,7 +2536,7 @@ function Nx.Quest.List:Update()
                     end
 
                     list:ItemSet (2, nameStr)
-                    list:ItemSet (4, tag .. Quest:XPText (qId))
+                    list:ItemSet (4, (tag or "") .. Quest:XPText (qId))
 
                     if self.QOpts.NXShowObj then
 
