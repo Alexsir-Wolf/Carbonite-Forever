@@ -22,7 +22,8 @@ local SKILL_LINE = { mining = 186, herbalism = 182, fishing = 356 }
 local SKILL_COLORS = { "ff3030", "ff8040", "ffff20", "40c040", "a0a0a0" }
 
 -- Hex color for a node with GatherLite's `levels` at the player's `rank`, or
--- nil to leave the icon as it is (no levels, or the player lacks the skill).
+-- nil (no levels, or the player lacks the skill). It colors the node's name
+-- in the tooltip; the icon keeps its own colors.
 function Nx.Notes:GatherSkillColor(levels, rank)
     if type(levels) ~= "table" or type(levels[1]) ~= "number"
             or type(rank) ~= "number" or rank <= 0 then
@@ -86,8 +87,10 @@ local function translate(GL, key)
     return ok and s or key
 end
 
-local function buildTip(GL, node, object)
+-- `color`: hex of the skill-up chance (GatherSkillColor) for the node's name, or nil.
+local function buildTip(GL, node, object, color)
     local name = translate(GL, "node." .. object.name)
+    if color then name = "|cff" .. color .. name .. "|r" end
     local lines = { "|T" .. object.icon .. ":16:16|t " .. name }
     local label = KIND_LABEL[node.type]
     if label then
@@ -152,10 +155,10 @@ function Nx.Notes:GatherLite(mapId)
                     if object then
                         local wx, wy = Nx.Map:GetWorldPos(mapId, node.posX * 100, node.posY * 100)
                         local color = self:GatherSkillColor(object.levels, ranks[kind])
-                        local pin = wx and wy and map:AddIconPt("!GLT", wx, wy, nil, color, object.icon)
+                        local pin = wx and wy and map:AddIconPt("!GLT", wx, wy, nil, nil, object.icon)
                         if pin then
                             pin.mapID, pin.MapId = mapId, mapId
-                            map:SetIconTip(pin, buildTip(GL, node, object))
+                            map:SetIconTip(pin, buildTip(GL, node, object, color))
                             count = count + 1
                         end
                     end
