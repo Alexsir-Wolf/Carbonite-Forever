@@ -498,12 +498,11 @@ function Nx.Quest.List:Open()
     f:SetFrameStrata ("MEDIUM")
     local t = f:CreateTexture()
     if Nx.qdb.profile.Quest.ScrollIMG then
-        t:SetTexture ("Interface\\QuestFrame\\QuestBG", true, true)
+        Nx.Quest.SetParchment (t)
     else
         t:SetColorTexture(Nx.Util_str2rgba(Nx.qdb.profile.Quest.DetailBC))
     end
     t:SetAllPoints (f)
-    t:SetTexCoord(0, .585, 0.02, .655)
     f.texture = t
 
     f:Show()
@@ -3187,6 +3186,26 @@ end
 -------------------------------------------------------------------------------
 -- Details
 -------------------------------------------------------------------------------
+
+-- The parchment of the game's own quest frames, in the client's art. The old
+-- QuestBG is a 512 px 1.x texture: stretched over the details panel it blurs.
+local PARCHMENT_ATLASES = { "QuestBG-Parchment", "QuestDetailsBackgrounds" }
+
+---
+-- Paint a texture with the quest parchment: the first atlas this client has,
+-- else the old QuestBG.
+--
+function Nx.Quest.SetParchment (t)
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    for _, name in ipairs (PARCHMENT_ATLASES) do
+        if info and info (name) then
+            t:SetAtlas (name)
+            return name
+        end
+    end
+    t:SetTexture ("Interface\\QuestFrame\\QuestBG", true, true)
+    t:SetTexCoord (0, .585, 0.02, .655)
+end
 
 function Nx.Quest:UpdateQuestDetails()
 
