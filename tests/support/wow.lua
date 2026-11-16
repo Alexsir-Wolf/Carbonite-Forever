@@ -76,4 +76,36 @@ function W.env(overrides)
     return env
 end
 
+-- A value that accepts anything: indexing, calling and arithmetic-free use return itself.
+-- For files whose load-time code touches many client APIs a test does not care about.
+function W.anything()
+    local any = {}
+    setmetatable(any, {
+        __index = function() return any end,
+        __call = function() return any end,
+    })
+    return any
+end
+
+-- Like W.env, but globals the test did not provide resolve to W.anything().
+function W.lenientEnv(overrides)
+    local env = W.env(overrides)
+    local any = W.anything()
+    return setmetatable(env, { __index = function() return any end })
+end
+
+-- A namespace table such as Nx for files that define methods on many sub-tables: a missing
+-- field becomes a new namespace (kept), so `function Nx.Font:Init()` and `Nx.Font.x` work.
+function W.namespace(fields)
+    local ns = fields or {}
+    return setmetatable(ns, {
+        __index = function(t, k)
+            local sub = W.namespace()
+            rawset(t, k, sub)
+            return sub
+        end,
+        __call = function() return W.anything() end,
+    })
+end
+
 return W
