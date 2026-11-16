@@ -204,6 +204,17 @@ function Nx.Notes:GetOptionsConfig()
                     end,
                     disabled = function() return not _G.ZGV end,
                 },
+                tomtomarrow = {
+                    order = 12.5, type = "toggle", width = "full",
+                    name = L["Route TomTom arrow through Carbonite"],
+                    desc = L["With TomTom installed, Carbonite's HUD travel arrow points at TomTom's destination and TomTom's arrow is hidden"],
+                    get = function() return Nx.fdb.profile.Notes.TomTomArrow end,
+                    set = function()
+                        Nx.fdb.profile.Notes.TomTomArrow = not Nx.fdb.profile.Notes.TomTomArrow
+                        if Nx.Notes.TomTomArrowSync then Nx.Notes:TomTomArrowSync() end
+                    end,
+                    disabled = function() return not Nx.RealTom end,
+                },
                 gatherlite = {
                     order = 13, type = "toggle", width = "full",
                     name = L["Display GatherLite nodes On Map"],

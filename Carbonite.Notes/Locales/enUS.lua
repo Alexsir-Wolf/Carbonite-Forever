@@ -61,6 +61,8 @@ L["If you have GatherLite installed, shows its gathering nodes on the Carbonite 
 L["GatherLite Icon Size"] = true
 L["Route ZygorGuides arrow through Carbonite"] = true
 L["Replaces the ZygorGuides navigation arrow with Carbonite's own HUD travel arrow, pointing at the current step"] = true
+L["Route TomTom arrow through Carbonite"] = true
+L["With TomTom installed, Carbonite's HUD travel arrow points at TomTom's destination and TomTom's arrow is hidden"] = true
 
 -- Keybinds
 L["Carbonite Notes"] = "Carbonite Notes"
