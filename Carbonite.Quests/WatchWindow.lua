@@ -1314,28 +1314,14 @@ function Nx.Quest.Watch:OnUpdateTimer (item)
     return 1.5
 end
 
--------------------------------------------------------------------------------
--- Update list security stub
--------------------------------------------------------------------------------
-
-local qw_elapsed = 0
-local qw_lasttime
-local qw_ttl = 9999
-
-local function checkWatchTimer()
-    if qw_lasttime then
-        local curtime = debugprofilestop()
-        qw_elapsed = curtime - qw_lasttime
-        qw_lasttime = curtime
-    else
-        qw_lasttime = debugprofilestop()
-    end
-    qw_ttl = qw_ttl + qw_elapsed
-    if qw_ttl < Nx.qdb.profile.QuestWatch.RefreshTimer then
-        return false
-    end
-    qw_ttl = 0
-    return true
+---
+-- Interval of the periodic watch list refresh, in seconds.
+-- "Watch Delay Time" stores milliseconds; profiles saved with the old
+-- 250-1000 range are raised to the 1 s floor the list always used.
+--
+function Nx.Quest.Watch:RefreshInterval()
+    local ms = Nx.qdb.profile.QuestWatch.RefreshTimer or 1000
+    return math.max (ms, 1000) / 1000
 end
 
 function Nx.Quest.Watch:Update()
@@ -2030,16 +2016,10 @@ function Nx.Quest.Watch:UpdateList()
 
     local oldw, oldh = list:GetSize()
 
-    local clearlist = checkWatchTimer()
-    if self.ForceListRefresh then
-        clearlist = true
-        self.ForceListRefresh = nil
-    end
+    self.ForceListRefresh = nil
 
-    if clearlist then
-        list:SetBGColor (Nx.Quest.Cols["BGColorR"], Nx.Quest.Cols["BGColorG"], Nx.Quest.Cols["BGColorB"], Nx.Quest.Cols["BGColorA"])
-        list:Empty()
-    end
+    list:SetBGColor (Nx.Quest.Cols["BGColorR"], Nx.Quest.Cols["BGColorG"], Nx.Quest.Cols["BGColorB"], Nx.Quest.Cols["BGColorA"])
+    list:Empty()
     local watched = wipe (self.Watched)
     local curq = Quest.CurQ
 
@@ -2162,7 +2142,6 @@ function Nx.Quest.Watch:UpdateList()
                     curnum = curnum + 1
                 end
             else
-                if clearlist then
                 if Nx.qdb.profile.QuestWatch.ChalTrack then
                   local cTimer = {} --{GetWorldElapsedTimers()}
                     for a,id in ipairs(cTimer) do
@@ -2736,15 +2715,12 @@ function Nx.Quest.Watch:UpdateList()
                     end
                 end
             end
-            end
         end
     end
     if not fixedSize then
         list:FullUpdate()
     else
-        if clearlist then
-            list:Update()
-        end
+        list:Update()
     end
 
     -- Grow upwards
