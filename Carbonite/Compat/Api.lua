@@ -496,6 +496,49 @@ function Unit:IsPlayer(unit)
 end
 
 -------------------------------------------------------------------------------
+-- Skill API
+-------------------------------------------------------------------------------
+
+Api.Skill = Api.Skill or {}
+local Skill = Api.Skill
+
+-- Rank of a skill line (riding, professions), 0 when the player lacks it.
+-- Forever replaced GetNumSkillLines / GetSkillLineInfo with C_SkillInfo, whose
+-- entries are tables ({ name, rank, modifier, isHeader }). Looked up by id when
+-- the client can, which also works with the header collapsed; else by name.
+function Skill:GetRank(skillLineID, name)
+    local C_SkillInfo = _G.C_SkillInfo
+    if C_SkillInfo then
+        if skillLineID and C_SkillInfo.GetSkillLineInfoByID then
+            local info = C_SkillInfo.GetSkillLineInfoByID(skillLineID)
+            if info and info.rank then
+                return info.rank
+            end
+        end
+        if name and C_SkillInfo.GetNumSkillLines and C_SkillInfo.GetSkillLineInfo then
+            for index = 1, C_SkillInfo.GetNumSkillLines() do
+                local info = C_SkillInfo.GetSkillLineInfo(index)
+                if info and not info.isHeader and info.name == name then
+                    return info.rank or 0
+                end
+            end
+        end
+        return 0
+    end
+
+    local getNum, getInfo = _G.GetNumSkillLines, _G.GetSkillLineInfo
+    if name and getNum and getInfo then
+        for index = 1, getNum() do
+            local lineName, isHeader, _, rank = getInfo(index)
+            if lineName == name and not isHeader then
+                return rank or 0
+            end
+        end
+    end
+    return 0
+end
+
+-------------------------------------------------------------------------------
 -- Quest log API
 -------------------------------------------------------------------------------
 
