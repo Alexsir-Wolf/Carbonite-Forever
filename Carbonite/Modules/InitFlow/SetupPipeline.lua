@@ -27,7 +27,7 @@ function Nx:SetupEverything()
 
     Nx:prtSetChatFrame()
 
-    if Nx.db.profile.General.LoginHideVer then
+    if Nx.db.profile.General.LoginMessage then
         Nx.prt (L["Carbonite"].." |cffffffff"..Nx.VERMAJOR.."."..(Nx.VERMINOR*10).." Build "..Nx.BUILD.." ".. L["Loading"])
     end
 
@@ -55,7 +55,7 @@ function Nx:SetupEverything()
     Nx.UEvents:Init()
     Nx.UEvents.List:Open()
 
-    if Nx.db.profile.General.LoginHideVer then
+    if Nx.db.profile.General.LoginMessage then
         Nx.prt (L["Loading Done"])
     end
     if Nx.Font.AddonLoaded then

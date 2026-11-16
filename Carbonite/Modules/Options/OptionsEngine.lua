@@ -214,10 +214,10 @@ local function generalOptions()
                     name = L["Show Login Message"],
                     desc = L["When Enabled, displays the Carbonite loading messages in chat."],
                     get = function()
-                        return Nx.db.profile.General.LoginHideVer
+                        return Nx.db.profile.General.LoginMessage
                     end,
                     set = function()
-                        Nx.db.profile.General.LoginHideVer = not Nx.db.profile.General.LoginHideVer
+                        Nx.db.profile.General.LoginMessage = not Nx.db.profile.General.LoginMessage
                     end,
                 },
                 -- Login graphic toggle
@@ -228,10 +228,10 @@ local function generalOptions()
                     name = L["Show Login Graphic"],
                     desc = L["When Enabled, displays the Carbonite graphic during initialization."] .. "\n",
                     get = function()
-                        return Nx.db.profile.General.TitleOff
+                        return Nx.db.profile.General.TitleShow
                     end,
                     set = function()
-                        Nx.db.profile.General.TitleOff = not Nx.db.profile.General.TitleOff
+                        Nx.db.profile.General.TitleShow = not Nx.db.profile.General.TitleShow
                     end,
                 },
                 -- Login sound toggle
