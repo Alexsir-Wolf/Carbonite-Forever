@@ -1181,49 +1181,26 @@ function Nx.Quest:CalcPreviousDone (qId)
 
     local cnt = 0
 
-    for mungeId, q in pairs (Nx.Quests) do
-        if mungeId < 0 then
-            break
-        end
+    -- Keys are real quest ids; negative keys hold patch flags (numbers).
+    for startId, q in pairs (Nx.Quests) do
+        if type (q) == "table" and q.CNum == 1 and startId > 0 then    -- Chain starters only
 
-        if q.CNum == 1 then        -- Only look at chain starters
-
-            local id = (mungeId + 3) / 2 - 7
-            local qc = q
-            -- Guard against cycles in the nextId chain (e.g. A->B->A). Without
-            -- a visited set a looped chain spins forever -> "script ran too
-            -- long" watchdog kill (surfaces in NxSplit/UnpackNext), which
-            -- aborts this timer mid-run and stalls dependent updates. The
-            -- inner walk also needs a qc nil-guard (a dangling nextId would
-            -- otherwise deref nil qc["Quest"]).
-            local seen = {}
+            -- Walk the chain, remembering the quests before qId. The seen set
+            -- stops looped chains (A->B->A); a dangling nextId ends at nil.
+            local before, seen = {}, {}
+            local id, qc = startId, q
             while qc and not seen[id] do
-                seen[id] = true
-
-                if id == qId then        -- Found me in chain? Mark before me complete
-
-                    local id = (mungeId + 3) / 2 - 7
-                    local qc = q
-                    local seen2 = {}
-                    while qc and id ~= qId and not seen2[id] do
-                        seen2[id] = true
-
-                        local qStatus = Nx.Quest:GetQuest (id)
-                        if qStatus ~= "C" then
-
+                if id == qId then
+                    for _, prevId in ipairs (before) do
+                        if Nx.Quest:GetQuest (prevId) ~= "C" then
                             cnt = cnt + 1
-
---                            Nx.prt ("%s %s", id, qId)
-                            Nx.Quest:SetQuest (id, "C", time())
+                            Nx.Quest:SetQuest (prevId, "C", time())
                         end
-
-                        id = self:UnpackNext (qc["Quest"])
-                        qc = Nx.Quests[id]
                     end
-
                     break
                 end
-
+                seen[id] = true
+                before[#before + 1] = id
                 id = self:UnpackNext (qc["Quest"])
                 qc = Nx.Quests[id]
             end
