@@ -174,16 +174,16 @@ function Nx.Quest:PatchQuestFromBlizzard (qId)
     title = (title or "?"):gsub("|", "")
     if title == "" then title = "?" end
 
-    -- Header line (name|faction|level|0|0|0). Synthesize if missing.
+    -- Header line (name|side|level|0|0|0). Synthesize if missing.
     if not quest["Quest"] then
-        local fac = UnitFactionGroup ("player") == "Horde" and 1 or 2
         local level = 0
         local qi = QuestAPI and QuestAPI:GetLogIndexForQuestID (qId) or 0
         if qi > 0 then
             local info = GetLiveLogInfo and GetLiveLogInfo (qi)
             level = info and info.level or 0
         end
-        quest["Quest"] = format ("[[%s|%s|%s|0|0|0]]", title, fac, level)
+        quest["Quest"] = Nx.Quest:SynthHeader (title, level)
+        quest.Synth = true
         touched = true
     end
 
