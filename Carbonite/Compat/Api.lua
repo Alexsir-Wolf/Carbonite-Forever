@@ -472,18 +472,6 @@ function Unit:GetLevel(unit)
     return level
 end
 
-function Unit:GetPosition(unit)
-    if not _G.UnitPosition then
-        return nil
-    end
-    local x, y, z, instanceID = _G.UnitPosition(unit)
-    if not Value:CanAccess(x) or not Value:CanAccess(y)
-            or not Value:CanAccess(z) or not Value:CanAccess(instanceID) then
-        return nil
-    end
-    return x, y, z, instanceID
-end
-
 function Unit:IsPlayer(unit)
     if not _G.UnitIsPlayer then
         return false

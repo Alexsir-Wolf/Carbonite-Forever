@@ -5050,10 +5050,6 @@ function Nx.Button:Update()
             of:Hide()
         end
     end
-
-    if typ.Dim then
-        SetDesaturation (tx, not self.Pressed)
-    end
 end
 
 ---------------------------------------------------------------------------------------
