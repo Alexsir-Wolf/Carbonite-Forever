@@ -32,7 +32,7 @@
 --   QS.ForeverLoc(f, s)  one location string projected with f(uiMapId, x, y)
 --   QS.ConvertLoadedCoords(lib)  project the Era points of records not yet converted
 --   QS.XPAt(questLevel, xp, playerLevel)  XP a quest gives at a player level
---   Nx.Quest:GetXP(qId)  that XP for the player, from QuestieDB's QuestXP table, or nil
+--   Nx.Quest:GetXP(qId)  that XP for the player, from the QuestXP table, or nil
 --   Nx.Quest:XPText(qId) the XP as " 1.650 XP" for lists and tooltips, or ""
 
 local Nx = _G.Nx
@@ -582,11 +582,21 @@ function QS.XPAt(questLevel, xp, playerLevel)
     return RoundXP(xp * share)
 end
 
-function Nx.Quest:GetXP(qId)
+-- The XP table. QuestieDB publishes it through Support, but drops it from there
+-- after Questie's QuestXP module has taken it; that module keeps it in `db`.
+local function XPTable()
     local lib = _G.LibQuestieDB
     local support = type(lib) == "table" and type(lib.Support) == "table" and lib.Support.Get
     local data = support and support("QuestXP")
-    local entry = data and data.db and data.db[qId]
+    if type(data) == "table" and type(data.db) == "table" then return data.db end
+    local loader = rawget(_G, "QuestieLoader")
+    local module = type(loader) == "table" and loader.ImportModule and loader:ImportModule("QuestXP")
+    return type(module) == "table" and type(module.db) == "table" and module.db or nil
+end
+
+function Nx.Quest:GetXP(qId)
+    local db = XPTable()
+    local entry = db and db[qId]
     if type(entry) ~= "table" or not entry[2] then return nil end
     local level = UnitLevel("player")
     local maxLevel = GetMaxPlayerLevel and GetMaxPlayerLevel()
