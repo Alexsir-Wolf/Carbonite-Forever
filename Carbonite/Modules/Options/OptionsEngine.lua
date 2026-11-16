@@ -2745,6 +2745,11 @@ local function commConfig()
             type = "group",
             name = L["Privacy Options"],
             args = {
+                commAbout = {
+                    order = 0,
+                    type = "description",
+                    name = L["Carbonite talks to other Carbonite users through hidden chat channels: it joins a global and a zone channel, and can send your position and level ups to friends, guild and zone. Everything here is off until you turn it on."],
+                },
                 commLTF = {
                     order = 1,
                     type = "toggle",

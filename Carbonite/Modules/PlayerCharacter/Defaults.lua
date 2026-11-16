@@ -311,13 +311,14 @@ Nx.Defaults = {
                 [3] = true,
             },
         },
+        -- Off until the player opts in (privacy): no channels, no position sent.
         Comm = {
-            Global = true,
-            Zone = true,
+            Global = false,
+            Zone = false,
             LvlUpShow = true,
-            SendToFriends = true,
-            SendToGuild = true,
-            SendToZone = true,
+            SendToFriends = false,
+            SendToGuild = false,
+            SendToZone = false,
         },
         Debug = {
           VerDebug = false,
