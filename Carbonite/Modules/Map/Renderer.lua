@@ -508,12 +508,14 @@ end
 -- Best-effort resolution of an NPC display name. QuestieDB names
 -- come from .name; HandyNotes plugins typically populate pin.tip
 -- directly during their OnEnter render.
-local function resolveNpcName(npcId)
+function Renderer.ResolveNpcName(npcId)
     if not npcId then return nil end
     local QuestieDB = _G.QuestieLoader and _G.QuestieLoader:ImportModule("QuestieDB")
-    if QuestieDB and QuestieDB.QueryNPC then
-        local ok, name = pcall(QuestieDB.QueryNPC, npcId, "name")
-        if ok and name then return name end
+    -- QueryNPC is the multi-key query (keys list in, table out); a
+    -- single field comes from QueryNPCSingle.
+    if QuestieDB and QuestieDB.QueryNPCSingle then
+        local ok, name = pcall(QuestieDB.QueryNPCSingle, npcId, "name")
+        if ok and type(name) == "string" then return name end
     end
     return nil
 end
@@ -633,7 +635,7 @@ local function ensureHoverTicker()
             else
                 local name = tip
                 if isQuestie and bestPin.npcId and (not name or name == "") then
-                    local viaDB = resolveNpcName(bestPin.npcId)
+                    local viaDB = Renderer.ResolveNpcName(bestPin.npcId)
                     if viaDB then name = viaDB end
                 end
                 if name then
