@@ -63,21 +63,19 @@ describe("tema", function()
 end)
 
 describe("tema Blizzard", function()
-    it("é o padrão de quem nunca escolheu um tema e usa a moldura do jogo", function()
+    it("é o padrão de quem nunca escolheu um tema", function()
         local Skin = load({ Name = "" })
         Skin:Set("", true)
         expect(Skin.activeName).toBe("Blizzard")
-        expect(Skin:GetActive().nineSlice).toBe("ButtonFrameTemplateNoPortrait")
     end)
 
-    it("sem a moldura no cliente, cai para a borda de diálogo", function()
-        local Skin, env = load({ Name = "Blizzard" })
+    it("usa a borda de diálogo e o fundo de pedra do jogo, sem NineSlice", function()
+        local Skin = load({ Name = "Blizzard" })
         Skin:Set("Blizzard", true)
-        env.NineSliceLayouts = {}
-        expect(Skin:GetBackdrop().edgeFile:find("UI-DialogBox-Border", 1, true) ~= nil).toBe(true)
-        env.NineSliceUtil = { ApplyLayoutByName = function() end }
-        env.NineSliceLayouts = { ButtonFrameTemplateNoPortrait = {} }
-        expect(Skin:GetBackdrop().edgeFile).toBeNil()
+        local bk = Skin:GetBackdrop()
+        expect(bk.edgeFile:find("UI-DialogBox-Border", 1, true) ~= nil).toBe(true)
+        expect(bk.bgFile:find("UI-Background-Rock", 1, true) ~= nil).toBe(true)
+        expect(Skin:GetActive().nineSlice).toBeNil()
     end)
 
     it("a lista de temas das opções vem dos próprios temas", function()
