@@ -12,6 +12,9 @@
 --   Battleground:GetOverrideMapID(id)  -> overrideMapWorldId or id
 --   Battleground:IsInBG()              -> bool, mirrors Nx.InBG
 --   Battleground:Refresh()             -> recompute Nx.InBG now
+--
+-- Nx.InBG is only a yes/no flag. The map id of the battleground the
+-- player entered is Nx.InBGMapId, kept by Nx.Map:Update (MapEngine).
 
 local Carbonite = _G.Carbonite
 local Battleground = {}
@@ -31,6 +34,8 @@ function Battleground:IsBGMap(mapID)
 end
 
 function Battleground:IsMicroDungeon(mapID)
+    -- Forever gives no map id inside dungeons; C_Map.GetMapInfo(nil) raises an error.
+    if mapID == nil then return false end
     if microCache[mapID] ~= nil then return microCache[mapID] end
     local info = _G.C_Map and _G.C_Map.GetMapInfo and _G.C_Map.GetMapInfo(mapID)
     local enum = _G.Enum and _G.Enum.UIMapType
