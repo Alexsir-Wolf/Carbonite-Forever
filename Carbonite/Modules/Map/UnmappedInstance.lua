@@ -13,12 +13,17 @@
 -- * The window title names the instance instead of the fallback world map.
 -- * DungeonChart.lua's dungeon map does not open by itself here; opened
 --   from the map menu, it is raised above the live minimap.
+-- * The live minimap sits one strata above the map window, so it is kept
+--   out of the toolbar band at the bottom; otherwise it covers the buttons.
+-- * The tracking arrow (HUD) hides: the player has no position here, and the
+--   distance to an outdoor destination is measured from the entrance.
 --
 -- Public (on Nx.Map):
 --   map:UpdateUnmappedInstanceView()    show/hide; sets map.UInstViewActive
 --   map:RaiseUnmappedInstanceView(lvl)  put the cover above this frame's
 --                                       outdoor icons; returns the next level
 --   map:GetUnmappedInstanceTitle()      window title, or nil
+--   map:GetUnmappedInstanceMinimapBox() size, x, y of the live minimap
 
 local Nx = _G.Nx
 local Map = Nx.Map
@@ -96,6 +101,20 @@ function Map:RaiseUnmappedInstanceView(level)
     end
     cover:SetFrameLevel(level)
     return level + 1
+end
+
+-- Square box for the live minimap: as large as the map area allows, centered,
+-- above the toolbar band. Offsets are from the map area's top left corner.
+function Map:GetUnmappedInstanceMinimapBox()
+    local w, h = self.MapW or 0, self.MapH or 0
+    local band = 0
+    local bar = self.ToolBar and self.ToolBar.Frm
+    if bar and bar:IsShown() then
+        band = (bar:GetHeight() or 0) + 2
+    end
+    local availH = math.max(h - band, 0)
+    local size = math.max(math.min(w, availH), 0)
+    return size, (w - size) / 2, (availH - size) / 2
 end
 
 function Map:GetUnmappedInstanceTitle()

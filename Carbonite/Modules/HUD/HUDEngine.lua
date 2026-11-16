@@ -210,6 +210,8 @@ function HUD:Update(map)
     local shouldShow = map.TrackDir
         and not Nx.db.profile.Track.Hide
         and not (Nx.InBG and Nx.db.profile.Track.HideInBG)
+        -- No player position inside an unmapped instance (UnmappedInstance.lua).
+        and not (map.IsUnmappedInstance and map:IsUnmappedInstance())
 
     if shouldShow then
         local frm = self.Frm

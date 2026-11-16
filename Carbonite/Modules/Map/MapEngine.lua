@@ -2799,37 +2799,7 @@ function Nx.Map:MinimapOnMouseUp(button)
     end
 end
 
----
--- Create a ping at the clicked location
---
-function Nx.Map:Ping()
-    local frm = self.Frm
-    local mx, my = Nx.Util_GetMouseClampedXY(frm)
-    local top = frm:GetTop()
-    local bottom = frm:GetBottom()
-    my = top - (my + bottom)
-
-    local mm = self.MMFrm
-
-    -- Get appropriate scale set based on city status
-    local scales = self.MMScales
-    local info = self.MapWorldInfo[self.MapId]
-
-    if info.City and not info.MMOutside then
-        scales = self.MMScalesC
-    end
-
-    local zoom = mm:GetZoom() + 1
-
-    -- Convert frame position to world coordinates
-    local wx, wy = self:FramePosToWorldPos(mx, my)
-
-    local sc = scales[zoom] / mm:GetWidth()
-    local x = wx - self.PlyrX
-    local y = self.PlyrY - wy
-
-    mm:PingLocation(x / sc, y / sc)
-end
+-- Ping lives in MiniMap.lua.
 
 ---
 -- Handle mouse entering minimap
@@ -3616,7 +3586,9 @@ function Nx.Map:MinimapUpdate()
         self.MMFScale = Nx.InBG and lOpts.NXMMDockScaleBG or lOpts.NXMMDockScale
         -- Unmapped instances use full size without changing the saved
         -- NXMMFull preference, so outdoor docking returns unchanged.
-        if lOpts.NXMMFull or unmappedInstance then
+        if unmappedInstance then
+            self.MMFScale = self:GetUnmappedInstanceMinimapBox() / 140
+        elseif lOpts.NXMMFull then
             self.MMFScale = min(self.MapW, self.MapH) / 140
         end
     end
@@ -3689,9 +3661,10 @@ function Nx.Map:MinimapUpdateEnd()
         local unmappedInstance = self:IsUnmappedInstance()
 
         if unmappedInstance then
-            -- Full-size replacement for the missing instance map: center it.
-            x = (self.MapW - sz) / 2
-            y = (self.MapH - sz) / 2
+            -- Full-size replacement for the missing instance map, centered
+            -- above the toolbar band (UnmappedInstance.lua).
+            local _
+            _, x, y = self:GetUnmappedInstanceMinimapBox()
         else
             if Nx.db.profile.MiniMap.DockRight then
                 x = (self.MapW - sz + 1)
@@ -6427,9 +6400,9 @@ function Nx.Map:Update (elapsed)
         end
     end
 
-    if Nx.InBG and Nx.InBG ~= rid then    -- Left or changed BG?
-
---        Nx.prt ("Left BG %s", Nx.InBG)
+    -- Nx.InBG is the yes/no flag Battleground.lua keeps; the battleground map the player
+    -- entered is tracked here, in Nx.InBGMapId.
+    if Nx.InBGMapId and Nx.InBGMapId ~= rid then    -- Left or changed BG?
 
         local cb = Nx.Combat
 
@@ -6440,7 +6413,7 @@ function Nx.Map:Update (elapsed)
         else
             local total = cb.KBs + cb.Deaths + cb.HKs + cb.Honor
             if total > 0 then
-                local sname = Nx.Map:GetShortName (Nx.InBG)
+                local sname = Nx.Map:GetShortName (Nx.InBGMapId) or "?"
                 Nx.UEvents:AddInfo (format ("Left %s %d %d %d %d", sname, cb.KBs, cb.Deaths, cb.HKs, cb.Honor))
 
                 local tm = GetTime() - cb.BGEnterTime
@@ -6467,7 +6440,7 @@ function Nx.Map:Update (elapsed)
         cb.Deaths = 0
         cb.HKs = 0
         cb.Honor = 0
-        Nx.InBG = nil
+        Nx.InBGMapId = nil
 
         if Nx.InArena then
             self.LOpts.NXMMFull = false
@@ -6475,8 +6448,8 @@ function Nx.Map:Update (elapsed)
         Nx.InArena = nil
     end
 
-    if inBG and Nx.InBG ~= rid then
-        Nx.InBG = rid
+    if inBG and Nx.InBGMapId ~= rid then
+        Nx.InBGMapId = rid
 
         local cb = Nx.Combat
         cb.BGEnterTime = GetTime()
@@ -14558,46 +14531,7 @@ function Nx.Map:GetCurrentMapAreaID()
     return mapID
 end
 
---------
--- Save map view
-
-function Nx.Map:SaveView (name)
-
-    local str = format ("%s%s", Nx.InBG or "", name)
-
---    Nx.prt ("Save view %s", str)
-
-    local v = self.ViewSavedData[str]
-
-    if not v then
-        v = {}
-        self.ViewSavedData[str] = v
-    end
-
-    v.Scale = self.Scale
-    v.X = self.MapPosX
-    v.Y = self.MapPosY
-end
-
---------
--- Restore map view
-
-function Nx.Map:RestoreView (name)
-
-    local str = format ("%s%s", Nx.InBG or "", name)
-
---    Nx.prt ("Restore view %s", str)
-
-    local v = self.ViewSavedData[str]
-
-    if v then
-        self.Scale = v.Scale
-        self.MapPosX = v.X
-        self.MapPosY = v.Y
-
-        self.StepTime = 5
-    end
-end
+-- SaveView / RestoreView live in ViewState.lua.
 
 --------
 -- Move map
@@ -15011,51 +14945,8 @@ function Nx.Map:IsInstanceMap (mapId)
     return false
 end
 
---------
---
-
-function Nx.Map:IsBattleGroundMap (mapId)
-    if self.MapWorldInfo[mapId] and self.MapWorldInfo[mapId].Short then
-        return true
-    else
-        return false
-    end
-end
-
--- Cache for micro dungeon checks
-local MicroDungeonCache = {}
-
-function Nx.Map:IsMicroDungeon(mapId)
-    if MicroDungeonCache[mapId] ~= nil then
-        return MicroDungeonCache[mapId]
-    end
-
-    local mapInfo = C_Map.GetMapInfo(mapId)
-    -- mapType 5 = Enum.UIMapType.Micro (Micro Dungeon)
-    local isMicro = mapInfo and mapInfo.mapType == 5
-    MicroDungeonCache[mapId] = isMicro or false
-    return isMicro or false
-end
-
-function Nx.Map:IsScenario(mapId)
-    local name, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, mapID = GetInstanceInfo()
-    if (Nx.Map:GetCurrentMapId() == mapId) then
-        if (difficultyIndex == 1) then
-            return true
-        end
-    end
-    return false
-end
-
-function Nx.Map:GCMI_OVERRIDE(mapId)
-    return mapId and Nx.Map:GetWorldZone(mapId) and Nx.Map:GetWorldZone(mapId).overrideMapWorldId or mapId
-end
---------
--- Get map short name (only BGs have)
-
-function Nx.Map:GetShortName (mapId)
-    return Nx.Map.MapWorldInfo[mapId].Short
-end
+-- IsBattleGroundMap / IsMicroDungeon / IsScenario / GCMI_OVERRIDE / GetShortName live in
+-- Battleground.lua.
 
 --------
 -- Get world info for a continent
@@ -15149,101 +15040,7 @@ function Nx.Map:GetWorldZone (mapId)
     return {}
 end
 
---------
--- Get world zone scale from map id
--- (id)
-
-function Nx.Map:GetWorldZoneScale (mapId)
-    local winfo = self.MapWorldInfo[mapId]
-    if winfo and winfo.BaseMap then
-        winfo = self.MapWorldInfo[winfo.BaseMap]
-    end
-    if winfo and winfo.Scale then
-        return winfo.Scale
-    else
-        return 10.02
-    end
-end
-
---------
--- Get world position of map (zone) location
--- (id, x (0-100), y (0-100)
-
-function Nx.Map:GetWorldPos (mapId, mapX, mapY)
-    if mapId == 9000 then
-        return 0,0
-    end
-    local winfo = self.MapWorldInfo[mapId]
-    if winfo then
-        if winfo.BaseMap then
-            winfo = self.MapWorldInfo[winfo.BaseMap]
-        end
-        local scale = winfo.Scale
-            if not winfo[4] or not winfo[5] then
---            Nx.prt("GetWorldErr (Not Calculated): " .. mapId)
-            return 0,0
-        end
-        if not scale then
---            Nx.prt("GetWorldErr (Scale): " .. mapId)
-            return 0,0
-        end
-
-        return    winfo[4] + mapX * scale,
-                    winfo[5] + mapY * scale / 1.5
-    end
-    if mapId then
-        Nx.prtStack("GetPos Err:" .. mapId)
-    else
-        Nx.prtStack("GetPos Err")
-    end
-    return 0, 0
-end
-
---------
--- Get world positions of map (zone) rectangle
--- (id, x, y)
-
-function Nx.Map:GetWorldRect (mapId, mapX, mapY, mapX2, mapY2)
-
-    local x, y = self:GetWorldPos (mapId, mapX, mapY)
-    local x2, y2 = self:GetWorldPos (mapId, mapX2, mapY2)
-
-    return x, y, x2, y2
-end
-
---------
--- Get zone position of world location
--- (id, x, y)
-
-function Nx.Map:GetZonePos (mapId, worldX, worldY)
-
---    self.GetZonePosCnt = (self.GetZonePosCnt or 0) + 1
-
---    Nx.prt ("WXY for map %s is %f %f", mapId, worldX, worldY)
-
-    local winfo = self.MapWorldInfo[mapId]
-
-    if winfo then
-        if winfo.BaseMap then
-            winfo = self.MapWorldInfo[winfo.BaseMap] or winfo
-        end
-        if winfo.Scale and winfo[4] and winfo[5] then
-            local scale = winfo.Scale
-                return    (worldX - winfo[4]) / scale,
-                        (worldY - winfo[5]) / scale * 1.5
-        else
-            return 0,0
-        end
---        local x = (worldX - info.X - winfo[2]) / scale
---        local y = (worldY - info.Y - winfo[3]) / scale * 1.5
-
---        Nx.prt ("XY %f %f %f", x, y, scale)
-
---        return x, y
-    end
-
-    return 0, 0
-end
+-- GetWorldZoneScale / GetWorldPos / GetWorldRect / GetZonePos live in Coords.lua.
 
 --------
 -- Get continent of world location

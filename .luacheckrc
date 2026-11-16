@@ -27,4 +27,6 @@ include_files = {
     "Carbonite.Quests/QuestieSource.lua",
     "Carbonite.Quests/SpokenPlay.lua",
     "Carbonite/Modules/Map/UnmappedInstance.lua",
+    "Carbonite/Modules/Map/Battleground.lua",
+    "Carbonite/Modules/Map/ViewState.lua",
 }
