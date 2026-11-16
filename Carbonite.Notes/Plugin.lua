@@ -6,7 +6,6 @@
 -- The legacy CarboniteNotes AceAddon and its Nx.Notes namespace
 -- still exist for backwards-compat; this file:
 --   - Exposes a typed Notes:Add / Notes:Remove / Notes:Each API.
---   - Registers options on the new Carbonite Options panel.
 --   - Re-broadcasts note add/remove via the EventBus so the Map
 --     module can drop NotePins automatically.
 --
@@ -81,67 +80,8 @@ function Notes:ToggleWindow()
     if Nx and Nx.Notes and Nx.Notes.ToggleShow then Nx.Notes:ToggleShow() end
 end
 
--- Bind to the Carbonite plugin registry so the EventBus and options
--- pages know about us.
-Plugin.Bind(NotesAddon, "Notes", {
-    displayName = "Notes",
-    order       = 40,
-    options = function()
-        local Nx = _G.Nx
-        local function notesDB()
-            if Nx and Nx.fdb then return Nx.fdb.profile.Notes else return {} end
-        end
-        return {
-            type = "group",
-            name = "Notes",
-            args = {
-                showMap = {
-                    order = 1, type = "toggle", name = "Show notes on map",
-                    get = function() return notesDB().ShowMap end,
-                    set = function(_, v) notesDB().ShowMap = v end,
-                },
-                handy = {
-                    order = 2, type = "toggle", name = "HandyNotes integration",
-                    get = function() return notesDB().HandyNotes end,
-                    set = function(_, v) notesDB().HandyNotes = v end,
-                },
-                handySize = {
-                    order = 3, type = "range", name = "HandyNotes icon size",
-                    min = 8, max = 48, step = 1,
-                    get = function() return notesDB().HandyNotesSize or 15 end,
-                    set = function(_, v) notesDB().HandyNotesSize = v end,
-                },
-                rareScanner = {
-                    order = 4, type = "toggle", name = "RareScanner integration",
-                    get = function() return notesDB().RareScanner end,
-                    set = function(_, v) notesDB().RareScanner = v end,
-                },
-                rareScannerSize = {
-                    order = 5, type = "range", name = "RareScanner icon size",
-                    min = 8, max = 64, step = 1,
-                    get = function() return notesDB().RareScannerSize or 32 end,
-                    set = function(_, v) notesDB().RareScannerSize = v end,
-                },
-                questie = {
-                    order = 6, type = "toggle", name = "Questie integration",
-                    get = function() return notesDB().Questie end,
-                    set = function(_, v) notesDB().Questie = v end,
-                },
-                questieSE = {
-                    order = 7, type = "toggle", name = "Questie available quests",
-                    get = function() return notesDB().QuestieSE end,
-                    set = function(_, v) notesDB().QuestieSE = v end,
-                },
-                questieSize = {
-                    order = 8, type = "range", name = "Questie icon size",
-                    min = 8, max = 64, step = 1,
-                    get = function() return notesDB().QuestieSize or 32 end,
-                    set = function(_, v) notesDB().QuestieSize = v end,
-                },
-            },
-        }
-    end,
-})
+-- Bind to the Carbonite plugin registry so the EventBus knows about us.
+Plugin.Bind(NotesAddon, "Notes")
 
 -- When the Map module asks for note pins to render, hand them over.
 -- Layer name must match the Pin kind so the Renderer's per-layer

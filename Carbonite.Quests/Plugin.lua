@@ -1,8 +1,7 @@
 -- Carbonite.Quests | Plugin entry
 -- New front door for the Quests plugin. Behaves like every other
--- Carbonite plugin: registers options on the central panel, exposes
--- a clean API for other plugins, and routes events through the
--- shared EventBus.
+-- Carbonite plugin: exposes a clean API for other plugins and routes
+-- events through the shared EventBus.
 --
 -- The actual quest database parsing, tracker UI, and route planning
 -- still live in NxQuest.lua and the Data/<expansion>/ folders. This
@@ -44,51 +43,7 @@ function Quests:ToggleTracker()
     if Nx and Nx.Quest and Nx.Quest.ToggleShow then Nx.Quest:ToggleShow() end
 end
 
-Plugin.Bind(QuestAddon, "Quests", {
-    displayName = "Quests",
-    order       = 15,
-    options = function()
-        local Nx = _G.Nx
-        local function qdb()
-            if Nx and Nx.qdb then return Nx.qdb.profile.Quest or {} end
-            return {}
-        end
-        return {
-            type = "group",
-            name = "Quests",
-            args = {
-                blurb = {
-                    order = 1, type = "description",
-                    name = "Quest tracker, watchlist, and database. The full options panel still ships from the legacy module while the rewrite is in progress.\n\nQuest data for this client: |cffd700ff" .. Expansion:GetMapDataFolder() .. "|r",
-                },
-                tracker = {
-                    order = 2, type = "execute", name = "Toggle quest tracker",
-                    func = function() Quests:ToggleTracker() end,
-                },
-                autoTurnin = {
-                    order = 3, type = "toggle", name = "Auto-turn-in completed quests",
-                    get = function() return qdb().AutoTurnin end,
-                    set = function(_, v) qdb().AutoTurnin = v end,
-                },
-                shareInParty = {
-                    order = 4, type = "toggle", name = "Share quest progress in party",
-                    get = function() return qdb().ShareInParty end,
-                    set = function(_, v) qdb().ShareInParty = v end,
-                },
-                showRoute = {
-                    order = 5, type = "toggle", name = "Show recommended route on map",
-                    get = function() return qdb().ShowRoute ~= false end,
-                    set = function(_, v) qdb().ShowRoute = v end,
-                },
-                colorByLevel = {
-                    order = 6, type = "toggle", name = "Color quests by level difficulty",
-                    get = function() return qdb().ColorByLevel ~= false end,
-                    set = function(_, v) qdb().ColorByLevel = v end,
-                },
-            },
-        }
-    end,
-})
+Plugin.Bind(QuestAddon, "Quests")
 
 -- Push quest objective pins onto the Map module's "Quests" layer when
 -- the map asks for a refresh.
