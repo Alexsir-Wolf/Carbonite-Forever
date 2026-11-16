@@ -549,7 +549,7 @@ function Nx.Quest.Watch:Open()
     end
 
     list:ColumnAdd ("", 1, self.Modern and 18 or 14)
-    list:ColumnAdd ("Name", 2, not fixedSize and 900 or 20)
+    list:ColumnAdd (L["Name"], 2, not fixedSize and 900 or 20)
 --    list:ColumnAdd ("", 3, 0)
 --    list:ColumnAdd ("Type", 4, 60)
 --    list:ColumnAdd ("Status", 5, 500)
