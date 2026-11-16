@@ -1700,8 +1700,6 @@ function Nx.Info.Combat:_FirstTimeOpen()
 		Nx.prtD ("Info combat: %s event registration(s) refused by the client", refused)
 	end
 
-	f:SetScript ("OnUpdate", self.OnUpdate)
-
 	f:SetScript ("OnEnter", self.OnEnter)
 	f:SetScript ("OnLeave", self.OnEnter)
 	f:EnableMouse (true)
@@ -1909,10 +1907,6 @@ function Nx.Info.Combat:OnEvent (event, ...)
 		end
 
 	end
-end
-
-function Nx.Info.Combat:OnUpdate (...)
-
 end
 
 function Nx.Info.Combat:OnEnter (motion)
