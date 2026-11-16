@@ -69,12 +69,12 @@ Skin.themes = {
     ["Modern Dark"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.30|0.36|0.46|0.95",
-        bgColor     = "0.06|0.07|0.10|0.92",
+        bgColor     = "0.06|0.07|0.10|1",
     },
     ["Modern Light"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.50|0.55|0.65|0.95",
-        bgColor     = "0.88|0.88|0.92|0.92",
+        bgColor     = "0.88|0.88|0.92|1",
         tokens = {
             hover       = "0.18|0.16|0.04|1",
             pressed     = "0.55|0.62|0.80|1",
@@ -94,7 +94,7 @@ Skin.themes = {
     ["Class Color"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.40|0.55|0.95|0.85",
-        bgColor     = "0.06|0.07|0.10|0.92",
+        bgColor     = "0.06|0.07|0.10|1",
         resolveBorder = function()
             local _, class = UnitClass("player")
             local cc = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)
@@ -105,7 +105,7 @@ Skin.themes = {
     ["Faction"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.40|0.55|0.95|0.85",
-        bgColor     = "0.06|0.07|0.10|0.92",
+        bgColor     = "0.06|0.07|0.10|1",
         resolveBorder = function()
             local f = UnitFactionGroup("player")
             if f == "Alliance" then return "0.18|0.45|0.95|0.90" end
@@ -203,16 +203,25 @@ function Skin:Apply(frame)
     if frame.SetBackdropColor then frame:SetBackdropColor(br, bg, bb, ba) end
 end
 
+-- Translucent backgrounds the modern themes had before they turned opaque.
+-- Picking a theme used to copy its colors into the profile, so a profile
+-- still holding one of these never chose it: it goes back to the theme's.
+local OLD_BACKGROUNDS = {
+    ["0.06|0.07|0.10|0.92"] = true,
+    ["0.88|0.88|0.92|0.92"] = true,
+}
+
 function Skin:Set(name, init)
     if not self.themes[name] then name = "Modern Dark" end
     self.activeName = name
-    if _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.Skin then
-        _G.Nx.db.profile.Skin.Name = name
+    local skin = _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.Skin
+    if skin then
+        skin.Name = name
         if not init then
-            local t = self.themes[name]
-            _G.Nx.db.profile.Skin.WinBdColor      = t.borderColor
-            _G.Nx.db.profile.Skin.WinFixedBgColor = ".5|.5|.5|.5"
-            _G.Nx.db.profile.Skin.WinSizedBgColor = t.bgColor
+            -- A new theme brings its own colors; the pickers start from them.
+            skin.WinBdColor, skin.WinFixedBgColor, skin.WinSizedBgColor = nil, nil, nil
+        elseif OLD_BACKGROUNDS[skin.WinSizedBgColor] then
+            skin.WinSizedBgColor = nil
         end
     end
     self:Update()

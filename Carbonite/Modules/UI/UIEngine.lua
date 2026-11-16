@@ -1576,7 +1576,18 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
 
         svdata["Hide"] = hide
         svdata["FI"] = self.CFadeIn or 1
-        svdata["FO"] = self.CFadeOut or .75
+        svdata["FO"] = self.CFadeOut or 1
+        svdata["FOV"] = 2
+    end
+
+    -- Windows used to go to 75% opacity with the mouse away, which let the
+    -- scenery show through the text. Opaque is the default now; a window
+    -- still at the old default moves to it once, a chosen value stays.
+    if svdata["FOV"] ~= 2 then
+        if svdata["FO"] == .75 then
+            svdata["FO"] = 1
+        end
+        svdata["FOV"] = 2
     end
 
     -- Debug
