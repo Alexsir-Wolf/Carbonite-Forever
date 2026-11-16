@@ -329,6 +329,19 @@ function Nx.Quest:GetOptionsConfig()
                                 Nx.qdb.profile.Quest.HCheckCompleted = not Nx.qdb.profile.Quest.HCheckCompleted
                             end,
                         },
+                        qloadmsg = {
+                            order = 22.5,
+                            type = "toggle",
+                            width = "full",
+                            name = L["Show Quest Loading Messages"],
+                            desc = L["Show the quest data loading messages in the chat at login"],
+                            get = function()
+                                return Nx.qdb.profile.Quest.LoadMessages
+                            end,
+                            set = function()
+                                Nx.qdb.profile.Quest.LoadMessages = not Nx.qdb.profile.Quest.LoadMessages
+                            end,
+                        },
                         spacer3 = {
                             order = 23,
                             type = "description",
