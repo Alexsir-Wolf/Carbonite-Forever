@@ -15843,6 +15843,13 @@ end
 -- Create the minimap button dock window
 -- Initializes window and schedules button scanning
 --
+-- MinimapButtonButton gathers the minimap buttons too; with it loaded the
+-- two would pull the same buttons back and forth, so the Dock stays off (#86).
+function Nx.Map.Dock:OtherCollector()
+    local loaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
+    return loaded and loaded ("MinimapButtonButton") and true or false
+end
+
 function Nx.Map.Dock:Create()
 
 --PAIDS!
@@ -15853,7 +15860,7 @@ function Nx.Map.Dock:Create()
 
     self.UpdateMod = 100        -- Prevent error
 
-    if not Nx.db.profile.MiniMap.ButOwn then
+    if not Nx.db.profile.MiniMap.ButOwn or self:OtherCollector() then
         return
     end
 
