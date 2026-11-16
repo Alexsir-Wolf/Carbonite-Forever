@@ -27,7 +27,6 @@ L["Paste"] = true
 L["Options"] = true
 L["Add Comment"] = true
 L["Set Icon"] = true
-L["Name"] = true
 L["Nothing to paste"] = true
 L["Can't paste that on the left side"] = true
 L["Can't paste that on the right side"] = true

@@ -16,7 +16,6 @@ NXClassLocToCap = {		-- Convert localized class name to generic caps
 }
 
 -- Main Carbonite
-L["Carbonite"] = true
 L["CARBONITE"] = true
 L["Whats New!"] = true
 L["Don't show for this update again"] = true
@@ -43,7 +42,6 @@ L["GUID player"] = true
 L["GUID NPC"] = true
 L["GUID pet"] = true
 L["Unit map error"] = true
-L["Gather"] = true
 L["Entered"] = true
 L["Level"] = true
 L["Deaths"] = true
@@ -58,7 +56,6 @@ L["Reset old HUD options"] = true
 L["Reset old travel data"] = true
 L["Reset old gather data"] = true
 L["Missing character data!"] = true
-L["Deathknight"] = true
 L["Death Knight"] = true
 L["Version"] = true
 L["Maintained by"] = true
@@ -85,7 +82,6 @@ L["Imported"] = true
 L["nodes from GatherMate2_Data"] = true
 L["Delete visited vendor data?"] = true
 L["This will stop the attempted retrieval of items on login."] = true
-L["Delete"] = true
 L["Cancel"] = true
 L["items retrieved"] = true
 L["Item retrieval from server complete"] = true

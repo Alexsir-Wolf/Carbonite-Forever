@@ -7,8 +7,6 @@ if not L then return end
 
 -- General Nodes
 L["Artifact"] = true
-L["Everfrost"] = "Everfrost"
-L["Gas"] = "Gás"
 L["Ooze Covered"] = true
 
 -- Herbs

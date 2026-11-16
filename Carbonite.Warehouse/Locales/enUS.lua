@@ -121,7 +121,6 @@ L["Verbose Selling"] = true
 L["When enabled shows what items got sold instead of just the grand total earned."] = true
 L["Test Selling"] = true
 L["Enabling this allows you to see what would get sold, without actually selling."] = true
-L["Warehouse"] = true
 L["Auto Sell"] = true
 L["Items"] = true
 L["Grey"] = true
