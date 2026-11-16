@@ -7824,6 +7824,9 @@ end
 -- Tab Bar
 ---------------------------------------------------------------------------------------
 
+Nx.TabBar.TabMinW = 66        -- default tab width
+Nx.TabBar.TabTextPad = 16     -- room around a tab label
+
 function Nx.TabBar:GetHeight()
     return 22
 end
@@ -7933,13 +7936,24 @@ function Nx.TabBar:AddTab (name, index, width, press, template, butId)
 
     -- (parentFrm, typ, text, tip, bx, by, side, width, height, func, user)
 
-    local w = width or 66
-    local x = 1 + (index - 1) * (w + 2)
-
-    tab.W = w
+    -- Tabs sit side by side from the left. Without a fixed width a tab grows to fit its
+    -- label: translated labels are often longer than the English ones.
+    local w = width or self.TabMinW
+    local x = self.NextTabX or 1
 
     local but = Nx.Button:Create (self.TopFrm, "Tab", name, nil, x, -1, "TOPLEFT", w, 20, self.OnBut, self, template)
     tab.But = but
+
+    if not width and but.FStr then
+        local textW = but.FStr:GetStringWidth() or 0
+        if textW + self.TabTextPad > w then
+            w = math.ceil (textW + self.TabTextPad)
+            but.Frm:SetWidth (w)
+        end
+    end
+
+    tab.W = w
+    self.NextTabX = x + w + 2
 
     if butId then
         but.Frm:SetID (butId)
