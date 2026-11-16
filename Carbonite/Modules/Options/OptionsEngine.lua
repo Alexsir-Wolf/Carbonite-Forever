@@ -112,7 +112,7 @@ local function mainConfig()
     if not config then
         config = {
             type = "group",
-            name = "Carbonite Classic",
+            name = "Carbonite Forever",
             args = {
                 main = {
                     order = 1,
@@ -124,10 +124,11 @@ local function mainConfig()
                             type = "description",
                             name = L["\nCarbonite is a full featured, powerful map addon providing a versitile easy to use google style map which either can replace or work with the current blizzard maps.\n\nThrough modules it can also be expanded to do even more to help make your game easier."] ..
                                 "\n\n\n|cff9999ff" .. L["Release Version"] .. ": |cffd700ff" .. Nx.VERMAJOR .. "." .. (Nx.VERMINOR * 10) .. " Build " .. Nx.BUILD .. "\n" ..
-                                "|cff9999ff" .. L["Maintained by"] .. ": |cffd700ffIrcDirk\n" ..
-                                "|cff9999ff" .. L["Website"] .. ": |cffd700ffhttps://github.com/IrcDirk/Carbonite-Classic\n" ..
+                                "|cff9999ff" .. L["Forever edition by"] .. ": |cffd700ffAlexsir-Wolf\n" ..
+                                "|cff9999ff" .. L["Website"] .. ": |cffd700ffhttps://github.com/Alexsir-Wolf/Carbonite-Forever\n" ..
+                                "|cff9999ff" .. L["Based on Carbonite All in One, maintained by"] .. ": |cffd700ffIrcDirk\n" ..
                                 "\n" ..
-                                "|cd700ffff" .. L["For support, please visit the forums for Carbonite on WoW Interface or Curse/Twitch."] .. "\n" ..
+                                "|cd700ffff" .. L["To report a problem, open an issue on the website above."] .. "\n" ..
                                 "|cd700ffff" .. L["Special thanks to"] .. ": \n\n" ..
                                 "|cff9999ff" .. L["Rythal for hard work in all those years"] .. "\n" ..
                                 "|cff9999ff" .. L["Cirax for Carbonite2 Logo"] .. "\n" ..
@@ -3259,7 +3260,7 @@ function Nx:SetupConfig()
         return
     end
 
-    -- The legacy mainConfig() returns a wrapped "Carbonite Classic"
+    -- The legacy mainConfig() returns a wrapped "Carbonite Forever"
     -- group with a child "main" that holds the version blurb / credits.
     -- Strip the outer wrapper so the new unified panel uses that block
     -- as its own About tab.
