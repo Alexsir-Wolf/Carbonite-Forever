@@ -95,7 +95,7 @@ function Nx.Whatsnew:Create()
     list:SetUser(self, self.OnListEvent)
     list:SetLineHeight(4)
     list:ColumnAdd("", 1, 24)
-    list:ColumnAdd("Date", 2, 200)
+    list:ColumnAdd(L["Date"], 2, 200)
     list:SetUser(self, self.OnListEvent)
     win:Attach(list.Frm, 0, .2, 0, .94)
 
