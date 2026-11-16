@@ -11521,6 +11521,14 @@ function Nx.Map:ClipFrameTL3D (frm, bx, by, w, h, texMaxX, texMaxY)
     texMaxX = texMaxX or 1
     texMaxY = texMaxY or 1
 
+    -- A single quad needs all four corners; a sea tile (always one quad)
+    -- partly behind the camera has none to draw (upstream #616: "arithmetic
+    -- on local 'x3'" while hovering zone connections during flight).
+    if sub == 1 and not allCorners then
+        frm:Hide()
+        return false
+    end
+
     if sub == 1 then
         if frm.Nx3DTex then
             for _, st in ipairs (frm.Nx3DTex) do
