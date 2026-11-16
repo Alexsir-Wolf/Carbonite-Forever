@@ -44,55 +44,40 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 -- Configuration tables for modular addon support
 local modular_config = {}
 
--- Profiles configuration table (lazy initialized)
-local profiles
+-------------------------------------------------------------------------------
+-- PROFILES
+-- Quests, Notes, Warehouse and Info keep their own AceDB. The single
+-- profile page drives Nx.db, and every module database follows it, so
+-- choosing, copying, resetting or deleting a profile acts on them all.
+-------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
--- PROFILE CONFIGURATION
--- Manages AceDB profile options for Carbonite and modules
--------------------------------------------------------------------------------
+local followers = {}
+
+-- Repeat on each module database what the player just did on Nx.db.
+local profileActions = {
+    OnProfileChanged = function(db, name) db:SetProfile(name) end,
+    OnProfileCopied  = function(db, name) db:CopyProfile(name, true) end,
+    OnProfileReset   = function(db) db:ResetProfile() end,
+    OnProfileDeleted = function(db, name) db:DeleteProfile(name, true) end,
+}
 
 ---
--- Get or create the profiles configuration table
--- @return  Profiles options table for AceConfig
+-- Make a module database follow the main profile.
+-- @param db   AceDB database of the module
 --
-local function profilesConfig()
-    if not profiles then
-        profiles = {
-            type = "group",
-            name = L["Profiles"],
-            childGroups = "tab",
-            args = {
-                main = {
-                    type = "group",
-                    name = L["Main"],
-                    order = 1,
-                    args = {},
-                },
-            },
-        }
+function Nx.Opts:FollowMainProfile(db)
+    if #followers == 0 then
+        for event, act in pairs(profileActions) do
+            Nx.db.RegisterCallback(followers, event, function(_, _, name)
+                for _, f in ipairs(followers) do act(f, name) end
+            end)
+        end
     end
-    profiles.args.main.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(Nx.db)
-    return profiles
-end
-
----
--- Add a module's profile options to the profile menu
--- @param ProfileName   Display name for the profile tab
--- @param ProfileOrder  Order in the tab list
--- @param ProfileDB     AceDB database for the module
---
-function Nx.Opts:AddToProfileMenu(ProfileName, ProfileOrder, ProfileDB)
-    if not profiles then
-        return
+    followers[#followers + 1] = db
+    local current = Nx.db:GetCurrentProfile()
+    if db:GetCurrentProfile() ~= current then
+        db:SetProfile(current)
     end
-    profiles.args[ProfileName] = {
-        type = "group",
-        name = ProfileName,
-        order = ProfileOrder,
-        args = {},
-    }
-    profiles.args[ProfileName].args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(ProfileDB)
 end
 
 -------------------------------------------------------------------------------
@@ -3254,7 +3239,7 @@ function Nx:SetupConfig()
         Nx:AddToConfig("Maps",          mapConfig(),          L["Maps"])
         Nx:AddToConfig("Menus",         menuConfig(),         L["Menus"])
         Nx:AddToConfig("Privacy",       commConfig(),         L["Privacy"])
-        Nx:AddToConfig("Profiles",      profilesConfig(),     L["Profiles"])
+        Nx:AddToConfig("Profiles",      LibStub("AceDBOptions-3.0"):GetOptionsTable(Nx.db), L["Profiles"])
         Nx:AddToConfig("Skin",          skinConfig(),         L["Skin"])
         Nx:AddToConfig("Tracking HUD",  trackConfig(),        L["Tracking HUD"])
         return
@@ -3306,14 +3291,6 @@ function Nx:AddToConfig(name, optionsTable, displayName)
     if Nx.optionsFrame then
         Nx.optionsFrame[name] = AceConfigDialog:AddToBlizOptions("Carbonite", displayName, "Carbonite", name)
     end
-end
-
----
--- Get profiles options table
--- @return  AceDBOptions profiles table
---
-local function giveProfiles()
-    return LibStub("AceDBOptions-3.0"):GetOptionsTable(Nx.db)
 end
 
 -------------------------------------------------------------------------------
