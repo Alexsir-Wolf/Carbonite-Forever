@@ -214,10 +214,10 @@ local function generalOptions()
                     name = L["Show Login Message"],
                     desc = L["When Enabled, displays the Carbonite loading messages in chat."],
                     get = function()
-                        return Nx.db.profile.General.LoginHideVer
+                        return Nx.db.profile.General.LoginMessage
                     end,
                     set = function()
-                        Nx.db.profile.General.LoginHideVer = not Nx.db.profile.General.LoginHideVer
+                        Nx.db.profile.General.LoginMessage = not Nx.db.profile.General.LoginMessage
                     end,
                 },
                 -- Login graphic toggle
@@ -228,10 +228,10 @@ local function generalOptions()
                     name = L["Show Login Graphic"],
                     desc = L["When Enabled, displays the Carbonite graphic during initialization."] .. "\n",
                     get = function()
-                        return Nx.db.profile.General.TitleOff
+                        return Nx.db.profile.General.TitleShow
                     end,
                     set = function()
-                        Nx.db.profile.General.TitleOff = not Nx.db.profile.General.TitleOff
+                        Nx.db.profile.General.TitleShow = not Nx.db.profile.General.TitleShow
                     end,
                 },
                 -- Login sound toggle
@@ -2745,6 +2745,11 @@ local function commConfig()
             type = "group",
             name = L["Privacy Options"],
             args = {
+                commAbout = {
+                    order = 0,
+                    type = "description",
+                    name = L["Carbonite talks to other Carbonite users through hidden chat channels: it joins a global and a zone channel, and can send your position and level ups to friends, guild and zone. Everything here is off until you turn it on."],
+                },
                 commLTF = {
                     order = 1,
                     type = "toggle",

@@ -394,6 +394,8 @@ L["When enabled, the quest watch uses a Blizzard tracker style title row and que
 L["Daily PvP"] = "JxJ diária"
 L["Weekly"] = "Semanal"
 L["Hide Locked Quest Givers"] = "Ocultar doadores de missão bloqueados"
+L["Show Quest Loading Messages"] = "Mostrar mensagens de carga das missões"
+L["Show the quest data loading messages in the chat at login"] = "Mostra no chat, ao entrar no jogo, as mensagens de carga dos dados de missões"
 L["Hide quest givers whose quests are still locked behind an unfinished prerequisite (otherwise they are dimmed and marked locked)"] = "Oculta doadores de missão cujas missões ainda estão bloqueadas por um pré-requisito não concluído (caso contrário, ficam esmaecidos e marcados como bloqueados)"
 L["Open World Quest List"] = "Abrir lista de missões mundiais"
 L["World Quest List"] = "Lista de missões mundiais"

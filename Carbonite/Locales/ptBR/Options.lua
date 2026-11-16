@@ -295,6 +295,7 @@ L["When Enabled, Carbonite Menus Will Be Drawn Vertically Centered On The Mouse"
 
 -- Privacy Options
 L["Privacy Options"] = "Opções de Privacidade"
+L["Carbonite talks to other Carbonite users through hidden chat channels: it joins a global and a zone channel, and can send your position and level ups to friends, guild and zone. Everything here is off until you turn it on."] = "O Carbonite conversa com outros usuários do Carbonite por canais de chat ocultos: entra num canal global e num da zona, e pode enviar sua posição e seus níveis ganhos para amigos, guilda e zona. Tudo aqui vem desligado até você ligar."
 L["Send Position & Level Ups To Friends"] = "Enviar Posição e Níveis Ganhos para Amigos"
 L["When Enabled, Carbonite will send your current location and any levelups you get to your other friends using carbonite"] = "Quando ativado, o Carbonite enviará sua localização atual e os níveis que você ganhar para seus amigos que usam o Carbonite"
 L["Send Position & Level Ups To Guild"] = "Enviar Posição e Níveis Ganhos para a Guilda"
