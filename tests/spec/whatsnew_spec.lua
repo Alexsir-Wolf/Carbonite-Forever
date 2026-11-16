@@ -57,3 +57,12 @@ describe("textos herdados do upstream", function()
         end
     end)
 end)
+
+describe("nome Carbonite-Forever", function()
+    it("é o nome que o jogador vê no chat, nas opções e no menu", function()
+        expect(loader.read("Carbonite/Carbonite.lua"):find('NXTITLEFULL = "Carbonite-Forever"', 1, true) ~= nil).toBe(true)
+        expect(loader.read("Carbonite/Core/Logger.lua"):find("[Carbonite-Forever]", 1, true) ~= nil).toBe(true)
+        expect(loader.read("Carbonite/Modules/Options/Options.lua"):find('AddToBlizOptions("Carbonite", "Carbonite-Forever")', 1, true) ~= nil).toBe(true)
+        expect(loader.read("Carbonite/Locales/ptBR/Main.lua"):find('"Novidades do Carbonite-Forever"', 1, true) ~= nil).toBe(true)
+    end)
+end)

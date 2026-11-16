@@ -28,7 +28,7 @@ function Nx:SetupEverything()
     Nx:prtSetChatFrame()
 
     if Nx.db.profile.General.LoginMessage then
-        Nx.prt (L["Carbonite"].." |cffffffff"..Nx.VERMAJOR.."."..(Nx.VERMINOR*10).." Build "..Nx.BUILD.." ".. L["Loading"])
+        Nx.prt (NXTITLEFULL.." |cffffffff"..Nx.VERMAJOR.."."..(Nx.VERMINOR*10).." Build "..Nx.BUILD.." ".. L["Loading"])
     end
 
     Nx:LocaleInit()

@@ -36,7 +36,6 @@ NXClassLocToCap = {		-- Convert localized class name to generic caps
 		"무기",
 	}
 -- Main Carbonite
-L["Carbonite"] = "Carbonite"
 L["CARBONITE"] = "CARBONITE"
 L["Loading"] = "시작하는 중..."
 L["Loading Done"] = "성공적으로 시작했습니다."

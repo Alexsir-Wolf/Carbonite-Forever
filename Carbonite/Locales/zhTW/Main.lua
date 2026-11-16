@@ -20,7 +20,6 @@ NXClassLocToCap = {		-- Convert localized class name to generic caps
 }
 
 -- Main Carbonite
-L["Carbonite"] = "Carbonite"
 L["CARBONITE"] = "CARBONITE"
 L["Loading"] = "載入中"
 L["Loading Done"] = "已載入"

@@ -125,7 +125,7 @@ local function mainConfig()
     if not config then
         config = {
             type = "group",
-            name = "Carbonite Forever",
+            name = "Carbonite-Forever",
             args = {
                 main = {
                     order = 1,
@@ -3028,7 +3028,7 @@ function Nx:SetupConfig()
         -- Fallback to legacy registration if the new module hasn't loaded
         -- (e.g. during an unmigrated TOC load order).
         AceConfig:RegisterOptionsTable("Carbonite", mainConfig)
-        Nx.optionsFrame, Nx.optionsPanelID = AceConfigDialog:AddToBlizOptions("Carbonite", "Carbonite", nil, "main")
+        Nx.optionsFrame, Nx.optionsPanelID = AceConfigDialog:AddToBlizOptions("Carbonite", "Carbonite-Forever", nil, "main")
         Nx:AddToConfig("General",       generalOptions(),     L["General"])
         Nx:AddToConfig("Battlegrounds", BGConfig(),           L["Battlegrounds"])
         Nx:AddToConfig("Fonts",         fontConfig(),         L["Fonts"])
@@ -3042,7 +3042,7 @@ function Nx:SetupConfig()
         return
     end
 
-    -- The legacy mainConfig() returns a wrapped "Carbonite Forever"
+    -- The legacy mainConfig() returns a wrapped "Carbonite-Forever"
     -- group with a child "main" that holds the version blurb / credits.
     -- Strip the outer wrapper so the new unified panel uses that block
     -- as its own About tab.
@@ -3086,7 +3086,7 @@ function Nx:AddToConfig(name, optionsTable, displayName)
     end
     -- Legacy fallback when new module is not present.
     if Nx.optionsFrame then
-        Nx.optionsFrame[name] = AceConfigDialog:AddToBlizOptions("Carbonite", displayName, "Carbonite", name)
+        Nx.optionsFrame[name] = AceConfigDialog:AddToBlizOptions("Carbonite", displayName, "Carbonite-Forever", name)
     end
 end
 

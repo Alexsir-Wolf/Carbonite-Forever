@@ -17,7 +17,7 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 
 Nx.BrokerMenuTemplate = {
-    { text = "Carbonite", icon = icon, isTitle = true },
+    { text = NXTITLEFULL, icon = icon, isTitle = true },
     { text = L["Options"],       func = function() Nx.Opts:Open() end },
     { text = L["Toggle Map"],    func = function() Nx.Map:ToggleSize(0) end },
     { text = L["Toggle Events"], func = function() Nx.UEvents.List:Open() end },
@@ -33,7 +33,7 @@ end
 local function ShowBrokerMenu(ownerRegion)
     if MenuUtil and MenuUtil.CreateContextMenu then
         MenuUtil.CreateContextMenu(ownerRegion, function(_, rootDescription)
-            rootDescription:CreateTitle("Carbonite")
+            rootDescription:CreateTitle(NXTITLEFULL)
             rootDescription:CreateButton(L["Options"],       function() Nx.Opts:Open() end)
             rootDescription:CreateButton(L["Toggle Map"],    function() Nx.Map:ToggleSize(0) end)
             rootDescription:CreateButton(L["Toggle Events"], function() Nx.UEvents.List:Open() end)
@@ -46,12 +46,12 @@ end
 Nx.Broker = LibStub("LibDataBroker-1.1"):NewDataObject("Broker_Carbonite", {
     type  = "data source",
     icon  = "Interface\\AddOns\\Carbonite\\Gfx\\MMBut",
-    label = "Carbonite",
-    text  = "Carbonite",
+    label = NXTITLEFULL,
+    text  = NXTITLEFULL,
 
     OnTooltipShow = function(tooltip)
         if not tooltip or not tooltip.AddLine then return end
-        tooltip:AddLine("Carbonite")
+        tooltip:AddLine(NXTITLEFULL)
         tooltip:AddLine(L["Left-Click to Toggle Map"])
         if Nx.db.profile.MiniMap.ButOwn then
             tooltip:AddLine(L["Shift Left-Click to Toggle Minimize"])
