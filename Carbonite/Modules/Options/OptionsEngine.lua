@@ -44,55 +44,48 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 -- Configuration tables for modular addon support
 local modular_config = {}
 
--- Profiles configuration table (lazy initialized)
-local profiles
-
--------------------------------------------------------------------------------
--- PROFILE CONFIGURATION
--- Manages AceDB profile options for Carbonite and modules
--------------------------------------------------------------------------------
-
 ---
--- Get or create the profiles configuration table
--- @return  Profiles options table for AceConfig
+-- Slider label with the unit of its value, e.g. "Watch Delay Time (ms)".
+-- AceConfig shows only the bare number, so the unit goes in the label.
 --
-local function profilesConfig()
-    if not profiles then
-        profiles = {
-            type = "group",
-            name = L["Profiles"],
-            childGroups = "tab",
-            args = {
-                main = {
-                    type = "group",
-                    name = L["Main"],
-                    order = 1,
-                    args = {},
-                },
-            },
-        }
-    end
-    profiles.args.main.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(Nx.db)
-    return profiles
+function Nx.Opts.Unit(name, unit)
+    return name .. " (" .. unit .. ")"
 end
 
+-------------------------------------------------------------------------------
+-- PROFILES
+-- Quests, Notes, Warehouse and Info keep their own AceDB. The single
+-- profile page drives Nx.db, and every module database follows it, so
+-- choosing, copying, resetting or deleting a profile acts on them all.
+-------------------------------------------------------------------------------
+
+local followers = {}
+
+-- Repeat on each module database what the player just did on Nx.db.
+local profileActions = {
+    OnProfileChanged = function(db, name) db:SetProfile(name) end,
+    OnProfileCopied  = function(db, name) db:CopyProfile(name, true) end,
+    OnProfileReset   = function(db) db:ResetProfile() end,
+    OnProfileDeleted = function(db, name) db:DeleteProfile(name, true) end,
+}
+
 ---
--- Add a module's profile options to the profile menu
--- @param ProfileName   Display name for the profile tab
--- @param ProfileOrder  Order in the tab list
--- @param ProfileDB     AceDB database for the module
+-- Make a module database follow the main profile.
+-- @param db   AceDB database of the module
 --
-function Nx.Opts:AddToProfileMenu(ProfileName, ProfileOrder, ProfileDB)
-    if not profiles then
-        return
+function Nx.Opts:FollowMainProfile(db)
+    if #followers == 0 then
+        for event, act in pairs(profileActions) do
+            Nx.db.RegisterCallback(followers, event, function(_, _, name)
+                for _, f in ipairs(followers) do act(f, name) end
+            end)
+        end
     end
-    profiles.args[ProfileName] = {
-        type = "group",
-        name = ProfileName,
-        order = ProfileOrder,
-        args = {},
-    }
-    profiles.args[ProfileName].args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(ProfileDB)
+    followers[#followers + 1] = db
+    local current = Nx.db:GetCurrentProfile()
+    if db:GetCurrentProfile() ~= current then
+        db:SetProfile(current)
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -359,7 +352,7 @@ local function mapConfig()
                         View3DTilt = {
                             order = 2,
                             type = "range",
-                            name = L["3D Tilt"],
+                            name = Nx.Opts.Unit(L["3D Tilt"], "°"),
                             desc = L["Camera tilt in degrees; 0 looks straight down."],
                             min = 10, max = 80, step = 1, bigStep = 1,
                             get = function() return Nx.db.profile.Map.View3DTilt end,
@@ -568,7 +561,7 @@ local function mapConfig()
                         mapUpdate = {
                             order = 7,
                             type = "range",
-                            name = L["Map update rate"],
+                            name = Nx.Opts.Unit(L["Map update rate"], "s"),
                             desc = L["sets map update refresh rate"],
                             min = 0,
                             max = .25,
@@ -677,7 +670,7 @@ local function mapConfig()
                         trailDist = {
                             order = 17,
                             type = "range",
-                            name = L["Movement trail distance"],
+                            name = Nx.Opts.Unit(L["Movement trail distance"], L["yds"]),
                             desc = L["sets the distance of movement between the trail marks"],
                             min = .1,
                             max = 20,
@@ -709,7 +702,7 @@ local function mapConfig()
                         trailTime = {
                             order = 19,
                             type = "range",
-                            name = L["Movement trail fade time"],
+                            name = Nx.Opts.Unit(L["Movement trail fade time"], "s"),
                             desc = L["sets the time trail marks last on the map (in seconds)"],
                             min = 0,
                             max = 1000,
@@ -874,7 +867,7 @@ local function mapConfig()
                         plyrArrowSize = {
                             order = 32,
                             type = "range",
-                            name = L["Player Arrow Size"],
+                            name = Nx.Opts.Unit(L["Player Arrow Size"], "px"),
                             width = "double",
                             desc = L["Sets the size of the player arrow on the map"],
                             min = 10,
@@ -909,7 +902,7 @@ local function mapConfig()
                             order = 34,
                             type = "range",
                             width = "double",
-                            name = L["Map Health Bar Thickness"],
+                            name = Nx.Opts.Unit(L["Map Health Bar Thickness"], "px"),
                             desc = L["Sets the thickness of the health bar (0 disables)"],
                             min = 0,
                             max = 10,
@@ -1264,7 +1257,7 @@ local function mapConfig()
                         MMIconScale = {
                             order = 5,
                             type = "range",
-                            name = L["Minimap Icon Scale"],
+                            name = Nx.Opts.Unit(L["Minimap Icon Scale"], "×"),
                             desc = L["Sets the scale of the icons drawn in the minimap portion of the map"],
                             min = .1,
                             max = 10,
@@ -1280,7 +1273,7 @@ local function mapConfig()
                         MMDockIScale = {
                             order = 6,
                             type = "range",
-                            name = L["Docked Minimap Icon Scale"],
+                            name = Nx.Opts.Unit(L["Docked Minimap Icon Scale"], "×"),
                             desc = L["Sets the scale of the icons drawn in the minimap portion of the map while docked"],
                             min = .1,
                             max = 10,
@@ -1297,7 +1290,7 @@ local function mapConfig()
                         MMGlow = {
                             order = 7,
                             type = "range",
-                            name = L["Minimap Node Glow Delay"],
+                            name = Nx.Opts.Unit(L["Minimap Node Glow Delay"], "s"),
                             desc = L["Sets the delay (in seconds) between the glow change on gathering nodes (0 is off)"],
                             min = 0,
                             max = 4,
@@ -1424,7 +1417,7 @@ local function mapConfig()
                         MMDXO = {
                             order = 17,
                             type = "range",
-                            name = L["Minimap Dock X-Offset"],
+                            name = Nx.Opts.Unit(L["Minimap Dock X-Offset"], "px"),
                             desc = L["Sets the X - offset the minimap draws while docked"],
                             min = -2000,
                             max = 2000,
@@ -1440,7 +1433,7 @@ local function mapConfig()
                         MMDYO = {
                             order = 18,
                             type = "range",
-                            name = L["Minimap Dock Y-Offset"],
+                            name = Nx.Opts.Unit(L["Minimap Dock Y-Offset"], "px"),
                             desc = L["Sets the Y - offset the minimap draws while docked"],
                             min = -2000,
                             max = 2000,
@@ -1598,7 +1591,7 @@ local function mapConfig()
                         MMButSpacing = {
                             order = 7,
                             type = "range",
-                            name = L["Minimap Button Spacing"],
+                            name = Nx.Opts.Unit(L["Minimap Button Spacing"], "px"),
                             width = "double",
                             desc = L["Sets the spacing between buttons in the minimap button bar"],
                             min = 25,
@@ -1766,7 +1759,7 @@ local function fontConfig()
                 SmallFontSize = {
                     order = 2,
                     type = "range",
-                    name = L["Small Font Size"],
+                    name = Nx.Opts.Unit(L["Small Font Size"], "px"),
                     desc = L["Sets the size of the small font"],
                     min = 6,
                     max = 14,
@@ -1783,7 +1776,7 @@ local function fontConfig()
                 SmallFontSpacing = {
                     order = 3,
                     type = "range",
-                    name = L["Small Font Spacing"],
+                    name = Nx.Opts.Unit(L["Small Font Spacing"], "px"),
                     desc = L["Sets the spacing of the small font"],
                     min = -10,
                     max = 20,
@@ -1823,7 +1816,7 @@ local function fontConfig()
                 MediumFontSize = {
                     order = 5,
                     type = "range",
-                    name = L["Medium Font Size"],
+                    name = Nx.Opts.Unit(L["Medium Font Size"], "px"),
                     desc = L["Sets the size of the normal font"],
                     min = 6,
                     max = 20,
@@ -1840,7 +1833,7 @@ local function fontConfig()
                 MediumFontSpacing = {
                     order = 6,
                     type = "range",
-                    name = L["Medium Font Spacing"],
+                    name = Nx.Opts.Unit(L["Medium Font Spacing"], "px"),
                     desc = L["Sets the spacing of the normal font"],
                     min = -10,
                     max = 20,
@@ -1880,7 +1873,7 @@ local function fontConfig()
                 MapFontSize = {
                     order = 8,
                     type = "range",
-                    name = L["Map Font Size"],
+                    name = Nx.Opts.Unit(L["Map Font Size"], "px"),
                     desc = L["Sets the size of the map font"],
                     min = 6,
                     max = 14,
@@ -1897,7 +1890,7 @@ local function fontConfig()
                 MapFontSpacing = {
                     order = 9,
                     type = "range",
-                    name = L["Map Font Spacing"],
+                    name = Nx.Opts.Unit(L["Map Font Spacing"], "px"),
                     desc = L["Sets the spacing of the map font"],
                     min = -10,
                     max = 20,
@@ -1942,7 +1935,7 @@ local function fontConfig()
                 MapLocFontSize = {
                     order = 12,
                     type = "range",
-                    name = L["Map Location Tip Font Size"],
+                    name = Nx.Opts.Unit(L["Map Location Tip Font Size"], "px"),
                     desc = L["Sets the size of the map tooltip font"],
                     min = 6,
                     max = 14,
@@ -1959,7 +1952,7 @@ local function fontConfig()
                 MapLocFontSpacing = {
                     order = 13,
                     type = "range",
-                    name = L["Map Loc Font Spacing"],
+                    name = Nx.Opts.Unit(L["Map Loc Font Spacing"], "px"),
                     desc = L["Sets the spacing of the map loc font"],
                     min = -10,
                     max = 20,
@@ -2004,7 +1997,7 @@ local function fontConfig()
                 MenuFontSize = {
                     order = 16,
                     type = "range",
-                    name = L["Menu Font Size"],
+                    name = Nx.Opts.Unit(L["Menu Font Size"], "px"),
                     desc = L["Sets the size of the menu font"],
                     min = 6,
                     max = 14,
@@ -2021,7 +2014,7 @@ local function fontConfig()
                 MenuFontSpacing = {
                     order = 17,
                     type = "range",
-                    name = L["Menu Font Spacing"],
+                    name = Nx.Opts.Unit(L["Menu Font Spacing"], "px"),
                     desc = L["Sets the spacing of the menu font"],
                     min = -10,
                     max = 20,
@@ -3032,7 +3025,7 @@ local function trackConfig()
                 ArrowSize = {
                     order = 6,
                     type = "range",
-                    name = L["Arrow Size"],
+                    name = Nx.Opts.Unit(L["Arrow Size"], "px"),
                     desc = L["Sets the number of size of the tracking hud arrow."],
                     min = 8,
                     max = 100,
@@ -3049,7 +3042,7 @@ local function trackConfig()
                 AXO = {
                     order = 7,
                     type = "range",
-                    name = L["Arrow X Offset"],
+                    name = Nx.Opts.Unit(L["Arrow X Offset"], "px"),
                     desc = L["Sets the X offset of the tracking hud arrow."],
                     min = -100,
                     max = 100,
@@ -3066,7 +3059,7 @@ local function trackConfig()
                 AYO = {
                     order = 8,
                     type = "range",
-                    name = L["Arrow Y Offset"],
+                    name = Nx.Opts.Unit(L["Arrow Y Offset"], "px"),
                     desc = L["Sets the Y offset of the tracking hud arrow."],
                     min = -100,
                     max = 100,
@@ -3254,7 +3247,7 @@ function Nx:SetupConfig()
         Nx:AddToConfig("Maps",          mapConfig(),          L["Maps"])
         Nx:AddToConfig("Menus",         menuConfig(),         L["Menus"])
         Nx:AddToConfig("Privacy",       commConfig(),         L["Privacy"])
-        Nx:AddToConfig("Profiles",      profilesConfig(),     L["Profiles"])
+        Nx:AddToConfig("Profiles",      LibStub("AceDBOptions-3.0"):GetOptionsTable(Nx.db), L["Profiles"])
         Nx:AddToConfig("Skin",          skinConfig(),         L["Skin"])
         Nx:AddToConfig("Tracking HUD",  trackConfig(),        L["Tracking HUD"])
         return
@@ -3306,14 +3299,6 @@ function Nx:AddToConfig(name, optionsTable, displayName)
     if Nx.optionsFrame then
         Nx.optionsFrame[name] = AceConfigDialog:AddToBlizOptions("Carbonite", displayName, "Carbonite", name)
     end
-end
-
----
--- Get profiles options table
--- @return  AceDBOptions profiles table
---
-local function giveProfiles()
-    return LibStub("AceDBOptions-3.0"):GetOptionsTable(Nx.db)
 end
 
 -------------------------------------------------------------------------------

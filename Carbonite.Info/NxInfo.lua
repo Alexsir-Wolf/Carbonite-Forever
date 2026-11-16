@@ -148,7 +148,7 @@ local function createOptions()
 				InfoFontSize = {
 					order = 4,
 					type = "range",
-					name = L["Info Font Size"],
+					name = Nx.Opts.Unit(L["Info Font Size"], "px"),
 					desc = L["Sets the size of the info font"],
 					min = 6,
 					max = 14,
@@ -165,7 +165,7 @@ local function createOptions()
 				InfoFontSpacing = {
 					order = 5,
 					type = "range",
-					name = L["Info Font Spacing"],
+					name = Nx.Opts.Unit(L["Info Font Spacing"], "px"),
 					desc = L["Sets the spacing of the info font"],
 					min = -10,
 					max = 20,
@@ -224,7 +224,7 @@ local function createOptions()
 				KillIconAutoClearSecs = {
 					order = 13,
 					type = "range",
-					name = L["Auto-clear kill markers after"] or "Auto-clear kill markers after",
+					name = Nx.Opts.Unit(L["Auto-clear kill markers after"] or "Auto-clear kill markers after", "s"),
 					desc = L["Seconds before a kill marker disappears automatically. 0 = never (manual clear only)"]
 						or "Seconds before a kill marker disappears automatically. 0 = never (manual clear only)",
 					min = 0,
@@ -237,7 +237,6 @@ local function createOptions()
 			},
 		}
 	end
-	Nx.Opts:AddToProfileMenu(L["Info"],2,Nx.idb)	
 	return options
 end
 
@@ -247,6 +246,7 @@ function CarboniteInfo:OnInitialize()
 		return
 	end
 	Nx.idb = LibStub("AceDB-3.0"):New("NXInfo",defaults, true)
+	Nx.Opts:FollowMainProfile(Nx.idb)
 	Nx.Font:ModuleAdd("Info.InfoFont",{ "NxFontI", "GameFontNormal","idb" })
 	Nx.Info:Init()
 	Nx.Info.Combat:Init()
