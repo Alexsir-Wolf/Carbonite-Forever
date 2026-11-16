@@ -964,10 +964,6 @@ function Nx.Quest:OnSuperTrackChanged(isRefresh, evtTime)
     -- Self-heal stale cur.QId so downstream code (icon draw, watch
     -- list, blob render) sees the live ID.
     if cur.QId ~= liveQID then
-        if Nx._dbgQId then
-            Nx.prt("|cffff8000[QId-DBG]|r SuperTrack:heal cur#%s QI=%s QId %s->%s Title=%q",
-                tostring(cur.Index), tostring(cur.QI), tostring(cur.QId), tostring(liveQID), tostring(cur.Title or "?"))
-        end
         cur.QId = liveQID
         if Nx.Quest.QIds then
             Nx.Quest.QIds[liveQID] = cur

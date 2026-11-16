@@ -195,10 +195,6 @@ function Nx.Quest:Goto (qId)
     cur.Goto = true
     cur.Q = quest
     cur.QI = 0
-    if Nx._dbgQId then
-        Nx.prt("|cffff8000[QId-DBG]|r Goto:new QId=%s Title=%q",
-            tostring(qId), tostring(name or "?"))
-    end
     cur.QId = qId
     cur.Header = L["Goto"]
     cur.Title = L["Goto: "] .. name
