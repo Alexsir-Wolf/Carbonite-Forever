@@ -92,6 +92,8 @@ function MiniMap:ZoomOut() self:Zoom(-2) end
 -- ---------------------------------------------------------------
 
 function MiniMap:Ping()
+    -- Also reached by Shift+click on the map (MapEngine); see CanPing.
+    if not self:CanPing() then return end
     local map = legacyMap()
     if not map or not map.Frm or not map.MMFrm then return end
     if not _G.Nx or not _G.Nx.Util_GetMouseClampedXY then return end
@@ -141,16 +143,24 @@ function MiniMap:OnMouseDown(frame, button)
     end
 end
 
+-- Whether addon code may ping the minimap. Forever runs the mainline code
+-- base, where the ping is protected, while identifying as a Classic client.
+function MiniMap:CanPing()
+    local Expansion = Carbonite.Compat.Expansion
+    return not (Expansion.isMainline or Expansion.isCamelot)
+end
+
 function MiniMap:OnMouseUp(frame, button)
     local map = legacyMap()
     if not map then return end
 
     if frame.NXPing then
-        -- Retail forbids invoking Minimap_OnClick or PingLocation from
-        -- a tainted addon code path. Suppress the ping there so we do
-        -- not spew "AddOn ... blocked" errors; the user can disable
-        -- MMOwn to get native Blizzard minimap clicks.
-        if Carbonite.Compat.Expansion.isMainline then return end
+        -- Mainline code bases (Retail, and Forever with its Classic .toc)
+        -- forbid invoking Minimap_OnClick or PingLocation from a tainted
+        -- addon code path. Suppress the ping there so we do not spew
+        -- "AddOn ... blocked" errors; the user can disable MMOwn to get
+        -- native Blizzard minimap clicks.
+        if not self:CanPing() then return end
 
         if map.MMZoomType == 0 then
             if _G.Minimap_OnClick then
