@@ -7,9 +7,9 @@ unused_args = false
 -- Addon and client globals the edition files read.
 read_globals = {
     "Nx", "Carbonite", "LibStub", "VoiceOver",
-    "C_Map", "C_Timer", "C_QuestLog", "C_SkillInfo", "Enum",
+    "C_Map", "C_NamePlate", "C_Timer", "C_QuestLog", "C_SkillInfo", "Enum",
     "CreateFrame", "GetInstanceInfo", "GetQuestLogTitle", "GetNumQuestLogEntries",
-    "GetQuestLogIndexByID", "GetTime", "InCombatLockdown", "IsInInstance", "UnitFactionGroup", "UnitLevel", "GetMaxPlayerLevel", "BreakUpLargeNumbers",
+    "GetQuestLogIndexByID", "GetTime", "UnitGUID", "UnitIsFriend", "InCombatLockdown", "IsInInstance", "UnitFactionGroup", "UnitLevel", "GetMaxPlayerLevel", "BreakUpLargeNumbers",
     "Minimap", "MinimapCluster", "UIParent", "WorldFrame", "GameTooltip",
     "debugprofilestop", "hooksecurefunc", "issecretvalue", "securecall", "strsplit",
     "format", "max", "min", "floor", "ceil", "abs", "tinsert", "tremove", "wipe",
@@ -26,6 +26,7 @@ include_files = {
     "tests/**/*.lua",
     "Carbonite.Quests/QuestieSource.lua",
     "Carbonite.Quests/SpokenPlay.lua",
+    "Carbonite.Quests/Nameplates.lua",
     "Carbonite/Modules/Map/UnmappedInstance.lua",
     "Carbonite/Modules/Map/Battleground.lua",
     "Carbonite/Modules/Map/ViewState.lua",
