@@ -1968,33 +1968,6 @@ local function guidegatherConfig()
                             type = "description",
                             name = "\n",
                         },
-                        CmdImportHerb = {
-                            order = 8,
-                            type = "execute",
-                            width = "full",
-                            name = L["Import Herbs From GatherMate2_Data"],
-                            func = function ()
-                                Nx.Opts:NXCmdImportCarbHerb()
-                            end,
-                        },
-                        CmdImportMine = {
-                            order = 9,
-                            type = "execute",
-                            width = "full",
-                            name = L["Import Mines From GatherMate2_Data"],
-                            func = function ()
-                                Nx.Opts:NXCmdImportCarbMine()
-                            end,
-                        },
-                        CmdImportMisc = {
-                            order = 10,
-                            type = "execute",
-                            width = "full",
-                            name = L["Import Misc From GatherMate2_Data"],
-                            func = function ()
-                                Nx.Opts:NXCmdImportCarbMisc()
-                            end,
-                        },
                     },
                 },
                 -- Hardcoded herb options matching GatherInfo order with expansion filtering
@@ -3465,48 +3438,6 @@ function Nx.Opts:NXCmdDeleteMisc()
     end
     Nx:ShowMessage(L["Delete Misc Gather Locations"] .. "?", L["Delete"], func, L["Cancel"])
 end
-
-function Nx.Opts:NXCmdImportCarbHerb()
-
-    local function func()
-        Nx:GatherImportCarbHerb()
-    end
-    Nx:ShowMessage (L["Import Herbs"] .. "?", L["Import"], func, L["Cancel"])
-end
-
-function Nx.Opts:NXCmdImportCarbMine()
-
-    local function func()
-        Nx:GatherImportCarbMine()
-    end
-    Nx:ShowMessage (L["Import Mining"] .. "?", L["Import"], func, L["Cancel"])
-end
-
-function Nx.Opts:NXCmdImportCarbMisc()
-
-    local function func()
-        Nx:GatherImportCarbMisc()
-    end
-    Nx:ShowMessage (L["Import Misc"] .. "?", L["Import"], func, L["Cancel"])
-end
-
---[[
-function Nx.Opts:NXCmdImportCartHerb()
-
-    local function func()
-        Nx:GatherImportCartHerb()
-    end
-    Nx:ShowMessage ("Import Herbs?", "Import", func, "Cancel")
-end
-
-function Nx.Opts:NXCmdImportCartMine()
-
-    local function func()
-        Nx:GatherImportCartMine()
-    end
-    Nx:ShowMessage ("Import Mining?", "Import", func, "Cancel")
-end
---]]
 
 function Nx.Opts:NXCmdInfoWinUpdate()
     if Nx.Info then

@@ -1232,22 +1232,33 @@ function Nx.Map.Guide:ClearAll()
     self:Update()
 end
 
+---
+-- Whether Carbonite draws its own gathering nodes of one kind. With GatherLite
+-- shown on the map (Nx.Notes:GatherLiteActive), only GatherLite's nodes show.
+--
+function Nx.Map.Guide:ShowsOwnGather (setting)
+    if Nx.Notes and Nx.Notes.GatherLiteActive and Nx.Notes:GatherLiteActive() then
+        return false
+    end
+    return Nx.db.char.Map[setting] and true or false
+end
+
 function Nx.Map.Guide:ClearShowFolders()
     self.ShowFolders = {}
     local gFolder = self:FindFolder (L["Gather"])
-    if Nx.db.char.Map.ShowGatherH then
+    if self:ShowsOwnGather ("ShowGatherH") then
         local folder = self:FindFolder (L["Herb"], gFolder)
         self:AddShowFolders (folder)
     end
-    if Nx.db.char.Map.ShowGatherM then
+    if self:ShowsOwnGather ("ShowGatherM") then
         local folder = self:FindFolder (L["Ore"], gFolder)
         self:AddShowFolders (folder)
     end
-    if Nx.db.char.Map.ShowGatherL then
+    if self:ShowsOwnGather ("ShowGatherL") then
         local folder = self:FindFolder (L["Timber"], gFolder)
         self:AddShowFolders (folder)
     end
-    if Nx.db.char.Map.ShowGatherA then
+    if self:ShowsOwnGather ("ShowGatherA") then
         local folder = self:FindFolder (L["Artifacts"], gFolder)
         self:AddShowFolders (folder)
     end
@@ -1288,7 +1299,7 @@ function Nx.Map.Guide:UpdateGatherFolders()
         local folder = self:FindFolder(folderName, gFolder)
         if not folder then return end
         self:AddShowFolders(folder, true)   -- remove existing entries
-        if Nx.db.char.Map[settingName] then
+        if self:ShowsOwnGather(settingName) then
             self:AddShowFolders(folder)     -- re-add if enabled
         end
     end

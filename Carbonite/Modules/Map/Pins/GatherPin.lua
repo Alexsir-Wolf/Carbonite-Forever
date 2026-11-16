@@ -1,6 +1,6 @@
 -- Carbonite | Modules / Map / Pins / GatherPin
--- A herbalism / mining / timber / treasure node pin. The legacy
--- Gathermate2_Data module ships flat arrays of {x,y,nodeId} per
+-- A herbalism / mining / timber / treasure node pin. Each entry of
+-- the gather cache is a flat {x,y,nodeId} per
 -- map; this class wraps each entry so renderer code does not have
 -- to know the source schema.
 

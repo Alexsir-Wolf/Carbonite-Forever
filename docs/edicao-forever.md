@@ -66,7 +66,7 @@ git push fork v12.1.0-00024-forever.1
 A tag dispara o workflow `Package and release`. Ele monta o zip com as 6 pastas, preenche a versão nos `.toc` e cria a Release no fork.
 
 Depois, confira na Release:
-- o zip contém `Carbonite`, `Carbonite.Quests`, `Carbonite.Info`, `Carbonite.Notes`, `Carbonite.Warehouse` e `Carbonite.Gathermate2_Data`;
+- o zip contém `Carbonite`, `Carbonite.Quests`, `Carbonite.Info`, `Carbonite.Notes`, e `Carbonite.Warehouse`;
 - os `.toc` mostram a versão da tag, e não `@project-version@`.
 
 O GitHub Actions precisa estar ativo no fork, na aba Actions. Nunca adicione ao fork os segredos `CF_API_KEY`, `WOWI_API_TOKEN` ou `WAGO_API_TOKEN`: a edição não deve ir para as páginas do Carbonite oficial.

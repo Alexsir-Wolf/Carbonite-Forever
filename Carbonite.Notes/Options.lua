@@ -218,6 +218,8 @@ function Nx.Notes:GetOptionsConfig()
                         else
                             map:ClearIconType("!GLT")
                         end
+                        -- Carbonite's own nodes show only while GatherLite's do not.
+                        Nx.Map.Guide:UpdateGatherFolders()
                     end,
                     disabled = function() return not Nx.Notes:IsGatherLiteAvailable() end,
                 },
