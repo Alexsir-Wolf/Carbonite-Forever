@@ -1,6 +1,6 @@
 ## Interface: 16001, 11508, 20506, 30403, 40402, 50504
-## Title: Carbonite Info @project-version@
-## Title-ptBR: Carbonite Info @project-version@
+## Title: Carbonite-Forever Info
+## Title-ptBR: Carbonite-Forever Info
 ## Version: @project-version@
 ## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
 ## Notes: Information windows for Carbonite

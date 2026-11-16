@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## X-Camelot-Toc: dash
-## Title: Carbonite Maps - Camelot (Forever) @project-version@
-## Title-ptBR: Carbonite Mapas - Camelot (Forever) @project-version@
+## Title: Carbonite-Forever Maps
+## Title-ptBR: Carbonite-Forever Mapas
 ## Version: @project-version@
 ## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
 ## Notes: Map with quests, routes and guides (Forever edition)
