@@ -11,6 +11,8 @@
 --
 -- * Carbonite's own records are never changed. A record Carbonite synthesized from the quest
 --   log for a quest it had no data for (marked Synth, Nx.Quest:SynthHeader) is replaced.
+-- * Forever redrew Mulgore, Eastern Plaguelands, Redridge and Stormwind. As each data file
+--   loads, Carbonite's Classic Era points there are projected with EraToForeverByUiMapId.
 -- * The work runs in batches over frames; quests in the player's log go first. No chat output
 --   except one line when the installed QuestieDB speaks an incompatible contract.
 -- * Nothing runs without QuestieDB. Loaded by the Forever (camelot) TOC only.
@@ -25,6 +27,8 @@
 --   QS.Convert(qId)      Carbonite record for one QuestieDB quest, or nil
 --   QS:Start()           convert and add the missing quests (runs after ProcessQuestDB)
 --   QS.added             quest ids added by the last completed run
+--   QS.ForeverLoc(f, s)  one location string projected with f(uiMapId, x, y)
+--   QS.ConvertLoadedCoords(lib)  project the Era points of records not yet converted
 
 local Nx = _G.Nx
 if not Nx or not Nx.Quest then return end
@@ -306,6 +310,65 @@ function QS.Convert(qId, lib)
 end
 
 --------------------------------------------------------------------------------------------
+-- Era coordinates in Carbonite's own data
+--------------------------------------------------------------------------------------------
+
+local POINT, AREA = 32, 35
+
+-- "desc|uiMapId|type|x|y[|w|h]" with x, y projected by convert(uiMapId, x, y). Points keep
+-- their trailing fields; an area is projected corner to corner, which keeps it exact because
+-- the projection is linear. Other types and unknown maps come back unchanged.
+function QS.ForeverLoc(convert, loc)
+    if type(loc) ~= "string" then return loc end
+    local desc, map, typ, x, y, rest = loc:match("^([^|]*)|(%d+)|(%d+)|([^|]+)|([^|]+)(.*)$")
+    map, typ, x, y = tonumber(map), tonumber(typ), tonumber(x), tonumber(y)
+    if not (map and x and y) or (typ ~= POINT and typ ~= AREA) then return loc end
+    local fx, fy = convert(map, x, y)
+    if fx == x and fy == y then return loc end
+    if typ == POINT then
+        return format("%s|%d|%d|%.2f|%.2f%s", desc, map, typ, fx, fy, rest)
+    end
+    local w, h = rest:match("^|([^|]+)|([^|]+)$")
+    w, h = tonumber(w), tonumber(h)
+    if not (w and h) then return loc end
+    local ex, ey = convert(map, x + w, y + h)
+    return format("%s|%d|%d|%.2f|%.2f|%.2f|%.2f", desc, map, typ, fx, fy, ex - fx, ey - fy)
+end
+
+local function ProjectRecord(convert, q)
+    q.Start = QS.ForeverLoc(convert, q.Start)
+    q.End = QS.ForeverLoc(convert, q.End)
+    for _, locs in pairs(type(q.Objectives) == "table" and q.Objectives or {}) do
+        if type(locs) == "table" then
+            for n, loc in ipairs(locs) do locs[n] = QS.ForeverLoc(convert, loc) end
+        end
+    end
+end
+
+-- Records come from the data files as fresh tables, so ForeverCoords marks the ones already
+-- handled: each point is projected once. Synthesized records hold live (Forever) points.
+function QS.ConvertLoadedCoords(lib)
+    local convert = lib and lib.EraToForeverByUiMapId
+    if type(convert) ~= "function" then return end
+    for _, q in pairs(Nx.Quests) do
+        if type(q) == "table" and not q.ForeverCoords then
+            if not q.Synth then pcall(ProjectRecord, convert, q) end
+            q.ForeverCoords = true
+        end
+    end
+end
+
+-- Each data file loads through Nx.ModQuests:LoadN (SuperTrack.lua), before quest-log patches
+-- can add live points to those records.
+if hooksecurefunc and type(Nx.ModQuests) == "table" then
+    for name, fn in pairs(Nx.ModQuests) do
+        if type(fn) == "function" and name:match("^Load%d+$") then
+            hooksecurefunc(Nx.ModQuests, name, function() QS.ConvertLoadedCoords(Lib()) end)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------------------
 -- Adding to Carbonite
 --------------------------------------------------------------------------------------------
 
@@ -317,7 +380,7 @@ local function Inject(qId, entry)
     local record, extra = entry[1], entry[2]
     -- A fresh table each time: ProcessQuestDB-style indexing writes CNum/CLvlMax into it.
     Nx.Quests[qId] = { Quest = record.Quest, Start = record.Start, End = record.End,
-        Objectives = record.Objectives }
+        Objectives = record.Objectives, ForeverCoords = true }
     Nx.Quests[-qId] = nil
 
     if extra.classes then
