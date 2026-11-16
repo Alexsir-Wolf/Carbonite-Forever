@@ -121,7 +121,6 @@ L["Reset Layout"] = "Resetta Strati"
 
 -- UI Tooltips
 L["Close/Menu"] = "Chiudi/Menu"
-L["Close/Unlock"] = "Chiudi/Sblocca"
 L["Pick Color"] = "Prendi Colore"
 L["Unlock"] = "Sblocca"
 L["Maximize"] = "Massimiza"

@@ -111,7 +111,6 @@ L["Reset Layout"] = "重設版面配置"
 
 -- UI Tooltips
 L["Close/Menu"] = "關閉/選單"
-L["Close/Unlock"] = "關閉/解鎖"
 L["Pick Color"] = "選取顏色"
 L["Unlock"] = "解鎖"
 L["Maximize"] = "最大化"

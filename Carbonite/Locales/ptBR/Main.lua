@@ -118,7 +118,6 @@ L["Reset Layout"] = "Reseta Possição"
 
 -- UI Tooltips
 L["Close/Menu"] = "Fechar/Menu"
-L["Close/Unlock"] = "Fechar/Destravar"
 L["Pick Color"] = "Escolher Cor"
 L["Unlock"] = "Destravar"
 L["Maximize"] = "Maximizar"

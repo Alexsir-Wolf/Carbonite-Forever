@@ -106,7 +106,6 @@ L["Reset Layout"] = true
 
 -- UI Tooltips
 L["Close/Menu"] = true
-L["Close/Unlock"] = true
 L["Pick Color"] = true
 L["Unlock"] = true
 L["Maximize"] = true
