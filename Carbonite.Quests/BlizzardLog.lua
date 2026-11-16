@@ -427,12 +427,9 @@ function Nx.Quest:RecordQuestsLog (validatedQuestCount)
                         end
 
                         if Nx.qdb.profile.Quest.AutoTurnInAC and cur.IsAutoComplete then
-                            -- ShowQuestComplete on retail takes questID, on
-                            -- Classic it takes the log index.
-                            if Nx.isRetail then
-                                ShowQuestComplete (cur.QId)
-                            else
-                                ShowQuestComplete (qi)
+                            -- questID on Retail and Forever, log index elsewhere.
+                            if QuestAPI then
+                                QuestAPI:ShowComplete (cur.QId, qi)
                             end
                         end
 
