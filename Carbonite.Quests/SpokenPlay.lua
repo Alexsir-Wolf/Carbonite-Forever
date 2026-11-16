@@ -15,9 +15,13 @@
 -- Spoken's own "Play button on the tracker" option decides whether a button shows, and Spoken
 -- only offers it for quests it has a recording of. Nothing here runs without Spoken loaded.
 --
+-- The journal's details panel gets one more Play, at its top right, for the quest it shows.
+--
 -- Public (on Nx.Quest.SpokenPlay):
---   SP:Sweep(list)   lay the buttons over the list's visible quest title rows
---   SP:Reset()       forget the cached answers and lay the buttons out again
+--   SP:Sweep(list)              lay the buttons over the list's visible quest title rows
+--   SP:Reset()                  forget the cached answers and lay the buttons out again
+--   SP:AttachToDetails(frame)   the journal's details panel, where its Play goes
+--   SP:SetDetailsQuest(qId)     the quest that panel shows; Play shows when Spoken has it
 
 local Nx = _G.Nx
 if not Nx or not Nx.List or not Nx.Quest then return end
@@ -30,6 +34,7 @@ local floor, max, min = math.floor, math.max, math.min
 local ipairs, pairs, pcall, type = ipairs, pairs, pcall, type
 
 local ORIGIN = "Carbonite's watch list"
+local DETAILS_ORIGIN = "Carbonite's quest log"
 -- ShowsTrackerButton asks Spoken's voice packs; the list redraws several times a second.
 local CACHE_SECONDS = 5
 local NEEDED = { "MakePlayButton", "ShowsTrackerButton", "BindPlayButton", "SetPlayButtonState" }
@@ -44,6 +49,7 @@ local ICON_OVERLAP = 2
 local TEXT_GAP = 2
 
 local buttons = {}      -- by position among the buttons shown, reused as the list scrolls
+local details = {}      -- the journal's details panel: frame, its Play, the quest shown
 local shows = {}        -- questID -> { shows, time asked }
 local failed, callbacksSet, relaying
 
@@ -88,6 +94,7 @@ local function Fail(err)
     if failed then return end
     failed = true
     HideFrom(1)
+    if details.button then details.button:Hide() end
     Nx.prt(L["Spoken Play button turned off for this session: %s"], tostring(err))
     local watch = Nx.Quest.Watch
     local list = watch and watch.List
@@ -177,12 +184,44 @@ end
 
 function SP:Reset()
     for questID in pairs(shows) do shows[questID] = nil end
+    if details.questID then SP:SetDetailsQuest(details.questID) end
     local watch = Nx.Quest.Watch
     local list = watch and watch.List
     if list and list.Frm then
         local ok, err = pcall(SP.Sweep, SP, list)
         if not ok then Fail(err) end
     end
+end
+
+function SP:AttachToDetails(frame)
+    details.frame = frame
+end
+
+function SP:SetDetailsQuest(qId)
+    details.questID = qId
+    local ui = Overlay()
+    local show = ui and details.frame and type(qId) == "number" and qId > 0 and Shows(ui, qId)
+    if not show then
+        if details.button then details.button:Hide() end
+        return
+    end
+    local button = details.button
+    if not button then
+        button = Call(ui, "MakePlayButton", details.frame)
+        if not button then return end
+        if not button.setPlayState then button.setPlayState = ui.FollowQueue end
+        button:SetSize(MAX_SIZE + 4, MAX_SIZE + 4)
+        button:SetPoint("TOPRIGHT", details.frame, "TOPRIGHT", -24, -8)
+        button:SetFrameLevel(details.frame:GetFrameLevel() + 5)
+        details.button = button
+    end
+    if button.NxQuestID ~= qId then
+        local _, ok = Call(ui, "BindPlayButton", button, qId, Title(qId), DETAILS_ORIGIN)
+        if not ok then return end
+        button.NxQuestID = qId
+    end
+    button:Show()
+    Call(ui, "SetPlayButtonState", button)
 end
 
 local function SetCallbacks()
