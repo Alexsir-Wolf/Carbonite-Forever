@@ -54,6 +54,8 @@ L["RXPGuides Icon Size"] = "Tamanho do ícone RXPGuides"
 L["Route RXPGuides arrow through Carbonite"] = "Direcionar a seta do RXPGuides pelo Carbonite-Forever"
 L["Step"] = "Passo"
 L["Replaces the RXPGuides navigation arrow with Carbonite's own HUD travel arrow, pointing at the current step"] = "Substitui a seta de navegação do RXPGuides pela própria seta de viagem (HUD) do Carbonite-Forever, apontando para o passo atual"
+L["Route TomTom arrow through Carbonite"] = "Direcionar a seta do TomTom pelo Carbonite-Forever"
+L["With TomTom installed, Carbonite's HUD travel arrow points at TomTom's destination and TomTom's arrow is hidden"] = "Com o TomTom instalado, a seta de viagem (HUD) do Carbonite-Forever aponta para o destino do TomTom e a seta do TomTom fica escondida"
 L["Route ZygorGuides arrow through Carbonite"] = "Direcionar a seta do ZygorGuides pelo Carbonite-Forever"
 L["Replaces the ZygorGuides navigation arrow with Carbonite's own HUD travel arrow, pointing at the current step"] = "Substitui a seta de navegação do ZygorGuides pela própria seta de viagem (HUD) do Carbonite-Forever, apontando para o passo atual"
 

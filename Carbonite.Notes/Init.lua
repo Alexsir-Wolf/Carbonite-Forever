@@ -34,6 +34,7 @@ local defaults = {
             GatherLite      = true,    -- Show GatherLite gathering nodes
             GatherLiteSize  = 14,
             ZygorArrow      = true,    -- Route ZygorGuidesViewer arrow through Carbonite HUD
+            TomTomArrow     = true,    -- Point Carbonite HUD at the real TomTom arrow target, hide TomTom arrow
         },
         Addons = {},
     },
