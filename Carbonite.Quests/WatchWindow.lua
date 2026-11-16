@@ -3051,7 +3051,7 @@ function Nx.Quest.Watch:OnListEvent (eventName, val1, val2, click, but)
                                         if id and id > 0 then _liveID = id end
                                     end
                                     local _qIndex = qIndex
-                                    if Nx.isRetail then
+                                    if QuestAPI and QuestAPI:ShowCompleteTakesQuestID() then
                                         C_Timer.After(0, function()
                                             -- Force the quest into Blizzard's
                                             -- AutoQuestPopUp queue first. The
@@ -3070,13 +3070,13 @@ function Nx.Quest.Watch:OnListEvent (eventName, val1, val2, click, but)
                                             if AddAutoQuestPopUp then
                                                 AddAutoQuestPopUp(_liveID, "COMPLETE")
                                             end
-                                            ShowQuestComplete(_liveID)
+                                            QuestAPI:ShowComplete(_liveID)
                                         end)
                                     else
                                         local qi = QuestAPI and QuestAPI:GetLogIndexForQuestID(_liveID) or _qIndex
                                         if qi and qi > 0 then
                                             C_Timer.After(0, function()
-                                                ShowQuestComplete(qi)
+                                                QuestAPI:ShowComplete(_liveID, qi)
                                             end)
                                         end
                                     end
@@ -3108,7 +3108,9 @@ function Nx.Quest.Watch:OnListEvent (eventName, val1, val2, click, but)
                             if isComplete and isAC then
                                 -- Use fresh log index in case quest log was reshuffled
                                 local qi = QuestAPI and QuestAPI:GetLogIndexForQuestID(qId) or 0
-                                ShowQuestComplete (qi > 0 and qi or qIndex)
+                                if QuestAPI then
+                                    QuestAPI:ShowComplete (qId, qi > 0 and qi or qIndex)
+                                end
 
                             else
                                 self:Set (data, val2, not IsShiftKeyDown())
