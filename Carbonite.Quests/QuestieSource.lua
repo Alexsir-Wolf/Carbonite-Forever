@@ -35,6 +35,9 @@
 --   QS.XPAt(questLevel, xp, playerLevel)  XP a quest gives at a player level
 --   Nx.Quest:GetXP(qId)  that XP for the player: the client's for a logged quest, else the QuestXP table, or nil
 --   Nx.Quest:XPText(qId) the XP as " 1.650 XP" for lists and tooltips, or ""
+--   Nx.Quest:MeetsQuestieRequirements(qId)  false when QuestieDB says the character cannot
+--                        take it: a profession below the skill it asks, or a quest that
+--                        excludes it already done or in the log
 
 local Nx = _G.Nx
 if not Nx or not Nx.Quest then return end
@@ -625,3 +628,53 @@ function Nx.Quest:XPText(qId)
     local amount = BreakUpLargeNumbers and BreakUpLargeNumbers(xp) or tostring(xp)
     return format(" |cff9f9fff%s %s|r", amount, L["XP"])
 end
+
+--------------------------------------------------------------------------------------------
+-- Requirements Carbonite's data lacks (#80)
+--------------------------------------------------------------------------------------------
+
+local requirements = {}     -- qId -> { skill = { skillLineId, value }, exclusive = { qId... } } or false
+
+local function Requirements(qId)
+    local cached = requirements[qId]
+    if cached ~= nil then return cached end
+    -- Only Quest.GetAll is needed: no zone data, unlike Lib().
+    local lib = _G.LibQuestieDB
+    local getAll = type(lib) == "table" and type(lib.Quest) == "table" and lib.Quest.GetAll
+    local ok, v = false, nil
+    if type(getAll) == "function" then ok, v = pcall(getAll, qId, { "requiredSkill", "exclusiveTo" }) end
+    local req = false
+    if ok and type(v) == "table" then
+        local skill, exclusive = v[1], v[2]
+        if type(skill) == "table" and type(skill[1]) == "number" then
+            req = { skill = skill }
+        end
+        if type(exclusive) == "table" and exclusive[1] then
+            req = req or {}
+            req.exclusive = exclusive
+        end
+    end
+    requirements[qId] = req
+    return req
+end
+
+local function Done(qId)
+    local log = _G.C_QuestLog
+    if log and log.IsQuestFlaggedCompleted and log.IsQuestFlaggedCompleted(qId) then return true end
+    return Nx.Quest:GetQuest(qId) == "C"
+end
+
+function Nx.Quest:MeetsQuestieRequirements(qId)
+    local req = Requirements(qId)
+    if not req then return true end
+    if req.skill then
+        local api = _G.Carbonite and _G.Carbonite.Compat and _G.Carbonite.Compat.Api
+        local rank = api and api.Skill and api.Skill:GetRank(req.skill[1]) or 0
+        if rank < (req.skill[2] or 1) then return false end
+    end
+    for _, other in ipairs(req.exclusive or {}) do
+        if Done(other) or (self.IdToCurQ and self.IdToCurQ[other]) then return false end
+    end
+    return true
+end
+
