@@ -249,8 +249,7 @@ function Nx.Map:Init()
     -- Integration with RareScanner addon
     self.RareScannerOverlays = {}
 
-    -- Initialize function tables and map data
-    self:InitFuncs()
+    -- Initialize map data
     self:InitTables()
 
     -- Player tracking data
@@ -604,62 +603,65 @@ end
 
 -------------------------------------------------------------------------------
 -- FUNCTION BINDING SYSTEM
--- Maps localized action names to function implementations
+-- Actions a map mouse button can run. The profile keeps the id; only the
+-- label is translated, so a new translation or client language keeps
+-- every binding.
 -------------------------------------------------------------------------------
 
----
--- Initialize the function lookup table
--- These functions can be bound to mouse actions via options
---
-function Nx.Map:InitFuncs()
-    self.Funcs = {
-        [L["None"]] = function() end,               -- No action
-        [L["Goto"]] = self.SetTargetAtClick,        -- Set waypoint at click
-        [L["Show Player Zone"]] = self.GotoCurrentZone,  -- Center on player
-        [L["Show Selected Zone"]] = self.CenterMap,      -- Center on zone
-        [L["Menu"]] = self.OpenMenu,                -- Open context menu
-        [L["Zoom In"]] = self.ClickZoomIn,          -- Zoom in
-        [L["Zoom Out"]] = self.ClickZoomOut,        -- Zoom out
-    }
-end
+Nx.Map.ButtonFuncs = {
+    None             = { label = "None" },
+    Goto             = { label = "Goto", method = "SetTargetAtClick" },
+    ShowPlayerZone   = { label = "Show Player Zone", method = "GotoCurrentZone" },
+    ShowSelectedZone = { label = "Show Selected Zone", method = "CenterMap" },
+    Menu             = { label = "Menu", method = "OpenMenu" },
+    ZoomIn           = { label = "Zoom In", method = "ClickZoomIn" },
+    ZoomOut          = { label = "Zoom Out", method = "ClickZoomOut" },
+}
+
+Nx.Map.ButtonKeys = { "ButLAlt", "ButLCtrl", "ButM", "ButMAlt", "ButMCtrl", "ButR", "ButRAlt",
+                      "ButRCtrl", "But4", "But4Alt", "But4Ctrl" }
 
 ---
--- Get sorted list of available function names
--- @return  Sorted table of function names for options UI
+-- Translated label of each action, keyed by id, for the options UI.
 --
 function Nx.Map:GetFuncs()
     local t = {}
-
-    for name in pairs(self.Funcs) do
-        tinsert(t, name)
+    for id, f in pairs(self.ButtonFuncs) do
+        t[id] = L[f.label]
     end
-
-    sort(t)
-
     return t
 end
 
 ---
--- Call a map function by its option name
--- Looks up the function name from settings and executes it
--- @param optName  Option name that contains the function name
--- @return         True if a function was executed, nil otherwise
+-- Profiles saved before the ids kept the translated label. Turn a label
+-- of this client's language, or the English one, back into its id; any
+-- other text becomes "None".
+--
+function Nx.Map.MigrateButtonFuncs(map)
+    if type(map) ~= "table" then return end
+    for _, key in ipairs(Nx.Map.ButtonKeys) do
+        local value = rawget(map, key)
+        if value ~= nil and not Nx.Map.ButtonFuncs[value] then
+            local found = "None"
+            for id, f in pairs(Nx.Map.ButtonFuncs) do
+                if value == f.label or value == L[f.label] then found = id end
+            end
+            map[key] = found
+        end
+    end
+end
+
+---
+-- Run the action bound to a mouse button.
+-- @param optName  Profile key of the button, e.g. "ButR"
+-- @return         True if an action ran, nil for "None"
 --
 function Nx.Map:CallFunc(optName)
-    local name = Nx.db.profile.Map[optName]
-
-    -- "None" means no action should be taken
-    if name == L["None"] then
+    local f = self.ButtonFuncs[Nx.db.profile.Map[optName]]
+    if not f or not f.method then
         return nil
     end
-
-    local func = self.Funcs[name]
-    if func then
-        func(self)
-    else
-        Nx.prt("Unknown map function %s", name)
-    end
-
+    self[f.method](self)
     return true
 end
 
