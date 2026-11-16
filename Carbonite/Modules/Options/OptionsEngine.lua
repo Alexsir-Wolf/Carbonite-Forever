@@ -2668,12 +2668,7 @@ local function skinConfig()
                     name = L["Border Color of Windows"],
                     hasAlpha = true,
                     get = function()
-                        local arr = { Nx.Split("|",Nx.db.profile.Skin.WinBdColor) }
-                        local r = arr[1]
-                        local g = arr[2]
-                        local b = arr[3]
-                        local a = arr[4]
-                        return r,g,b,tonumber(a)
+                        return unpack(Carbonite.UI.Skin:GetBorderColor())
                     end,
                     set = function(_,r,g,b,a)
                         Nx.db.profile.Skin.WinBdColor = r .. "|" .. g .. "|" .. b .. "|" .. a
@@ -2687,12 +2682,7 @@ local function skinConfig()
                     name = L["Background Color of Fixed Sized Windows"],
                     hasAlpha = true,
                     get = function()
-                        local arr = { Nx.Split("|",Nx.db.profile.Skin.WinFixedBgColor) }
-                        local r = arr[1]
-                        local g = arr[2]
-                        local b = arr[3]
-                        local a = arr[4]
-                        return r,g,b,tonumber(a)
+                        return unpack(Carbonite.UI.Skin:GetFixedBackgroundColor())
                     end,
                     set = function(_,r,g,b,a)
                         Nx.db.profile.Skin.WinFixedBgColor = r .. "|" .. g .. "|" .. b .. "|" .. a
@@ -2706,12 +2696,7 @@ local function skinConfig()
                     name = L["Background Color of Resizable Windows"],
                     hasAlpha = true,
                     get = function()
-                        local arr = { Nx.Split("|",Nx.db.profile.Skin.WinSizedBgColor) }
-                        local r = arr[1]
-                        local g = arr[2]
-                        local b = arr[3]
-                        local a = arr[4]
-                        return r,g,b,tonumber(a)
+                        return unpack(Carbonite.UI.Skin:GetBackgroundColor())
                     end,
                     set = function(_,r,g,b,a)
                         Nx.db.profile.Skin.WinSizedBgColor = r .. "|" .. g .. "|" .. b .. "|" .. a
