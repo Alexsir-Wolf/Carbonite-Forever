@@ -71,8 +71,6 @@ L["Grace Loom"] ="Webstuhl der anmutigen Königin"
 L["Moonwell"] = "Mondbrunnen"
 L["Name"] = "Name"
 L["Info"] = "Info"
-L["Info2"] = "Info2"
-L["Info3"] = "Info3"
 L["Back "] = "Zurück "
 
 -- Menus
