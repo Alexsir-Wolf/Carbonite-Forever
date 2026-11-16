@@ -492,6 +492,7 @@ function Nx.Quest.List:Open()
 
     self.DetailsFrm = f
     f.NxSetSize = self.OnDetailsSetSize
+    if Nx.Quest.SpokenPlay then Nx.Quest.SpokenPlay:AttachToDetails (f) end
 
     f:SetMovable (true)
     f:EnableMouse (true)
@@ -1404,6 +1405,7 @@ function Nx.Quest.List:OnListEvent (eventName, sel, val2, click)
             local mapId = Map:GetCurrentMapId()
             Quest:TrackOnMap (qId, qObj, qIndex > 0, shift)
             Map:SetCurrentMap (mapId)
+            if Quest.SpokenPlay then Quest.SpokenPlay:SetDetailsQuest (qId) end
 
             -- LightHeaded select
 
