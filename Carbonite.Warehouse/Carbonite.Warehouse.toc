@@ -1,8 +1,12 @@
 ## Interface: 16001, 50504, 11508, 20506, 120007, 120100
 ## Title: Carbonite Warehouse @project-version@
+## Title-ptBR: Carbonite Armazém @project-version@
 ## Version: @project-version@
-## Author: No One
-## Notes: Released Under GPL
+## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
+## Notes: Your characters' items for Carbonite
+## Notes-ptBR: Itens dos seus personagens no Carbonite
+## X-License: GPL-3.0
+## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: NXWhouse
