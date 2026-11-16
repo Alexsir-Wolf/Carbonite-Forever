@@ -4,7 +4,7 @@
 local src = loader.read("Carbonite/Modules/Map/MapEngine.lua")
 
 local owners = {
-    Ping = "MiniMap.lua",
+    Ping = "MiniMap.lua", MinimapOnMouseUp = "MiniMap.lua",
     SaveView = "ViewState.lua", RestoreView = "ViewState.lua",
     IsBattleGroundMap = "Battleground.lua", IsMicroDungeon = "Battleground.lua",
     IsScenario = "Battleground.lua", GCMI_OVERRIDE = "Battleground.lua",
