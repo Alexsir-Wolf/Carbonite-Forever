@@ -1065,7 +1065,6 @@ function Nx.Quest:ScanBlizzQuestDataZone(WatchUpdate)
                     qObjl = #quest["Objectives"]
                 end
                 local needEnd = isComplete and not quest["End"]
-                local fac = UnitFactionGroup ("player") == "Horde" and 1 or 2
 
                 -- Enter the patch block whenever Blizzard's API has objectives
                 -- to contribute (lbCnt > 0) — even if we already have static
@@ -1080,7 +1079,8 @@ function Nx.Quest:ScanBlizzQuestDataZone(WatchUpdate)
                         y = y * 100
 --                        Nx.prt ("%s #%s %s %s %s %s", mapId, n, id, x or "nil", y or "nil", objective and objective.text or "nil")
                         if not quest["Quest"] then
-                            quest["Quest"] = format ("[[%s|%s|%s|0|0|0]]",title,fac,level)
+                            quest["Quest"] = Nx.Quest:SynthHeader (title, level)
+                            quest.Synth = true
                         end
                         if needEnd or bit_band (patch, 1) then
                             if not quest["End"] then --or (bit_band(patch,1) and mapId == MapUtil.GetDisplayableMapForPlayer()) then --disable this check as it's logic fails when there's no objectives defined in QuestDB for QuestID
@@ -1181,49 +1181,26 @@ function Nx.Quest:CalcPreviousDone (qId)
 
     local cnt = 0
 
-    for mungeId, q in pairs (Nx.Quests) do
-        if mungeId < 0 then
-            break
-        end
+    -- Keys are real quest ids; negative keys hold patch flags (numbers).
+    for startId, q in pairs (Nx.Quests) do
+        if type (q) == "table" and q.CNum == 1 and startId > 0 then    -- Chain starters only
 
-        if q.CNum == 1 then        -- Only look at chain starters
-
-            local id = (mungeId + 3) / 2 - 7
-            local qc = q
-            -- Guard against cycles in the nextId chain (e.g. A->B->A). Without
-            -- a visited set a looped chain spins forever -> "script ran too
-            -- long" watchdog kill (surfaces in NxSplit/UnpackNext), which
-            -- aborts this timer mid-run and stalls dependent updates. The
-            -- inner walk also needs a qc nil-guard (a dangling nextId would
-            -- otherwise deref nil qc["Quest"]).
-            local seen = {}
+            -- Walk the chain, remembering the quests before qId. The seen set
+            -- stops looped chains (A->B->A); a dangling nextId ends at nil.
+            local before, seen = {}, {}
+            local id, qc = startId, q
             while qc and not seen[id] do
-                seen[id] = true
-
-                if id == qId then        -- Found me in chain? Mark before me complete
-
-                    local id = (mungeId + 3) / 2 - 7
-                    local qc = q
-                    local seen2 = {}
-                    while qc and id ~= qId and not seen2[id] do
-                        seen2[id] = true
-
-                        local qStatus = Nx.Quest:GetQuest (id)
-                        if qStatus ~= "C" then
-
+                if id == qId then
+                    for _, prevId in ipairs (before) do
+                        if Nx.Quest:GetQuest (prevId) ~= "C" then
                             cnt = cnt + 1
-
---                            Nx.prt ("%s %s", id, qId)
-                            Nx.Quest:SetQuest (id, "C", time())
+                            Nx.Quest:SetQuest (prevId, "C", time())
                         end
-
-                        id = self:UnpackNext (qc["Quest"])
-                        qc = Nx.Quests[id]
                     end
-
                     break
                 end
-
+                seen[id] = true
+                before[#before + 1] = id
                 id = self:UnpackNext (qc["Quest"])
                 qc = Nx.Quests[id]
             end
