@@ -4051,7 +4051,38 @@ Nx.Button.TypeData = {
 ---
 -- Initialize button system with type definitions
 --
+-- Blizzard atlases for the window buttons, used where this client has them:
+-- the red close / expand / condense buttons of the game's frames and the
+-- minimal check box. The skin's TGA stays for any atlas the client lacks.
+Nx.Button.ClientAtlases = {
+    Close = { AtlasUp = "RedButton-Exit", AtlasDn = "RedButton-exit-pressed" },
+    Max = { AtlasUp = "RedButton-Expand", AtlasDn = "RedButton-Expand-Pressed" },
+    MaxOn = { AtlasUp = "RedButton-Condense", AtlasDn = "RedButton-Condense-Pressed", Untinted = true },
+}
+for _, name in ipairs ({ "Chk", "Toggle", "Opts", "MapAutoScale" }) do
+    Nx.Button.ClientAtlases[name] = { AtlasUp = "checkbox-minimal", AtlasDn = "checkbox-minimal",
+                                      IconDn = "checkmark-minimal", IconScale = 1 }
+end
+
+---
+-- Give each button type its Blizzard atlases when the client has all of them.
+--
+function Nx.Button:UseClientAtlases()
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    if not info then return end
+    for name, look in pairs (self.ClientAtlases) do
+        local typ = self.TypeData[name]
+        if typ and info (look.AtlasUp) and info (look.AtlasDn) and (not look.IconDn or info (look.IconDn)) then
+            typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
+            typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
+            if look.Untinted then typ.VRGBAUp = nil end
+        end
+    end
+end
+
 function Nx.Button:Init()
+
+    self:UseClientAtlases()
 
     local f = CreateFrame ("Frame", nil, UIParent, "BackdropTemplate")
     self.OverFrm = f
