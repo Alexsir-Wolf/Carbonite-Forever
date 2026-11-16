@@ -281,3 +281,5 @@ L["Routed %s nodes, %d yards in %.1f secs"] = "Rota com %s pontos, %d jardas em 
 L["%d days, %d hours, %d minutes, %d seconds"] = "%d dias, %d horas, %d minutos e %d segundos"
 L["%m/%d/%y"] = "%d/%m/%y"
 L[" (Part %d)"] = " (Parte %d)"
+L["Date"] = "Data"
+L["Page"] = "Página"

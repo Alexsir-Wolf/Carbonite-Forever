@@ -3277,7 +3277,7 @@ function Nx.Opts:Create()
 
     list:SetLineHeight (8)
 
-    list:ColumnAdd ("Page", 1, listW)
+    list:ColumnAdd (L["Page"], 1, listW)
 
     for k, t in ipairs (Nx.OptsData) do
 
