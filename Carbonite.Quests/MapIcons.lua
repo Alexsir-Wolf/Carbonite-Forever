@@ -1001,8 +1001,9 @@ local function RefreshTaskInfoCache(mapID, forceMapBoundary)
     return taskInfoCache.data
 end
 
+-- World quests exist only on Retail; Forever has C_TaskQuest but no tasks.
 local taskInfoCacheTimer = nil
-if C_TaskQuest and C_TaskQuest.GetQuestsOnMap then
+if Nx.isRetail and C_TaskQuest and C_TaskQuest.GetQuestsOnMap then
     taskInfoCacheTimer = C_Timer.NewTicker(1, function()
         if Nx.Map and Nx.Map.UpdateMapID then
             RefreshTaskInfoCache(Nx.Map.UpdateMapID, false)
