@@ -95,7 +95,7 @@ function DC:Refresh()
     if native and not (self.NativeSeen and self.NativeSeen[native]) then
         self.NativeSeen = self.NativeSeen or {}
         self.NativeSeen[native] = true
-        Nx.prt(L["The game now provides a map for this dungeon (map %d)"], native)
+        Nx.prtD(L["The game now provides a map for this dungeon (map %d)"], native)
     end
     local fojji, dj = Fojji(), DJ()
     if fojji then
