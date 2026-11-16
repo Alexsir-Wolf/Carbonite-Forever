@@ -106,6 +106,9 @@ end
 -- @param str  Label for the stack trace
 --
 function Nx.prtStack (str)
+    if not Nx.DebugOn then
+        return
+    end
     local s = debugstack (2, 3, 2)
     s = gsub (s, "Interface\\AddOns\\", "")
     Nx.prtD ("%s: %s", str, s)
