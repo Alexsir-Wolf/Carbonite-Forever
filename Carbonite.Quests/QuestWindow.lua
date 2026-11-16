@@ -2784,204 +2784,205 @@ function Nx.Quest.List:Update()
             local quest = Nx.Quests[qId]
             if not quest then
                 Nx.prt (L["nil quest %s"], qId)
-            end
-            local qname, side, lvl, minlvl, next = Quest:Unpack (quest["Quest"])
+            else
+                local qname, side, lvl, minlvl, next = Quest:Unpack (quest["Quest"])
 
-            local status, qTime = Nx.Quest:GetQuest (qId)
-            local qCompleted = status == "C"
+                local status, qTime = Nx.Quest:GetQuest (qId)
+                local qCompleted = status == "C"
 
-            if not quest.CNum or quest.CNum == 1 then
-                addBlank = true
-            end
-
-            -- Compute show fresh per quest. The previous implementation
-            -- carried `showchain` across iterations to "show all members of a
-            -- chain together" — but pairs(Quest.Sorted) doesn't traverse in
-            -- chain order, so the inherited show leaked into unrelated
-            -- quests and broke both zone and level filters in this tab.
-            -- Each quest is now evaluated independently; chain heads still
-            -- get the CLvlMax-based "any reachable level in the chain"
-            -- relaxation, while chain members are filtered by their own lvl.
-            local show = true
-
-            if not showLowLevel then
-                if quest.CLvlMax then
-                    show = show and quest.CLvlMax >= minLevel
-                else
-                    show = show and ((lvl == 0) or (lvl >= minLevel))
-                end
-            end
-            show = show and lvl <= maxLevel
-
-            if show and not showAllZones then
-                show = self:CheckShow (mapId, qsIndex)
-            end
-
-            if not (Nx.QuestFreq and Nx.QuestFreq[qId]) then
-                if (not showFinished and qCompleted) or showOnlyDailies then
-                    show = false
-                end
-            end
-
-            if show then
-
-                local lvlStr = format ("|cffd0d0d0%2d", lvl)
-                -- Prefer the live, localized title; fall back to Questie's
-                -- per-locale patch table; final fallback is the English
-                -- name baked into the Quest header. A live-cache miss kicks
-                -- a server request so the next refresh picks up the real
-                -- localized name (see Quest:GetLocalizedName).
-                local title = Quest:GetLocalizedName (qId, qname)
-
-                local cati = Quest:UnpackCategory (quest["Quest"])
-                if cati > 0 then
-                    title = title .. " <" .. Nx.QuestCategory[cati] .. ">"
+                if not quest.CNum or quest.CNum == 1 then
+                    addBlank = true
                 end
 
-                if quest.CNum then
-
---                    if quest.CNum > 1 then
---                        lvlStr = "    " .. lvlStr
---                    end
-                    title = title .. format (L[" (Part %d)"], quest.CNum)
-                end
-
-                local tag = qCompleted and L["(History) "] or ""
-
-                local freq = Nx.QuestFreq and Nx.QuestFreq[qId]
-                if freq then
-                    local label = Quest.QuestFreqLabels[freq] or L["Daily"]
-                    local rew = Nx.QuestReward and Nx.QuestReward[qId]
-                    tag = "|cffd060d0(" .. label
-                    if rew then
-                        if (rew.m or 0) > 0 then
-                            tag = tag .. format (" %.2fg", rew.m / 10000)
-                        end
-                        for _, rp in ipairs (rew.r or {}) do    -- {faction, value}
-                            tag = format ("%s, +%d %s", tag, rp[2], rp[1])
-                        end
-                    end
-                    tag = tag .. ")"
-                end
-
-                local filterName = ""
-
-                -- Resolve Start/End through the alt-spawn picker so a
-                -- multi-city quest (holiday turn-in, capital quartermaster)
-                -- displays the spawn matching the player's zone or faction
-                -- instead of whichever copy the curated data happened to
-                -- pick from.
-                local sMapName
-                local sName, sMapId = Quest:UnpackSE (Quest:ResolveStart (qId))
-                if sMapId then
-                    sMapName = Map:IdToName (sMapId)
-                    filterName = format ("%s(%s)", sName, sMapName)
-                end
-
-                local eMapName
-                local eName, eMapId = Quest:UnpackSE (Quest:ResolveEnd (qId))
-                if eMapId then
-                    eMapName = Map:IdToName (eMapId)
-                    if sName ~= eName then
-                        filterName = format ("%s%s(%s)", filterName, eName, eMapName)
-                    end
-                end
-
+                -- Compute show fresh per quest. The previous implementation
+                -- carried `showchain` across iterations to "show all members of a
+                -- chain together" — but pairs(Quest.Sorted) doesn't traverse in
+                -- chain order, so the inherited show leaked into unrelated
+                -- quests and broke both zone and level filters in this tab.
+                -- Each quest is now evaluated independently; chain heads still
+                -- get the CLvlMax-based "any reachable level in the chain"
+                -- relaxation, while chain members are filtered by their own lvl.
                 local show = true
 
-                if self.Filters[self.TabSelected] ~= "" then
-
-                    for n = 1, 15 do
-
-                        local obj = quest["Objectives"]
-                        if obj then obj = quest["Objectives"][n] end
-                        if not obj then
-                            break
-                        end
-
-                        local name, zone = Nx.Quest:UnpackObjectiveNew (obj)
-                        if zone then
-                            filterName = filterName .. Map:IdToName (zone)
-                        end
+                if not showLowLevel then
+                    if quest.CLvlMax then
+                        show = show and quest.CLvlMax >= minLevel
+                    else
+                        show = show and ((lvl == 0) or (lvl >= minLevel))
                     end
+                end
+                show = show and lvl <= maxLevel
 
-                    local str = strlower (format ("%2d %s %s %s", lvl, title, filterName, tag))
-                    local filtStr = strlower (self.Filters[self.TabSelected])
+                if show and not showAllZones then
+                    show = self:CheckShow (mapId, qsIndex)
+                end
 
-                    show = strfind (str, filtStr, 1, true)
+                if not (Nx.QuestFreq and Nx.QuestFreq[qId]) then
+                    if (not showFinished and qCompleted) or showOnlyDailies then
+                        show = false
+                    end
                 end
 
                 if show then
 
-                    if addBlank then
-                        addBlank = false
-                        list:ItemAdd (0)
+                    local lvlStr = format ("|cffd0d0d0%2d", lvl)
+                    -- Prefer the live, localized title; fall back to Questie's
+                    -- per-locale patch table; final fallback is the English
+                    -- name baked into the Quest header. A live-cache miss kicks
+                    -- a server request so the next refresh picks up the real
+                    -- localized name (see Quest:GetLocalizedName).
+                    local title = Quest:GetLocalizedName (qId, qname)
+
+                    local cati = Quest:UnpackCategory (quest["Quest"])
+                    if cati > 0 then
+                        title = title .. " <" .. Nx.QuestCategory[cati] .. ">"
                     end
 
-                    dbTitleNum = dbTitleNum + 1
+                    if quest.CNum then
 
-                    local trackMode = Quest.Tracking[qId] or 0
-
-                    list:ItemAdd (qId * 0x10000)
-
-                    local haveStr = ""
-
-                    if qIds[qId] then
-                        haveStr = "|cffe0e0e0+ "
+    --                    if quest.CNum > 1 then
+    --                        lvlStr = "    " .. lvlStr
+    --                    end
+                        title = title .. format (L[" (Part %d)"], quest.CNum)
                     end
 
-                    local color = GetCachedDifficultyColorStr(lvl)
+                    local tag = qCompleted and L["(History) "] or ""
 
-                    local str = format ("%s %s%s%s", lvlStr, haveStr, color, title)
-
-                    if showQId then
-                        str = str .. format (" [%s]", qId)
+                    local freq = Nx.QuestFreq and Nx.QuestFreq[qId]
+                    if freq then
+                        local label = Quest.QuestFreqLabels[freq] or L["Daily"]
+                        local rew = Nx.QuestReward and Nx.QuestReward[qId]
+                        tag = "|cffd060d0(" .. label
+                        if rew then
+                            if (rew.m or 0) > 0 then
+                                tag = tag .. format (" %.2fg", rew.m / 10000)
+                            end
+                            for _, rp in ipairs (rew.r or {}) do    -- {faction, value}
+                                tag = format ("%s, +%d %s", tag, rp[2], rp[1])
+                            end
+                        end
+                        tag = tag .. ")"
                     end
 
-                    local questTip = "@" .. qId
+                    local filterName = ""
 
-                    list:ItemSet (2, str)
-                    list:ItemSet (4, tag)
+                    -- Resolve Start/End through the alt-spawn picker so a
+                    -- multi-city quest (holiday turn-in, capital quartermaster)
+                    -- displays the spawn matching the player's zone or faction
+                    -- instead of whichever copy the curated data happened to
+                    -- pick from.
+                    local sMapName
+                    local sName, sMapId = Quest:UnpackSE (Quest:ResolveStart (qId))
+                    if sMapId then
+                        sMapName = Map:IdToName (sMapId)
+                        filterName = format ("%s(%s)", sName, sMapName)
+                    end
 
-                    if sName then
+                    local eMapName
+                    local eName, eMapId = Quest:UnpackSE (Quest:ResolveEnd (qId))
+                    if eMapId then
+                        eMapName = Map:IdToName (eMapId)
+                        if sName ~= eName then
+                            filterName = format ("%s%s(%s)", filterName, eName, eMapName)
+                        end
+                    end
+
+                    local show = true
+
+                    if self.Filters[self.TabSelected] ~= "" then
+
+                        for n = 1, 15 do
+
+                            local obj = quest["Objectives"]
+                            if obj then obj = quest["Objectives"][n] end
+                            if not obj then
+                                break
+                            end
+
+                            local name, zone = Nx.Quest:UnpackObjectiveNew (obj)
+                            if zone then
+                                filterName = filterName .. Map:IdToName (zone)
+                            end
+                        end
+
+                        local str = strlower (format ("%2d %s %s %s", lvl, title, filterName, tag))
+                        local filtStr = strlower (self.Filters[self.TabSelected])
+
+                        show = strfind (str, filtStr, 1, true)
+                    end
+
+                    if show then
+
+                        if addBlank then
+                            addBlank = false
+                            list:ItemAdd (0)
+                        end
+
+                        dbTitleNum = dbTitleNum + 1
+
+                        local trackMode = Quest.Tracking[qId] or 0
+
                         list:ItemAdd (qId * 0x10000)
 
-                        if not eName then
-                            list:ItemSet (2, "     |cff6060ff" ..L["Start/End: "] .. sName)
-                        else
-                            list:ItemSet (2, "     |cff6060ff" ..L["Start: "] .. sName)
-                        end
-                        list:ItemSet (4, sMapName)
+                        local haveStr = ""
 
-                        list:ItemSetButton ("QuestWatch", false)
-                        if bit_band (trackMode, 1) > 0 then
-                            list:ItemSetButton ("QuestWatch", true)
+                        if qIds[qId] then
+                            haveStr = "|cffe0e0e0+ "
                         end
-                        list:ItemSetButtonTip (questTip)
+
+                        local color = GetCachedDifficultyColorStr(lvl)
+
+                        local str = format ("%s %s%s%s", lvlStr, haveStr, color, title)
+
+                        if showQId then
+                            str = str .. format (" [%s]", qId)
+                        end
+
+                        local questTip = "@" .. qId
+
+                        list:ItemSet (2, str)
+                        list:ItemSet (4, tag)
+
+                        if sName then
+                            list:ItemAdd (qId * 0x10000)
+
+                            if not eName then
+                                list:ItemSet (2, "     |cff6060ff" ..L["Start/End: "] .. sName)
+                            else
+                                list:ItemSet (2, "     |cff6060ff" ..L["Start: "] .. sName)
+                            end
+                            list:ItemSet (4, sMapName)
+
+                            list:ItemSetButton ("QuestWatch", false)
+                            if bit_band (trackMode, 1) > 0 then
+                                list:ItemSetButton ("QuestWatch", true)
+                            end
+                            list:ItemSetButtonTip (questTip)
+                        end
+                        if eName then
+                            list:ItemAdd (qId * 0x10000 + 16 * 0x100)
+                            list:ItemSet (2, L["     |cff6060ffEnd: "] .. eName)
+                            list:ItemSet (4, eMapName)
+
+                            list:ItemSetButton ("QuestWatch", false)
+                            if bit_band (trackMode, 0x10000) > 0 then
+                                list:ItemSetButton ("QuestWatch", true)
+                            end
+                            list:ItemSetButtonTip (questTip)
+                        end
+
+                        -- Objective rows intentionally omitted from the
+                        -- Database tab. Many quests have only one POI baked in
+                        -- (a single city for multi-city/multi-faction quests,
+                        -- a single chosen spawn cluster for spread-out kill
+                        -- objectives) so the row would mislead more than help.
+                        -- Tracked-quest objective POIs in the live tracker are
+                        -- unaffected — they get their text from the API.
                     end
-                    if eName then
-                        list:ItemAdd (qId * 0x10000 + 16 * 0x100)
-                        list:ItemSet (2, L["     |cff6060ffEnd: "] .. eName)
-                        list:ItemSet (4, eMapName)
-
-                        list:ItemSetButton ("QuestWatch", false)
-                        if bit_band (trackMode, 0x10000) > 0 then
-                            list:ItemSetButton ("QuestWatch", true)
-                        end
-                        list:ItemSetButtonTip (questTip)
-                    end
-
-                    -- Objective rows intentionally omitted from the
-                    -- Database tab. Many quests have only one POI baked in
-                    -- (a single city for multi-city/multi-faction quests,
-                    -- a single chosen spawn cluster for spread-out kill
-                    -- objectives) so the row would mislead more than help.
-                    -- Tracked-quest objective POIs in the live tracker are
-                    -- unaffected — they get their text from the API.
                 end
-            end
 
---            qsindex = qsindex + 1
+    --            qsindex = qsindex + 1
+            end
         end
 
         local str = (showAllZones and "Full" or Map:IdToName (mapId)) .. L[" Database"]
@@ -3188,6 +3189,8 @@ function Nx.Quest.List:OnDetailsSetSize (w, h)
     local dw = (w - barW - 8) / scale
 
 --    Nx.Quest.List:DetailsSetWidth (dw)
+
+    Nx.Quest:FitDetailsScrollChild()
 end
 
 function Nx.Quest.List:DetailsSetWidth (w)
@@ -3261,6 +3264,54 @@ function Nx.Quest:UpdateQuestDetailsTimer()
             _G["QuestInfoObjective" .. n]:SetTextColor (r, g, b)
         end
     end
+
+    -- The scroll child keeps the fixed 333 px height from the XML, so long quest text
+    -- had no scroll range. Fit it to the content now and again after the layout settles.
+    Nx.Quest:FitDetailsScrollChild()
+    C_Timer.After (0, function() Nx.Quest:FitDetailsScrollChild() end)
+end
+
+-- Lowest bottom edge among the shown descendants of a frame (same scale as the child).
+local function detailsContentBottom (frame, depth, low)
+    for _, region in ipairs ({ frame:GetRegions() }) do
+        if region:IsShown() then
+            local b = region:GetBottom()
+            if b and (not low or b < low) then
+                low = b
+            end
+        end
+    end
+    if depth > 0 then
+        for _, child in ipairs ({ frame:GetChildren() }) do
+            if child:IsShown() then
+                local b = child:GetBottom()
+                if b and (not low or b < low) then
+                    low = b
+                end
+                low = detailsContentBottom (child, depth - 1, low)
+            end
+        end
+    end
+    return low
+end
+
+function Nx.Quest:FitDetailsScrollChild()
+
+    local scroll = NxQuestD
+    local child = NXQuestLogDetailScrollChildFrame
+    if not scroll or not child then
+        return
+    end
+
+    local top = child:GetTop()
+    local low = detailsContentBottom (child, 4)
+    if not top or not low then
+        return
+    end
+
+    local minH = scroll:GetHeight() / child:GetScale()
+    child:SetHeight (max (top - low + 16, minH))
+    scroll:UpdateScrollChildRect()
 end
 
 -------------------------------------------------------------------------------
