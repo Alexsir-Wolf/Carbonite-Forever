@@ -3249,7 +3249,10 @@ function Nx.Quest:UpdateQuestDetailsTimer()
     -- The scroll child keeps the fixed 333 px height from the XML, so long quest text
     -- had no scroll range. Fit it to the content now and again after the layout settles.
     Nx.Quest:FitDetailsScrollChild()
-    C_Timer.After (0, function() Nx.Quest:FitDetailsScrollChild() end)
+    -- Reward icons and item names arrive a moment later and grow the rewards block.
+    for _, delay in ipairs ({ 0, .2, .6 }) do
+        C_Timer.After (delay, function() Nx.Quest:FitDetailsScrollChild() end)
+    end
 end
 
 -- Lowest bottom edge among the shown descendants of a frame (same scale as the child).
@@ -3288,6 +3291,24 @@ function Nx.Quest:FitDetailsScrollChild()
     local low = detailsContentBottom (child, 4)
     if not top or not low then
         return
+    end
+
+    -- QuestInfo lays its rewards out under the text but may keep the rewards frame
+    -- parented elsewhere, out of the child's descendants. Count it too, in the
+    -- child's scale, or the scroll range stops above the rewards and cuts them.
+    local childScale = child:GetEffectiveScale()
+    local candidates = { QuestInfoFrame and QuestInfoFrame.rewardsFrame or false,
+                         QuestInfoRewardsFrame or false, MapQuestInfoRewardsFrame or false }
+    for _, frame in ipairs (candidates) do
+        if frame and frame:IsVisible() then
+            local ratio = frame:GetEffectiveScale() / childScale
+            local fTop = frame:GetTop()
+            local fLow = detailsContentBottom (frame, 3, frame:GetBottom())
+            -- Only a frame drawn inside the details panel, below its top.
+            if fTop and fLow and fTop * ratio <= top then
+                low = min (low, fLow * ratio)
+            end
+        end
     end
 
     local minH = scroll:GetHeight() / child:GetScale()
