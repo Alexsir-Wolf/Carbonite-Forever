@@ -341,7 +341,6 @@ L[", |cffe0c020Need "] = true
 L["Start/End: "] = true
 L["Start: "] = true
 L["     |cff6060ffEnd: "] = true
-L["|cffc0c0c0--- Levels %d to %d ---"] = true
 L["%s\nEnd: %s (%.1f %.1f)"] = true
 L["Quest: "] = true
 L["%s\nStart: %s (%.1f %.1f)"] = true
@@ -437,3 +436,5 @@ L["QUEST LOADER"] = true
 L["%d Quests Loaded"] = true
 L["Starting Background Quest Data Loading..."] = true
 L["%m/%d %H:%M:%S"] = true
+
+L["Levels %d to %d"] = true

@@ -1,0 +1,20 @@
+-- Quest log list in the game's style: gold zone headers without dashes, themed selection (#42)
+
+describe("lista de quests", function()
+    it("os cabeçalhos de zona ficam em dourado e sem os traços", function()
+        local src = loader.read("Carbonite.Quests/QuestWindow.lua")
+        expect(src:find("---- %s ----", 1, true)).toBeNil()
+        expect(src:find("--- %s (%d) ---", 1, true)).toBeNil()
+        expect(src:find('format ("|cffffd100%s", header)', 1, true) ~= nil).toBe(true)
+    end)
+
+    it("a faixa de níveis usa uma chave traduzida sem os traços", function()
+        expect(loader.read("Carbonite.Quests/Locales/ptBR.lua"):find('L["Levels %d to %d"] = "Níveis %d a %d"', 1, true) ~= nil).toBe(true)
+    end)
+
+    it("a seleção e o cabeçalho das listas seguem o tema", function()
+        local src = loader.read("Carbonite/Modules/UI/UIEngine.lua")
+        expect(src:find('Paint (sfrm.texture, "selection")', 1, true) ~= nil).toBe(true)
+        expect(src:find('Paint (hfrm.texture, "listHeader")', 1, true) ~= nil).toBe(true)
+    end)
+end)
