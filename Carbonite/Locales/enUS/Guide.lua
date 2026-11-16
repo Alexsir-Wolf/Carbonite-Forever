@@ -7,6 +7,7 @@ L["Quest Givers"] = true
 L["Stable Master"] = true
 L["Flight Master"] = true
 L["Common Place"] = true
+L["Spirit Healer"] = true
 L["Auctioneer"] = true
 L["Banker"] = true
 L["Innkeeper"] = true
