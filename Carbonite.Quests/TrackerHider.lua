@@ -467,11 +467,11 @@ function Nx.Quest:Init()
     local menu = Nx.Menu:Create (self.Map.Frm)
     self.IconMenu = menu
 
-    menu:AddItem (0, "Track", self.Menu_OnTrack, self)
-    menu:AddItem (0, "Show Quest Log", self.Menu_OnShowQuest, self)
-    self.IconMenuIWatch = menu:AddItem (0, "Watch", self.Menu_OnWatch, self)
+    menu:AddItem (0, L["Track"], self.Menu_OnTrack, self)
+    menu:AddItem (0, L["Show Quest Log"], self.Menu_OnShowQuest, self)
+    self.IconMenuIWatch = menu:AddItem (0, L["Watch"], self.Menu_OnWatch, self)
 
-    menu:AddItem (0, "Add Note", self.Map.Menu_OnAddNote, self.Map)
+    menu:AddItem (0, L["Add Note"], self.Map.Menu_OnAddNote, self.Map)
 
     -- Hook quests
     --

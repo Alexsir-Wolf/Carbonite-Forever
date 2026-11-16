@@ -200,7 +200,7 @@ function Nx.Quest:ProcessQuestDB(questTotal)
         end
     end
     if Nx.qdb.profile.Quest.LoadMessages then
-        Nx.prt("|cff00ff00[|cffffff00QUEST LOADER|cff00ff00] |cffffffff" .. questTotal .. " Quests Loaded")
+        Nx.prt("|cff00ff00[|cffffff00" .. L["QUEST LOADER"] .. "|cff00ff00] |cffffffff" .. L["%d Quests Loaded"], questTotal)
     end
     Nx.QInit = true
     --Nx.Quest.List:LogUpdate()
@@ -227,7 +227,7 @@ function Nx.Quest:LoadQuestDB()
     self.Map = Map:GetMap (1)
     Nx.Quests = {}
     if Nx.qdb.profile.Quest.LoadMessages then
-        Nx.prt("|cff00ff00[|cffffff00QUEST LOADER|cff00ff00] |cffffffffStarting Background Quest Data Loading...")
+        Nx.prt("|cff00ff00[|cffffff00" .. L["QUEST LOADER"] .. "|cff00ff00] |cffffffff" .. L["Starting Background Quest Data Loading..."])
     end
     if Nx.qdb.profile.Quest.Load0 then
         C_Timer.After(1, function() questTotal = questTotal + Nx.ModQuests:Load0(); numQLoad = numQLoad - 1; end)

@@ -3,8 +3,6 @@ if not L then return end
 
 -- General Nodes
 L["Artifact"] = true
-L["Everfrost"] = true
-L["Gas"] = true
 L["Ooze Covered"] = true
 
 -- Timber (WoD Lumber Mill)

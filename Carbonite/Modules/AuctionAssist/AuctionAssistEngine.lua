@@ -56,7 +56,7 @@ end
 --
 function Nx.AuctionAssist:OnListEvent(eventName, sel)
     local name = self.List:ItemGetData(sel)
-    Nx.prt("%s", name)
+    Nx.prtD("%s", name)
     BrowseName:SetText(name)
     AuctionFrameBrowse_Search()
 end
