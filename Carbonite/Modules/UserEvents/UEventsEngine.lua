@@ -442,7 +442,7 @@ end
 -- The Gather subsystem (Nx.GatherInfo / Nx.GatherRemap / Nx.GatherCache /
 -- Nx:GatherInit / GetGather / IsGathering / HerbNameToId / MineNameToId /
 -- GatherHerb / Mine / Timber / Gather / GatherUnpack / GatherDelete* /
--- GatherImportCarb* / GatherImportBatch / GatherNodeToCarb / GatherConvert)
+-- the GatherMate2 import was removed with Carbonite.Gathermate2_Data)
 -- lives in Modules/Gather/GatherStorage.lua.
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
