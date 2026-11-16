@@ -3188,6 +3188,8 @@ function Nx.Quest.List:OnDetailsSetSize (w, h)
     local dw = (w - barW - 8) / scale
 
 --    Nx.Quest.List:DetailsSetWidth (dw)
+
+    Nx.Quest:FitDetailsScrollChild()
 end
 
 function Nx.Quest.List:DetailsSetWidth (w)
@@ -3261,6 +3263,54 @@ function Nx.Quest:UpdateQuestDetailsTimer()
             _G["QuestInfoObjective" .. n]:SetTextColor (r, g, b)
         end
     end
+
+    -- The scroll child keeps the fixed 333 px height from the XML, so long quest text
+    -- had no scroll range. Fit it to the content now and again after the layout settles.
+    Nx.Quest:FitDetailsScrollChild()
+    C_Timer.After (0, function() Nx.Quest:FitDetailsScrollChild() end)
+end
+
+-- Lowest bottom edge among the shown descendants of a frame (same scale as the child).
+local function detailsContentBottom (frame, depth, low)
+    for _, region in ipairs ({ frame:GetRegions() }) do
+        if region:IsShown() then
+            local b = region:GetBottom()
+            if b and (not low or b < low) then
+                low = b
+            end
+        end
+    end
+    if depth > 0 then
+        for _, child in ipairs ({ frame:GetChildren() }) do
+            if child:IsShown() then
+                local b = child:GetBottom()
+                if b and (not low or b < low) then
+                    low = b
+                end
+                low = detailsContentBottom (child, depth - 1, low)
+            end
+        end
+    end
+    return low
+end
+
+function Nx.Quest:FitDetailsScrollChild()
+
+    local scroll = NxQuestD
+    local child = NXQuestLogDetailScrollChildFrame
+    if not scroll or not child then
+        return
+    end
+
+    local top = child:GetTop()
+    local low = detailsContentBottom (child, 4)
+    if not top or not low then
+        return
+    end
+
+    local minH = scroll:GetHeight() / child:GetScale()
+    child:SetHeight (max (top - low + 16, minH))
+    scroll:UpdateScrollChildRect()
 end
 
 -------------------------------------------------------------------------------
