@@ -91,6 +91,11 @@ function Hotspots:Build()
                 if name and not self.byMap[mapID] then
                     local color, desc = Carbonite.Modules.Map.MapIDs:GetZoneDescription(mapID)
                     local tip = ("%s, %s%s (%s)"):format(cname, color, name, desc)
+                    local fishing = Carbonite.Modules.Map.ZoneFishing and Carbonite.Modules.Map.ZoneFishing:Get(mapID)
+                    if fishing then
+                        local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite", true)
+                        tip = ("%s\n|cff80c0ff%s: %s|r"):format(tip, L and L["Fishing"] or "Fishing", fishing)
+                    end
                     local record = self:Record(map, mapID, tip)
                     if record then
                         setBounds(map, mapID, record.spot, 0, 0, 100, 100)
