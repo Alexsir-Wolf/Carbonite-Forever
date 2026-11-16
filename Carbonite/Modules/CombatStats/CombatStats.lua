@@ -15,15 +15,8 @@
 local Carbonite = _G.Carbonite
 local Module = Carbonite.Core.Module
 
-local CombatStats = Module:New("CombatStats", {
-    defaults = {
-        profile = {
-            CombatStats = {
-                AnnounceUpdates = true,
-            },
-        },
-    },
-})
+-- The chat summary is EventHandlers.lua's (Battleground.ShowStats option).
+local CombatStats = Module:New("CombatStats")
 
 local stats = {
     KBs      = 0,
@@ -108,14 +101,5 @@ function CombatStats:OnEnable()
 end
 
 function CombatStats:OnBattlefieldScore()
-    if not self:Refresh() then return end
-    local db = self:DB() and self:DB().profile or {}
-    if not db.AnnounceUpdates then return end
-
-    -- Per-message announce in the chat frame Carbonite is configured
-    -- to use. We don't depend on Nx.prt anymore; use Carbonite's
-    -- logger so the new color-prefix is consistent.
-    local snap = self:GetStats()
-    self.log:info("%d KB (#%d), %d deaths, %d HK, %d honor",
-        snap.KBs, self:GetKBRank(), snap.Deaths, snap.HKs, snap.Honor)
+    self:Refresh()
 end
