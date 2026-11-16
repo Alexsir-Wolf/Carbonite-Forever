@@ -429,3 +429,4 @@ L["Thick Outline"] = true
 
 L["Wowhead Link"] = true
 L["Set as Active Quest"] = true
+L["characters"] = true

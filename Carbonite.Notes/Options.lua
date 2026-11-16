@@ -46,7 +46,7 @@ function Nx.Notes:GetOptionsConfig()
                 handysize = {
                     order = 3, type = "range", width = "normal",
                     min = 10, max = 60, step = 5,
-                    name = L["Handnotes Icon Size"],
+                    name = Nx.Opts.Unit(L["Handnotes Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.HandyNotesSize end,
                     set = function(_, value)
                         local map = Nx.Map:GetMap(1)
@@ -85,7 +85,7 @@ function Nx.Notes:GetOptionsConfig()
                 raresize = {
                     order = 5, type = "range", width = "normal",
                     min = 10, max = 60, step = 5,
-                    name = L["RareScanner Icon Size"],
+                    name = Nx.Opts.Unit(L["RareScanner Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.RareScannerSize end,
                     set = function(_, value)
                         local map = Nx.Map:GetMap(1)
@@ -139,7 +139,7 @@ function Nx.Notes:GetOptionsConfig()
                 questiesize = {
                     order = 8, type = "range", width = "normal",
                     min = 10, max = 40, step = 1,
-                    name = L["Questie Icon Size"],
+                    name = Nx.Opts.Unit(L["Questie Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.QuestieSize end,
                     set = function(_, value)
                         local map = Nx.Map:GetMap(1)
@@ -171,7 +171,7 @@ function Nx.Notes:GetOptionsConfig()
                 rxpsize = {
                     order = 10, type = "range", width = "normal",
                     min = 16, max = 48, step = 2,
-                    name = L["RXPGuides Icon Size"],
+                    name = Nx.Opts.Unit(L["RXPGuides Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.RXPSize end,
                     set = function(_, value)
                         local map = Nx.Map:GetMap(1)
@@ -224,7 +224,7 @@ function Nx.Notes:GetOptionsConfig()
                 gatherlitesize = {
                     order = 14, type = "range", width = "normal",
                     min = 8, max = 32, step = 1,
-                    name = L["GatherLite Icon Size"],
+                    name = Nx.Opts.Unit(L["GatherLite Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.GatherLiteSize end,
                     set = function(_, value)
                         local map = Nx.Map:GetMap(1)
@@ -238,6 +238,5 @@ function Nx.Notes:GetOptionsConfig()
             },
         }
     end
-    Nx.Opts:AddToProfileMenu(L["Notes"], 4, Nx.fdb)
     return notesoptions
 end

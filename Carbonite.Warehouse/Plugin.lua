@@ -2,7 +2,7 @@
 -- New front door for the Warehouse plugin (inventory tracking across
 -- characters and guild bank). Wraps the legacy CarboniteWarehouse
 -- AceAddon and Nx.Warehouse namespace with the new Carbonite Plugin
--- pattern: shared logger, EventBus, options registration.
+-- pattern: shared logger and EventBus.
 
 local Carbonite = _G.Carbonite
 if not Carbonite then return end
@@ -85,54 +85,7 @@ function Warehouse:ToggleWindow()
     if Nx and Nx.Warehouse and Nx.Warehouse.ToggleShow then Nx.Warehouse:ToggleShow() end
 end
 
-Plugin.Bind(WHAddon, "Warehouse", {
-    displayName = "Warehouse",
-    order       = 50,
-    options = function()
-        local Nx = _G.Nx
-        local function whDB()
-            if Nx and Nx.wdb and Nx.wdb.profile then
-                Nx.wdb.profile.Warehouse = Nx.wdb.profile.Warehouse or {}
-                return Nx.wdb.profile.Warehouse
-            end
-            return {}
-        end
-        return {
-            type = "group",
-            name = "Warehouse",
-            args = {
-                blurb = {
-                    order = 1, type = "description",
-                    name = "Carbonite Warehouse tracks bag, bank, mail, and guild-bank inventories for every character on your account.\n\nThe full options panel still ships from the legacy module while the rewrite is in progress.",
-                },
-                openWindow = {
-                    order = 2, type = "execute", name = "Open Warehouse window",
-                    func = function() Warehouse:ToggleWindow() end,
-                },
-                showRarity = {
-                    order = 3, type = "toggle", name = "Color items by rarity",
-                    get = function() return whDB().ShowRarity end,
-                    set = function(_, v) whDB().ShowRarity = v end,
-                },
-                showCount = {
-                    order = 4, type = "toggle", name = "Show stack count",
-                    get = function() return whDB().ShowCount end,
-                    set = function(_, v) whDB().ShowCount = v end,
-                },
-                trackMail = {
-                    order = 5, type = "toggle", name = "Track items in mail",
-                    get = function() return whDB().TrackMail end,
-                    set = function(_, v) whDB().TrackMail = v end,
-                },
-                trackAH = {
-                    order = 6, type = "toggle", name = "Track auction house purchases",
-                    get = function() return whDB().TrackAH end,
-                    set = function(_, v) whDB().TrackAH = v end,
-                },
-            },
-        }
-    end,
-})
+Plugin.Bind(WHAddon, "Warehouse")
 
 -- LDB tooltip helper: other plugins (Quests, Map) can ask the
 -- Warehouse plugin to count an item without depending on private

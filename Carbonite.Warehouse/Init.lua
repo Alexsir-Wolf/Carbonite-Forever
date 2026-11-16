@@ -40,6 +40,7 @@ function CarboniteWarehouse:OnInitialize()
         return
     end
     Nx.wdb = LibStub("AceDB-3.0"):New("NXWhouse", Nx.Warehouse.defaults, true)
+    Nx.Opts:FollowMainProfile(Nx.wdb)
     Nx.Button.TypeData["MapWarehouse"] = {
         Up = "$INV_Misc_EngGizmos_17",
         SizeUp = 22,
