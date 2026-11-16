@@ -6397,9 +6397,9 @@ function Nx.Map:Update (elapsed)
         end
     end
 
-    if Nx.InBG and Nx.InBG ~= rid then    -- Left or changed BG?
-
---        Nx.prt ("Left BG %s", Nx.InBG)
+    -- Nx.InBG is the yes/no flag Battleground.lua keeps; the battleground map the player
+    -- entered is tracked here, in Nx.InBGMapId.
+    if Nx.InBGMapId and Nx.InBGMapId ~= rid then    -- Left or changed BG?
 
         local cb = Nx.Combat
 
@@ -6410,7 +6410,7 @@ function Nx.Map:Update (elapsed)
         else
             local total = cb.KBs + cb.Deaths + cb.HKs + cb.Honor
             if total > 0 then
-                local sname = Nx.Map:GetShortName (Nx.InBG)
+                local sname = Nx.Map:GetShortName (Nx.InBGMapId) or "?"
                 Nx.UEvents:AddInfo (format ("Left %s %d %d %d %d", sname, cb.KBs, cb.Deaths, cb.HKs, cb.Honor))
 
                 local tm = GetTime() - cb.BGEnterTime
@@ -6437,7 +6437,7 @@ function Nx.Map:Update (elapsed)
         cb.Deaths = 0
         cb.HKs = 0
         cb.Honor = 0
-        Nx.InBG = nil
+        Nx.InBGMapId = nil
 
         if Nx.InArena then
             self.LOpts.NXMMFull = false
@@ -6445,8 +6445,8 @@ function Nx.Map:Update (elapsed)
         Nx.InArena = nil
     end
 
-    if inBG and Nx.InBG ~= rid then
-        Nx.InBG = rid
+    if inBG and Nx.InBGMapId ~= rid then
+        Nx.InBGMapId = rid
 
         local cb = Nx.Combat
         cb.BGEnterTime = GetTime()
