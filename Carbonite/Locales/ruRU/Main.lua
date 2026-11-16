@@ -119,7 +119,6 @@ L["Reset Layout"] = "Сбросить "
 
 -- UI Tooltips
 L["Close/Menu"] = "Закрыть/Меню"
-L["Close/Unlock"] = "Закрыть/Разблокировать"
 L["Pick Color"] = "Взять цвет"
 L["Unlock"] = "Разблокировать"
 L["Maximize"] = "Максимизировать"
