@@ -6040,7 +6040,7 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
 
         hfrm.texture = hfrm:CreateTexture()
         hfrm.texture:SetAllPoints (hfrm)
-        hfrm.texture:SetColorTexture (.2, .2, .3, 1)
+        Carbonite.UI.Skin:Paint (hfrm.texture, "listHeader")
         hfrm:SetPoint ("TOPLEFT", 0, 0)
         hfrm:Show()
     end
@@ -6053,7 +6053,7 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
 
     sfrm.texture = sfrm:CreateTexture()
     sfrm.texture:SetAllPoints (sfrm)
-    sfrm.texture:SetColorTexture (.4, .4, .5, .4)
+    Carbonite.UI.Skin:Paint (sfrm.texture, "selection")
     sfrm.texture:SetBlendMode ("Add")
 
 --    sfrm:SetHeight (inst:GetLineH() + 1)

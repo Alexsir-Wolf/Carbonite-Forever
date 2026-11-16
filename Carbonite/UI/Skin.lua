@@ -52,6 +52,8 @@ Skin.themes = {
             separator   = "0.45|0.36|0.20|1",
             scrollTrack = "0.08|0.07|0.05|0.85",
             scrollThumb = "0.60|0.48|0.24|1",
+            listHeader  = "0.22|0.16|0.08|1",
+            selection   = "0.55|0.42|0.05|0.45",
         },
     },
     ["Blackout"] = {
@@ -111,6 +113,8 @@ Skin.themes = {
             separator   = "0.60|0.60|0.65|1",
             scrollTrack = "0.70|0.72|0.80|0.6",
             scrollThumb = "0.35|0.42|0.65|0.9",
+            listHeader  = "0.75|0.76|0.82|1",
+            selection   = "0.25|0.30|0.50|0.35",
         },
     },
     ["Glass"] = {
@@ -153,6 +157,8 @@ Skin.activeName = "Blizzard"
 --   separator   tab bar border lines
 --   scrollTrack scroll bar track
 --   scrollThumb scroll bar thumb
+--   listHeader  column header strip of a list
+--   selection   selected list row (added on top, ADD blend)
 Skin.tokens = {
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
@@ -162,6 +168,8 @@ Skin.tokens = {
     separator   = "0.313|0.313|0.313|1",
     scrollTrack = "0.3|0.3|0.4|0.6",
     scrollThumb = "0.3|0.3|0.7|0.9",
+    listHeader  = "0.2|0.2|0.3|1",
+    selection   = "0.4|0.4|0.5|0.4",
 }
 
 -- Parse a "r|g|b|a" string the legacy save format uses.
