@@ -87,7 +87,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("channels", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("channels", function()
         local log = Carbonite.Core.Logger:Get("ChannelManager")
         log:info("addon channel: %s", tostring(ChannelManager:GetAddonChannelName()))
         log:info("total in-use channels: %d", ChannelManager:GetChannelCount())

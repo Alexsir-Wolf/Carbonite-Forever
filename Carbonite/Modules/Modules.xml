@@ -121,8 +121,7 @@
     <!-- Engine extracted from Carbonite.lua: AH browse hook plus
          the event-routed AceEvent callbacks. -->
     <Script file="AuctionAssist\AuctionAssistEngine.lua" />
-    <Script file="SlashHandler\SlashHandler.lua" />
-    <!-- The legacy /carb dispatcher extracted from Carbonite.lua. -->
+    <!-- The /carb subcommands of the legacy dispatcher. -->
     <Script file="SlashHandler\SlashCommandEngine.lua" />
     <Script file="EventDispatcher\EventDispatcher.lua" />
     <Script file="ChatHooks\ChatHooks.lua" />

@@ -58,7 +58,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("bindings", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("bindings", function()
         local log = Carbonite.Core.Logger:Get("HotkeyBindings")
         log:info("Carbonite key bindings:")
         HotkeyBindings:Each(function(action, info)

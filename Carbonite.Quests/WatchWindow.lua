@@ -3553,7 +3553,7 @@ do
 
                     local title = f:CreateFontString (nil, "OVERLAY", "GameFontNormal")
                     title:SetPoint ("TOPLEFT", 10, -8)
-                    title:SetText ("|cffffd100" .. L["Quest Watch"] .. "|r  icon test (/cb qwtest icons to close)")
+                    title:SetText ("|cffffd100" .. L["Quest Watch"] .. "|r  icon test (/carb debug qwtest icons to close)")
                     MakeHeaderLine (f, 8, -24)
 
                     local rows = {
@@ -3648,14 +3648,14 @@ do
                 end
             end
 
-            Carbonite.Core.SlashCommands:Register("qwtest", function(rest)
+            Carbonite.Core.SlashCommands:RegisterDebug("qwtest", function(rest)
                 local cmd = tostring(rest or ""):lower():match("^%s*(%S*)")
                 if cmd == "state" then
                     ShowStateDump()
                 else
                     ShowIconTest()
                 end
-            end, "quest watch look test: /cb qwtest [icons|state]")
+            end, "[icons|state] - quest watch look test")
         end)
     end
 end

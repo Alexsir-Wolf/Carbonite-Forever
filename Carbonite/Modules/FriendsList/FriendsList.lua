@@ -46,7 +46,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("friends", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("friends", function()
         local log = Carbonite.Core.Logger:Get("FriendsList")
         log:info("friends tracked: %d", FriendsList:Count())
     end, "show friend-list summary")

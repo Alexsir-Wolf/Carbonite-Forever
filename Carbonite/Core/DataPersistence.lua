@@ -96,11 +96,11 @@ end
 -- Slash convenience: /cb data <name> prints the data-table size.
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("data", function(rest)
+    Carbonite.Core.SlashCommands:RegisterDebug("data", function(rest)
         local log = Carbonite.Core.Logger:Get("DataPersistence")
         local name = rest:match("^%s*(%S+)") or ""
         if name == "" then
-            log:info("usage: /cb data <Events|List|Quests|Win|Herb|Timber|Mine>")
+            log:info("usage: /carb debug data <Events|List|Quests|Win|Herb|Timber|Mine>")
             return
         end
         local t = DataPersistence:Get(name)

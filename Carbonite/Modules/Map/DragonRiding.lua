@@ -29,7 +29,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("skyriding", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("skyriding", function()
         local log = Carbonite.Core.Logger:Get("DragonRiding")
         log:info("Skyriding: %s", DragonRiding:IsUnlocked() and "unlocked" or "locked")
         log:info("intro quest %d", DragonRiding:GetIntroQuestID())
