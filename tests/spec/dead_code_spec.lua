@@ -43,3 +43,10 @@ describe("funções sem uso", function()
         end
     end)
 end)
+
+describe("prints de depuração no chat", function()
+    it("o envio de posição não escreve NetSend no chat (#23)", function()
+        local src = loader.read("Carbonite/Modules/MainUpdater/NXOnUpdate.lua")
+        expect(src:find('"NetSend', 1, true)).toBeNil()
+    end)
+end)

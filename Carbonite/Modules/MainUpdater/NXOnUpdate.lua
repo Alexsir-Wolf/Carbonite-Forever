@@ -103,7 +103,6 @@ function Nx:NXOnUpdate (elapsed)
                 local mapId = (Nx.Map.GetPlayerWorldMapID and Nx.Map:GetPlayerWorldMapID())
                     or Nx.Map:GetCurrentMapId()
                 local s = format ("Map~%d~%d~%d", plX * 100000000, plY * 100000000, mapId)
-                Nx.prt ("NetSend %s", s)
                 Nx.Com:Send ("Z", s)
 
                 self.NetPlyrSendTime = t + 1.5
