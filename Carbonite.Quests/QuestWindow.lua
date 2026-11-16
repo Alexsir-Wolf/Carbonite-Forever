@@ -498,12 +498,11 @@ function Nx.Quest.List:Open()
     f:SetFrameStrata ("MEDIUM")
     local t = f:CreateTexture()
     if Nx.qdb.profile.Quest.ScrollIMG then
-        t:SetTexture ("Interface\\QuestFrame\\QuestBG", true, true)
+        Nx.Quest.SetParchment (t)
     else
         t:SetColorTexture(Nx.Util_str2rgba(Nx.qdb.profile.Quest.DetailBC))
     end
     t:SetAllPoints (f)
-    t:SetTexCoord(0, .585, 0.02, .655)
     f.texture = t
 
     f:Show()
@@ -2496,7 +2495,7 @@ function Nx.Quest.List:Update()
                     header = cur.Header
                     if show then
                         list:ItemAdd (0)
-                        list:ItemSet (2, format ("|cff8f8fff---- %s ----", header))
+                        list:ItemSet (2, format ("|cffffd100%s", header))
                         list:ItemSetDataEx (list:ItemGetNum(), cur, 1)
                         list:ItemSetButton ("QuestHdr", Quest.HeaderHide[cur.Header])
                     end
@@ -2722,7 +2721,7 @@ function Nx.Quest.List:Update()
 
         local str = (showAllZones and "All" or Map:IdToName (mapId)) .. L[" Completed"]
 
-        list:ItemSet (2, format ("|cffc0c0c0--- %s (%d) ---", str, dbTitleNum), dbTitleIndex)
+        list:ItemSet (2, format ("|cffc0c0c0%s (%d)", str, dbTitleNum), dbTitleIndex)
     end
 
     -- Add database quests
@@ -2968,11 +2967,11 @@ function Nx.Quest.List:Update()
 
         local str = (showAllZones and "Full" or Map:IdToName (mapId)) .. L[" Database"]
 
-        list:ItemSet (2, format ("|cffc0c0c0--- %s (%d) ---", str, dbTitleNum), dbTitleIndex)
+        list:ItemSet (2, format ("|cffc0c0c0%s (%d)", str, dbTitleNum), dbTitleIndex)
 
         local low = max (1, showLowLevel and 1 or minLevel)
         local high = min (Nx.MaxPlayerLevel, maxLevel)
-        list:ItemSet (2, format (L["|cffc0c0c0--- Levels %d to %d ---"], low, high), dbTitleIndex + 1)
+        list:ItemSet (2, "|cffc0c0c0" .. format (L["Levels %d to %d"], low, high), dbTitleIndex + 1)
     end
 
     -- Add other player quests
@@ -2982,7 +2981,7 @@ function Nx.Quest.List:Update()
         local qIds = Quest.QIds
 
         list:ItemAdd (0)
-        list:ItemSet (2, format ("|cffc0c0c0--- %s %s/%s ---", Quest.RcvPlyrLast, Quest.RcvCnt, Quest.RcvTotal))
+        list:ItemSet (2, format ("|cffc0c0c0%s %s/%s", Quest.RcvPlyrLast, Quest.RcvCnt, Quest.RcvTotal))
 
         for n = 1, #Quest.FriendQuests do
 
@@ -2997,7 +2996,7 @@ function Nx.Quest.List:Update()
 
             elseif mode == "H" then
 
-                list:ItemSet (2, format ("|cff8f8fff---- %s ----", strsub (data, 3)))
+                list:ItemSet (2, format ("|cffffd100%s", strsub (data, 3)))
 
             elseif mode == "T" then
 
@@ -3187,6 +3186,26 @@ end
 -------------------------------------------------------------------------------
 -- Details
 -------------------------------------------------------------------------------
+
+-- The parchment of the game's own quest frames, in the client's art. The old
+-- QuestBG is a 512 px 1.x texture: stretched over the details panel it blurs.
+local PARCHMENT_ATLASES = { "QuestBG-Parchment", "QuestDetailsBackgrounds" }
+
+---
+-- Paint a texture with the quest parchment: the first atlas this client has,
+-- else the old QuestBG.
+--
+function Nx.Quest.SetParchment (t)
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    for _, name in ipairs (PARCHMENT_ATLASES) do
+        if info and info (name) then
+            t:SetAtlas (name)
+            return name
+        end
+    end
+    t:SetTexture ("Interface\\QuestFrame\\QuestBG", true, true)
+    t:SetTexCoord (0, .585, 0.02, .655)
+end
 
 function Nx.Quest:UpdateQuestDetails()
 
