@@ -3819,7 +3819,13 @@ end
 
 function Nx.Window:OnCloseBut (but, id, click)
 
-    if click == "LeftButton" and self.Closer then
+    -- A locked window shows a padlock in place of the close button: clicking the
+    -- padlock unlocks the window. It used to close it on a left click, so the
+    -- player trying to unlock a window saw it disappear.
+    if self.Locked then
+        self:Lock (false)
+
+    elseif click == "LeftButton" and self.Closer then
 
         self:Show (false)
         self:RecordLayoutData()
@@ -3827,11 +3833,7 @@ function Nx.Window:OnCloseBut (but, id, click)
         self:Notify ("Close")
 
     else
-        if self.Locked then
-            self:Lock (false)
-        else
-            self:OpenMenu()
-        end
+        self:OpenMenu()
     end
 end
 
@@ -3899,7 +3901,7 @@ Nx.Button.TypeData = {
         Skin = true,
         Up = "ButLock",
         Dn = "ButLock",
-        Tip = L["Close/Unlock"]
+        Tip = L["Unlock"]
     },
     ["Color"] = {
         Tip = L["Pick Color"],

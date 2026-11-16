@@ -133,7 +133,6 @@ L["Disable and Reload"] ="사용안함 그리고 재시작"
 
 -- UI Tooltips
 L["Close/Menu"] = "닫기/메뉴"
-L["Close/Unlock"] = "닫기/잠금 해제"
 L["Pick Color"] = "색상 선택"
 L["Unlock"] = "잠금 해제"
 L["Maximize"] = "최대화"

@@ -117,7 +117,6 @@ L["Reset Layout"] = "R\195\169initialiser mise en page"
 
 -- UI Tooltips
 L["Close/Menu"] = "Fermer/Menu"
-L["Close/Unlock"] = "Fermer/D\195\169verrouiller"
 L["Pick Color"] = "Choisir la couleur"
 L["Unlock"] = "D\195\169verrouiller"
 L["Maximize"] = "Maximiser"
