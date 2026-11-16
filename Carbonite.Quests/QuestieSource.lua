@@ -1,5 +1,6 @@
 -- Carbonite.Quests | QuestieSource
 -- Quests the Forever client has and Carbonite's camelot data lacks, read from QuestieDB.
+-- They are marked ForeverOnly: Carbonite's data is Classic Era's, so these have no Wowhead page.
 --
 -- Carbonite's camelot quest data was generated offline from an older Questie export, and
 -- Forever keeps adding quests. QuestieDB (a library addon, usable without Questie) carries the
@@ -387,7 +388,7 @@ local function Inject(qId, entry)
     local record, extra = entry[1], entry[2]
     -- A fresh table each time: ProcessQuestDB-style indexing writes CNum/CLvlMax into it.
     Nx.Quests[qId] = { Quest = record.Quest, Start = record.Start, End = record.End,
-        Objectives = record.Objectives, ForeverCoords = true }
+        Objectives = record.Objectives, ForeverCoords = true, ForeverOnly = true }
     Nx.Quests[-qId] = nil
 
     if extra.classes then
