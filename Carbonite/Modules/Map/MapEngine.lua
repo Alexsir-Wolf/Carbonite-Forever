@@ -6890,15 +6890,19 @@ function Nx.Map:Update (elapsed)
         self.View3DSig = nil
     end
 
-    self:MoveContinents()
---    self:MoveWorldHotspots()
+    -- With the window hidden (MainOnUpdate keeps this running), skip the
+    -- pure drawing: zone art, POIs, area labels and flags. Position,
+    -- trail, targets, quest tracking and the HUD still update below.
+    local drawDetail = self.Frm:IsVisible()
 
---    if not (IsAltKeyDown() and IsControlKeyDown()) then
---    end
+    local zoneTime = 0
+    if drawDetail then
+        self:MoveContinents()
 
-    local zoneStart = debugProfile and debugprofilestop()
-    self:UpdateZones()
-    local zoneTime = debugProfile and (debugprofilestop() - zoneStart) or 0
+        local zoneStart = debugProfile and debugprofilestop()
+        self:UpdateZones()
+        zoneTime = debugProfile and (debugprofilestop() - zoneStart) or 0
+    end
 
     local instStart = debugProfile and debugprofilestop()
     self:UpdateInstanceMap()
@@ -6929,728 +6933,731 @@ function Nx.Map:Update (elapsed)
         profileSection = debugprofilestop()
     end
 
-    self:DrawContinentsPOIs()
-    self:DrawGarrisonPlots()
-
+    -- The trail records history points, so it runs even while hidden.
     if Nx.db.profile.Map.ShowTrail then
         self:UpdatePlyrHistory()
     end
 
---[[
-    if self["DebugHotspots"] then
-        self:UpdateHotspotsDebug()
-    end
---]]
-    -- Enemy-player icons used to come from the in-house Nx.Punks
-    -- producer. Punks is gone; the Carbonite.Spy integration draws
-    -- pins through the MapProvider system instead, so MapIcons.lua
-    -- picks them up automatically and there's nothing to call here.
+    if drawDetail then
+        self:DrawContinentsPOIs()
+        self:DrawGarrisonPlots()
 
-    -- map BG Flags
-
-    if GetNumBattlefieldFlagPositions() > 0 then
-        for fpn = 1, GetNumBattlefieldFlagPositions() do
-            local fpX, fpY, flagIcon = GetBattlefieldFlagPosition(fpn)
-            if fpX and fpY and flagIcon then
-                local ficon = self:GetIcon(3)
-                fpX = fpX * 100
-                fpY = fpY * 100
-                fpX, fpY = self:GetWorldPos (self.MapId, fpX, fpY)
-                self:ClipFrameWChop(ficon, fpX, fpY, 32 * self.ScaleDraw, 32 * self.ScaleDraw)
-                ficon.texture:SetTexture("Interface\\WorldStateFrame\\" .. flagIcon)
-            end
+    --[[
+        if self["DebugHotspots"] then
+            self:UpdateHotspotsDebug()
         end
-    end
+    --]]
+        -- Enemy-player icons used to come from the in-house Nx.Punks
+        -- producer. Punks is gone; the Carbonite.Spy integration draws
+        -- pins through the MapProvider system instead, so MapIcons.lua
+        -- picks them up automatically and there's nothing to call here.
 
-    -- POI's (Points of interest)
+        -- map BG Flags
 
-    local oldLev = self.Level
-
-    if IsShiftKeyDown() or inBG then
-        oldLev = oldLev - 4
-        self.Level = self.Level + 16
-    end
-
-    local type, name, description, txIndex, pX, pY, atlasIcon
-    local txX1, txX2, txY1, txY2
-
-    if not IsAltKeyDown() then
-        local zPOIs
-        local now = GetTime()
-        local isZoomingOrScrolling = self.StepTime ~= 0 or self.Scrolling
-        local gossipPOIDirty = self.GossipPOIDirty
-        local cacheValid = not gossipPOIDirty
-            and POI_Cache.mapID == rid
-            and POI_Cache.instanceContext == isInstanceContext
-            and POI_Cache.data
-            and (now - POI_Cache.time) < POI_Cache.refreshInterval
-
-        -- Use cached POI data during zoom/scroll to reduce stutter, or if cache is still valid
-        if not gossipPOIDirty and isZoomingOrScrolling and POI_Cache.data
-            and POI_Cache.mapID == rid
-            and POI_Cache.instanceContext == isInstanceContext then
-            zPOIs = POI_Cache.data
-        elseif cacheValid then
-            zPOIs = POI_Cache.data
-        else
-            -- Fetch fresh POI data. Each `or POI_EMPTY` here uses a
-            -- shared immutable sentinel in place of `or {}` so we
-            -- don't allocate a fresh empty table every time the
-            -- Blizzard API returns nil. POI_EMPTY is never mutated
-            -- (it's frozen by metatable) so the for-loops below skip
-            -- their bodies when the API had nothing to return.
-            local tPOIs = C_TaxiMap.GetTaxiNodesForMap(rid) or POI_EMPTY
-            -- Reuse pooled tables instead of creating new ones every frame
-            local pPOIs = POI_Pool.pPOIs
-            wipe(pPOIs)
-            local dPOIs = C_ResearchInfo.GetDigSitesForMap(rid) or POI_EMPTY
-            local aPOIs = POI_Pool.aPOIs
-            wipe(aPOIs)
-            local areaPOIIds = C_AreaPoiInfo.GetAreaPOIForMap(rid) or POI_EMPTY
-            for j, aPOIId in ipairs(areaPOIIds) do
-                aPOIs[j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, aPOIId)
-            end
-            -- Add Delves POIs
-            if C_AreaPoiInfo.GetDelvesForMap then
-                local delvePOIIds = C_AreaPoiInfo.GetDelvesForMap(rid) or POI_EMPTY
-                local offset = #aPOIs
-                for j, delvePOIId in ipairs(delvePOIIds) do
-                    aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, delvePOIId)
+        if GetNumBattlefieldFlagPositions() > 0 then
+            for fpn = 1, GetNumBattlefieldFlagPositions() do
+                local fpX, fpY, flagIcon = GetBattlefieldFlagPosition(fpn)
+                if fpX and fpY and flagIcon then
+                    local ficon = self:GetIcon(3)
+                    fpX = fpX * 100
+                    fpY = fpY * 100
+                    fpX, fpY = self:GetWorldPos (self.MapId, fpX, fpY)
+                    self:ClipFrameWChop(ficon, fpX, fpY, 32 * self.ScaleDraw, 32 * self.ScaleDraw)
+                    ficon.texture:SetTexture("Interface\\WorldStateFrame\\" .. flagIcon)
                 end
-            end
-            -- Add Quest Hubs POIs
-            if C_AreaPoiInfo.GetQuestHubsForMap then
-                local hubPOIIds = C_AreaPoiInfo.GetQuestHubsForMap(rid) or POI_EMPTY
-                local offset = #aPOIs
-                for j, hubPOIId in ipairs(hubPOIIds) do
-                    aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, hubPOIId)
-                end
-            end
-            -- Add Dragonriding Races POIs
-            if C_AreaPoiInfo.GetDragonridingRacesForMap then
-                local racePOIIds = C_AreaPoiInfo.GetDragonridingRacesForMap(rid) or POI_EMPTY
-                local offset = #aPOIs
-                for j, racePOIId in ipairs(racePOIIds) do
-                    aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, racePOIId)
-                end
-            end
-            -- Add Events POIs
-            if C_AreaPoiInfo.GetEventsForMap then
-                local eventPOIIds = C_AreaPoiInfo.GetEventsForMap(rid) or POI_EMPTY
-                local offset = #aPOIs
-                for j, eventPOIId in ipairs(eventPOIIds) do
-                    aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, eventPOIId)
-                end
-            end
-            -- C_AreaPoiInfo.GetAreaPOIInfo returns textureWidth/Height
-            -- for some POI kinds (dragonriding races, area-POI events)
-            -- but not others (quest hubs, delves) — and the iteration
-            -- below would render those at the legacy txW/txH default,
-            -- producing a barely-visible dot. Backstop with 24 px so
-            -- pins read clearly. Per-API explicit sizes win.
-            for _, info in ipairs(aPOIs) do
-                if info and not info.textureWidth then
-                    info.textureWidth  = 24
-                    info.textureHeight = 24
-                end
-            end
-            -- Boss encounters from the dungeon journal. On instance
-            -- maps C_EncounterJournal.GetEncountersOnMap returns per-
-            -- boss positions; pair that with EJ_GetCreatureInfo for
-            -- the creature name + iconImage and EJ_GetEncounterInfo
-            -- for the encounter description. Emit POI-shaped entries
-            -- that flow through the same render iteration as everything
-            -- else in aPOIs. Marked with _bossEncounter so the texture-
-            -- set branch below routes through SetTexture(iconImage)
-            -- instead of the atlas / textureIndex path.
-            --
-            -- Skip entries with no position: GetEncountersOnMap can
-            -- list trash / scripted encounters whose position table is
-            -- nil, and the iteration below does `pX = pX * 100` which
-            -- crashes on nil.
-            -- Boss encounters from the dungeon journal. Built into
-            -- their OWN array (NOT appended to aPOIs) so ArrayConcatReuse
-            -- below stamps them with a distinct _type and retains the
-            -- separate journal-click behavior used for encounter icons.
-            local ePOIs = POI_Pool.ePOIs
-            if not ePOIs then
-                ePOIs = {}
-                POI_Pool.ePOIs = ePOIs
-            end
-            wipe(ePOIs)
-            if rid and rid > 0
-                and _G.C_EncounterJournal
-                and _G.C_EncounterJournal.GetEncountersOnMap then
-                local bosses = _G.C_EncounterJournal.GetEncountersOnMap(rid) or POI_EMPTY
-                for _, b in ipairs(bosses) do
-                    local encID = b.journalEncounterID or b.encounterID
-                    local mapX, mapY = b.mapX, b.mapY
-                    -- Drop encID from the guard: some flavours may
-                    -- leave the field nil but still hand us a usable
-                    -- name + position. Without encID we just lose the
-                    -- creature-portrait and description lookups.
-                    if mapX and mapY then
-                        local creatureName, iconImage, desc, instanceID
-                        if encID and _G.EJ_GetCreatureInfo then
-                            local _, nm, _, _, img = _G.EJ_GetCreatureInfo(1, encID)
-                            creatureName = nm
-                            iconImage    = img
-                        end
-                        if encID and _G.EJ_GetEncounterInfo then
-                            -- 6th return is journalInstanceID — needed
-                            -- by EncounterJournal_OpenJournal so we land
-                            -- on the right instance section.
-                            local _, d, _, _, _, jiID = _G.EJ_GetEncounterInfo(encID)
-                            desc = d
-                            instanceID = jiID
-                        end
-                        ePOIs[#ePOIs + 1] = {
-                            -- The POI iteration reads either zPOI.position.x/y
-                            -- or zPOI.x/y; wrap the flat mapX/mapY in a
-                            -- position table to match the AreaPOI shape.
-                            position       = { x = mapX, y = mapY },
-                            name           = creatureName or b.name
-                                            or ("Boss " .. tostring(encID or "?")),
-                            description    = desc,
-                            -- Fall back to a known texture path when no
-                            -- creature image is returned.
-                            -- Fall back to a known texture path when
-                            -- EJ_GetCreatureInfo returns no iconImage
-                            -- (rare but happens for placeholder bosses).
-                            tex            = iconImage
-                                            or "Interface\\TargetingFrame\\UI-TargetingFrame-Skull",
-                            textureWidth   = 21,
-                            textureHeight  = 21,
-                            _bossEncounter = true,
-                            _bossEncID     = encID,
-                            _bossInstID    = instanceID,
-                        }
-                    end
-                end
-            end
-
-            local bgPOIs = C_PvP.GetBattlefieldVehicles(rid) or POI_EMPTY
-
-            -- Vignettes ("special" map markers — Renown Quartermasters,
-            -- world-event NPCs, some rares). The vPOIs array itself is
-            -- pooled via POI_Pool.vPOIs; the per-vignette entry tables
-            -- (position / name / atlasName / description) are still
-            -- allocated fresh because Blizzard's vignette API returns
-            -- a new info table per call and reusing them across
-            -- refreshes would risk stale data. Pooling the OUTER
-            -- array is the main win.
-            local vPOIs = POI_Pool.vPOIs
-            wipe(vPOIs)
-            if self:ShouldShowMapVignettes(rid)
-                and C_VignetteInfo
-                and C_VignetteInfo.GetVignettes
-                and C_VignetteInfo.GetVignetteInfo then
-                local vGUIDs = C_VignetteInfo.GetVignettes() or POI_EMPTY
-                for _, guid in ipairs(vGUIDs) do
-                    local vInfo = C_VignetteInfo.GetVignetteInfo(guid)
-                    if vInfo and vInfo.onWorldMap then
-                        local pos, facing
-                        if C_VignetteInfo.GetVignettePosition then
-                            pos, facing = C_VignetteInfo.GetVignettePosition(guid, rid)
-                        end
-                        if pos and _G.type(pos.x) == "number"
-                            and _G.type(pos.y) == "number" then
-                            local width, height = self:GetMapPOIAtlasSize(vInfo.atlasName, 16)
-                            vPOIs[#vPOIs + 1] = {
-                                position = pos,
-                                name = vInfo.name,
-                                atlasName = vInfo.atlasName,
-                                description = vInfo.description,
-                                textureWidth = width,
-                                textureHeight = height,
-                                tooltipWidgetSet = vInfo.tooltipWidgetSet,
-                                vignetteGUID = guid,
-                                onMinimap = vInfo.onMinimap,
-                                inFogOfWar = vInfo.inFogOfWar,
-                                facing = facing,
-                            }
-                        end
-                    end
-                end
-            end
-
-            -- Dynamic gossip POI. This includes directions requested from
-            -- city guards (auction houses, trainers, banks, and other city
-            -- services). GossipPoiInfo supplies a Minimap POI textureIndex,
-            -- not an atlasName; retain optional fields only for forward
-            -- compatibility. Toggled via _type = 8 + ShowGossip below.
-            local gPOIs = POI_Pool.gPOIs
-            wipe(gPOIs)
-            if _G.C_GossipInfo
-                and _G.C_GossipInfo.GetPoiForUiMapID
-                and _G.C_GossipInfo.GetPoiInfo then
-                local gossipPoiID = _G.C_GossipInfo.GetPoiForUiMapID(rid)
-                if gossipPoiID then
-                    local gInfo = _G.C_GossipInfo.GetPoiInfo(rid, gossipPoiID)
-                    if gInfo and gInfo.position then
-                        gPOIs[1] = {
-                            position      = gInfo.position,
-                            name          = gInfo.name,
-                            textureIndex  = gInfo.textureIndex,
-                            atlasName     = gInfo.atlasName,
-                            description   = gInfo.description,
-                            inBattleMap   = gInfo.inBattleMap,
-                            textureWidth  = 16,
-                            textureHeight = 16,
-                        }
-                    end
-                end
-            end
-
-            -- Bonus objectives (retail). C_TaskQuest.GetQuestsOnMap
-            -- returns all on-map tasks; filter to
-            -- Enum.QuestClassification.BonusObjective (and Threat,
-            -- which shares the visual category). C_TaskQuest entries
-            -- carry questID + x/y; we synthesize the rest. Toggled at
-            -- iteration via _type = 9 + ShowBonusObjective gate.
-            local bPOIs = POI_Pool.bPOIs
-            wipe(bPOIs)
-            if _G.C_TaskQuest and _G.C_TaskQuest.GetQuestsOnMap
-                and _G.C_QuestInfoSystem
-                and _G.C_QuestInfoSystem.GetQuestClassification
-                and _G.Enum and _G.Enum.QuestClassification then
-                local bonus = _G.Enum.QuestClassification.BonusObjective
-                local threat = _G.Enum.QuestClassification.Threat
-                local tasks = _G.C_TaskQuest.GetQuestsOnMap(rid) or POI_EMPTY
-                for _, t in ipairs(tasks) do
-                    local qid = t.questID
-                    if qid and t.x and t.y then
-                        local cls = _G.C_QuestInfoSystem.GetQuestClassification(qid)
-                        if cls == bonus or cls == threat then
-                            local title
-                            if _G.C_TaskQuest.GetQuestInfoByQuestID then
-                                title = _G.C_TaskQuest.GetQuestInfoByQuestID(qid)
-                            end
-                            -- "Bonus-Objective-Star" is the legend atlas
-                            -- Blizzard uses for BonusObjectivePinTemplate
-                            -- (see maplegendframe.lua). No dedicated
-                            -- threat atlas exists; reuse the star so v1
-                            -- has a clean visual category for both.
-                            bPOIs[#bPOIs + 1] = {
-                                position      = { x = t.x, y = t.y },
-                                name          = title or (cls == threat and "Threat" or "Bonus Objective"),
-                                atlasName     = "Bonus-Objective-Star",
-                                textureWidth  = 18,
-                                textureHeight = 18,
-                                _bonusQuestID = qid,
-                                _bonusThreat  = (cls == threat) or nil,
-                            }
-                        end
-                    end
-                end
-            end
-
-            -- Blizzard's ScenarioDataProvider is separate from both its
-            -- area-POI and vignette providers. Keep that distinction so
-            -- locked doors and scenario objects are not hidden by the
-            -- Archaeology, Gossip, or Bonus Objective visibility toggles.
-            local sPOIs = self:GetScenarioMapPOIs(rid, POI_Pool.sPOIs)
-
-            -- Preserve all existing source indexes: archaeology is 3,
-            -- area POIs are 4, encounters 7, gossip 8, bonus objectives 9,
-            -- and the new Blizzard scenario source is 10.
-            zPOIs = POI_Pool.zPOIs
-            Nx.ArrayConcatReuse(
-                zPOIs,
-                tPOIs,
-                pPOIs,
-                dPOIs,
-                aPOIs,
-                bgPOIs,
-                vPOIs,
-                ePOIs,
-                gPOIs,
-                bPOIs,
-                sPOIs
-            )
-
-            -- Cache the POI data
-            POI_Cache.mapID = rid
-            POI_Cache.instanceContext = isInstanceContext
-            POI_Cache.time = now
-            POI_Cache.data = zPOIs
-            self.GossipPOIDirty = nil
-
-            if debugProfile then
-                local now2 = debugprofilestop()
-                if (now2 - profileSection) > 5 then
-                    Nx.prt("Map:Update - POI fetch took %.2fms", now2 - profileSection)
-                end
-                profileSection = now2
             end
         end
 
-        -- During the transition frame the player may already be inside an
-        -- instance while Carbonite still exposes the preceding outdoor map
-        -- ID. Never render that outdoor POI snapshot on the instance canvas.
-        if isInstanceContext and not self:IsMapRelevantToInstance(rid, rid) then
-            zPOIs = POI_EMPTY
+        -- POI's (Points of interest)
+
+        local oldLev = self.Level
+
+        if IsShiftKeyDown() or inBG then
+            oldLev = oldLev - 4
+            self.Level = self.Level + 16
         end
 
-        for i, zPOI in ipairs(zPOIs) do
-            local type = zPOI._type
-            local name = zPOI.name
-            local txIndex = zPOI.textureIndex
-            local pX, pY
-            if zPOI.position then
-                pX = zPOI.position.x
-                pY = zPOI.position.y
+        local type, name, description, txIndex, pX, pY, atlasIcon
+        local txX1, txX2, txY1, txY2
+
+        if not IsAltKeyDown() then
+            local zPOIs
+            local now = GetTime()
+            local isZoomingOrScrolling = self.StepTime ~= 0 or self.Scrolling
+            local gossipPOIDirty = self.GossipPOIDirty
+            local cacheValid = not gossipPOIDirty
+                and POI_Cache.mapID == rid
+                and POI_Cache.instanceContext == isInstanceContext
+                and POI_Cache.data
+                and (now - POI_Cache.time) < POI_Cache.refreshInterval
+
+            -- Use cached POI data during zoom/scroll to reduce stutter, or if cache is still valid
+            if not gossipPOIDirty and isZoomingOrScrolling and POI_Cache.data
+                and POI_Cache.mapID == rid
+                and POI_Cache.instanceContext == isInstanceContext then
+                zPOIs = POI_Cache.data
+            elseif cacheValid then
+                zPOIs = POI_Cache.data
             else
-                pX = zPOI.x
-                pY = zPOI.y
-            end
-            local mapX, mapY = pX, pY
-
-            local atlasIcon = zPOI.atlasName or zPOI.atlas
-            local desc = zPOI.description
-            local faction = zPOI.faction
-            local widgetSet = zPOI.tooltipWidgetSet
-            local areaPoiID = zPOI.areaPoiID
-
-            local txW = 16
-            local txH = 16
-
-            if zPOI.textureWidth  and not inBG then txW = zPOI.textureWidth  end
-            if zPOI.textureHeight and not inBG then txH = zPOI.textureHeight end
-
-            local skip = false
-
-            local _, splitname
-            if name then
-                _, splitname = strsplit(",", name)
-            end
-            if type == 1 and name and not Nx.strpos(Nx.Map:GetMapNameByID(rid), strtrim(splitname or name)) then
-                skip = true
-            end
-
-            -- type, name, desc, txIndex, pX, pY = C_WorldMap.GetMapLandmarkInfo (i)
-            -- local type, name, desc, txIndex, pX, pY, mapLinkID, inBattleMap, graveyardID, areaID, poiID, isObjectIcon, atlasIcon = C_WorldMap.GetMapLandmarkInfo(i);
-            -- Nx.prtCtrl ("LandMs %s, %s, %s, %s, %s, %s, %s, %s", i, poiID, txIndex or '-', name, type, isObjectIcon, atlasIcon, WorldMap_IsSpecialPOI(poiID))
-            if (atlasIcon or zPOI.tex or (pX and txIndex and txIndex ~= 0)) and not skip then        -- WotLK has 0 index POIs for named locations
-                if (type ~= 3 or Nx.db.char.Map.ShowArchBlobs)
-                    and (type ~= 8 or Nx.db.char.Map.ShowGossip)
-                    and (type ~= 9 or Nx.db.char.Map.ShowBonusObjective)
-                    and (faction == nil or faction == 0 or Nx.PlFactionNum == faction) then
-                    local tip = name
-                    if desc then
-                        tip = format ("%s\n%s", name, desc)
+                -- Fetch fresh POI data. Each `or POI_EMPTY` here uses a
+                -- shared immutable sentinel in place of `or {}` so we
+                -- don't allocate a fresh empty table every time the
+                -- Blizzard API returns nil. POI_EMPTY is never mutated
+                -- (it's frozen by metatable) so the for-loops below skip
+                -- their bodies when the API had nothing to return.
+                local tPOIs = C_TaxiMap.GetTaxiNodesForMap(rid) or POI_EMPTY
+                -- Reuse pooled tables instead of creating new ones every frame
+                local pPOIs = POI_Pool.pPOIs
+                wipe(pPOIs)
+                local dPOIs = C_ResearchInfo.GetDigSitesForMap(rid) or POI_EMPTY
+                local aPOIs = POI_Pool.aPOIs
+                wipe(aPOIs)
+                local areaPOIIds = C_AreaPoiInfo.GetAreaPOIForMap(rid) or POI_EMPTY
+                for j, aPOIId in ipairs(areaPOIIds) do
+                    aPOIs[j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, aPOIId)
+                end
+                -- Add Delves POIs
+                if C_AreaPoiInfo.GetDelvesForMap then
+                    local delvePOIIds = C_AreaPoiInfo.GetDelvesForMap(rid) or POI_EMPTY
+                    local offset = #aPOIs
+                    for j, delvePOIId in ipairs(delvePOIIds) do
+                        aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, delvePOIId)
                     end
-                    pX = pX * 100
-                    pY = pY * 100
-
-        --            Nx.prtCtrl ("poi %d %s %s %d", i, name, desc, txIndex)
-
-                    local f = self:GetIcon (5)
-
-                    if self.CurMapBG then
-
-                        f.NXType = 2000
-
-                        local iconType = Nx.MapPOITypes[txIndex]
-
-                        local sideStr = ""
-                        if iconType == 1 then    -- Ally?
-                            sideStr = " (Ally)"
-                        elseif iconType == 2 then    -- Horde?
-                            sideStr = " (Horde)"
+                end
+                -- Add Quest Hubs POIs
+                if C_AreaPoiInfo.GetQuestHubsForMap then
+                    local hubPOIIds = C_AreaPoiInfo.GetQuestHubsForMap(rid) or POI_EMPTY
+                    local offset = #aPOIs
+                    for j, hubPOIId in ipairs(hubPOIIds) do
+                        aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, hubPOIId)
+                    end
+                end
+                -- Add Dragonriding Races POIs
+                if C_AreaPoiInfo.GetDragonridingRacesForMap then
+                    local racePOIIds = C_AreaPoiInfo.GetDragonridingRacesForMap(rid) or POI_EMPTY
+                    local offset = #aPOIs
+                    for j, racePOIId in ipairs(racePOIIds) do
+                        aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, racePOIId)
+                    end
+                end
+                -- Add Events POIs
+                if C_AreaPoiInfo.GetEventsForMap then
+                    local eventPOIIds = C_AreaPoiInfo.GetEventsForMap(rid) or POI_EMPTY
+                    local offset = #aPOIs
+                    for j, eventPOIId in ipairs(eventPOIIds) do
+                        aPOIs[offset + j] = C_AreaPoiInfo.GetAreaPOIInfo(rid, eventPOIId)
+                    end
+                end
+                -- C_AreaPoiInfo.GetAreaPOIInfo returns textureWidth/Height
+                -- for some POI kinds (dragonriding races, area-POI events)
+                -- but not others (quest hubs, delves) — and the iteration
+                -- below would render those at the legacy txW/txH default,
+                -- producing a barely-visible dot. Backstop with 24 px so
+                -- pins read clearly. Per-API explicit sizes win.
+                for _, info in ipairs(aPOIs) do
+                    if info and not info.textureWidth then
+                        info.textureWidth  = 24
+                        info.textureHeight = 24
+                    end
+                end
+                -- Boss encounters from the dungeon journal. On instance
+                -- maps C_EncounterJournal.GetEncountersOnMap returns per-
+                -- boss positions; pair that with EJ_GetCreatureInfo for
+                -- the creature name + iconImage and EJ_GetEncounterInfo
+                -- for the encounter description. Emit POI-shaped entries
+                -- that flow through the same render iteration as everything
+                -- else in aPOIs. Marked with _bossEncounter so the texture-
+                -- set branch below routes through SetTexture(iconImage)
+                -- instead of the atlas / textureIndex path.
+                --
+                -- Skip entries with no position: GetEncountersOnMap can
+                -- list trash / scripted encounters whose position table is
+                -- nil, and the iteration below does `pX = pX * 100` which
+                -- crashes on nil.
+                -- Boss encounters from the dungeon journal. Built into
+                -- their OWN array (NOT appended to aPOIs) so ArrayConcatReuse
+                -- below stamps them with a distinct _type and retains the
+                -- separate journal-click behavior used for encounter icons.
+                local ePOIs = POI_Pool.ePOIs
+                if not ePOIs then
+                    ePOIs = {}
+                    POI_Pool.ePOIs = ePOIs
+                end
+                wipe(ePOIs)
+                if rid and rid > 0
+                    and _G.C_EncounterJournal
+                    and _G.C_EncounterJournal.GetEncountersOnMap then
+                    local bosses = _G.C_EncounterJournal.GetEncountersOnMap(rid) or POI_EMPTY
+                    for _, b in ipairs(bosses) do
+                        local encID = b.journalEncounterID or b.encounterID
+                        local mapX, mapY = b.mapX, b.mapY
+                        -- Drop encID from the guard: some flavours may
+                        -- leave the field nil but still hand us a usable
+                        -- name + position. Without encID we just lose the
+                        -- creature-portrait and description lookups.
+                        if mapX and mapY then
+                            local creatureName, iconImage, desc, instanceID
+                            if encID and _G.EJ_GetCreatureInfo then
+                                local _, nm, _, _, img = _G.EJ_GetCreatureInfo(1, encID)
+                                creatureName = nm
+                                iconImage    = img
+                            end
+                            if encID and _G.EJ_GetEncounterInfo then
+                                -- 6th return is journalInstanceID — needed
+                                -- by EncounterJournal_OpenJournal so we land
+                                -- on the right instance section.
+                                local _, d, _, _, _, jiID = _G.EJ_GetEncounterInfo(encID)
+                                desc = d
+                                instanceID = jiID
+                            end
+                            ePOIs[#ePOIs + 1] = {
+                                -- The POI iteration reads either zPOI.position.x/y
+                                -- or zPOI.x/y; wrap the flat mapX/mapY in a
+                                -- position table to match the AreaPOI shape.
+                                position       = { x = mapX, y = mapY },
+                                name           = creatureName or b.name
+                                                or ("Boss " .. tostring(encID or "?")),
+                                description    = desc,
+                                -- Fall back to a known texture path when no
+                                -- creature image is returned.
+                                -- Fall back to a known texture path when
+                                -- EJ_GetCreatureInfo returns no iconImage
+                                -- (rare but happens for placeholder bosses).
+                                tex            = iconImage
+                                                or "Interface\\TargetingFrame\\UI-TargetingFrame-Skull",
+                                textureWidth   = 21,
+                                textureHeight  = 21,
+                                _bossEncounter = true,
+                                _bossEncID     = encID,
+                                _bossInstID    = instanceID,
+                            }
                         end
+                    end
+                end
 
-                        if desc == L["In Conflict"] then
+                local bgPOIs = C_PvP.GetBattlefieldVehicles(rid) or POI_EMPTY
 
-                            local state = self.BGTimers[name]
-                            if state ~= txIndex then
-                                self.BGTimers[name] = txIndex
-                                self.BGTimers[name.."#"] = GetTime()
+                -- Vignettes ("special" map markers — Renown Quartermasters,
+                -- world-event NPCs, some rares). The vPOIs array itself is
+                -- pooled via POI_Pool.vPOIs; the per-vignette entry tables
+                -- (position / name / atlasName / description) are still
+                -- allocated fresh because Blizzard's vignette API returns
+                -- a new info table per call and reusing them across
+                -- refreshes would risk stale data. Pooling the OUTER
+                -- array is the main win.
+                local vPOIs = POI_Pool.vPOIs
+                wipe(vPOIs)
+                if self:ShouldShowMapVignettes(rid)
+                    and C_VignetteInfo
+                    and C_VignetteInfo.GetVignettes
+                    and C_VignetteInfo.GetVignetteInfo then
+                    local vGUIDs = C_VignetteInfo.GetVignettes() or POI_EMPTY
+                    for _, guid in ipairs(vGUIDs) do
+                        local vInfo = C_VignetteInfo.GetVignetteInfo(guid)
+                        if vInfo and vInfo.onWorldMap then
+                            local pos, facing
+                            if C_VignetteInfo.GetVignettePosition then
+                                pos, facing = C_VignetteInfo.GetVignettePosition(guid, rid)
+                            end
+                            if pos and _G.type(pos.x) == "number"
+                                and _G.type(pos.y) == "number" then
+                                local width, height = self:GetMapPOIAtlasSize(vInfo.atlasName, 16)
+                                vPOIs[#vPOIs + 1] = {
+                                    position = pos,
+                                    name = vInfo.name,
+                                    atlasName = vInfo.atlasName,
+                                    description = vInfo.description,
+                                    textureWidth = width,
+                                    textureHeight = height,
+                                    tooltipWidgetSet = vInfo.tooltipWidgetSet,
+                                    vignetteGUID = guid,
+                                    onMinimap = vInfo.onMinimap,
+                                    inFogOfWar = vInfo.inFogOfWar,
+                                    facing = facing,
+                                }
+                            end
+                        end
+                    end
+                end
+
+                -- Dynamic gossip POI. This includes directions requested from
+                -- city guards (auction houses, trainers, banks, and other city
+                -- services). GossipPoiInfo supplies a Minimap POI textureIndex,
+                -- not an atlasName; retain optional fields only for forward
+                -- compatibility. Toggled via _type = 8 + ShowGossip below.
+                local gPOIs = POI_Pool.gPOIs
+                wipe(gPOIs)
+                if _G.C_GossipInfo
+                    and _G.C_GossipInfo.GetPoiForUiMapID
+                    and _G.C_GossipInfo.GetPoiInfo then
+                    local gossipPoiID = _G.C_GossipInfo.GetPoiForUiMapID(rid)
+                    if gossipPoiID then
+                        local gInfo = _G.C_GossipInfo.GetPoiInfo(rid, gossipPoiID)
+                        if gInfo and gInfo.position then
+                            gPOIs[1] = {
+                                position      = gInfo.position,
+                                name          = gInfo.name,
+                                textureIndex  = gInfo.textureIndex,
+                                atlasName     = gInfo.atlasName,
+                                description   = gInfo.description,
+                                inBattleMap   = gInfo.inBattleMap,
+                                textureWidth  = 16,
+                                textureHeight = 16,
+                            }
+                        end
+                    end
+                end
+
+                -- Bonus objectives (retail). C_TaskQuest.GetQuestsOnMap
+                -- returns all on-map tasks; filter to
+                -- Enum.QuestClassification.BonusObjective (and Threat,
+                -- which shares the visual category). C_TaskQuest entries
+                -- carry questID + x/y; we synthesize the rest. Toggled at
+                -- iteration via _type = 9 + ShowBonusObjective gate.
+                local bPOIs = POI_Pool.bPOIs
+                wipe(bPOIs)
+                if _G.C_TaskQuest and _G.C_TaskQuest.GetQuestsOnMap
+                    and _G.C_QuestInfoSystem
+                    and _G.C_QuestInfoSystem.GetQuestClassification
+                    and _G.Enum and _G.Enum.QuestClassification then
+                    local bonus = _G.Enum.QuestClassification.BonusObjective
+                    local threat = _G.Enum.QuestClassification.Threat
+                    local tasks = _G.C_TaskQuest.GetQuestsOnMap(rid) or POI_EMPTY
+                    for _, t in ipairs(tasks) do
+                        local qid = t.questID
+                        if qid and t.x and t.y then
+                            local cls = _G.C_QuestInfoSystem.GetQuestClassification(qid)
+                            if cls == bonus or cls == threat then
+                                local title
+                                if _G.C_TaskQuest.GetQuestInfoByQuestID then
+                                    title = _G.C_TaskQuest.GetQuestInfoByQuestID(qid)
+                                end
+                                -- "Bonus-Objective-Star" is the legend atlas
+                                -- Blizzard uses for BonusObjectivePinTemplate
+                                -- (see maplegendframe.lua). No dedicated
+                                -- threat atlas exists; reuse the star so v1
+                                -- has a clean visual category for both.
+                                bPOIs[#bPOIs + 1] = {
+                                    position      = { x = t.x, y = t.y },
+                                    name          = title or (cls == threat and "Threat" or "Bonus Objective"),
+                                    atlasName     = "Bonus-Objective-Star",
+                                    textureWidth  = 18,
+                                    textureHeight = 18,
+                                    _bonusQuestID = qid,
+                                    _bonusThreat  = (cls == threat) or nil,
+                                }
+                            end
+                        end
+                    end
+                end
+
+                -- Blizzard's ScenarioDataProvider is separate from both its
+                -- area-POI and vignette providers. Keep that distinction so
+                -- locked doors and scenario objects are not hidden by the
+                -- Archaeology, Gossip, or Bonus Objective visibility toggles.
+                local sPOIs = self:GetScenarioMapPOIs(rid, POI_Pool.sPOIs)
+
+                -- Preserve all existing source indexes: archaeology is 3,
+                -- area POIs are 4, encounters 7, gossip 8, bonus objectives 9,
+                -- and the new Blizzard scenario source is 10.
+                zPOIs = POI_Pool.zPOIs
+                Nx.ArrayConcatReuse(
+                    zPOIs,
+                    tPOIs,
+                    pPOIs,
+                    dPOIs,
+                    aPOIs,
+                    bgPOIs,
+                    vPOIs,
+                    ePOIs,
+                    gPOIs,
+                    bPOIs,
+                    sPOIs
+                )
+
+                -- Cache the POI data
+                POI_Cache.mapID = rid
+                POI_Cache.instanceContext = isInstanceContext
+                POI_Cache.time = now
+                POI_Cache.data = zPOIs
+                self.GossipPOIDirty = nil
+
+                if debugProfile then
+                    local now2 = debugprofilestop()
+                    if (now2 - profileSection) > 5 then
+                        Nx.prt("Map:Update - POI fetch took %.2fms", now2 - profileSection)
+                    end
+                    profileSection = now2
+                end
+            end
+
+            -- During the transition frame the player may already be inside an
+            -- instance while Carbonite still exposes the preceding outdoor map
+            -- ID. Never render that outdoor POI snapshot on the instance canvas.
+            if isInstanceContext and not self:IsMapRelevantToInstance(rid, rid) then
+                zPOIs = POI_EMPTY
+            end
+
+            for i, zPOI in ipairs(zPOIs) do
+                local type = zPOI._type
+                local name = zPOI.name
+                local txIndex = zPOI.textureIndex
+                local pX, pY
+                if zPOI.position then
+                    pX = zPOI.position.x
+                    pY = zPOI.position.y
+                else
+                    pX = zPOI.x
+                    pY = zPOI.y
+                end
+                local mapX, mapY = pX, pY
+
+                local atlasIcon = zPOI.atlasName or zPOI.atlas
+                local desc = zPOI.description
+                local faction = zPOI.faction
+                local widgetSet = zPOI.tooltipWidgetSet
+                local areaPoiID = zPOI.areaPoiID
+
+                local txW = 16
+                local txH = 16
+
+                if zPOI.textureWidth  and not inBG then txW = zPOI.textureWidth  end
+                if zPOI.textureHeight and not inBG then txH = zPOI.textureHeight end
+
+                local skip = false
+
+                local _, splitname
+                if name then
+                    _, splitname = strsplit(",", name)
+                end
+                if type == 1 and name and not Nx.strpos(Nx.Map:GetMapNameByID(rid), strtrim(splitname or name)) then
+                    skip = true
+                end
+
+                -- type, name, desc, txIndex, pX, pY = C_WorldMap.GetMapLandmarkInfo (i)
+                -- local type, name, desc, txIndex, pX, pY, mapLinkID, inBattleMap, graveyardID, areaID, poiID, isObjectIcon, atlasIcon = C_WorldMap.GetMapLandmarkInfo(i);
+                -- Nx.prtCtrl ("LandMs %s, %s, %s, %s, %s, %s, %s, %s", i, poiID, txIndex or '-', name, type, isObjectIcon, atlasIcon, WorldMap_IsSpecialPOI(poiID))
+                if (atlasIcon or zPOI.tex or (pX and txIndex and txIndex ~= 0)) and not skip then        -- WotLK has 0 index POIs for named locations
+                    if (type ~= 3 or Nx.db.char.Map.ShowArchBlobs)
+                        and (type ~= 8 or Nx.db.char.Map.ShowGossip)
+                        and (type ~= 9 or Nx.db.char.Map.ShowBonusObjective)
+                        and (faction == nil or faction == 0 or Nx.PlFactionNum == faction) then
+                        local tip = name
+                        if desc then
+                            tip = format ("%s\n%s", name, desc)
+                        end
+                        pX = pX * 100
+                        pY = pY * 100
+
+            --            Nx.prtCtrl ("poi %d %s %s %d", i, name, desc, txIndex)
+
+                        local f = self:GetIcon (5)
+
+                        if self.CurMapBG then
+
+                            f.NXType = 2000
+
+                            local iconType = Nx.MapPOITypes[txIndex]
+
+                            local sideStr = ""
+                            if iconType == 1 then    -- Ally?
+                                sideStr = " (Ally)"
+                            elseif iconType == 2 then    -- Horde?
+                                sideStr = " (Horde)"
                             end
 
-                            local dur = GetTime() - self.BGTimers[name.."#"]
-                            local doneDur = (rid == 461 or rid == 540 or rid == 736) and 64 or 241
-                            local leftDur = max (doneDur - dur, 0)
-                            local tmStr
+                            if desc == L["In Conflict"] then
 
-                            if leftDur < 60 then
-                                tmStr = format (":%02d", leftDur)
-                            else
-                                tmStr = format ("%d:%02d", floor (leftDur / 60), floor (leftDur % 60))
-                            end
+                                local state = self.BGTimers[name]
+                                if state ~= txIndex then
+                                    self.BGTimers[name] = txIndex
+                                    self.BGTimers[name.."#"] = GetTime()
+                                end
 
-                            f.NXData = format ("1~%f~%f~%s%s %s", pX, pY, name, sideStr, tmStr)
+                                local dur = GetTime() - self.BGTimers[name.."#"]
+                                local doneDur = (rid == 461 or rid == 540 or rid == 736) and 64 or 241
+                                local leftDur = max (doneDur - dur, 0)
+                                local tmStr
 
-                            tip = format ("%s\n%s", tip, tmStr)
+                                if leftDur < 60 then
+                                    tmStr = format (":%02d", leftDur)
+                                else
+                                    tmStr = format ("%d:%02d", floor (leftDur / 60), floor (leftDur % 60))
+                                end
 
-                            -- Horizontal bar
+                                f.NXData = format ("1~%f~%f~%s%s %s", pX, pY, name, sideStr, tmStr)
 
-                            local sz = 30 / self.ScaleDraw
+                                tip = format ("%s\n%s", tip, tmStr)
 
-                            local f2 = self:GetIcon (0)
-                            self:ClipFrameZTLO (f2, pX, pY, sz, sz, -15, -15)
-                            f2.texture:SetColorTexture (0, 0, 0, .35)
+                                -- Horizontal bar
 
-                            f2.NXType = 2000
-                            f2.NxTip = tip
-                            f2.NXData = f.NXData
+                                local sz = 30 / self.ScaleDraw
 
-                            local f2 = self:GetIconNI (1)
+                                local f2 = self:GetIcon (0)
+                                self:ClipFrameZTLO (f2, pX, pY, sz, sz, -15, -15)
+                                f2.texture:SetColorTexture (0, 0, 0, .35)
 
-                            if leftDur < 10 then
+                                f2.NXType = 2000
+                                f2.NxTip = tip
+                                f2.NXData = f.NXData
+
+                                local f2 = self:GetIconNI (1)
+
+                                if leftDur < 10 then
+
+                                    if self.BGGrowBars then
+
+                                        local al = abs (GetTime() % .4 - .2) / .2 * .2 + .8
+
+                                        local f3 = self:GetIconNI (2)
+                                        self:ClipFrameZTLO (f3, pX, pY, sz * (10 - leftDur) * .1, 3 / self.ScaleDraw, -15, -15)
+                                        f3.texture:SetColorTexture (.5, 1, .5, al)
+
+                                        local f3 = self:GetIconNI (2)
+                                        self:ClipFrameZTLO (f3, pX, pY, sz * (10 - leftDur) * .1, 3 / self.ScaleDraw, -15, 12)
+                                        f3.texture:SetColorTexture (.5, 1, .5, al)
+                                    end
+
+            --                        f2.texture:SetColorTexture (.5, 1, .5, abs (GetTime() % .6 - .3) / .3 * .7 + .3)
+                                end
+
+                                local red = .3
+                                local blue = 1
+                                if iconType == 2 then    -- Horde?
+                                    red = 1
+                                    blue = .3
+                                end
+
+                                f2.texture:SetColorTexture (red, .3, blue, abs (GetTime() % 2 - 1) * .5 + .5)
+
+                                local per = leftDur / doneDur
+                                local vper = per > .1 and 1 or per * 10
 
                                 if self.BGGrowBars then
-
-                                    local al = abs (GetTime() % .4 - .2) / .2 * .2 + .8
-
-                                    local f3 = self:GetIconNI (2)
-                                    self:ClipFrameZTLO (f3, pX, pY, sz * (10 - leftDur) * .1, 3 / self.ScaleDraw, -15, -15)
-                                    f3.texture:SetColorTexture (.5, 1, .5, al)
-
-                                    local f3 = self:GetIconNI (2)
-                                    self:ClipFrameZTLO (f3, pX, pY, sz * (10 - leftDur) * .1, 3 / self.ScaleDraw, -15, 12)
-                                    f3.texture:SetColorTexture (.5, 1, .5, al)
+                                    per = 1 - per
+                                    vper = 1
+                                else
+                                    per = max (per, .1)
                                 end
 
-        --                        f2.texture:SetColorTexture (.5, 1, .5, abs (GetTime() % .6 - .3) / .3 * .7 + .3)
-                            end
+                                self:ClipFrameZTLO (f2, pX, pY, sz * per, sz * vper, -15, -15)
 
-                            local red = .3
-                            local blue = 1
-                            if iconType == 2 then    -- Horde?
-                                red = 1
-                                blue = .3
-                            end
+                            else    -- No conflict
 
-                            f2.texture:SetColorTexture (red, .3, blue, abs (GetTime() % 2 - 1) * .5 + .5)
+                                f.NXData = format ("0~%f~%f~%s%s", pX, pY, name, sideStr)
 
-                            local per = leftDur / doneDur
-                            local vper = per > .1 and 1 or per * 10
+                                self.BGTimers[name] = nil
 
-                            if self.BGGrowBars then
-                                per = 1 - per
-                                vper = 1
-                            else
-                                per = max (per, .1)
-                            end
+                                -- Rect
 
-                            self:ClipFrameZTLO (f2, pX, pY, sz * per, sz * vper, -15, -15)
+                                local sz = 30 / self.ScaleDraw
 
-                        else    -- No conflict
+                                local f2 = self:GetIcon (0)
+                                self:ClipFrameZTLO (f2, pX, pY, sz, sz, -15, -15)
 
-                            f.NXData = format ("0~%f~%f~%s%s", pX, pY, name, sideStr)
+            --                    Nx.prtCtrl ("I %s %s %s", name, txIndex, iconType or "nil")
 
-                            self.BGTimers[name] = nil
-
-                            -- Rect
-
-                            local sz = 30 / self.ScaleDraw
-
-                            local f2 = self:GetIcon (0)
-                            self:ClipFrameZTLO (f2, pX, pY, sz, sz, -15, -15)
-
-        --                    Nx.prtCtrl ("I %s %s %s", name, txIndex, iconType or "nil")
-
-                            if iconType == 1 then    -- Ally?
-                                f2.texture:SetColorTexture (0, 0, 1, .3)
-        --                        Nx.prtCtrl ("Blue")
-                            elseif iconType == 2 then    -- Horde?
-                                f2.texture:SetColorTexture (1, 0, 0, .3)
-        --                        Nx.prtCtrl ("Red")
-                            else
-                                f2.texture:SetColorTexture (0, 0, 0, .3)
-                            end
-
-                            f2.NXType = 2000
-                            f2.NxTip = tip
-                            f2.NXData = f.NXData
-
-                        end
-                    end
-
-                    f.NxTip = tip
-                    f.NxWidgetSet = widgetSet
-                    f.NxAreaPoiID = areaPoiID
-                    f.NxPoiInfo = zPOI  -- Store full POI info for tooltip
-
-                    -- Set NXType for Quest Hub POIs (type 4000) to enable click handling
-                    if atlasIcon and (atlasIcon == "poi-hub" or string.find(atlasIcon, "QuestHub") or string.find(atlasIcon, "questhub")) then
-                        f.NXType = 4000
-                        f.NXData = {
-                            hubPoiID = areaPoiID,
-                            mapID = rid,
-                            linkedMapID = zPOI.linkedUiMapID,
-                            name = name
-                        }
-                    end
-
-                    -- Add methods for compatibility with Blizzard's AreaPoiUtil.TryShowTooltip
-                    f.GetPoiInfo = function(self) return self.NxPoiInfo end
-                    f.HasDisplayName = function(self)
-                        local poi = self.NxPoiInfo
-                        return poi and poi.name and poi.name ~= ""
-                    end
-                    f.GetDisplayName = function(self)
-                        local poi = self.NxPoiInfo
-                        return poi and poi.name or ""
-                    end
-                    f.GetLinkedUIMapID = function(self)
-                        local poi = self.NxPoiInfo
-                        return poi and poi.linkedUiMapID
-                    end
-
-                    -- Sentinax and Broken Shore bosses
-                    if atlasIcon and (Nx.strpos(atlasIcon, 'DemonShip') == 1 or Nx.strpos(atlasIcon, 'DemonInvasion') == 1) then
-                        pX, pY = self:GetWorldPos (self.MapId, pX, pY)
-                        if self.ScaleDraw > 1 then
-                            self:ClipFrameTL (f, pX-16, pY-16, 32 / self.ScaleDraw, 32 / self.ScaleDraw, 0)
-                        else
-                            self:ClipFrameTL (f, pX-16, pY-16, 32, 32, 0)
-                        end
-                        f.texture:SetAtlas(atlasIcon)
-                    else
-                        pX, pY = self:GetWorldPos(self.MapId, pX, pY)
-                        -- Use ClipFrameWNoChop for all POI icons to avoid squishing at map edges
-                        -- Parent frame clips overflow via SetClipsChildren(true)
-                        -- Render Blizzard POI icons (available quest
-                        -- markers from C_QuestLine.GetAvailableQuestLines,
-                        -- area-POI hubs, vignettes, ...) at their
-                        -- texture-native size — no `* ScaleDraw`.
-                        -- ClipFrameWNoChop treats w/h as raw pixels, so
-                        -- multiplying by ScaleDraw made them grow with
-                        -- map zoom up to 4-5× native (80-160 px); native
-                        -- size keeps them readable but not dominant.
-                        local iconW = txW
-                        local iconH = txH
-                        local isInstanceCanvas = self.CurOpts.NXInstanceMaps
-                            and (self:IsInstanceMap(self.MapId)
-                                or self:IsBattleGroundMap(self.MapId))
-                        local visible
-                        if isInstanceCanvas then
-                            visible = self:PlaceInstanceMapPOI(
-                                f, mapX, mapY, iconW, iconH
-                            )
-                        else
-                            visible = self:ClipFrameWNoChop(
-                                f, pX, pY, iconW, iconH
-                            )
-                        end
-
-                        if visible then
-                            if zPOI._bossEncounter then
-                                -- Boss POIs need a frame-level bump on
-                                -- instance maps: ClipFrameMF stamps the
-                                -- instance-map icon overlay at level
-                                -- 50, and the legacy GetIcon(5) we use
-                                -- lands at self.Level + 5 ≈ 11. Without
-                                -- the bump the boss pin renders below
-                                -- the overlay and is invisible.
-                                f:SetFrameLevel(self.Level + 51)
-                                -- Wire up click routing. NXType 5000
-                                -- (cat = 5) is the boss-encounter band;
-                                -- IconOnMouseDown's cat==5 branches open
-                                -- the Dungeon Journal on left-click and
-                                -- the standard icon menu on right-click.
-                                -- NXData carries the encounter / instance
-                                -- IDs (for EJ) plus X/Y/Tip so the menu's
-                                -- Goto / Paste Link items have data to
-                                -- read.
-                                f.NXType = 5000
-                                f.NXData = {
-                                    X           = pX,
-                                    Y           = pY,
-                                    Tip         = name,
-                                    encounterID = zPOI._bossEncID,
-                                    instanceID  = zPOI._bossInstID,
-                                }
-                            end
-                            -- Bonus objective: wire click to ToggleGoto
-                            -- (cat = 6 in IconOnMouseDown) and reset the
-                            -- circle bg below so we don't leak it onto
-                            -- a non-bonus icon that reuses the frame.
-                            if zPOI._bonusQuestID then
-                                f.NXType = 6000
-                                f.NXData = {
-                                    X       = pX,
-                                    Y       = pY,
-                                    Tip     = name,
-                                    questID = zPOI._bonusQuestID,
-                                }
-                            end
-                            if f.bgTex then f.bgTex:Hide() end
-                            if zPOI.tex then
-                                -- Boss-encounter POIs (and any future
-                                -- entry that hands us a raw texture
-                                -- path / FileDataID) use SetTexture
-                                -- directly. atlas / Minimap-atlas
-                                -- paths don't know about FileDataIDs.
-                                f.texture:SetTexture(zPOI.tex)
-                                f.texture:SetTexCoord(0, 1, 0, 1)
-                                f.texture:SetVertexColor(1, 1, 1, 1)
-                            elseif atlasIcon then
-                                f.texture:SetAtlas(atlasIcon)
-                            else
-                                f.texture:SetTexture ("Interface\\Minimap\\POIIcons")
-                                txX1, txX2, txY1, txY2 = C_Minimap.GetPOITextureCoords (txIndex)
-                                f.texture:SetTexCoord (txX1 + .003, txX2 - .003, txY1 + .003, txY2 - .003)
-                                f.texture:SetVertexColor (1, 1, 1, 1)
-                            end
-                            if zPOI.facing then
-                                f.texture:SetRotation(zPOI.facing)
-                            end
-                            -- Blizzard's BonusObjectivePinTemplate draws
-                            -- a "UI-QuestPoi-QuestNumber" ring behind the
-                            -- "Bonus-Objective-Star" foreground (see
-                            -- maplegendframe.lua + GetIconWQ's emissary
-                            -- ring for the in-Carbonite pattern). Use
-                            -- SetAtlas(name, true) so the ring keeps its
-                            -- native atlas dimensions and SetPoint
-                            -- "CENTER" so it sits behind the star
-                            -- regardless of the icon frame's own size.
-                            -- Lazy-created and stashed on the frame; the
-                            -- :Hide above clears it when the frame is
-                            -- reused for a non-bonus pin.
-                            --
-                            -- Swap to the SuperTracked variant when the
-                            -- bonus quest is the current super-track
-                            -- target; mirrors poibutton.lua's atlas pair.
-                            if zPOI._bonusQuestID then
-                                if not f.bgTex then
-                                    f.bgTex = f:CreateTexture(nil, "BACKGROUND")
-                                    f.bgTex:SetPoint("CENTER", 0, 0)
+                                if iconType == 1 then    -- Ally?
+                                    f2.texture:SetColorTexture (0, 0, 1, .3)
+            --                        Nx.prtCtrl ("Blue")
+                                elseif iconType == 2 then    -- Horde?
+                                    f2.texture:SetColorTexture (1, 0, 0, .3)
+            --                        Nx.prtCtrl ("Red")
+                                else
+                                    f2.texture:SetColorTexture (0, 0, 0, .3)
                                 end
-                                -- Highlight by checking our own Goto
-                                -- state instead of C_SuperTrack:
-                                -- SetSuperTrackedQuestID silently
-                                -- rejects bonus-objective IDs (they
-                                -- are implicitly super-tracked by
-                                -- proximity, not by user click), so
-                                -- relying on it left the bg permanently
-                                -- on the un-tracked variant. Each Goto
-                                -- target carries the questID we stamped
-                                -- in ToggleGotoQuest.
-                                local gotoActive = false
-                                for _, tar in ipairs(self.Targets or {}) do
-                                    if tar.TargetType == "Goto"
-                                        and tar.QuestID == zPOI._bonusQuestID then
-                                        gotoActive = true
-                                        break
+
+                                f2.NXType = 2000
+                                f2.NxTip = tip
+                                f2.NXData = f.NXData
+
+                            end
+                        end
+
+                        f.NxTip = tip
+                        f.NxWidgetSet = widgetSet
+                        f.NxAreaPoiID = areaPoiID
+                        f.NxPoiInfo = zPOI  -- Store full POI info for tooltip
+
+                        -- Set NXType for Quest Hub POIs (type 4000) to enable click handling
+                        if atlasIcon and (atlasIcon == "poi-hub" or string.find(atlasIcon, "QuestHub") or string.find(atlasIcon, "questhub")) then
+                            f.NXType = 4000
+                            f.NXData = {
+                                hubPoiID = areaPoiID,
+                                mapID = rid,
+                                linkedMapID = zPOI.linkedUiMapID,
+                                name = name
+                            }
+                        end
+
+                        -- Add methods for compatibility with Blizzard's AreaPoiUtil.TryShowTooltip
+                        f.GetPoiInfo = function(self) return self.NxPoiInfo end
+                        f.HasDisplayName = function(self)
+                            local poi = self.NxPoiInfo
+                            return poi and poi.name and poi.name ~= ""
+                        end
+                        f.GetDisplayName = function(self)
+                            local poi = self.NxPoiInfo
+                            return poi and poi.name or ""
+                        end
+                        f.GetLinkedUIMapID = function(self)
+                            local poi = self.NxPoiInfo
+                            return poi and poi.linkedUiMapID
+                        end
+
+                        -- Sentinax and Broken Shore bosses
+                        if atlasIcon and (Nx.strpos(atlasIcon, 'DemonShip') == 1 or Nx.strpos(atlasIcon, 'DemonInvasion') == 1) then
+                            pX, pY = self:GetWorldPos (self.MapId, pX, pY)
+                            if self.ScaleDraw > 1 then
+                                self:ClipFrameTL (f, pX-16, pY-16, 32 / self.ScaleDraw, 32 / self.ScaleDraw, 0)
+                            else
+                                self:ClipFrameTL (f, pX-16, pY-16, 32, 32, 0)
+                            end
+                            f.texture:SetAtlas(atlasIcon)
+                        else
+                            pX, pY = self:GetWorldPos(self.MapId, pX, pY)
+                            -- Use ClipFrameWNoChop for all POI icons to avoid squishing at map edges
+                            -- Parent frame clips overflow via SetClipsChildren(true)
+                            -- Render Blizzard POI icons (available quest
+                            -- markers from C_QuestLine.GetAvailableQuestLines,
+                            -- area-POI hubs, vignettes, ...) at their
+                            -- texture-native size — no `* ScaleDraw`.
+                            -- ClipFrameWNoChop treats w/h as raw pixels, so
+                            -- multiplying by ScaleDraw made them grow with
+                            -- map zoom up to 4-5× native (80-160 px); native
+                            -- size keeps them readable but not dominant.
+                            local iconW = txW
+                            local iconH = txH
+                            local isInstanceCanvas = self.CurOpts.NXInstanceMaps
+                                and (self:IsInstanceMap(self.MapId)
+                                    or self:IsBattleGroundMap(self.MapId))
+                            local visible
+                            if isInstanceCanvas then
+                                visible = self:PlaceInstanceMapPOI(
+                                    f, mapX, mapY, iconW, iconH
+                                )
+                            else
+                                visible = self:ClipFrameWNoChop(
+                                    f, pX, pY, iconW, iconH
+                                )
+                            end
+
+                            if visible then
+                                if zPOI._bossEncounter then
+                                    -- Boss POIs need a frame-level bump on
+                                    -- instance maps: ClipFrameMF stamps the
+                                    -- instance-map icon overlay at level
+                                    -- 50, and the legacy GetIcon(5) we use
+                                    -- lands at self.Level + 5 ≈ 11. Without
+                                    -- the bump the boss pin renders below
+                                    -- the overlay and is invisible.
+                                    f:SetFrameLevel(self.Level + 51)
+                                    -- Wire up click routing. NXType 5000
+                                    -- (cat = 5) is the boss-encounter band;
+                                    -- IconOnMouseDown's cat==5 branches open
+                                    -- the Dungeon Journal on left-click and
+                                    -- the standard icon menu on right-click.
+                                    -- NXData carries the encounter / instance
+                                    -- IDs (for EJ) plus X/Y/Tip so the menu's
+                                    -- Goto / Paste Link items have data to
+                                    -- read.
+                                    f.NXType = 5000
+                                    f.NXData = {
+                                        X           = pX,
+                                        Y           = pY,
+                                        Tip         = name,
+                                        encounterID = zPOI._bossEncID,
+                                        instanceID  = zPOI._bossInstID,
+                                    }
+                                end
+                                -- Bonus objective: wire click to ToggleGoto
+                                -- (cat = 6 in IconOnMouseDown) and reset the
+                                -- circle bg below so we don't leak it onto
+                                -- a non-bonus icon that reuses the frame.
+                                if zPOI._bonusQuestID then
+                                    f.NXType = 6000
+                                    f.NXData = {
+                                        X       = pX,
+                                        Y       = pY,
+                                        Tip     = name,
+                                        questID = zPOI._bonusQuestID,
+                                    }
+                                end
+                                if f.bgTex then f.bgTex:Hide() end
+                                if zPOI.tex then
+                                    -- Boss-encounter POIs (and any future
+                                    -- entry that hands us a raw texture
+                                    -- path / FileDataID) use SetTexture
+                                    -- directly. atlas / Minimap-atlas
+                                    -- paths don't know about FileDataIDs.
+                                    f.texture:SetTexture(zPOI.tex)
+                                    f.texture:SetTexCoord(0, 1, 0, 1)
+                                    f.texture:SetVertexColor(1, 1, 1, 1)
+                                elseif atlasIcon then
+                                    f.texture:SetAtlas(atlasIcon)
+                                else
+                                    f.texture:SetTexture ("Interface\\Minimap\\POIIcons")
+                                    txX1, txX2, txY1, txY2 = C_Minimap.GetPOITextureCoords (txIndex)
+                                    f.texture:SetTexCoord (txX1 + .003, txX2 - .003, txY1 + .003, txY2 - .003)
+                                    f.texture:SetVertexColor (1, 1, 1, 1)
+                                end
+                                if zPOI.facing then
+                                    f.texture:SetRotation(zPOI.facing)
+                                end
+                                -- Blizzard's BonusObjectivePinTemplate draws
+                                -- a "UI-QuestPoi-QuestNumber" ring behind the
+                                -- "Bonus-Objective-Star" foreground (see
+                                -- maplegendframe.lua + GetIconWQ's emissary
+                                -- ring for the in-Carbonite pattern). Use
+                                -- SetAtlas(name, true) so the ring keeps its
+                                -- native atlas dimensions and SetPoint
+                                -- "CENTER" so it sits behind the star
+                                -- regardless of the icon frame's own size.
+                                -- Lazy-created and stashed on the frame; the
+                                -- :Hide above clears it when the frame is
+                                -- reused for a non-bonus pin.
+                                --
+                                -- Swap to the SuperTracked variant when the
+                                -- bonus quest is the current super-track
+                                -- target; mirrors poibutton.lua's atlas pair.
+                                if zPOI._bonusQuestID then
+                                    if not f.bgTex then
+                                        f.bgTex = f:CreateTexture(nil, "BACKGROUND")
+                                        f.bgTex:SetPoint("CENTER", 0, 0)
                                     end
+                                    -- Highlight by checking our own Goto
+                                    -- state instead of C_SuperTrack:
+                                    -- SetSuperTrackedQuestID silently
+                                    -- rejects bonus-objective IDs (they
+                                    -- are implicitly super-tracked by
+                                    -- proximity, not by user click), so
+                                    -- relying on it left the bg permanently
+                                    -- on the un-tracked variant. Each Goto
+                                    -- target carries the questID we stamped
+                                    -- in ToggleGotoQuest.
+                                    local gotoActive = false
+                                    for _, tar in ipairs(self.Targets or {}) do
+                                        if tar.TargetType == "Goto"
+                                            and tar.QuestID == zPOI._bonusQuestID then
+                                            gotoActive = true
+                                            break
+                                        end
+                                    end
+                                    local bgAtlas = gotoActive
+                                        and "UI-QuestPoi-QuestNumber-SuperTracked"
+                                        or  "UI-QuestPoi-QuestNumber"
+                                    f.bgTex:SetAtlas(bgAtlas, true)
+                                    f.bgTex:Show()
                                 end
-                                local bgAtlas = gotoActive
-                                    and "UI-QuestPoi-QuestNumber-SuperTracked"
-                                    or  "UI-QuestPoi-QuestNumber"
-                                f.bgTex:SetAtlas(bgAtlas, true)
-                                f.bgTex:Show()
                             end
                         end
                     end
                 end
             end
         end
-    end
 
-    self.Level = oldLev + 4
+        self.Level = oldLev + 4
+    end
 
     -- Update misc icons (herbs, ore, ...)
     -- Levels:
@@ -7680,22 +7687,24 @@ function Nx.Map:Update (elapsed)
     end
 
     self:UpdateIcons (self.KillShow)
-    self:UpdateAreaLabels()
+    if drawDetail then
+        self:UpdateAreaLabels()
 
-    -- Battlefield flags
+        -- Battlefield flags
 
-    local fX, fY, fToken
-    local flagNum = GetNumBattlefieldFlagPositions()
+        local fX, fY, fToken
+        local flagNum = GetNumBattlefieldFlagPositions()
 
-    for i = 1, flagNum do
+        for i = 1, flagNum do
 
-        fX, fY, fToken = GetBattlefieldFlagPosition (i)
+            fX, fY, fToken = GetBattlefieldFlagPosition (i)
 
-        if fX ~= 0 or fY ~= 0 then
+            if fX ~= 0 or fY ~= 0 then
 
-            local f = self:GetIconNI()
-            f.texture:SetTexture (fToken)
-            self:ClipFrameZ (f, (fX or 0) * 100, (fY or 0) * 100, 36, 36, 0)
+                local f = self:GetIconNI()
+                f.texture:SetTexture (fToken)
+                self:ClipFrameZ (f, (fX or 0) * 100, (fY or 0) * 100, 36, 36, 0)
+            end
         end
     end
 
