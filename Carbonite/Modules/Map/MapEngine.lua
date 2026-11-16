@@ -3586,7 +3586,9 @@ function Nx.Map:MinimapUpdate()
         self.MMFScale = Nx.InBG and lOpts.NXMMDockScaleBG or lOpts.NXMMDockScale
         -- Unmapped instances use full size without changing the saved
         -- NXMMFull preference, so outdoor docking returns unchanged.
-        if lOpts.NXMMFull or unmappedInstance then
+        if unmappedInstance then
+            self.MMFScale = self:GetUnmappedInstanceMinimapBox() / 140
+        elseif lOpts.NXMMFull then
             self.MMFScale = min(self.MapW, self.MapH) / 140
         end
     end
@@ -3659,9 +3661,10 @@ function Nx.Map:MinimapUpdateEnd()
         local unmappedInstance = self:IsUnmappedInstance()
 
         if unmappedInstance then
-            -- Full-size replacement for the missing instance map: center it.
-            x = (self.MapW - sz) / 2
-            y = (self.MapH - sz) / 2
+            -- Full-size replacement for the missing instance map, centered
+            -- above the toolbar band (UnmappedInstance.lua).
+            local _
+            _, x, y = self:GetUnmappedInstanceMinimapBox()
         else
             if Nx.db.profile.MiniMap.DockRight then
                 x = (self.MapW - sz + 1)
