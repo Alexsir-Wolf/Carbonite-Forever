@@ -31,6 +31,9 @@
 --   QS.filled            quest ids whose missing fields the last completed run filled
 --   QS.ForeverLoc(f, s)  one location string projected with f(uiMapId, x, y)
 --   QS.ConvertLoadedCoords(lib)  project the Era points of records not yet converted
+--   QS.XPAt(questLevel, xp, playerLevel)  XP a quest gives at a player level
+--   Nx.Quest:GetXP(qId)  that XP for the player, from QuestieDB's QuestXP table, or nil
+--   Nx.Quest:XPText(qId) the XP as " 1.650 XP" for lists and tooltips, or ""
 
 local Nx = _G.Nx
 if not Nx or not Nx.Quest then return end
@@ -556,4 +559,45 @@ if hooksecurefunc then
         local ok, err = pcall(QS.Start, QS)
         if not ok then Say(err) end
     end)
+end
+
+-------------------------------------------------------------------------------
+-- Quest XP. QuestieDB keeps { quest level, full XP } per quest id. The game
+-- cuts the XP when the player is over 5 levels above the quest and rounds it
+-- to a step that grows with the amount.
+-------------------------------------------------------------------------------
+
+-- Share of the XP by levels above the quest: 6 above gives 80%, 9 gives 20%,
+-- 10 or more give 10%.
+local XP_SHARE = { [6] = .8, [7] = .6, [8] = .4, [9] = .2 }
+
+local function RoundXP(xp)
+    local step = xp <= 100 and 5 or xp <= 500 and 10 or xp <= 1000 and 25 or 50
+    return floor(xp / step + .5) * step
+end
+
+function QS.XPAt(questLevel, xp, playerLevel)
+    local over = playerLevel - questLevel
+    local share = over <= 5 and 1 or XP_SHARE[over] or .1
+    return RoundXP(xp * share)
+end
+
+function Nx.Quest:GetXP(qId)
+    local lib = _G.LibQuestieDB
+    local support = type(lib) == "table" and type(lib.Support) == "table" and lib.Support.Get
+    local data = support and support("QuestXP")
+    local entry = data and data.db and data.db[qId]
+    if type(entry) ~= "table" or not entry[2] then return nil end
+    local level = UnitLevel("player")
+    local maxLevel = GetMaxPlayerLevel and GetMaxPlayerLevel()
+    if maxLevel and level >= maxLevel then return nil end
+    local xp = QS.XPAt(entry[1] or level, entry[2], level)
+    return xp > 0 and xp or nil
+end
+
+function Nx.Quest:XPText(qId)
+    local xp = self:GetXP(qId)
+    if not xp then return "" end
+    local amount = BreakUpLargeNumbers and BreakUpLargeNumbers(xp) or tostring(xp)
+    return format(" |cff9f9fff%s %s|r", amount, L["XP"])
 end
