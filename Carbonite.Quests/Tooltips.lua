@@ -463,6 +463,11 @@ local function PrepareQuestTooltipFrame(sourceTip)
     return tip
 end
 
+-- Decided by what the client has, not by Nx.isRetail (#13).
+function Nx.Quest.UsesPrivateTooltip()
+    return _G.issecretvalue ~= nil or _G.TooltipDataProcessor ~= nil
+end
+
 function    Nx.Quest.TooltipHook()
 
     --Nx.prt ("TooltipHook")
@@ -481,9 +486,11 @@ function    Nx.Quest:TooltipProcess (stripColor, sourceTooltip)
         return
     end
 
-    -- Blizzard's shared tooltip is read-only to Carbonite on Retail. Carbonite
-    -- UI can pass Nx.TooltipText explicitly and safely render into that frame.
-    local usePrivateTip = Nx.isRetail and sourceTip == GameTooltip
+    -- Blizzard's shared tooltip is read-only to Carbonite on clients with the
+    -- modern tooltip pipeline (Retail, and Forever with its Classic .toc).
+    -- Carbonite UI can pass Nx.TooltipText explicitly and safely render into
+    -- that frame.
+    local usePrivateTip = Nx.Quest.UsesPrivateTooltip() and sourceTip == GameTooltip
     local firstLine = GetTooltipLeftLine (sourceTip, 1)
     local tipStr = firstLine and firstLine:GetText()
     if not CanUseValue(tipStr) then
