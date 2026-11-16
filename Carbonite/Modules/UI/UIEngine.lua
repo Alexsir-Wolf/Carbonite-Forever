@@ -6277,7 +6277,10 @@ function Nx.List:Resize (width, height)
                     offX = self.Offsets[line] or 0
                 end
 
-                maxCW = max (maxCW, self.Strs[strNum]:GetWidth() + offX)
+                -- A list sized to its text (the watch list) grows by the width a row-end
+                -- button reserves, instead of the button covering the text.
+                local endPad = k == #self.Columns and self.RowRightPad and self.RowRightPad (self, line) or 0
+                maxCW = max (maxCW, self.Strs[strNum]:GetWidth() + offX + endPad)
 --                Nx.prt ("maxCW %s %f", line, maxCW)
                 strNum = strNum + 1
             end

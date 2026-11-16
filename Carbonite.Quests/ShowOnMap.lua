@@ -21,7 +21,8 @@ local SIZE = 14
 -- Gap between the button and the list's right edge (the scroll bar sits outside the list).
 local RIGHT_PAD = 4
 local ICON_ATLAS = "Waypoint-MapPin-ChatIcon"
-local ICON_FILE = "Interface\\WorldMap\\WorldMap-Icon"
+-- The map scroll icon, in every client, when the pin atlas is missing.
+local ICON_FILE = "Interface\\Icons\\INV_Misc_Map_01"
 
 local buttons = {}
 
@@ -69,8 +70,9 @@ local function GetButton(index, parent)
         icon:SetAtlas(ICON_ATLAS)
     else
         icon:SetTexture(ICON_FILE)
+        icon:SetTexCoord(.08, .92, .08, .92)
     end
-    button:SetHighlightTexture(ICON_FILE, "ADD")
+    button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
     button:SetScript("OnEnter", OnEnter)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
     button:SetScript("OnClick", OnClick)
