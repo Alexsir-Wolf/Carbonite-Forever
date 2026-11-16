@@ -61,20 +61,30 @@ local function GetStoredItemStats(inv)
     return entries, total
 end
 
+-- Equipment slot as the client names it: "ShoulderSlot" is SHOULDERSLOT
+-- ("Ombros" on a pt-BR client). Without the global, the name without "Slot".
+local function SlotName(slot)
+    local name = _G[strupper (slot)]
+    if type (name) == "string" and name ~= "" then
+        return name
+    end
+    return (gsub (gsub (slot, "Slot", ""), "%d", ""))
+end
+
 local function FormatScanStatus(scanTime, hasData)
     scanTime = tonumber(scanTime)
     if scanTime and scanTime > 0 then
         local elapsed = max(0, time() - scanTime)
         if elapsed < 60 then
-            return "|cff80ff80current|r"
+            return "|cff80ff80" .. L["current"] .. "|r"
         end
-        return format("|cffcfcfcf%s ago|r", Nx.Util_GetTimeElapsedStr(elapsed))
+        return format("|cffcfcfcf" .. L["%s ago"] .. "|r", Nx.Util_GetTimeElapsedStr(elapsed))
     end
 
     if hasData then
-        return "|cffffff80legacy cache|r"
+        return "|cffffff80" .. L["legacy cache"] .. "|r"
     end
-    return "|cff888888not scanned|r"
+    return "|cff888888" .. L["not scanned"] .. "|r"
 end
 
 local function AddSectionHeader(list, column, label, count)
@@ -178,7 +188,7 @@ function Nx.Warehouse:Create()
     list:SetLineHeight (4)
 
     list:ColumnAdd ("", 1, 24)
-    list:ColumnAdd ("Name", 2, 900)
+    list:ColumnAdd (L["Name"], 2, 900)
 
     local paneSplit = .38
     self.PaneSplit = paneSplit
@@ -204,8 +214,8 @@ function Nx.Warehouse:Create()
     -- Filter Edit Box
 
     self.EditBox = Nx.EditBox:Create (win.Frm, self, self.OnEditBox, 60)
-    self.EditBox.FilterDesc = "Search items..."
-    self.EditBox.FilterDescEsc = "Search items%.%.%."
+    self.EditBox.FilterDesc = L["Search items..."]
+    self.EditBox.FilterDescEsc = gsub (L["Search items..."], "%p", "%%%0")
     self.EditBox.Frm:SetText(self.EditBox.FilterDesc)
 
     win:Attach (self.EditBox.Frm, paneSplit, 1, 0, 18)
@@ -578,7 +588,7 @@ function Nx.Warehouse:AddSelectionSummary(list)
     local accountStatus = FormatScanStatus(account and account.ScanTime, account and next(account.Inv or {}) ~= nil)
 
     list:ItemAdd(selected)
-    list:ItemSet(2, "|cff80bfffStorage Summary|r")
+    list:ItemSet(2, "|cff80bfff" .. L["Storage Summary"] .. "|r")
 
     if selected == 99 then
         local bagTotal, bankTotal, mailTotal = 0, 0, 0
@@ -596,14 +606,14 @@ function Nx.Warehouse:AddSelectionSummary(list)
         end
 
         list:ItemAdd(selected)
-        list:ItemSet(2, format("  Characters: %d", #Nx.RealmChars))
+        list:ItemSet(2, format(L["  Characters: %d"], #Nx.RealmChars))
         list:ItemAdd(selected)
-        list:ItemSet(2, format("  Bags: %d  Bank: %d  Mail: %d", bagTotal, bankTotal, mailTotal))
+        list:ItemSet(2, format(L["  Bags: %d  Bank: %d  Mail: %d"], bagTotal, bankTotal, mailTotal))
         if hasAccountBank then
             list:ItemAdd(selected)
             list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal))
             list:ItemAdd(selected)
-            list:ItemSet(2, format("  Shared scan: %s", accountStatus))
+            list:ItemSet(2, format(L["  Shared scan: %s"], accountStatus))
         end
         return
     end
@@ -621,22 +631,22 @@ function Nx.Warehouse:AddSelectionSummary(list)
     local _, mailTotal = GetStoredItemStats(ch["WareMail"])
 
     list:ItemAdd(selected)
-    list:ItemSet(2, format("  Equipped: %d  Bags: %d", equipCount, bagTotal))
+    list:ItemSet(2, format(L["  Equipped: %d  Bags: %d"], equipCount, bagTotal))
     list:ItemAdd(selected)
-    list:ItemSet(2, format("  Bank: %d  Mail: %d", bankTotal + reagentTotal, mailTotal))
+    list:ItemSet(2, format(L["  Bank: %d  Mail: %d"], bankTotal + reagentTotal, mailTotal))
     if hasAccountBank then
         list:ItemAdd(selected)
         list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal))
     end
 
     list:ItemAdd(selected)
-    list:ItemSet(2, format("  Bags scan: %s", FormatScanStatus(ch.WareBagsScanTime, ch["WareBags"] ~= nil)))
+    list:ItemSet(2, format(L["  Bags scan: %s"], FormatScanStatus(ch.WareBagsScanTime, ch["WareBags"] ~= nil)))
     list:ItemAdd(selected)
-    list:ItemSet(2, format("  Bank scan: %s", FormatScanStatus(ch.WareBankScanTime or ch.WareRBankScanTime, ch["WareBank"] ~= nil or ch["WareRBank"] ~= nil)))
+    list:ItemSet(2, format(L["  Bank scan: %s"], FormatScanStatus(ch.WareBankScanTime or ch.WareRBankScanTime, ch["WareBank"] ~= nil or ch["WareRBank"] ~= nil)))
     list:ItemAdd(selected)
-    list:ItemSet(2, format("  Mail scan: %s", FormatScanStatus(ch.WareMailScanTime, ch["WareMail"] ~= nil)))
+    list:ItemSet(2, format(L["  Mail scan: %s"], FormatScanStatus(ch.WareMailScanTime, ch["WareMail"] ~= nil)))
     list:ItemAdd(selected)
-    list:ItemSet(2, format("  Professions: %s", FormatScanStatus(GetLatestProfessionScan(ch), ch["Profs"] and next(ch["Profs"]) ~= nil)))
+    list:ItemSet(2, format(L["  Professions: %s"], FormatScanStatus(GetLatestProfessionScan(ch), ch["Profs"] and next(ch["Profs"]) ~= nil)))
 
     if type(ch["Profs"]) == "table" then
         local professionNames = {}
@@ -662,7 +672,7 @@ function Nx.Warehouse:AddStorageOverview(list, ch, allCharacters)
     local account = hasAccountBank and self:GetAccountStorageRecord() or nil
     local _, accountTotal = GetStoredItemStats(account and account.Inv)
 
-    AddSectionHeader(list, 3, allCharacters and "Character Storage - All Characters" or "Character Storage")
+    AddSectionHeader(list, 3, allCharacters and L["Character Storage - All Characters"] or L["Character Storage"])
 
     if allCharacters then
         local bagTotal, bankTotal, mailTotal = 0, 0, 0
@@ -679,16 +689,16 @@ function Nx.Warehouse:AddStorageOverview(list, ch, allCharacters)
             end
         end
         list:ItemAdd(0)
-        list:ItemSet(3, format("  Bags: %d   Bank: %d   Mail: %d", bagTotal, bankTotal, mailTotal))
+        list:ItemSet(3, format(L["  Bags: %d  Bank: %d  Mail: %d"], bagTotal, bankTotal, mailTotal))
     elseif ch then
         local _, bags = GetStoredItemStats(IsCharacterBagDataCurrent(ch) and ch["WareBags"] or nil)
         local _, bank = GetStoredItemStats(ch["WareBank"])
         local _, rbank = GetStoredItemStats(ch["WareRBank"])
         local _, mail = GetStoredItemStats(ch["WareMail"])
         list:ItemAdd(0)
-        list:ItemSet(3, format("  Bags: %d   Bank: %d   Mail: %d", bags, bank + rbank, mail))
+        list:ItemSet(3, format(L["  Bags: %d  Bank: %d  Mail: %d"], bags, bank + rbank, mail))
         list:ItemAdd(0)
-        list:ItemSet(3, format("  Updated: Bags %s  Bank %s  Mail %s",
+        list:ItemSet(3, format(L["  Updated: Bags %s  Bank %s  Mail %s"],
             FormatScanStatus(ch.WareBagsScanTime, ch["WareBags"] ~= nil),
             FormatScanStatus(ch.WareBankScanTime or ch.WareRBankScanTime, ch["WareBank"] ~= nil or ch["WareRBank"] ~= nil),
             FormatScanStatus(ch.WareMailScanTime, ch["WareMail"] ~= nil)))
@@ -697,7 +707,7 @@ function Nx.Warehouse:AddStorageOverview(list, ch, allCharacters)
     if hasAccountBank then
         AddSectionHeader(list, 3, _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal)
         list:ItemAdd(0)
-        list:ItemSet(3, format("  Shared account storage - %s",
+        list:ItemSet(3, format(L["  Shared account storage - %s"],
             FormatScanStatus(account and account.ScanTime, account and next(account.Inv or {}) ~= nil)))
     end
 end
@@ -1104,8 +1114,7 @@ function Nx.Warehouse:UpdateItems()
             for _, data in ipairs (inv) do
                 local slot, link = Nx.Split ("^", data)
                 Nx.Item:Load (link)
-                slot = gsub (slot, L["Slot"], "")
-                slot = gsub (slot, "%d", "")
+                slot = SlotName (slot)
                 local name = WarehouseAPI.GetItemInfo(link)
                 self:UpdateItem (format ("  %s - ", slot), name, 1, 0, 0, link, true)
             end
@@ -1130,8 +1139,7 @@ function Nx.Warehouse:UpdateItems()
                     local slot, link = Nx.Split ("^", data)
                     Nx.Item:Load (link)
 
-                    slot = gsub (slot, L["Slot"], "")
-                    slot = gsub (slot, "%d", "")
+                    slot = SlotName (slot)
 
                     local name, _, iRarity = WarehouseAPI.GetItemInfo(link)
                     if iRarity and iRarity >= self.NXEqRarityMin then
