@@ -9,8 +9,6 @@
 ## LoadOnDemand: 1
 ## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
 
-## X-WoWI-ID: 22789
-## X-Curse-Project-ID: 75792
 
 Data\retail\MiningData.lua
 Data\retail\HerbalismData.lua

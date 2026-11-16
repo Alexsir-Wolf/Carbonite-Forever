@@ -3,5 +3,3 @@
 ## Version: @project-version@
 ## Notes: Released Under GPL
 ## DefaultState: Enabled
-## X-Curse-Project-ID: 342147
-## X-WoWI-ID: 25328

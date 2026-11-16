@@ -9,8 +9,6 @@
 ## RequiredDeps: Carbonite 
 ## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
 
-## X-WoWI-ID: 23404
-## X-Curse-Project-ID: 87975
 
 Locales\locales.xml
 Data\shared\QuestCats.lua

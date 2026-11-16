@@ -9,8 +9,6 @@
 ## RequiredDeps: Carbonite
 ## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
 
-## X-WoWI-ID: 23405
-## X-Curse-Project-ID: 87978
 
 Locales\locales.xml
 NxInfo.lua
