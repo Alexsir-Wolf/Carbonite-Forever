@@ -71,7 +71,7 @@ end
 -- Slash command for diagnostics.
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("taxi", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("taxi", function()
         local log = Carbonite.Core.Logger:Get("TaxiCapture")
         log:info("current node: %s", tostring(TaxiCapture:GetCurrentNode()))
         log:info("known nodes:  %d", TaxiCapture:CountKnown())

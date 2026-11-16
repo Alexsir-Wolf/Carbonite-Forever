@@ -264,7 +264,6 @@ function CarboniteInfo:OnInitialize()
 	end
 	Nx.NXMiniMapBut.Menu:AddItem(0, L["Show Combat Graph"], func, Nx.NXMiniMapBut)
 	CarboniteInfo:RegisterEvent("PLAYER_LOGIN")
-	CarboniteInfo:RegisterComm("carbmodule",Nx.Info.OnChat_msg_addon)
 
 	-- Periodically nudge UEvents:UpdateMap so kill/death events past their
 	-- auto-clear threshold actually get pruned + redrawn. UpdateMap is normally
@@ -414,14 +413,6 @@ function Nx.Info.Combat:Init()
 	self.AttackerName = "?"
 end
 
-function Nx.Info:OnChat_msg_addon(msg, dist, target)
-	local ssplit = { strsplit("|",msg) }
-	if ssplit[1] == "CMD" then
-		if ssplit[2] == "c" then
-			Nx.Info.Combat:Open()
-		end
-	end
-end
 
 ---------------------------------------------------------------------------------------
 -- Update all info windows

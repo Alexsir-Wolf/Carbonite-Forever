@@ -76,7 +76,7 @@ end
 -- Slash subcommand: /cb versions
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if Carbonite.Core.SlashCommands then
-        Carbonite.Core.SlashCommands:Register("versions", function()
+        Carbonite.Core.SlashCommands:RegisterDebug("versions", function()
             local log = Carbonite.Core.Logger:Get("Versions")
             log:info("Carbonite %s (build %s)", Versions:GetAddonVersion(), Versions:GetBuild())
             Versions:Each(function(scope, ver) log:info("  %s -> %s", scope, tostring(ver)) end)

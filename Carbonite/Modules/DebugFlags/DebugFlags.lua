@@ -51,7 +51,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("flags", function(rest)
+    Carbonite.Core.SlashCommands:RegisterDebug("flags", function(rest)
         rest = rest or ""
         local name = rest:match("^%s*(%S+)")
         local log = Carbonite.Core.Logger:Get("DebugFlags")

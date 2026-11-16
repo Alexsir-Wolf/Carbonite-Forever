@@ -61,9 +61,9 @@ end
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
     Carbonite.Core.SlashCommands:Register("winpos", function(rest)  WindowConsole:Pos(rest)  end,
-        "move a window: /cb winpos <name> <x> <y>")
+        "name x y - move a window")
     Carbonite.Core.SlashCommands:Register("winshow", function(rest) WindowConsole:Show(rest) end,
-        "show/hide a window: /cb winshow <name> [0/1]")
+        "name [0/1] - show or hide a window")
     Carbonite.Core.SlashCommands:Register("winsize", function(rest) WindowConsole:Size(rest) end,
-        "resize a window: /cb winsize <name> <w> <h>")
+        "name w h - resize a window")
 end)

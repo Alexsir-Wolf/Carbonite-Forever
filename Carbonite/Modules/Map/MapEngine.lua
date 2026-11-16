@@ -18272,7 +18272,7 @@ do
     if Carbonite and Carbonite.Core and Carbonite.Core.EventBus then
         Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
             if not Carbonite.Core.SlashCommands then return end
-            Carbonite.Core.SlashCommands:Register("map3d", function()
+            Carbonite.Core.SlashCommands:RegisterDebug("map3d", function()
                 local function prt (fmt, ...)
                     DEFAULT_CHAT_FRAME:AddMessage ("|cff40c0ff[map3d]|r " .. format (fmt, ...))
                 end

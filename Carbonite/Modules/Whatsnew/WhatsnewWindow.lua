@@ -94,10 +94,3 @@ function WhatsnewWindow:AddCategory(name)
     end
 end
 
-Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
-    if Carbonite.Core.SlashCommands then
-        Carbonite.Core.SlashCommands:Register("changelog", function()
-            WhatsnewWindow:Show()
-        end, "open the changelog window")
-    end
-end)

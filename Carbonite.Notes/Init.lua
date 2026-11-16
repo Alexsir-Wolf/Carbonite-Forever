@@ -5,7 +5,7 @@
 -- registers the minimap button, the map toolbar entry, the map
 -- right-click "Add Note" menu, and the broker menu.
 --
--- Also hosts the cross-addon ("CMD|note|<text>") message handler.
+-- Also registers the /carb note command.
 
 local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite.Notes", true)
 
@@ -53,7 +53,8 @@ function CarboniteNotes:OnInitialize()
     Nx.Opts:FollowMainProfile(Nx.fdb)
     Nx.Notes:Init()
 
-    CarboniteNotes:RegisterComm("carbmodule", Nx.Notes.OnChat_msg_addon)
+    Carbonite.Core.SlashCommands:Register("note", function(rest) Nx.Notes:SetNoteAtStr(rest) end,
+        "[\"]name[\"] [zone] [x y] - add a map note")
 
     -- Map-toolbar button: the "Notes" toggle on the map header bar.
     Nx.Button.TypeData["MapFav"] = {
@@ -84,18 +85,6 @@ function CarboniteNotes:OnInitialize()
         text = L["Toggle Notes"],
         func = function() Nx.Notes:ToggleShow() end,
     })
-end
-
----
--- Handle incoming addon messages on the "carbmodule" channel.
--- Currently we only respond to "CMD|note|<text>" — a remote-add
--- note from another player using the same chat-string protocol.
---
-function Nx.Notes:OnChat_msg_addon(msg, dist, target)
-    local ssplit = { strsplit("|", msg) }
-    if ssplit[1] == "CMD" and ssplit[2] == "note" then
-        Nx.Notes:SetNoteAtStr(ssplit[3])
-    end
 end
 
 ---

@@ -636,7 +636,7 @@ end
 
 function Profiler:PrintHelp(scope)
     scope = NormalizeScope(scope)
-    local prefix = "/carb profiler " .. (scope == "all" and "" or scope .. " ")
+    local prefix = "/carb debug profiler " .. (scope == "all" and "" or scope .. " ")
     Nx.prt("|cffffd200%s profiler — capture|r", ScopeLabel(scope))
     Nx.prt("%son / off — start or stop measurements", prefix)
     Nx.prt("%sstatus — monitoring state and saved sample count", prefix)
@@ -648,10 +648,10 @@ function Profiler:PrintHelp(scope)
     Nx.prt("%sbaseline status / clear — inspect or remove the reference", prefix)
     Nx.prt("|cffffd200Maintenance|r")
     Nx.prt("%sclear — reset this view's samples, timings, and baseline", prefix)
-    Nx.prt("/carb profiler limit [100-1000] — shared saved-sample limit")
-    Nx.prt("/carb profiler selftest — test the comparison analyzer")
+    Nx.prt("/carb debug profiler limit [100-1000] — shared saved-sample limit")
+    Nx.prt("/carb debug profiler selftest — test the comparison analyzer")
     Nx.prt("Options: Maps > Diagnostics; Quest Module > Diagnostics")
-    Nx.prt("Use /carb profiler quest help or map help for a focused command list.")
+    Nx.prt("Use /carb debug profiler quest help or map help for a focused command list.")
 end
 
 function Profiler:HandleCommand(argument, scope)
@@ -699,36 +699,6 @@ eventFrame:SetScript("OnEvent", function(_, event, addonName)
     end
 end)
 
--- The legacy /carb slash binding calls Nx.slashCommand directly rather than
--- SlashHandler:Dispatch(), so runtime registrations alone are not reachable.
--- Intercept only the profiler subcommand and delegate every other command to
--- the original parser unchanged.
-local originalSlashCommand = Nx.slashCommand
-if type(originalSlashCommand) == "function" and not Nx._QuestProfilerSlashWrapped then
-    Nx.slashCommand = function(text)
-        text = Trim(text)
-        local command, rest = match(text, "^(%S+)%s*(.-)$")
-        if lower(command or "") == "profiler" then
-            Profiler:HandleCommand(rest)
-            return
-        end
-        if lower(command or "") == "help" and lower(Trim(rest)) == "profiler" then
-            Profiler:PrintHelp()
-            return
-        end
-        return originalSlashCommand(text)
-    end
-    Nx._QuestProfilerSlashWrapped = true
-    -- The slash table is normally assigned later during addon lifecycle, but
-    -- update it immediately as well when it already exists (reload/hot-load).
-    if type(_G.SlashCmdList) == "table" and _G.SlashCmdList["Carbonite"] == originalSlashCommand then
-        _G.SlashCmdList["Carbonite"] = Nx.slashCommand
-    end
-end
-local slashHandler = Carbonite.Modules and Carbonite.Modules.SlashHandler
-if slashHandler and slashHandler.Register then
-    slashHandler:Register("profiler", function(rest) Profiler:HandleCommand(rest) end, "control quest and map profiling")
-end
 if Carbonite.Core and Carbonite.Core.SlashCommands and Carbonite.Core.SlashCommands.Register then
-    Carbonite.Core.SlashCommands:Register("profiler", function(rest) Profiler:HandleCommand(rest) end, "control quest and map profiling")
+    Carbonite.Core.SlashCommands:RegisterDebug("profiler", function(rest) Profiler:HandleCommand(rest) end, "control quest and map profiling")
 end
