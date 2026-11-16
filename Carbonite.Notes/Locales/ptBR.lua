@@ -73,3 +73,8 @@ L["Red: skill too low. Orange, yellow, green and gray: the chance of a skill poi
 L["If you have GatherLite installed, shows its gathering nodes on the Carbonite map"] = "Se você tem GatherLite instalado, mostra seus pontos de coleta no mapa do Carbonite-Forever"
 L["GatherLite Icon Size"] = "Tamanho do ícone GatherLite"
 L["Ctrl+C:"] = "Ctrl+C:"
+L["Library book"] = "Livro da biblioteca"
+L["Convergence"] = "Convergência"
+L["Show library books still to find"] = "Mostrar os livros da biblioteca que faltam"
+L["Show convergences (Skyborne)"] = "Mostrar as convergências (Skyborne)"
+L["Show convergences for every character"] = "Mostrar as convergências para todos os personagens"

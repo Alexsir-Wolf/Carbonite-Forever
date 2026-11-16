@@ -192,6 +192,9 @@ function Nx.Notes:UpdateIcons()
         and self:IsGatherLiteAvailable() then
         self:GatherLite(mapId)
     end
+    if Nx.isCamelot and self.ForeverPoints then
+        self:ForeverPoints(mapId)
+    end
 
     -- Early-exit when nothing's changed since the last !Fav rebuild.
     if mapId == self.DrawMapId
