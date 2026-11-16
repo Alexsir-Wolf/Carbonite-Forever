@@ -39,4 +39,16 @@
 	<Binding name="NxMAPSKIPTARGET" category="Carbonite">
 		Nx.NXMapKeyTargetSkip();
 	</Binding>
+	<Binding name="NxMAPCLEARTARGET" category="Carbonite">
+		Nx.NXMapKeyClearTargets();
+	</Binding>
+	<Binding name="NxOPENOPTIONS" category="Carbonite">
+		Nx.NXKeyOpenOptions();
+	</Binding>
+	<Binding name="NxTOGGLEHUD" category="Carbonite">
+		Nx.NXKeyToggleHUD();
+	</Binding>
+	<Binding name="NxTOGGLEINFO" category="Carbonite">
+		Nx.NXKeyToggleInfo();
+	</Binding>
 </Bindings>
