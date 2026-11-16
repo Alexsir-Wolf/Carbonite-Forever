@@ -8,9 +8,9 @@
 -- not Spoken's public API (Spoken/API.lua), so every call is guarded: a failure turns the buttons
 -- off for the session with one chat line instead of raising inside the list update.
 --
--- Play sits inside the window, between Carbonite's quest icon and the title, as Spoken's own
--- button sits left of the title: the icon column is widened by one button while any listed quest
--- has a recording, so every row's text moves right by the same amount and none is covered.
+-- Play sits inside the window, right after Carbonite's quest icon and before the title, as
+-- Spoken's own button sits left of the title: the icon column is widened just enough for it while
+-- any listed quest has a recording, so every row's text moves right alike and none is covered.
 --
 -- Spoken's own "Play button on the tracker" option decides whether a button shows, and Spoken
 -- only offers it for quests it has a recording of. Nothing here runs without Spoken loaded.
@@ -32,11 +32,15 @@ local ORIGIN = "Carbonite's watch list"
 -- ShowsTrackerButton asks Spoken's voice packs; the list redraws several times a second.
 local CACHE_SECONDS = 5
 local NEEDED = { "MakePlayButton", "ShowsTrackerButton", "BindPlayButton", "SetPlayButtonState" }
--- Room added to the icon column for Play, and Play's largest size within it.
-local COLUMN_EXTRA = 18
+-- Play's largest size. Nx.List draws its icons and text this far from the list's left edge, and
+-- its icons are 14 square at a line height of BaseLineH (Nx.List:CreateButtons).
 local MAX_SIZE = 16
--- Nx.List draws its text columns this far from the list's left edge.
 local LIST_PAD = 1
+local ICON_SIZE = 14
+-- Play's frame overlaps the icon's by this much: both draw their glyph inside a margin, so the
+-- glyphs end up side by side. Then the gap before the title's text.
+local ICON_OVERLAP = 2
+local TEXT_GAP = 2
 
 local buttons = {}      -- by position among the buttons shown, reused as the list scrolls
 local shows = {}        -- questID -> { shows, time asked }
@@ -48,16 +52,18 @@ local function HideFrom(first)
     end
 end
 
--- Column 1 holds Carbonite's quest icon (WatchWindow.lua, ColumnAdd). Widened once; the width it
--- had is kept to put it back, and a width set again by Carbonite is taken as the new one.
+-- Column 1 holds Carbonite's quest icon (WatchWindow.lua, ColumnAdd). Widened to `width`; the
+-- width it had is kept to put it back, and a width set again by Carbonite is taken as the new one.
 -- Each returns whether the width changed, so the list must be laid out again.
-local function Widen(list)
+local function Widen(list, width)
     local column = list.Columns and list.Columns[1]
-    if not column or column.Width == list.NxSpokenWidth then return false end
-    list.NxSpokenBaseW = column.Width
-    column.Width = column.Width + COLUMN_EXTRA
-    list.NxSpokenWidth = column.Width
-    return true
+    if not column then return false end
+    if column.Width ~= list.NxSpokenWidth then list.NxSpokenBaseW = column.Width end
+    width = max(list.NxSpokenBaseW, width)
+    local changed = column.Width ~= width
+    column.Width = width
+    list.NxSpokenWidth = width
+    return changed
 end
 
 local function Narrow(list)
@@ -197,18 +203,22 @@ function SP:Sweep(list)
         return
     end
     SetCallbacks()
-    if Widen(list) and not relaying then
+
+    local lineH = list:GetLineH()
+    local size = max(12, min(MAX_SIZE, lineH + 2))
+    -- The icon is centred half a line in, at its scale (Nx.List:Update, "Buttons").
+    local iconRight = LIST_PAD + lineH / 2 + ICON_SIZE / 2 * lineH / (list.BaseLineH or lineH)
+    local left = iconRight - ICON_OVERLAP
+    if Widen(list, math.ceil(left + size + TEXT_GAP - LIST_PAD)) and not relaying then
         Relayout(list)      -- lays the buttons out from inside
         return
     end
 
     local frm = list.Frm
-    local lineH = list:GetLineH()
     local hdrH = list.HdrH or 0
     local top = list.Top or 1
     local last = min(top + (list.Vis or 0) - 1, list.Num or 0)
-    local size = max(12, min(MAX_SIZE, lineH + 2))
-    local x = LIST_PAD + (list.NxSpokenBaseW or 0) + COLUMN_EXTRA / 2
+    local x = left + size / 2
     local used = 0
 
     for line = top, last do
