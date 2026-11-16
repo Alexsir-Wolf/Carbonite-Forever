@@ -49,6 +49,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 local Carbonite = _G.Carbonite
 local SharedAPI = Carbonite.Compat and Carbonite.Compat.Api
 local SpellAPI = SharedAPI and SharedAPI.Spell
+local SkillAPI = SharedAPI and SharedAPI.Skill
 local Travel = Carbonite:GetModule("Travel", true)
 if not Travel then return end
 
@@ -1301,15 +1302,8 @@ function Travel:GetRidingSkill()
     local RidingSkill = 0
 
     if Nx.OldRidingSkill then
-	local RidingSkillName = L["Riding"]
-        for skillIndex = 1, GetNumSkillLines() do
-		PlayerSkill = {GetSkillLineInfo(skillIndex)}
-		if PlayerSkill[1] == RidingSkillName then
-			RidingSkill = PlayerSkill[4]
-                       	break
-		end
-	end
-	return RidingSkill
+        -- Riding is skill line 762 (Compat/Api.lua reads C_SkillInfo on Forever).
+        return SkillAPI and SkillAPI:GetRank (762, L["Riding"]) or 0
     else
     -- Riding skill spell IDs and their corresponding skill levels
         local RidingSpells = {
