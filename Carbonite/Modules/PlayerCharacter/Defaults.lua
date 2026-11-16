@@ -27,6 +27,7 @@ Nx.Defaults = {
             ShowCustom = true,
             ShowCCity = false,
             ShowCExtra = true,
+            QuestGiversAvailable = true,    -- Quest givers on the map: only quests the player can take now
             ShowCTown = false,
             ShowArchBlobs = true,
             ShowQuestBlobs = true,

@@ -28,6 +28,7 @@ L["Show Quest Blobs"] = true
 L["Show Gossip POIs"] = true
 L["Show Bonus Objectives"] = true
 L["Show Unexplored Areas"] = true
+L["Quest Givers: Only Available Quests"] = true
 L["Show World"] = true
 L["Show Cities"] = true
 L["Show Towns"] = true

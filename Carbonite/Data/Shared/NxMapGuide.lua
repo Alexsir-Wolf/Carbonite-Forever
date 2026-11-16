@@ -1236,6 +1236,20 @@ end
 -- Whether Carbonite draws its own gathering nodes of one kind. With GatherLite
 -- shown on the map (Nx.Notes:GatherLiteActive), only GatherLite's nodes show.
 --
+-- Whether the player can take a quest now: not done, not in the log, the
+-- quest before it done and the minimum level reached. Repeatable quests
+-- (daily, weekly) count while not in the log. The map shows only these
+-- givers while Map.QuestGiversAvailable is on (#39).
+function Nx.Map.Guide:QuestGiverAvailable (qId, minLevel, playerLevel)
+    local Quest = Nx.Quest
+    if Quest.IdToCurQ and Quest.IdToCurQ[qId] then return false end
+    local daily = Nx.QuestFreq and Nx.QuestFreq[qId]
+    if not daily and Quest:GetQuest (qId) == "C" then return false end
+    if minLevel and minLevel > playerLevel then return false end
+    if Quest.PrereqMet and not Quest:PrereqMet (qId) then return false end
+    return true
+end
+
 function Nx.Map.Guide:ShowsOwnGather (setting)
     if Nx.Notes and Nx.Notes.GatherLiteActive and Nx.Notes:GatherLiteActive() then
         return false
@@ -1616,6 +1630,8 @@ function Nx.Map.Guide:UpdateMapIcons()
                     local state = Nx.db.char.Map[folder.Persist]
                     local debugMap = Nx.db.profile.Debug.DebugMap
                     local showComplete = self.ShowQuestGiverCompleted
+                    local onlyAvailable = Nx.db.profile.Map.QuestGiversAvailable
+                    local playerLevel = UnitLevel ("player")
                     local qIds = Quest.QIds
                     -- Class-restriction filter: Nx.QuestRequiredClasses[qId]
                     -- carries Questie's requiredClasses bitmask (only emitted
@@ -1654,7 +1670,8 @@ function Nx.Map.Guide:UpdateMapIcons()
                             local classOK = (not req) or req == 0
                                 or (playerClassBit ~= 0
                                     and bit.band(req, playerClassBit) ~= 0)
-                            if classOK and lvl >= minLvl and lvl <= maxLvl then
+                            if classOK and lvl >= minLvl and lvl <= maxLvl
+                                    and (not onlyAvailable or self:QuestGiverAvailable (qId, minlvl, playerLevel)) then
                                 local col = "|r"
                                 local include = true
                                 local daily = Nx.QuestFreq and Nx.QuestFreq[qId]
