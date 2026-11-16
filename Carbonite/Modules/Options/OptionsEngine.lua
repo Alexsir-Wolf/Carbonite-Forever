@@ -234,6 +234,21 @@ local function generalOptions()
                         Nx.db.profile.General.LoginMessage = not Nx.db.profile.General.LoginMessage
                     end,
                 },
+                -- Buyout per item in the auction house (was on the minimap button menu, #46)
+                auctionPerItem = {
+                    order = 2.5,
+                    type = "toggle",
+                    width = "full",
+                    name = L["Show Auction Buyout Per Item"],
+                    get = function()
+                        local aa = Carbonite:GetModule ("AuctionAssist", true)
+                        return aa and aa:IsEnabled() or false
+                    end,
+                    set = function(_, value)
+                        local aa = Carbonite:GetModule ("AuctionAssist", true)
+                        if aa then aa:Enable (value) end
+                    end,
+                },
                 -- Login graphic toggle
                 loginWin = {
                     order = 2,

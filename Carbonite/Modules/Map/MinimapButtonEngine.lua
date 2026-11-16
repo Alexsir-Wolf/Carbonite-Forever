@@ -35,10 +35,6 @@ function Nx.NXMiniMapBut:Init()
     menu:AddItem (0, L["Options"], self.Menu_OnOptions, self)
     menu:AddItem (0, L["Show Map"], self.Menu_OnShowMap, self)
     menu:AddItem (0, L["Show Events"], self.Menu_OnShowEvents, self)
-    menu:AddItem (0, "", nil, self)
-
-    local item = menu:AddItem (0, L["Show Auction Buyout Per Item"], self.Menu_OnShowAuction, self)
-    item:SetChecked (false)
 
     if Nx.db.profile.Debug.DebugCom then
         menu:AddItem (0, "", nil, self)
@@ -97,14 +93,6 @@ end
 function Nx.NXMiniMapBut:Menu_OnHideWatch (item)
     local hide = item:GetChecked()
     Nx.Quest.Watch.Win:Show (not hide)
-end
-
-function Nx.NXMiniMapBut:Menu_OnShowAuction (item)
-    Nx.AuctionShowBOPer = item:GetChecked()
-
-    if AuctionFrame and AuctionFrame:IsShown() then
-        AuctionFrameBrowse_Update()
-    end
 end
 
 function Nx.NXMiniMapBut:Menu_OnShowCom()
