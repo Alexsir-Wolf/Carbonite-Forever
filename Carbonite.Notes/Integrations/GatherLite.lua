@@ -23,6 +23,12 @@ function Nx.Notes:IsGatherLiteAvailable()
         and GL.db ~= nil
 end
 
+-- GatherLite installed and shown on the Carbonite map. Then it is the only source of
+-- gathering nodes: Carbonite stops drawing its own, which would repeat them.
+function Nx.Notes:GatherLiteActive()
+    return Nx.fdb and Nx.fdb.profile.Notes.GatherLite and self:IsGatherLiteAvailable() or false
+end
+
 local function bump()
     Nx.Notes.GLVersion = Nx.Notes.GLVersion + 1
 end

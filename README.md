@@ -44,7 +44,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 
 ### Coleta
 - Registra onde você colheu ervas, minerou, pescou e abriu tesouros, e mostra os nós no mapa e no minimapa.
-- Inclui uma base de nós de ervas e minérios (Carbonite GatherMate2 Data).
+- Com o [GatherLite](https://www.curseforge.com/wow/addons/gatherlite) instalado, mostra só os nós dele no mapa: a base dele e o que você coletou. Sem ele, mostra os nós que você mesmo coletou.
 
 ### Warehouse
 - Inventário de todos os seus personagens: bolsas, banco, equipamento, profissões e dinheiro, em uma janela só.
@@ -77,7 +77,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 ## Instalação
 
 1. Feche o WoW.
-2. Apague as pastas `Carbonite`, `Carbonite.Quests`, `Carbonite.Info`, `Carbonite.Notes`, `Carbonite.Warehouse` e `Carbonite.Gathermate2_Data` de `World of Warcraft\_forever_\Interface\AddOns`.
+2. Apague as pastas `Carbonite`, `Carbonite.Quests`, `Carbonite.Info`, `Carbonite.Notes`, `Carbonite.Warehouse` e, se existir, `Carbonite.Gathermate2_Data` de `World of Warcraft\_forever_\Interface\AddOns`.
 3. Baixe o zip da versão mais recente na página de [Releases](https://github.com/Alexsir-Wolf/Carbonite-Forever/releases) e extraia em `Interface\AddOns`.
 4. Se você usa um gerenciador de addons (CurseForge, WowUp etc.), desligue as atualizações do Carbonite oficial nele. Senão, a próxima atualização oficial substitui esta edição.
 
