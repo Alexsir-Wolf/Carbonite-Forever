@@ -30,14 +30,20 @@ local NX_TRACKER_FRAMES = {
     "QuestTimerFrame",       -- Anniversary / Classic timed quests
 }
 
--- ObjectiveTrackerFrame is an Edit Mode-managed Blizzard system on Retail.
--- Carbonite must not reparent it, alter its alpha/mouse state, or install an
--- OnShow hook.  Retail visibility is instead controlled through Blizzard's
--- secure visibility state driver. Legacy tracker frames retain the original
--- handling on Classic clients.
+-- ObjectiveTrackerFrame is the modern, Edit Mode-managed Blizzard tracker
+-- (Retail, and Forever, which runs the mainline code base with a Classic
+-- .toc). Carbonite must not reparent it, alter its mouse state, or install an
+-- OnShow hook; its visibility goes through Blizzard's secure visibility state
+-- driver. Chosen by the frame, not by Nx.isRetail. Legacy tracker frames keep
+-- the original handling.
+local function NxTracker_UsesStateDriver(name)
+    return name == "ObjectiveTrackerFrame"
+        and RegisterStateDriver ~= nil and UnregisterStateDriver ~= nil
+end
+
 local function NxTracker_CanManage(name)
-    if name == "ObjectiveTrackerFrame" and Nx.isRetail then
-        return RegisterStateDriver ~= nil and UnregisterStateDriver ~= nil
+    if name == "ObjectiveTrackerFrame" then
+        return NxTracker_UsesStateDriver(name)
     end
     return true
 end
@@ -228,7 +234,7 @@ function Nx.Quest:TrackerHider_HookFrame(name)
         return
     end
 
-    if name == "ObjectiveTrackerFrame" and Nx.isRetail then
+    if NxTracker_UsesStateDriver(name) then
         return
     end
 
@@ -259,7 +265,7 @@ function Nx.Quest:TrackerHider_Apply()
         local name = NX_TRACKER_FRAMES[i]
         local frame = _G[name]
         if frame and NxTracker_CanManage(name) then
-            if name == "ObjectiveTrackerFrame" and Nx.isRetail then
+            if NxTracker_UsesStateDriver(name) then
                 self:TrackerHider_SetRetailVisible(frame, not hide)
             else
                 self:TrackerHider_HookFrame(name)
