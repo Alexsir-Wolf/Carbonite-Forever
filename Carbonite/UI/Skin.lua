@@ -27,6 +27,35 @@ local function backdrop(edgeFile, tile, tileSize, edgeSize, insets)
 end
 
 Skin.themes = {
+    -- The game's own window look: the dialog border and dark rock background of
+    -- Blizzard's frames, bronze separators and the gold highlight of its lists.
+    -- The NineSlice frame of the character sheet was tried and does not fit
+    -- Carbonite's windows (its title bar covers their first lines, and on the
+    -- map its edges break into stray marks), so the border is a backdrop.
+    ["Blizzard"] = {
+        backdrop = {
+            bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
+            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+            tile     = true,
+            tileSize = 256,
+            edgeSize = 16,
+            insets   = { left = 4, right = 4, top = 4, bottom = 4 },
+        },
+        borderColor = "1|1|1|1",
+        bgColor     = "1|1|1|1",
+        tokens = {
+            hover       = "0.22|0.17|0.04|1",
+            pressed     = "0.45|0.36|0.12|1",
+            rowHover    = "1|0.82|0|0.12",
+            listBg      = "0|0|0|0.35",
+            tabBarBg    = "0|0|0|0.45",
+            separator   = "0.45|0.36|0.20|1",
+            scrollTrack = "0.08|0.07|0.05|0.85",
+            scrollThumb = "0.60|0.48|0.24|1",
+            listHeader  = "0.22|0.16|0.08|1",
+            selection   = "0.55|0.42|0.05|0.45",
+        },
+    },
     ["Blackout"] = {
         backdrop = backdrop("Interface\\Addons\\Carbonite\\Gfx\\Skin\\EdgeSquare", true, 8, 8, { left=0, right=0, top=0, bottom=0 }),
         borderColor = "0|0|0|1",
@@ -84,6 +113,8 @@ Skin.themes = {
             separator   = "0.60|0.60|0.65|1",
             scrollTrack = "0.70|0.72|0.80|0.6",
             scrollThumb = "0.35|0.42|0.65|0.9",
+            listHeader  = "0.75|0.76|0.82|1",
+            selection   = "0.25|0.30|0.50|0.35",
         },
     },
     ["Glass"] = {
@@ -114,7 +145,7 @@ Skin.themes = {
     },
 }
 
-Skin.activeName = "Modern Dark"
+Skin.activeName = "Blizzard"
 
 -- Colors of the parts every window shares. A theme overrides the ones it
 -- needs in its own `tokens`; the rest come from here (the dark look).
@@ -126,6 +157,8 @@ Skin.activeName = "Modern Dark"
 --   separator   tab bar border lines
 --   scrollTrack scroll bar track
 --   scrollThumb scroll bar thumb
+--   listHeader  column header strip of a list
+--   selection   selected list row (added on top, ADD blend)
 Skin.tokens = {
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
@@ -135,6 +168,8 @@ Skin.tokens = {
     separator   = "0.313|0.313|0.313|1",
     scrollTrack = "0.3|0.3|0.4|0.6",
     scrollThumb = "0.3|0.3|0.7|0.9",
+    listHeader  = "0.2|0.2|0.3|1",
+    selection   = "0.4|0.4|0.5|0.4",
 }
 
 -- Parse a "r|g|b|a" string the legacy save format uses.
@@ -145,7 +180,7 @@ local function parseColor(s)
 end
 
 function Skin:GetActive()
-    return self.themes[self.activeName] or self.themes["Modern Dark"]
+    return self.themes[self.activeName] or self.themes["Blizzard"]
 end
 
 function Skin:GetBackdrop()
@@ -212,7 +247,8 @@ local OLD_BACKGROUNDS = {
 }
 
 function Skin:Set(name, init)
-    if not self.themes[name] then name = "Modern Dark" end
+    -- A profile that never picked a theme gets the game's own look.
+    if not self.themes[name] then name = "Blizzard" end
     self.activeName = name
     local skin = _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.Skin
     if skin then
