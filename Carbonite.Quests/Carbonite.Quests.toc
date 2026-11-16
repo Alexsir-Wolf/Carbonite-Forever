@@ -30,6 +30,7 @@ QuestProvider.lua
 WorldQuestWindow.lua
 WatchWindow.lua
 SpokenPlay.lua
+ShowOnMap.lua
 QuestWindow.lua
 DataAndComm.lua
 Tracking.lua

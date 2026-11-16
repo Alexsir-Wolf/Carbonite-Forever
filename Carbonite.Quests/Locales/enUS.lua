@@ -438,3 +438,7 @@ L["%d Quests Loaded"] = true
 L["Starting Background Quest Data Loading..."] = true
 L["%m/%d %H:%M:%S"] = true
 L["XP"] = true
+L["Show on map"] = true
+L["Turn in to %s"] = true
+L["Turn in"] = true
+L["Objectives"] = true

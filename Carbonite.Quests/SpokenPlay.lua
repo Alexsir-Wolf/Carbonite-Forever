@@ -18,6 +18,7 @@
 -- Public (on Nx.Quest.SpokenPlay):
 --   SP:Sweep(list)   lay the buttons over the list's visible quest title rows
 --   SP:Reset()       forget the cached answers and lay the buttons out again
+--   SP.TitleQuestID(data)  quest id of a watch list title row, nil for other rows
 
 local Nx = _G.Nx
 if not Nx or not Nx.List or not Nx.Quest then return end
@@ -158,7 +159,8 @@ local function GetButton(ui, index, parent)
 end
 
 -- Row data is qId * 0x10000 + qi for a quest's title and adds ln * 0x100 for its objectives.
-local function TitleQuestID(data)
+-- Shared with ShowOnMap.lua.
+function SP.TitleQuestID(data)
     if type(data) ~= "number" or data <= 0 or floor(data / 0x100) % 0x100 ~= 0 then return nil end
     local questID = floor(data / 0x10000)
     return questID > 0 and questID or nil
@@ -168,7 +170,7 @@ end
 -- while the list scrolls.
 local function AnyShows(ui, list)
     for line = 1, list.Num or 0 do
-        local questID = TitleQuestID(list.Data[line])
+        local questID = SP.TitleQuestID(list.Data[line])
         if questID and Shows(ui, questID) then return true end
         if failed then return false end
     end
@@ -223,7 +225,7 @@ function SP:Sweep(list)
     local used = 0
 
     for line = top, last do
-        local questID = TitleQuestID(list.Data[line])
+        local questID = SP.TitleQuestID(list.Data[line])
         if questID and Shows(ui, questID) then
             local button = GetButton(ui, used + 1, frm)
             if failed then return end
