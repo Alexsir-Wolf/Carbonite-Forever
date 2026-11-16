@@ -433,6 +433,7 @@ Nx.Quest.defaults = {
             DetailTC = ".125|.06|.03|1",                -- Detail text color
             DetailScale = .95,                          -- Detail window scale
             HCheckCompleted = false,                    -- Check completed on login
+            LoadMessages = false,                       -- Quest loader messages in chat
             maxLoadLevel = false,                       -- Load by level threshold
             LevelsToLoad = 10,                          -- Level threshold
             MapQuestGiversHighLevel = Nx.MaxPlayerLevel, -- Max quest giver level
