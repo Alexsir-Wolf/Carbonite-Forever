@@ -23,7 +23,7 @@ local function Label(scope)
 end
 
 local function Prefix(scope)
-    return "/carb profiler " .. (scope == "all" and "" or scope .. " ")
+    return "/carb debug profiler " .. (scope == "all" and "" or scope .. " ")
 end
 
 local function Number(value, decimals)
@@ -316,8 +316,8 @@ local function CommandRows(scope)
         { prefix .. "baseline status", "Check the saved reference" },
         { prefix .. "baseline clear", "Remove this reference" },
         { prefix .. "clear", "Clear this view's samples and timing totals" },
-        { "/carb profiler limit [100-1000]", "Set the shared sample capacity" },
-        { "/carb profiler selftest", "Test the comparison calculations" },
+        { "/carb debug profiler limit [100-1000]", "Set the shared sample capacity" },
+        { "/carb debug profiler selftest", "Test the comparison calculations" },
         { prefix .. "help", "Print the command guide" },
     }
 end

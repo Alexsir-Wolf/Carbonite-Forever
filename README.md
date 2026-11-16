@@ -87,11 +87,12 @@ As configurações do Carbonite oficial continuam valendo, porque os nomes inter
 
 | Comando | O que faz |
 |---|---|
-| `/carb` | Menu principal do Carbonite |
+| `/carb` ou `/carb ajuda` | Lista os comandos (`/cb` também funciona) |
+| `/carb menu` | Menu principal do Carbonite |
 | `/carb options` | Opções |
 | `/carb goto <x> <y>` | Marca um destino na zona atual |
-| `/carb resetwin` | Volta as janelas para a posição padrão |
-| `/carb help` | Ajuda |
+| `/carb resetwindows` | Volta as janelas para a posição padrão |
+| `/carb debug` | Comandos de diagnóstico, como o `profiler` |
 | `/way x y` | Destino no formato do TomTom |
 
 ## Documentação para desenvolvedores

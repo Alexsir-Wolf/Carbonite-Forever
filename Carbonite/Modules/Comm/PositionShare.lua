@@ -111,7 +111,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("pals", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("pals", function()
         local log = Carbonite.Core.Logger:Get("PositionShare")
         local snap = PositionShare:Snapshot()
         local n = 0

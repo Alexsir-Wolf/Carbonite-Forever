@@ -65,7 +65,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("roster", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("roster", function()
         local log = Carbonite.Core.Logger:Get("CharacterRoster")
         log:info("characters tracked: %d", CharacterRoster:Count())
         CharacterRoster:Each(function(name)

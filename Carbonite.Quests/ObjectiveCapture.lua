@@ -2039,7 +2039,7 @@ if Carbonite and Carbonite.Core and Carbonite.Core.EventBus then
     Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
         if not (Carbonite.Core.SlashCommands and Carbonite.Core.Logger) then return end
         local log = Carbonite.Core.Logger:Get("ObjectiveCapture")
-        Carbonite.Core.SlashCommands:Register("qcap", function(rest)
+        Carbonite.Core.SlashCommands:RegisterDebug("qcap", function(rest)
             local args = {}
             for word in tostring(rest or ""):lower():gmatch("[^%s]+") do
                 args[#args + 1] = word
@@ -2134,7 +2134,7 @@ if Carbonite and Carbonite.Core and Carbonite.Core.EventBus then
             if running or (cur or 0) > 0 then
                 log:info("  harvest %s at id %d/%d", running and "running" or "idle", cur, to)
             end
-        end, "quest capture (/cb qcap [on|off|wipe|batch N|harvest [stop|status|from to]])")
+        end, "[on|off|wipe|batch N|harvest] - quest capture")
     end)
 end
 

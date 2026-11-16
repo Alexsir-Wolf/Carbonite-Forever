@@ -75,7 +75,7 @@ Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
         elseif cmd == "delete" then
             ProfileSwitcher:DeleteProfile(arg)
         else
-            log:info("usage: /cb profile [list|set|copy|reset|delete] [name]")
+            log:info("usage: /carb profile [list|set|copy|reset|delete] [name]")
         end
     end, "AceDB profile operations")
 end)

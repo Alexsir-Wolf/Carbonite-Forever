@@ -182,9 +182,7 @@ function Options:OnEnable()
         AceConfigDialog:SetDefaultSize("Carbonite", 960, 600)
     end
 
-    Carbonite.Core.SlashCommands:Register("opts", function() self:Open() end, "open options panel")
     Carbonite.Core.SlashCommands:Register("options", function() self:Open() end, "open options panel")
-    Carbonite.Core.SlashCommands:Register("config", function() self:Open() end, "open options panel")
 
     -- Mirror onto legacy namespace so old `Nx.Opts:Open` calls keep
     -- working until those callers are migrated.

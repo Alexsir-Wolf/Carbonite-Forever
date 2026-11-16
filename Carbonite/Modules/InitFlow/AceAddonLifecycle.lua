@@ -58,17 +58,6 @@ end
 function Nx:OnDisable()
 end
 -------------------------------------------------------------------------------
--- SLASH COMMAND HANDLER
--- Parses /carb command and subcommands
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
--- Nx.slashCommand (the /carb dispatcher) lives in
--- Modules/SlashHandler/SlashCommandEngine.lua.
--------------------------------------------------------------------------------
-
-
--------------------------------------------------------------------------------
 -- ADDON STARTUP
 -- Initial loading and event registration
 -------------------------------------------------------------------------------
@@ -79,9 +68,6 @@ end
 -- @param frm  The addon's main frame
 --
 function Nx:NXOnLoad (frm)
-
-    SlashCmdList["Carbonite"] = Nx.slashCommand
-    SLASH_Carbonite1 = "/Carb"
 
     self.Frm = frm        --V4 this
     self.TimeLast = 0
