@@ -436,5 +436,5 @@ L["QUEST LOADER"] = true
 L["%d Quests Loaded"] = true
 L["Starting Background Quest Data Loading..."] = true
 L["%m/%d %H:%M:%S"] = true
-
 L["Levels %d to %d"] = true
+L["XP"] = true
