@@ -8,6 +8,7 @@
 ## LoadOnDemand: 0
 ## SavedVariables: NXQuest
 ## RequiredDeps: Carbonite
+## OptionalDeps: QuestieDB
 
 Locales\locales.xml
 Data\Shared\QuestCats.lua
@@ -44,3 +45,5 @@ QuestWatchSurface.lua
 QuestRouting.lua
 Plugin.lua
 Data\Shared\QuestDataLoader.lua
+# Forever quests Carbonite lacks, read from QuestieDB (after ProcessQuestDB in SuperTrack.lua).
+QuestieSource.lua
