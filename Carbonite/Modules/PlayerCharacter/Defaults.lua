@@ -39,16 +39,16 @@ Nx.Defaults = {
     },
     profile = {
         Battleground = {
-            ShowStats = true
+            ShowStats = false
         },
         General = {
             CameraForceMaxDist = false,
             CaptureEnable = false,
             CaptureShare = true,
             ChatMsgFrm = "",
-            GryphonsHide = true,
-            LoginHideVer = true,
-            TitleOff = true,
+            GryphonsHide = false,
+            LoginMessage = false,
+            TitleShow = false,
             TitleSoundOn = false,
         },
         Guide = {
@@ -311,13 +311,14 @@ Nx.Defaults = {
                 [3] = true,
             },
         },
+        -- Off until the player opts in (privacy): no channels, no position sent.
         Comm = {
-            Global = true,
-            Zone = true,
+            Global = false,
+            Zone = false,
             LvlUpShow = true,
-            SendToFriends = true,
-            SendToGuild = true,
-            SendToZone = true,
+            SendToFriends = false,
+            SendToGuild = false,
+            SendToZone = false,
         },
         Debug = {
           VerDebug = false,
@@ -500,3 +501,21 @@ Nx.Defaults = {
         },
    },
 }
+
+-- Keys renamed because their old names said the opposite of what they do:
+-- LoginHideVer = true showed the login message, TitleOff = true showed the
+-- title screen. A value the player saved under the old name moves over.
+Nx.RenamedGeneralKeys = { LoginHideVer = "LoginMessage", TitleOff = "TitleShow" }
+
+function Nx.MigrateGeneralKeys(general)
+    if type(general) ~= "table" then return end
+    for old, new in pairs(Nx.RenamedGeneralKeys) do
+        local value = rawget(general, old)
+        if value ~= nil then
+            if rawget(general, new) == nil then
+                general[new] = value
+            end
+            general[old] = nil
+        end
+    end
+end

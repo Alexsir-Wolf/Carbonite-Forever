@@ -25,7 +25,7 @@ local function legacy() return _G.Nx and _G.Nx.Title end
 function TitleScreen:IsEnabled()
     local Nx = _G.Nx
     if not Nx or not Nx.db or not Nx.db.profile or not Nx.db.profile.General then return true end
-    return not Nx.db.profile.General.TitleOff
+    return Nx.db.profile.General.TitleShow == true
 end
 
 function TitleScreen:Show()
