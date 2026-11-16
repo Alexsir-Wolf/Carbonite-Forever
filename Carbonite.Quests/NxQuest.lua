@@ -387,25 +387,34 @@ BINDING_NAME_NxWATCHUSEITEM = L["NxWATCHUSEITEM"]
 -- Stub functions for Classic WoW where retail APIs don't exist
 -------------------------------------------------------------------------------
 
-local IsClassic = select(4, GetBuildInfo()) < 60000
-
-if IsClassic then
+-- Each stub is defined only when the client lacks the function. Forever has a .toc below
+-- 60000 but ships some of these natively; replacing them breaks Blizzard's quest details
+-- and taints protected code (#11).
+if not GetQuestLogCriteriaSpell then
     function GetQuestLogCriteriaSpell()
         return
     end
+end
 
+if not ProcessQuestLogRewardFactions then
     function ProcessQuestLogRewardFactions()
         return
     end
+end
 
+if not GetQuestLogPortraitGiver then
     function GetQuestLogPortraitGiver()
         return
     end
+end
 
+if not GetQuestLogRewardSkillPoints then
     function GetQuestLogRewardSkillPoints()
         return 0
     end
+end
 
+if not GetQuestLogRewardArtifactXP then
     function GetQuestLogRewardArtifactXP()
         return 0
     end
