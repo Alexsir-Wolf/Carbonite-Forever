@@ -1,9 +1,13 @@
 ## Interface: 16001
 ## X-Camelot-Toc: dash
 ## Title: Carbonite Maps - Camelot (Forever) @project-version@
+## Title-ptBR: Carbonite Mapas - Camelot (Forever) @project-version@
 ## Version: @project-version@
-## Author: No one
-## Notes: Released Under GPL
+## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
+## Notes: Map with quests, routes and guides (Forever edition)
+## Notes-ptBR: Mapa com quests, rotas e guias (edição Forever)
+## X-License: GPL-3.0
+## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: CarbData

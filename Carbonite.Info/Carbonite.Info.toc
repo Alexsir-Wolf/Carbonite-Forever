@@ -1,8 +1,11 @@
 ## Interface: 16001, 11508, 20506, 30403, 40402, 50504
 ## Title: Carbonite Info @project-version@
+## Title-ptBR: Carbonite Info @project-version@
 ## Version: @project-version@
-## Author: No One
-## Notes: Released Under GPL
+## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
+## Notes: Information windows for Carbonite
+## Notes-ptBR: Janelas de informação do Carbonite
+## X-License: GPL-3.0
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: NXInfo

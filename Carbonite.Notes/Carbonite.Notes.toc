@@ -1,8 +1,12 @@
 ## Interface: 16001, 50504, 11508, 20506, 120007, 120100
 ## Title: Carbonite Notes @project-version@
+## Title-ptBR: Carbonite Notas @project-version@
 ## Version: @project-version@
-## Author: No one
-## Notes: Released Under GPL
+## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
+## Notes: Map notes for Carbonite
+## Notes-ptBR: Notas no mapa do Carbonite
+## X-License: GPL-3.0
+## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: NXNotes
