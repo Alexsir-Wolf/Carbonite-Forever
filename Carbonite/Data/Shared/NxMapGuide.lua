@@ -85,6 +85,19 @@ Nx.GuideAbr = {
 }
 
 
+-- Titles of the right list's columns 3 to 5, by what a category's entries
+-- carry in Column2 to Column4. Set on each entry as Headers; the list takes
+-- them from the first entry shown (#99).
+Nx.GuideHeaders = {
+    Gather     = { L["Skill"] },
+    Zone       = { L["Level"] },
+    Instance   = { L["Level"], L["Players"] },
+    Vendor     = { L["Repair"], L["Zone"] },
+    VendorItem = { L["Level"], L["Price"], L["Type"] },
+    Item       = { L["Level"], L["Source"] },
+    Area       = { L["Level"], L["Group"] },
+}
+
 Nx.GuideInfo = {
     Name = L["All"],
     Tx = "INV_Misc_Map02",
@@ -623,9 +636,9 @@ function Nx.Map.Guide:Create (map)
     list:SetLineHeight (16, 11)
     list:ColumnAdd ("", 1, 35)
     list:ColumnAdd (L["Name"], 2, 220)
-    list:ColumnAdd (L["Info"], 3, 80)
-    list:ColumnAdd (L["Info2"], 4, 150)
-    list:ColumnAdd (L["Info3"], 5, 230)
+    list:ColumnAdd ("", 3, 80)
+    list:ColumnAdd ("", 4, 150)
+    list:ColumnAdd ("", 5, 230)
     win:Attach (list.Frm, .33, 1, 18, 1)
 
     g.EditBox = Nx.EditBox:Create (win.Frm, g, g.OnEditBox, 30)
@@ -758,7 +771,29 @@ function Nx:NXGuideKeyToggleShow()
     map.Guide:ToggleShow()
 end
 function Nx.Map.Guide:ToggleShow()
-    self.Win:Show (not self.Win:IsShown())
+    local show = not self.Win:IsShown()
+    if show then
+        self:OpenStartFolder()
+    end
+    self.Win:Show (show)
+end
+
+-- At the top level the right list is empty, so the Guide opens in the
+-- category used last, or in Common Place the first time (#99).
+function Nx.Map.Guide:OpenStartFolder()
+    if #self.PathHistory ~= 1 then
+        return
+    end
+    local want = Nx.db.char.Map.GuideLastFolder or L["Common Place"]
+    for _, folder in ipairs (Nx.GuideInfo) do
+        if type (folder) == "table" and folder.Name == want and folder[1] then
+            self.PathHistory[2] = folder
+            self.PathHistorySel[2] = 1
+            self:Update()
+            self:SelectLists()
+            return
+        end
+    end
 end
 function Nx.Map.Guide:OnWin (typ)
     if typ == "Hide" then
@@ -784,6 +819,9 @@ function Nx.Map.Guide:OnListEventDo (list, eventName, sel, val2, click)
         if eventName ~= "menu" or list == self.List then
             if type (item) == "table" then
                 if item[1] or item.Item then
+                    if pathI == 1 and item.Name then
+                        Nx.db.char.Map.GuideLastFolder = item.Name
+                    end
                     self.PathHistory[pathI + 1] = item
                     self.PathHistorySel[pathI + 1] = 1
                     self:SelectLists()
@@ -1042,6 +1080,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                 local f = {}
                 f.Name = name
                 f.Column2 = format ("%3d", skill)
+                f.Headers = Nx.GuideHeaders.Gather
                 f.T = "$H" .. a
                 f.Tx = tx
                 f.Id = a
@@ -1063,6 +1102,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                 local f = {}
                 f.Name = name
                 f.Column2 = format ("%3d", skill)
+                f.Headers = Nx.GuideHeaders.Gather
                 f.T = "$M" .. (a + 500)
                 f.Tx = tx
                 f.Id = a
@@ -1082,6 +1122,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                 local f = {}
                 f.Name = name
                 f.Column2 = format ("%3d", skill)
+                f.Headers = Nx.GuideHeaders.Gather
                 f.T = "$L" .. (a + 1000)
                 f.Tx = tx
                 f.Id = a
@@ -1105,6 +1146,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                     local name = Map:IdToName (id)
                     f.Name = format ("%s%s", color, name)
                     f.Column2 = infoStr
+                    f.Headers = Nx.GuideHeaders.Zone
                     if not Map.MapWorldInfo[id] then
                     Nx.prtD("err: " .. id)
                     end
@@ -1161,6 +1203,7 @@ function Nx.Map.Guide:PatchFolder (folder, parent)
                         f.Name = format ("%s", longname)
                         f.Column3 = plStr
                         f.Column2 = "?"
+                        f.Headers = Nx.GuideHeaders.Instance
                         if minLvl ~= "0" then
                             if minLvl == maxLvl then
                                 f.Column2 = format ("%d", minLvl)
@@ -1398,8 +1441,19 @@ function Nx.Map.Guide:Update()
     self:UpdateMapIcons()
 end
 
+-- Column titles of the right list for what it shows now: the first entry's
+-- Headers, and "Found" over the text a search matched.
+function Nx.Map.Guide:SetListHeaders (list, headers, searched)
+    for n = 1, 3 do
+        local name = headers and headers[n] or ""
+        if n == 3 and name == "" and searched then name = L["Found"] end
+        list:ColumnSetName (n + 2, name)
+    end
+end
+
 function Nx.Map.Guide:UpdateList (list, pathI, listSide)
     list:Empty()
+    local headers, searched
     local curFolder = self.PathHistory[pathI]
     if curFolder then
         local filterStr = strlower (self.EditBox:GetText())
@@ -1466,6 +1520,8 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
                         list:ItemAdd (index)
                         list:ItemSet (2, format ("%s%s", col, name))
                         if listSide == 2 then
+                            headers = headers or folder.Headers
+                            searched = searched or column4 ~= nil
                             if folder.Column2 then
                                 list:ItemSet (3, folder.Column2)
                             end
@@ -1499,6 +1555,9 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
                 end
             end
         end
+    end
+    if listSide == 2 then
+        self:SetListHeaders (list, headers, searched)
     end
     list:Update()
 end
@@ -2442,11 +2501,12 @@ function Nx.Map.Guide:UpdateVisitedVendors()
             mapId = tonumber (mapId)
             npcF.T = "(" .. npcName
             npcF.Tx = "INV_Misc_Coin_05"
-            local repair = links["R"] and " (Repair)" or ""
+            local repair = links["R"] and L["Repair"] or ""
 
             npcF.Name = name
             npcF.Column2 = repair
             npcF.Column3 = format("|cff8080c0%s|r",Nx.Map:IdToName(mapId))
+            npcF.Headers = Nx.GuideHeaders.Vendor
             npcF.VendorPos = links["POS"]
             npcF.NoShowChild = true
             tinsert (tagFolder, npcF)
@@ -2492,6 +2552,7 @@ function Nx.Map.Guide:UpdateVisitedVendors()
                         end
                         itemF.Column3 = price
                         itemF.Column4 = type..(subType and "-"..subType or "")
+                        itemF.Headers = Nx.GuideHeaders.VendorItem
                     else
                         itemF.Name = name
                         if name=="1?" then itemF.Name = price end
@@ -3471,7 +3532,8 @@ function Nx.Map.Guide:ItemsInitCreatureFolders (folder)
         else
             areaT.Column2 = format ("%2d-%d", aMin, aMax)
         end
-        areaT.Column3 = format ("%2d-Man", aGroup)
+        areaT.Column3 = format (L["%d players"], aGroup)
+        areaT.Headers = Nx.GuideHeaders.Area
         for cName, cData in pairs (areaData) do
             local cT = {}
             tinsert (areaT, cT)
@@ -3516,6 +3578,7 @@ function Nx.Map.Guide:ItemsAddItem (folder, id)
     local im = max (iMin, 0)
     item.Column2 = format ("L%2d i%3d", im, iLvl)
     item.Column3 = format ("%s", srcStr)
+    item.Headers = Nx.GuideHeaders.Item
     local _, iLink, iRarity, lvl, minLvl, iType, subType, stackCount, equipLoc, tx = GetItemInfoCompat (id)
     item.Link = iLink
     item.Tx = tx and gsub (tx, "Interface\\Icons\\", "") or "INV_Misc_QuestionMark"
