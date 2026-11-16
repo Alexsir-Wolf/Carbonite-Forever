@@ -103,10 +103,10 @@ end
 function Nx.Title:Tick()
     local this = self.Frm
 
-    -- The TitleOff option hides the splash but keeps the animation
+    -- The TitleShow option off hides the splash but keeps the animation
     -- ticking so the rest of the SetupEverything pipeline still
     -- runs to completion.
-    if not Nx.db.profile.General.TitleOff then
+    if not Nx.db.profile.General.TitleShow then
         this:Hide()
     end
 
