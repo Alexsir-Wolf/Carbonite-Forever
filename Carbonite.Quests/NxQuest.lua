@@ -283,11 +283,19 @@ end
 Nx.Quest = Nx.Quest or {}
 Nx.Quest.difficultyColorCache = Nx.Quest.difficultyColorCache or {}
 local difficultyColorCache = Nx.Quest.difficultyColorCache
+local difficultyColorPlayerLevel
 
 -- Get cached difficulty color string for a level.
+-- The color bands move with the player's level, so the cache is dropped
+-- whenever that level changes.
 -- @param level: Quest level
 -- @return: Color escape sequence string like "|cffRRGGBB"
 function Nx.Quest.GetCachedDifficultyColorStr(level)
+    local playerLevel = UnitLevel("player")
+    if playerLevel ~= difficultyColorPlayerLevel then
+        wipe(difficultyColorCache)
+        difficultyColorPlayerLevel = playerLevel
+    end
     local cached = difficultyColorCache[level]
     if cached then
         return cached
