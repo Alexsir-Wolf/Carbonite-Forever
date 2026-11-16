@@ -1294,6 +1294,7 @@ function Nx.Map.Guide:QuestGiverAvailable (qId, minLevel, playerLevel)
     if not daily and Quest:GetQuest (qId) == "C" then return false end
     if minLevel and minLevel > playerLevel then return false end
     if Quest.PrereqMet and not Quest:PrereqMet (qId) then return false end
+    if Quest.MeetsQuestieRequirements and not Quest:MeetsQuestieRequirements (qId) then return false end
     return true
 end
 
