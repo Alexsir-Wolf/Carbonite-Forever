@@ -2768,38 +2768,7 @@ function Nx.Map:MinimapOnMouseDown(button)
     end
 end
 
----
--- Handle mouse up on minimap
--- @param button  Mouse button released
---
-function Nx.Map:MinimapOnMouseUp(button)
-    local this = self
-    local map = Nx.Map.Maps[1]
-
-    if this.NXPing then
-        -- On retail, both Minimap:OnClick (which calls Minimap:PingLocation
-        -- internally) and our own map:Ping (which also calls PingLocation)
-        -- are forbidden from this tainted Lua path. Skip Carbonite-routed
-        -- overlay pings silently on retail. Docked mode retains Blizzard's
-        -- native OnMouseUp script and therefore does not use this path.
-        if not Nx.isRetail then
-            if map.MMZoomType == 0 then
-                if _G.Minimap_OnClick then
-                    _G.Minimap_OnClick(this)
-                elseif this.OnClick then
-                    this:OnClick(button or "LeftButton")
-                end
-            else
-                map:Ping()
-            end
-        end
-    else
-        this.NxMap = map
-        map.OnMouseUp(this, button)
-    end
-end
-
--- Ping lives in MiniMap.lua.
+-- MinimapOnMouseUp and Ping live in MiniMap.lua.
 
 ---
 -- Handle mouse entering minimap
