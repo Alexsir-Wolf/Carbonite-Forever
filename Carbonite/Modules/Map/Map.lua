@@ -1,7 +1,7 @@
 -- Carbonite | Modules / Map
 -- Module entry for the Carbonite map. The heavy rendering code still
 -- lives in the legacy NxMap.lua and is reachable through `Carbonite.Map`;
--- this file owns module lifecycle, layer registry, options page, and
+-- this file owns module lifecycle, layer registry and
 -- the public Pin/Layer API new code should use.
 --
 -- Public API exposed on `Carbonite:GetModule("Map")`:
@@ -24,12 +24,6 @@ local Map = Module:New("Map", {
         profile = {
             Map = {
                 ShowQuests       = true,
-                ShowGather       = true,
-                ShowTrainers     = false,
-                ShowNotes        = true,
-                ShowGroup        = true,
-                ShowPlayer       = true,
-                MinimapBlobs     = false,
             },
         },
     },
@@ -136,54 +130,3 @@ end
 function Map:OnZoneChange()
     Carbonite.Core.EventBus:Fire("MAP_ZONE_CHANGED", MapApi:GetPlayerMapID())
 end
-
--- Options page.
-Carbonite.Core.EventBus:Subscribe("MODULE_ENABLED", function(name)
-    if name ~= "Options" then return end
-    local Options = Carbonite:GetModule("Options", true)
-    if not Options then return end
-    Options:Register("Map", function()
-        local function db() return Map:DB().profile end
-        return {
-            type = "group",
-            name = "Map",
-            args = {
-                quests = {
-                    order = 1, type = "toggle", name = "Show quest pins",
-                    get = function() return db().ShowQuests end,
-                    set = function(_, v) db().ShowQuests = v; Map:Refresh() end,
-                },
-                gather = {
-                    order = 2, type = "toggle", name = "Show gathering nodes",
-                    get = function() return db().ShowGather end,
-                    set = function(_, v) db().ShowGather = v; Map:Refresh() end,
-                },
-                trainers = {
-                    order = 3, type = "toggle", name = "Show trainer pins",
-                    get = function() return db().ShowTrainers end,
-                    set = function(_, v) db().ShowTrainers = v; Map:Refresh() end,
-                },
-                notes = {
-                    order = 4, type = "toggle", name = "Show waypoint notes",
-                    get = function() return db().ShowNotes end,
-                    set = function(_, v) db().ShowNotes = v; Map:Refresh() end,
-                },
-                group = {
-                    order = 5, type = "toggle", name = "Show party/raid pins",
-                    get = function() return db().ShowGroup end,
-                    set = function(_, v) db().ShowGroup = v; Map:Refresh() end,
-                },
-                player = {
-                    order = 6, type = "toggle", name = "Show player arrow",
-                    get = function() return db().ShowPlayer end,
-                    set = function(_, v) db().ShowPlayer = v; Map:Refresh() end,
-                },
-                blobs = {
-                    order = 7, type = "toggle", name = "Quest blobs on minimap",
-                    get = function() return db().MinimapBlobs end,
-                    set = function(_, v) db().MinimapBlobs = v; Map:Refresh() end,
-                },
-            },
-        }
-    end, { displayName = "Map", order = 10 })
-end)
