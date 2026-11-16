@@ -49,3 +49,17 @@ describe("Mostrar no mapa", function()
         end
     end)
 end)
+
+describe("Mostrar no mapa: espaço do botão", function()
+    it("a linha de título reserva o espaço do alfinete e as outras não", function()
+        local Quest = load({}, {})
+        local list = { Data = { 100 * 0x10000 + 1, 100 * 0x10000 + 0x100 + 1 } }
+        expect(Quest.ShowOnMap.RowRightPad(list, 1) > 0).toBe(true)
+        expect(Quest.ShowOnMap.RowRightPad(list, 2)).toBe(0)
+    end)
+
+    it("a lista corta o texto antes do botão", function()
+        local src = loader.read("Carbonite/Modules/UI/UIEngine.lua")
+        expect(src:find("pad = pad + self.RowRightPad (self, line)", 1, true) ~= nil).toBe(true)
+    end)
+end)

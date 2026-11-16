@@ -25,6 +25,12 @@ local ICON_FILE = "Interface\\WorldMap\\WorldMap-Icon"
 
 local buttons = {}
 
+-- Width the button takes at the end of a quest title row; the row text stops before it.
+local function RowRightPad(list, line)
+    return Nx.Quest.SpokenPlay.TitleQuestID(list.Data[line]) and SIZE + RIGHT_PAD + 2 or 0
+end
+SM.RowRightPad = RowRightPad
+
 function SM:Target(qId)
     local _, cur = Nx.Quest:FindCur(qId)
     if not (cur and cur.Complete) then return "objectives" end
@@ -73,12 +79,15 @@ local function GetButton(index, parent)
 end
 
 function SM:Sweep(list)
+    list.RowRightPad = RowRightPad
     local frm = list.Frm
     local lineH = list:GetLineH()
     local hdrH = list.HdrH or 0
     local top = list.Top or 1
     local last = math.min(top + (list.Vis or 0) - 1, list.Num or 0)
-    local x = frm:GetWidth() - SIZE / 2 - RIGHT_PAD
+    local right = frm:GetWidth() - SIZE / 2 - RIGHT_PAD
+    -- Quest item buttons sit at the right end of their rows: the pin goes left of them.
+    local itemPads = list:GetWatchItemRightPads(lineH) or {}
     local used = 0
     for line = top, last do
         local data = list.Data[line]
@@ -88,6 +97,7 @@ function SM:Sweep(list)
             local button = GetButton(used, frm)
             button.NxQuestID, button.NxData = qId, data
             button:ClearAllPoints()
+            local x = right - (itemPads[line] or 0)
             button:SetPoint("CENTER", frm, "TOPLEFT", x, -((line - top) * lineH + hdrH + lineH / 2))
             button:Show()
         end

@@ -6394,7 +6394,12 @@ function Nx.List:CreateStrings()
             fstr:SetPoint ("TOPLEFT", padW + x + offX, -(n - 1) * lineH - hdrH - padH - offY)
 
             if not self.ShowAll then
-                local pad = lastCol and rightPads and rightPads[self.Top + n - 1] or 0
+                local line = self.Top + n - 1
+                local pad = lastCol and rightPads and rightPads[line] or 0
+                -- A module drawing a button at the row's end (ShowOnMap) reserves its width.
+                if lastCol and self.RowRightPad then
+                    pad = pad + self.RowRightPad (self, line)
+                end
                 fstr:SetWidth (colW - offX - pad)
             end
 
