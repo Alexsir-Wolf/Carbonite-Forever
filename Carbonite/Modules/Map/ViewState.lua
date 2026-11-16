@@ -25,7 +25,7 @@ end
 
 local function viewKey(name)
     local Nx = _G.Nx
-    local prefix = (Nx and Nx.InBG) and Nx.InBG or ""
+    local prefix = Nx and Nx.InBGMapId or ""
     return ("%s%s"):format(prefix, name or "")
 end
 
