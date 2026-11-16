@@ -14,6 +14,39 @@ Nx.Notes.PrevGLPins   = 0
 local KINDS = { "mining", "herbalism", "containers", "fishing" }
 local KIND_LABEL = { mining = "mining", herbalism = "herbalism", fishing = "fish" }
 
+-- Skill line of each kind, for the skill-up color of its nodes (#76).
+local SKILL_LINE = { mining = 186, herbalism = 182, fishing = 356 }
+-- Red: skill too low to gather. Then orange, yellow, green and gray, as the
+-- game colors the chance of a skill point. GatherLite keeps, per node type,
+-- the skill where each of the last four starts (levels = { 1, 25, 50, 100 }).
+local SKILL_COLORS = { "ff3030", "ff8040", "ffff20", "40c040", "a0a0a0" }
+
+-- Hex color for a node with GatherLite's `levels` at the player's `rank`, or
+-- nil to leave the icon as it is (no levels, or the player lacks the skill).
+function Nx.Notes:GatherSkillColor(levels, rank)
+    if type(levels) ~= "table" or type(levels[1]) ~= "number"
+            or type(rank) ~= "number" or rank <= 0 then
+        return nil
+    end
+    local band = 1
+    for i = 1, 4 do
+        if type(levels[i]) == "number" and rank >= levels[i] then band = i + 1 end
+    end
+    return SKILL_COLORS[band]
+end
+
+local function SkillRanks()
+    local ranks = {}
+    local api = _G.Carbonite and _G.Carbonite.Compat and _G.Carbonite.Compat.Api
+    local skill = api and api.Skill
+    if Nx.fdb.profile.Notes.GatherLiteSkillColor and skill then
+        for kind, line in pairs(SKILL_LINE) do
+            ranks[kind] = skill:GetRank(line)
+        end
+    end
+    return ranks
+end
+
 function Nx.Notes:IsGatherLiteAvailable()
     local GL = _G.GatherLite
     return type(GL) == "table"
@@ -85,9 +118,12 @@ function Nx.Notes:GatherLite(mapId)
             sig = sig + 2 ^ i
         end
     end
+    local ranks = SkillRanks()
     sig = self.GLVersion * 64 + sig
+    local rankSig = format("%d:%d:%d", ranks.mining or 0, ranks.herbalism or 0, ranks.fishing or 0)
 
-    if self.GLLastMapId == mapId and self.GLLastSig == sig then return end
+    if self.GLLastMapId == mapId and self.GLLastSig == sig and self.GLLastRanks == rankSig then return end
+    self.GLLastRanks = rankSig
 
     map:ClearIconType("!GLT")
     self.GLLastMapId = mapId
@@ -115,7 +151,8 @@ function Nx.Notes:GatherLite(mapId)
                     local object = GL:GetNodeObject(node.object)
                     if object then
                         local wx, wy = Nx.Map:GetWorldPos(mapId, node.posX * 100, node.posY * 100)
-                        local pin = wx and wy and map:AddIconPt("!GLT", wx, wy, nil, nil, object.icon)
+                        local color = self:GatherSkillColor(object.levels, ranks[kind])
+                        local pin = wx and wy and map:AddIconPt("!GLT", wx, wy, nil, color, object.icon)
                         if pin then
                             pin.mapID, pin.MapId = mapId, mapId
                             map:SetIconTip(pin, buildTip(GL, node, object))
