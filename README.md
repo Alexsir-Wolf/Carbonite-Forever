@@ -1,6 +1,6 @@
-# Carbonite Edição Forever
+# Carbonite-Forever
 
-Mapa, quests, navegação e utilidades em um só addon para o **World of Warcraft: Forever** (cliente 1.60.x, interface 16001).
+O **Carbonite-Forever** reúne mapa, quests, navegação e utilidades num só addon para o **World of Warcraft: Forever** (cliente 1.60.x, interface 16001).
 
 Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic)](https://github.com/IrcDirk/Carbonite-All-in-One-Retail-Classic), mantido por IrcDirk. Ela traz o Carbonite completo mais correções e recursos voltados ao Forever. Para Retail e para os outros clientes Classic, use a versão oficial.
 

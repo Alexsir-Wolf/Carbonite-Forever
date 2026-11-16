@@ -99,7 +99,7 @@ L["enchant:(%d+)"] = true
 L["item:(%d+)"] = true
 
 -- Keybinds
-L["Carbonite Warehouse"] = "Carbonite Warehouse"
+L["Carbonite Warehouse"] = "Carbonite-Forever Warehouse"
 L["NxTOGGLEWAREHOUSE"] = "show/hide Warehouse"
 
 L["Guilds"] = "Guildas"

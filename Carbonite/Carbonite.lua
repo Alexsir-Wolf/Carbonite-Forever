@@ -42,7 +42,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 -------------------------------------------------------------------------------
 
 Nx.WebSite = "wowinterface.com"
-NXTITLEFULL = L["Carbonite"]
+NXTITLEFULL = "Carbonite-Forever"
 
 -- Main version numbers
 Nx.VERMAJOR             = 113
@@ -77,7 +77,7 @@ Nx.TXTBLUE              = "|cffc0c0ff"
 -- Localized names for keybindable actions
 -------------------------------------------------------------------------------
 
-BINDING_HEADER_Carbonite        = "|cffc0c0ff" .. L["Carbonite"] .. "|r"
+BINDING_HEADER_Carbonite        = "|cffc0c0ff" .. NXTITLEFULL .. "|r"
 BINDING_NAME_NxMAPTOGORIGINAL   = L["NxMAPTOGORIGINAL"]
 BINDING_NAME_NxMAPTOGNORMMAX    = L["NxMAPTOGNORMMAX"]
 BINDING_NAME_NxMAPTOGNONEMAX    = L["NxMAPTOGNONEMAX"]

@@ -80,7 +80,7 @@ local function buildRootGroup()
             args  = {
                 blurb = {
                     type = "description",
-                    name = ("|cffc0c0ffCarbonite|r  -  %s |cffd700ff%s|r\n\n%s\n")
+                    name = ("|cffc0c0ffCarbonite-Forever|r  -  %s |cffd700ff%s|r\n\n%s\n")
                             :format(L["Version"], Carbonite.VERSION_STRING or "dev",
                                 L["Full featured map and questing addon."]),
                     order = 1,
@@ -128,7 +128,7 @@ local function buildRootGroup()
 
     return {
         type = "group",
-        name = "Carbonite",
+        name = "Carbonite-Forever",
         -- Top-level sections must stay in AceGUI's scrollable navigation tree.
         -- Tabs remain available inside individual sections where appropriate.
         childGroups = "tree",
@@ -173,7 +173,7 @@ end
 function Options:OnEnable()
     AceConfig:RegisterOptionsTable("Carbonite", buildRootGroup)
     self._rootRegistered = true
-    self.frame, self.panelID = AceConfigDialog:AddToBlizOptions("Carbonite", "Carbonite")
+    self.frame, self.panelID = AceConfigDialog:AddToBlizOptions("Carbonite", "Carbonite-Forever")
 
     -- The AceConfigDialog default (700 wide) is too narrow for the
     -- multi-control rows on the font pages. Widen the default ONCE here;

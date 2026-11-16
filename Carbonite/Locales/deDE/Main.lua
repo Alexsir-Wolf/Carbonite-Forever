@@ -28,7 +28,6 @@ NXClassLocToCap = {
 }
 
 -- Main Carbonite
-L["Carbonite"] = "Carbonite"
 L["CARBONITE"] = "CARBONITE"
 L["Loading"] = "Laden"
 L["Loading Done"] = "Fertig geladen"

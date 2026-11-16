@@ -5,7 +5,6 @@ end
 local L = LibStub("AceLocale-3.0"):NewLocale("Carbonite", "zhTW")
 if not L then return end
 
-L["Carbonite"] = "Carbonite"
 L["NxMAPTOGORIGINAL"] = "show/hide Blizzard's Map"
 L["NxMAPTOGNORMMAX"] = "switch Mapsize"
 L["NxMAPTOGNONEMAX"] = "show/hide Fullmap"
