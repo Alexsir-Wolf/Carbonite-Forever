@@ -72,3 +72,8 @@ L["NxTOGGLEFAV"] = "show/hide Notes"
 
 
 L["Ctrl+C:"] = true
+L["Library book"] = true
+L["Convergence"] = true
+L["Show library books still to find"] = true
+L["Show convergences (Skyborne)"] = true
+L["Show convergences for every character"] = true

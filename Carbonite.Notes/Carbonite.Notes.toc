@@ -34,5 +34,6 @@ Integrations\RXPArrow.lua
 Integrations\ZygorArrow.lua
 Integrations\TomTomArrow.lua
 Integrations\Attune.lua
+Integrations\ForeverPoints.lua
 Plugin.lua
 

@@ -215,6 +215,37 @@ function Nx.Notes:GetOptionsConfig()
                     end,
                     disabled = function() return not Nx.RealTom end,
                 },
+                librarybooks = {
+                    order = 12.6, type = "toggle", width = "full",
+                    name = L["Show library books still to find"],
+                    get = function() return Nx.fdb.profile.Notes.LibraryBooks end,
+                    set = function()
+                        Nx.fdb.profile.Notes.LibraryBooks = not Nx.fdb.profile.Notes.LibraryBooks
+                        Nx.Notes.FPLastSig = nil
+                    end,
+                    hidden = function() return not Nx.isCamelot end,
+                },
+                convergences = {
+                    order = 12.7, type = "toggle", width = "full",
+                    name = L["Show convergences (Skyborne)"],
+                    get = function() return Nx.fdb.profile.Notes.Convergences end,
+                    set = function()
+                        Nx.fdb.profile.Notes.Convergences = not Nx.fdb.profile.Notes.Convergences
+                        Nx.Notes.FPLastSig = nil
+                    end,
+                    hidden = function() return not Nx.isCamelot end,
+                },
+                convergencesall = {
+                    order = 12.8, type = "toggle", width = "full",
+                    name = L["Show convergences for every character"],
+                    get = function() return Nx.fdb.profile.Notes.ConvergencesAll end,
+                    set = function()
+                        Nx.fdb.profile.Notes.ConvergencesAll = not Nx.fdb.profile.Notes.ConvergencesAll
+                        Nx.Notes.FPLastSig = nil
+                    end,
+                    hidden = function() return not Nx.isCamelot end,
+                    disabled = function() return not Nx.fdb.profile.Notes.Convergences end,
+                },
                 gatherlite = {
                     order = 13, type = "toggle", width = "full",
                     name = L["Display GatherLite nodes On Map"],
