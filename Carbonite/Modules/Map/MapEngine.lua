@@ -1218,6 +1218,13 @@ function Nx.Map:Create(index)
     local item = showMenu:AddItem(0, L["Show Unexplored Areas"], func, m)
     item:SetChecked(m.ShowUnexplored)
 
+    -- Quest givers: only the quests the player can take now, or all of them
+    local function func(self)
+        self.Guide:UpdateGatherFolders()
+    end
+    local item = showMenu:AddItem(0, L["Quest Givers: Only Available Quests"], func, m)
+    item:SetChecked(Nx.db.profile.Map, "QuestGiversAvailable")
+
     -- World map toggle
     m.MenuIShowWorld = showMenu:AddItem(0, L["Show World"], self.Menu_OnShowWorld, m)
 
