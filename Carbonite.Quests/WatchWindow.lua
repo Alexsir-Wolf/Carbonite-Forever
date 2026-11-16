@@ -745,12 +745,20 @@ function Nx.Quest.Watch:Menu_OnLinkQuest()
     Nx.Quest:LinkChat (self.MenuQId)
 end
 
+-- Wowhead language path for the client locale; English has none.
+local WOWHEAD_LANG = {
+    deDE = "de/", esES = "es/", esMX = "es/", frFR = "fr/", itIT = "it/",
+    koKR = "ko/", ptBR = "pt/", ruRU = "ru/", zhCN = "cn/", zhTW = "tw/",
+}
+
 -- Build the Wowhead URL for a quest, with the per-flavor subdomain.
 -- Retail uses the bare domain; Classic flavors use their slug
--- (classic / tbc / wotlk / cata / mop-classic).
+-- (classic / tbc / wotlk / cata / mop-classic). Forever runs Classic Era
+-- quest ids, so it links to the Classic site in the client language.
 function Nx.Quest:WowheadURL (qId)
     local sub = ""
-    if Nx.isClassicEra then sub = "classic/"
+    if Nx.isCamelot then sub = "classic/" .. (WOWHEAD_LANG[GetLocale and GetLocale() or ""] or "")
+    elseif Nx.isClassicEra then sub = "classic/"
     elseif Nx.isTBCClassic then sub = "tbc/"
     elseif Nx.isWotlkClassic then sub = "wotlk/"
     elseif Nx.isCataClassic then sub = "cata/"
