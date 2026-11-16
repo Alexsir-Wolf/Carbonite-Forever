@@ -5,3 +5,6 @@ move-folders:
   CarboniteAllinOneRetailClassic/Carbonite.Notes: Carbonite.Notes
   CarboniteAllinOneRetailClassic/Carbonite.Warehouse: Carbonite.Warehouse
   CarboniteAllinOneRetailClassic/Carbonite.Gathermate2_Data: Carbonite.Gathermate2_Data
+manual-changelog:
+  filename: CHANGELOG-FOREVER.md
+  markup-type: markdown
