@@ -472,6 +472,7 @@ Nx.Defaults = {
         },
         Track = {
             EmuTomTom = true,
+            BlizzardPin = true,             -- Blizzard's 3D waypoint pin on the Carbonite target
             Hide = false,
             HideInBG = false,
             ShowDir = false,
