@@ -755,7 +755,11 @@ local WOWHEAD_LANG = {
 -- Retail uses the bare domain; Classic flavors use their slug
 -- (classic / tbc / wotlk / cata / mop-classic). Forever runs Classic Era
 -- quest ids, so it links to the Classic site in the client language.
+-- Quests only Forever has (taken from QuestieDB, QuestieSource.lua) have no
+-- Wowhead page: nil.
 function Nx.Quest:WowheadURL (qId)
+    local quest = Nx.Quests and Nx.Quests[qId]
+    if type (quest) == "table" and quest.ForeverOnly == true then return nil end
     local sub = ""
     if Nx.isCamelot then sub = "classic/" .. (WOWHEAD_LANG[GetLocale and GetLocale() or ""] or "")
     elseif Nx.isClassicEra then sub = "classic/"
@@ -785,6 +789,10 @@ function Nx.Quest:ShowWowheadLink (qId, qIndex)
     end
     if not qId or qId == 0 then return end
     local url = self:WowheadURL (qId)
+    if not url then
+        Nx.prt (L["This quest only exists in Forever: Wowhead has no page for it"])
+        return
+    end
     if not StaticPopupDialogs["NxWowheadLink"] then
         StaticPopupDialogs["NxWowheadLink"] = {
             text = L["Wowhead (Ctrl+C):"],

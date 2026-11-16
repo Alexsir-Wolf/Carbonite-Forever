@@ -380,6 +380,7 @@ L["Sets the outline style of this font"] = "Define o estilo de contorno desta fo
 L["Adds a drop shadow to this font"] = "Adiciona uma sombra a esta fonte"
 
 L["Wowhead Link"] = "Link do Wowhead"
+L["This quest only exists in Forever: Wowhead has no page for it"] = "Esta quest só existe no Forever: o Wowhead não tem página dela"
 L["Set as Active Quest"] = "Definir como missão ativa"
 L["Share Full and Minimized Watch Position"] = "Compartilhar Posição do Monitor Completo e Minimizado"
 L["When enabled, the full and minimized quest watch use one screen position. Disable to save a separate position for each state."] = "Quando ativado, o monitor de missões completo e o minimizado usam a mesma posição na tela. Desative para salvar uma posição separada para cada estado."

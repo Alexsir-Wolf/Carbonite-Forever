@@ -424,6 +424,7 @@ L["Sets the outline style of this font"] = true
 L["Adds a drop shadow to this font"] = true
 
 L["Wowhead Link"] = true
+L["This quest only exists in Forever: Wowhead has no page for it"] = true
 L["Set as Active Quest"] = true
 L["characters"] = true
 L["Track"] = true
