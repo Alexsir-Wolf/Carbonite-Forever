@@ -89,6 +89,26 @@ function Nx.Opts:FollowMainProfile(db)
 end
 
 -------------------------------------------------------------------------------
+-- MAP MOUSE BUTTONS
+-------------------------------------------------------------------------------
+
+---
+-- Select control for one map mouse-button action. The profile keeps the
+-- action id ("Goto", "Menu"...); Nx.Map:GetFuncs gives the translated labels.
+--
+local function mapButton(order, key, name, desc)
+    return {
+        order = order,
+        type = "select",
+        name = "           " .. name,
+        desc = desc,
+        get = function() return Nx.db.profile.Map[key] end,
+        set = function(_, id) Nx.db.profile.Map[key] = id end,
+        values = function() return Nx.Map:GetFuncs() end,
+    }
+end
+
+-------------------------------------------------------------------------------
 -- MAIN CONFIGURATION
 -- Root configuration table with addon info and credits
 -------------------------------------------------------------------------------
@@ -960,248 +980,17 @@ local function mapConfig()
                             type = "header",
                             name = L["Map Mouse Button Binds"],
                         },
-                        ButLAlt = {
-                            order = 39,
-                            type = "select",
-                            name = "           " .. L["Alt Left Click"],
-                            desc = L["Sets the action performed when left clicking holding ALT"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButLAlt) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButLAlt = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        ButLCtrl = {
-                            order = 40,
-                            type    = "select",
-                            name    = "           " .. L["Ctrl Left Click"],
-                            desc    = L["Sets the action performed when left clicking holding CTRL"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButLCtrl) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButLCtrl = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        ButM = {
-                            order = 41,
-                            type    = "select",
-                            name    = "           " .. L["Middle Click"],
-                            desc    = L["Sets the action performed when clicking your middle mouse button"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButM) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButM = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        ButMAlt = {
-                            order = 42,
-                            type    = "select",
-                            name    = "           " .. L["Alt Middle Click"],
-                            desc    = L["Sets the action performed when middle clicking holding ALT"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButMAlt) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButMAlt = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        ButMCtrl = {
-                            order = 43,
-                            type    = "select",
-                            name    = "           " .. L["Ctrl Middle Click"],
-                            desc    = L["Sets the action performed when middle clicking holding CTRL"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButMCtrl) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButMCtrl = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        ButR = {
-                            order = 44,
-                            type    = "select",
-                            name    = "           " .. L["Right Click"],
-                            desc    = L["Sets the action performed when right clicking the map"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButR) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButR = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        ButRAlt = {
-                            order = 45,
-                            type    = "select",
-                            name    = "           " .. L["Alt Right Click"],
-                            desc    = L["Sets the action performed when Right clicking holding ALT"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButRAlt) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButRAlt = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        ButRCtrl = {
-                            order = 46,
-                            type    = "select",
-                            name    = "           " .. L["Ctrl Right Click"],
-                            desc    = L["Sets the action performed when right clicking holding CTRL"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.ButRCtrl) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.ButRCtrl = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        But4 = {
-                            order = 47,
-                            type    = "select",
-                            name    = "           " .. L["Button 4 Click"],
-                            desc    = L["Sets the action performed when clicking mouse button 4"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.But4) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.But4 = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        But4Alt = {
-                            order = 48,
-                            type    = "select",
-                            name    = "           " .. L["Alt Button 4 Click"],
-                            desc    = L["Sets the action performed when pressing mouse 4 while holding ALT"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.But4Alt) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.But4Alt = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
-                        But4Ctrl = {
-                            order = 49,
-                            type    = "select",
-                            name    = "           " .. L["Ctrl Button 4 Click"],
-                            desc    = L["Sets the action performed when clicking 4th mouse button holding CTRL"],
-                            get    = function()
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                for a,b in pairs(vals) do
-                                  if (b == Nx.db.profile.Map.But4Ctrl) then
-                                     return a
-                                  end
-                                end
-                                return ""
-                            end,
-                            set    = function(info, name)
-                                local vals = Nx.Opts:CalcChoices("MapFunc")
-                                Nx.db.profile.Map.But4Ctrl = vals[name]
-                            end,
-                            values    = function()
-                                return Nx.Opts:CalcChoices("MapFunc")
-                            end,
-                        },
+                        ButLAlt = mapButton(39, "ButLAlt", L["Alt Left Click"], L["Sets the action performed when left clicking holding ALT"]),
+                        ButLCtrl = mapButton(40, "ButLCtrl", L["Ctrl Left Click"], L["Sets the action performed when left clicking holding CTRL"]),
+                        ButM = mapButton(41, "ButM", L["Middle Click"], L["Sets the action performed when clicking your middle mouse button"]),
+                        ButMAlt = mapButton(42, "ButMAlt", L["Alt Middle Click"], L["Sets the action performed when middle clicking holding ALT"]),
+                        ButMCtrl = mapButton(43, "ButMCtrl", L["Ctrl Middle Click"], L["Sets the action performed when middle clicking holding CTRL"]),
+                        ButR = mapButton(44, "ButR", L["Right Click"], L["Sets the action performed when right clicking the map"]),
+                        ButRAlt = mapButton(45, "ButRAlt", L["Alt Right Click"], L["Sets the action performed when Right clicking holding ALT"]),
+                        ButRCtrl = mapButton(46, "ButRCtrl", L["Ctrl Right Click"], L["Sets the action performed when right clicking holding CTRL"]),
+                        But4 = mapButton(47, "But4", L["Button 4 Click"], L["Sets the action performed when clicking mouse button 4"]),
+                        But4Alt = mapButton(48, "But4Alt", L["Alt Button 4 Click"], L["Sets the action performed when pressing mouse 4 while holding ALT"]),
+                        But4Ctrl = mapButton(49, "But4Ctrl", L["Ctrl Button 4 Click"], L["Sets the action performed when clicking 4th mouse button holding CTRL"]),
                     },
                 },
                 miniMap = {
@@ -4237,10 +4026,6 @@ function Nx.Opts:CalcChoices(name, mode, val)
     elseif name == "Corner" then
 
         return self.ChoicesCorner
-
-    elseif name == "MapFunc" then
-
-        return Nx.Map:GetFuncs()
 
     elseif name == "QArea" then
 

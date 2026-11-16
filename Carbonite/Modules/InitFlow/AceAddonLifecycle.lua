@@ -32,6 +32,7 @@ function Nx:OnInitialize()
     Nx.TooltipLastDiffNumLines = 0
     Nx.db = LibStub("AceDB-3.0"):New("CarbData", Nx.Defaults, true)
     Nx.MigrateGeneralKeys(Nx.db.profile.General)
+    Nx.Map.MigrateButtonFuncs(Nx.db.profile.Map)
     tinsert(Nx.dbs,Nx.db)
     Nx.db.RegisterCallback(self, "OnProfileChanged", "OnProfileChanged")
     Nx.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
@@ -47,6 +48,7 @@ function Nx:OnProfileChanged(event, database, newProfileKey)
         Nx.db.profile.MapSettings.Maps = NXMapOptsMapsDefault
     end
     Nx.MigrateGeneralKeys(Nx.db.profile.General)
+    Nx.Map.MigrateButtonFuncs(Nx.db.profile.Map)
     Nx.db.profile.Version.OptionsVersion = Nx.VERSIONGOPTS
     Nx.Map:VerifySettings()
     Nx.Opts.NXCmdReload()
