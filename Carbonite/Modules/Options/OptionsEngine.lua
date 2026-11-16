@@ -1321,6 +1321,8 @@ local function mapConfig()
                                 Nx.db.profile.MiniMap.ButOwn = not Nx.db.profile.MiniMap.ButOwn
                                 Nx.Opts:NXCmdReload()
                             end,
+                            -- MinimapButtonButton already gathers the buttons (#86).
+                            disabled = function() return Nx.Map.Dock:OtherCollector() end,
                         },
                         spacer1 = {
                             order = 2,
