@@ -34,4 +34,12 @@ describe("funções sem uso", function()
     it("Notes não usa mais o WorldMapBlobFrame inexistente", function()
         expect(loader.read("Carbonite.Notes/WindowEngine.lua"):find("WorldMapBlobFrame", 1, true)).toBeNil()
     end)
+
+    it("Quests não procura mais o NXQuestDB, que nunca existe (#91)", function()
+        expect(loader.read("Carbonite.Quests/Plugin.lua"):find("NXQuestDB", 1, true)).toBeNil()
+        for _, flavor in ipairs({ "Camelot", "Classic", "Tbc", "Wrath", "Cata", "Mists" }) do
+            local toc = loader.read("Carbonite.Quests/Carbonite.Quests-" .. flavor .. ".toc")
+            expect(toc:find("QuestDataLoader", 1, true)).toBeNil()
+        end
+    end)
 end)

@@ -44,6 +44,5 @@ WatchHider.lua
 QuestWatchSurface.lua
 QuestRouting.lua
 Plugin.lua
-Data\Shared\QuestDataLoader.lua
 # Forever quests Carbonite lacks, read from QuestieDB (after ProcessQuestDB in SuperTrack.lua).
 QuestieSource.lua

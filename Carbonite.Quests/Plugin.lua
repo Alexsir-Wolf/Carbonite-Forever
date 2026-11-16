@@ -35,25 +35,6 @@ Carbonite.Plugins.Quests = Quests
 Carbonite.Quests = Carbonite.Quests or {}
 Carbonite.Quests.Public = Quests
 
--- Returns the loaded quest database for the running client. The
--- per-flavor data files all populate a single global table; this
--- accessor just exposes it via a stable name.
-function Quests:GetDatabase()
-    return _G.NXQuestDB or (_G.Nx and _G.Nx.Quest and _G.Nx.Quest.DB)
-end
-
-function Quests:Get(questID)
-    local db = self:GetDatabase()
-    if not db then return nil end
-    return db[questID]
-end
-
-function Quests:Each(fn)
-    local db = self:GetDatabase()
-    if not db then return end
-    for id, data in pairs(db) do fn(id, data) end
-end
-
 function Quests:GetExpansionFolder()
     return Expansion:GetMapDataFolder()
 end
