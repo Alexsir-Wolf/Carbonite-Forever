@@ -9,6 +9,8 @@
 -- Public (on Nx.Quest.ShowOnMap):
 --   SM:Target(qId)   "turnin", npc name for a complete quest, else "objectives"
 --   SM:Sweep(list)   lay the buttons over the list's visible quest title rows
+--   SM:AttachToDetails(frame)       the same action as a button on the journal's details panel
+--   SM:SetDetailsQuest(qId, qIndex) the quest that button shows (qIndex > 0 when in the log)
 
 local Nx = _G.Nx
 if not Nx or not Nx.List or not Nx.Quest then return end
@@ -107,6 +109,34 @@ function SM:Sweep(list)
     for i = used + 1, #buttons do
         buttons[i]:Hide()
     end
+end
+
+-------------------------------------------------------------------------------
+-- Journal: a "Show on map" button at the top right of the quest details panel.
+-------------------------------------------------------------------------------
+
+function SM:AttachToDetails(frame)
+    local button = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    button:SetText(L["Show on map"])
+    button:SetSize(button:GetFontString():GetStringWidth() + 24, 22)
+    button:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -24, -6)
+    button:SetFrameLevel(frame:GetFrameLevel() + 5)
+    button:SetScript("OnEnter", OnEnter)
+    button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    button:SetScript("OnClick", function(b)
+        Nx.Quest:TrackOnMap(b.NxQuestID, 0, b.NxInLog, true)
+        local MapOpen = Carbonite.Modules.Map and Carbonite.Modules.Map.MapOpen
+        if MapOpen then MapOpen:Open() end
+    end)
+    button:Hide()
+    self.DetailsButton = button
+end
+
+function SM:SetDetailsQuest(qId, qIndex)
+    local button = self.DetailsButton
+    if not button then return end
+    button.NxQuestID, button.NxInLog = qId, (qIndex or 0) > 0
+    button:SetShown(qId and qId > 0 or false)
 end
 
 -- Same hook as SpokenPlay: every list shares Nx.List.Update; only the watch list gets buttons.

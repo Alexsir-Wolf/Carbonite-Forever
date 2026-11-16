@@ -492,6 +492,7 @@ function Nx.Quest.List:Open()
 
     self.DetailsFrm = f
     f.NxSetSize = self.OnDetailsSetSize
+    Nx.Quest.ShowOnMap:AttachToDetails (f)
 
     f:SetMovable (true)
     f:EnableMouse (true)
@@ -1405,6 +1406,7 @@ function Nx.Quest.List:OnListEvent (eventName, sel, val2, click)
             local mapId = Map:GetCurrentMapId()
             Quest:TrackOnMap (qId, qObj, qIndex > 0, shift)
             Map:SetCurrentMap (mapId)
+            Quest.ShowOnMap:SetDetailsQuest (qId, qIndex)
 
             -- LightHeaded select
 

@@ -70,3 +70,24 @@ describe("Mostrar no mapa: lista do tamanho do texto", function()
         expect(src:find("self.Strs[strNum]:GetWidth() + offX + endPad", 1, true) ~= nil).toBe(true)
     end)
 end)
+
+describe("Mostrar no mapa no diário", function()
+    it("o botão mostra a quest selecionada e some sem quest", function()
+        local Quest = load({}, {})
+        local SM = Quest.ShowOnMap
+        local shown
+        SM.DetailsButton = { SetShown = function(_, v) shown = v end }
+        SM:SetDetailsQuest(100, 3)
+        expect(shown).toBe(true)
+        expect(SM.DetailsButton.NxQuestID).toBe(100)
+        expect(SM.DetailsButton.NxInLog).toBe(true)
+        SM:SetDetailsQuest(0, 0)
+        expect(shown).toBe(false)
+    end)
+
+    it("o diário cria o botão e avisa a quest selecionada", function()
+        local src = loader.read("Carbonite.Quests/QuestWindow.lua")
+        expect(src:find("Nx.Quest.ShowOnMap:AttachToDetails (f)", 1, true) ~= nil).toBe(true)
+        expect(src:find("Quest.ShowOnMap:SetDetailsQuest (qId, qIndex)", 1, true) ~= nil).toBe(true)
+    end)
+end)
