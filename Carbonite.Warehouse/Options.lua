@@ -711,6 +711,5 @@ function Nx.Warehouse:GetOptionsConfig()
             },
         }
     end
-    Nx.Opts:AddToProfileMenu(L["Warehouse"], 5, Nx.wdb)
     return warehouseopts
 end

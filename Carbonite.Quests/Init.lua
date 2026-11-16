@@ -34,6 +34,7 @@ function CarboniteQuest:OnInitialize()
         return
     end
     Nx.qdb = LibStub("AceDB-3.0"):New("NXQuest", Nx.Quest.defaults, true)
+    Nx.Opts:FollowMainProfile(Nx.qdb)
     Nx.Quest:ConvertData()
     Nx.Quest:InitQuestCharacter()
     Nx.Font:ModuleAdd("Quest.QuestFont",{ "NxFontQ", "GameFontNormal","qdb" })

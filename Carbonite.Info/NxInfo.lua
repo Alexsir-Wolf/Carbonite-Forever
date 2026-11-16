@@ -237,7 +237,6 @@ local function createOptions()
 			},
 		}
 	end
-	Nx.Opts:AddToProfileMenu(L["Info"],2,Nx.idb)	
 	return options
 end
 
@@ -247,6 +246,7 @@ function CarboniteInfo:OnInitialize()
 		return
 	end
 	Nx.idb = LibStub("AceDB-3.0"):New("NXInfo",defaults, true)
+	Nx.Opts:FollowMainProfile(Nx.idb)
 	Nx.Font:ModuleAdd("Info.InfoFont",{ "NxFontI", "GameFontNormal","idb" })
 	Nx.Info:Init()
 	Nx.Info.Combat:Init()
