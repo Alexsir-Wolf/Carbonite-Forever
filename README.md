@@ -1,4 +1,4 @@
-# Carbonite — Edição Forever
+# Carbonite Edição Forever
 
 Mapa, quests, navegação e utilidades em um só addon para o **World of Warcraft: Forever** (cliente 1.60.x, interface 16001).
 
