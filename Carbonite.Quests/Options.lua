@@ -179,7 +179,7 @@ function Nx.Quest:GetOptionsConfig()
                         qtscale = {
                             order = 11,
                             type = "range",
-                            name = L["Quest Details Scale"],
+                            name = Nx.Opts.Unit(L["Quest Details Scale"], "×"),
                             desc = L["Sets the size of the quest details"],
                             min = .5,
                             max = 2,
@@ -754,7 +754,7 @@ function Nx.Quest:GetOptionsConfig()
                         QuestFontSize = {
                             order = 47,
                             type = "range",
-                            name = L["Quest Font Size"],
+                            name = Nx.Opts.Unit(L["Quest Font Size"], "px"),
                             desc = L["Sets the size of the quest window font"],
                             min = 6,
                             max = 20,
@@ -771,7 +771,7 @@ function Nx.Quest:GetOptionsConfig()
                         QuestFontSpacing = {
                             order = 48,
                             type = "range",
-                            name = L["Quest Font Spacing"],
+                            name = Nx.Opts.Unit(L["Quest Font Spacing"], "px"),
                             desc = L["Sets the spacing of the quest window font"],
                             min = -10,
                             max = 20,
@@ -955,7 +955,7 @@ function Nx.Quest:GetOptionsConfig()
                         qwtextsize = {
                             order = 8,
                             type = "range",
-                            name = L["Object Text Length Before Linewrap"],
+                            name = Nx.Opts.Unit(L["Object Text Length Before Linewrap"], L["characters"]),
                             desc = L["Sets the number of characters before an objective wraps"],
                             min = 20,
                             max = 999,
@@ -985,7 +985,7 @@ function Nx.Quest:GetOptionsConfig()
                         qrefresh = {
                             order = 10,
                             type = "range",
-                            name = L["Watch Delay Time"],
+                            name = Nx.Opts.Unit(L["Watch Delay Time"], "ms"),
                             desc = L["Sets the forced delay time of watch update in ms, performance toggle for systems that need it"],
                             min = 1000,
                             max = 5000,
@@ -1339,7 +1339,7 @@ function Nx.Quest:GetOptionsConfig()
                         qwiconsize = {
                             order = 36,
                             type = "range",
-                            name = L["Clickable Icon Size (0 disables)"],
+                            name = Nx.Opts.Unit(L["Clickable Icon Size (0 disables)"], "px"),
                             desc = L["If a quest has an item to be used, will draw it beside the quest at the size defined here"],
                             min = 0,
                             max = 50,
@@ -1411,7 +1411,7 @@ function Nx.Quest:GetOptionsConfig()
                         QuestWatchFontSize = {
                             order = 41,
                             type = "range",
-                            name = L["Watch Font Size"],
+                            name = Nx.Opts.Unit(L["Watch Font Size"], "px"),
                             desc = L["Sets the size of the quest watch font"],
                             min = 6,
                             max = 20,
@@ -1428,7 +1428,7 @@ function Nx.Quest:GetOptionsConfig()
                         QuestWatchFontSpacing = {
                             order = 42,
                             type = "range",
-                            name = L["Watch Font Spacing"],
+                            name = Nx.Opts.Unit(L["Watch Font Spacing"], "px"),
                             desc = L["Sets the spacing of the quest watch font"],
                             min = -10,
                             max = 20,

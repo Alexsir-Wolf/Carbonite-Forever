@@ -430,3 +430,4 @@ L["Click the icon to set a map target."] = "Clique no ícone para definir um alv
 L["Track World Quest"] = "Rastrear missão mundial"
 L["Untrack World Quest"] = "Parar de rastrear missão mundial"
 L["Right-click the row to track or untrack this world quest."] = "Clique com o botão direito na linha para rastrear ou parar de rastrear esta missão mundial."
+L["characters"] = "caracteres"
