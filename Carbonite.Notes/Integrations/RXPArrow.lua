@@ -310,10 +310,17 @@ end
 -- update loop (not every frame), so a light poll is plenty; it also
 -- keeps the suppression applied if RXP re-enables its arrow.
 local driver = CreateFrame("Frame")
-driver:SetScript("OnUpdate", function(_, elapsed)
-    pollAccum = pollAccum + elapsed
-    if pollAccum < POLL_INTERVAL then return end
-    pollAccum = 0
-    if not (Nx.fdb and Nx.Notes) then return end
-    pcall(Nx.Notes.RXPArrowSync, Nx.Notes)
+driver:RegisterEvent("PLAYER_LOGIN")
+driver:SetScript("OnEvent", function(self)
+    self:UnregisterEvent("PLAYER_LOGIN")
+    -- Addons load before PLAYER_LOGIN; without RXP there is nothing to
+    -- sync, so the poll never starts.
+    if not rxpAddon() then return end
+    self:SetScript("OnUpdate", function(_, elapsed)
+        pollAccum = pollAccum + elapsed
+        if pollAccum < POLL_INTERVAL then return end
+        pollAccum = 0
+        if not (Nx.fdb and Nx.Notes) then return end
+        pcall(Nx.Notes.RXPArrowSync, Nx.Notes)
+    end)
 end)
