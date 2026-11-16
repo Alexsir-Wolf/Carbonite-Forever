@@ -50,6 +50,18 @@ describe("XP das quests", function()
         loader.run(env, "Carbonite.Quests/QuestieSource.lua")
         expect(env.Nx.Quest:GetXP(2)).toBe(2450)
     end)
+
+    it("quest no registro usa a XP que o cliente mostra nas recompensas", function()
+        local env = wow.lenientEnv()
+        env.UnitLevel = function() return 26 end
+        env.GetMaxPlayerLevel = function() return 60 end
+        env.GetQuestLogRewardXP = function(id) return id == 7 and 2000 or 0 end
+        env.LibQuestieDB = { Support = { Get = function() return { db = { [8] = { 26, 900 } } } end } }
+        env.Nx = wow.namespace({ Quest = wow.namespace() })
+        loader.run(env, "Carbonite.Quests/QuestieSource.lua")
+        expect(env.Nx.Quest:GetXP(7)).toBe(2000)
+        expect(env.Nx.Quest:GetXP(8)).toBe(900)   -- 0 do cliente: cai na tabela
+    end)
 end)
 
 describe("XP no diário", function()
