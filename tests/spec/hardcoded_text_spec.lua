@@ -35,10 +35,10 @@ describe("menus e janelas", function()
         end
     end)
 
-    it("página de Opções sem texto fixo, exceto o nome Carbonite", function()
+    it("página de Opções sem texto fixo, exceto o nome Carbonite-Forever", function()
         local src = code("Carbonite/Modules/Options/Options.lua")
         for value in src:gmatch('name%s*=%s*"([^"]*)"') do
-            expect(value).toBe("Carbonite")
+            expect(value).toBe("Carbonite-Forever")
         end
         expect(src:find('reason or "', 1, true)).toBeNil()
         expect(src:find('ok and "', 1, true)).toBeNil()

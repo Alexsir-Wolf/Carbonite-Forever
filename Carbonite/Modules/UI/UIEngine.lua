@@ -252,7 +252,7 @@ function Nx.prt(...)
     end
 
     local f = Nx.prtChatFrm or DEFAULT_CHAT_FRAME
-    f:AddMessage("|cffff0000[" .. Nx.TXTBLUE .. L["Carbonite"] .. "|cffff0000] |cffffffff" .. format(unpack(args)), 1, 1, 1)
+    f:AddMessage("|cffff0000[" .. Nx.TXTBLUE .. NXTITLEFULL .. "|cffff0000] |cffffffff" .. format(unpack(args)), 1, 1, 1)
 end
 
 ---
@@ -261,7 +261,7 @@ end
 --
 function Nx.prtraw(msg)
     local f = Nx.prtChatFrm or DEFAULT_CHAT_FRAME
-    f:AddMessage(Nx.TXTBLUE .. L["Carbonite"] .. " |cffffffff" .. msg, 1, 1, 1)
+    f:AddMessage(Nx.TXTBLUE .. NXTITLEFULL .. " |cffffffff" .. msg, 1, 1, 1)
 end
 
 ---

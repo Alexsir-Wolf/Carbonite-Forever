@@ -26,7 +26,6 @@ NXClassLocToCap = {		-- Convert localized class name to generic caps
 }
 
 -- Main Carbonite
-L["Carbonite"] = "Carbonite"
 L["CARBONITE"] = "CARBONITE"
 L["Whats New!"] = "Новости аддона"
 L["Don't show for this update again"] = "Не показывать для этого обновления"

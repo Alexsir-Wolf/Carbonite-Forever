@@ -93,7 +93,7 @@ function MinimapButton:ShowTooltip(ownerFrame)
     local L = LibStub and LibStub("AceLocale-3.0", true) and LibStub("AceLocale-3.0"):GetLocale("Carbonite", true)
     local mmown = Nx and Nx.db and Nx.db.profile and Nx.db.profile.MiniMap and Nx.db.profile.MiniMap.ButOwn
     local ver = ("%s.%s"):format(Nx and Nx.VERMAJOR or "?", (Nx and Nx.VERMINOR or 0) * 10)
-    local title = (_G.NXTITLEFULL or "Carbonite") .. " " .. ver
+    local title = _G.NXTITLEFULL .. " " .. ver
 
     local lines = { title }
     local function add(s) lines[#lines + 1] = (L and L[s]) or s end

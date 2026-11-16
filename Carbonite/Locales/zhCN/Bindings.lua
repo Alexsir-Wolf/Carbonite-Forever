@@ -5,7 +5,6 @@ end
 local L = LibStub("AceLocale-3.0"):NewLocale("Carbonite", "zhCN")
 if not L then return end
 
-L["Carbonite"] = "Carbonite"
 L["NxMAPTOGORIGINAL"] = "显示/隐藏暴雪地图"
 L["NxMAPTOGNORMMAX"] = "切换地图大小"
 L["NxMAPTOGNONEMAX"] = "显示/隐藏完整地图"

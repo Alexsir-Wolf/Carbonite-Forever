@@ -29,7 +29,7 @@ local LEVEL_PREFIX = {
     [LEVEL.ERROR] = "|cffff4040[E]|r ",
 }
 
-local ADDON_PREFIX = "|cffc0c0ff[Carbonite]|r "
+local ADDON_PREFIX = "|cffc0c0ff[Carbonite-Forever]|r "
 
 local function emit(level, tag, fmt, ...)
     if level < Logger.minLevel then return end
