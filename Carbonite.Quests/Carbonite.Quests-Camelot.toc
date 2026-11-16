@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## X-Camelot-Toc: dash
-## Title: Carbonite Quest - Camelot (Forever) @project-version@
-## Title-ptBR: Carbonite Quests - Camelot (Forever) @project-version@
+## Title: Carbonite-Forever Quests
+## Title-ptBR: Carbonite-Forever Quests
 ## Version: @project-version@
 ## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
 ## Notes: Quest database and tracking for Carbonite

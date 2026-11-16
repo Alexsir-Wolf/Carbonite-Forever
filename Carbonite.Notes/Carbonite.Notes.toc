@@ -1,6 +1,6 @@
 ## Interface: 16001, 50504, 11508, 20506, 120007, 120100
-## Title: Carbonite Notes @project-version@
-## Title-ptBR: Carbonite Notas @project-version@
+## Title: Carbonite-Forever Notes
+## Title-ptBR: Carbonite-Forever Notas
 ## Version: @project-version@
 ## Author: Alexsir-Wolf (Forever edition), IrcDirk and the Carbonite contributors
 ## Notes: Map notes for Carbonite
