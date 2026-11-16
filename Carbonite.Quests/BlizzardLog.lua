@@ -607,10 +607,6 @@ function Nx.Quest:RecordQuestsLog (validatedQuestCount)
 
                 cur.Q = quest
                 cur.QI = qn                        -- Blizzard index
-                if Nx._dbgQId and cur.QId and cur.QId ~= qId then
-                    Nx.prt("|cffff8000[QId-DBG]|r RecordQuestsLog:set cur#%s QI=%s QId %s->%s Title=%q",
-                        tostring(cur.Index), tostring(qn), tostring(cur.QId), tostring(qId), tostring(title or "?"))
-                end
                 cur.QId = qId
                 cur.Header = header
                 cur.Title = title
@@ -801,10 +797,6 @@ function Nx.Quest:RecordQuestsLog (validatedQuestCount)
                     cur.PartyNames = cur.PartyDesc
                     cur.Q = quest
                     cur.QI = 0
-                    if Nx._dbgQId then
-                        Nx.prt("|cffff8000[QId-DBG]|r RecordQuestsLog:partyNew QId=%s plName=%s Title=%q",
-                            tostring(qId), tostring(plName), tostring(name or "?"))
-                    end
                     cur.QId = qId
                     cur.Header = "Party, " .. plName
                     cur.Title = name
