@@ -46,7 +46,7 @@ describe("textos herdados do upstream", function()
         local tocs = {
             "Carbonite/Carbonite-Camelot.toc", "Carbonite.Quests/Carbonite.Quests-Camelot.toc",
             "Carbonite.Info/Carbonite.Info.toc", "Carbonite.Notes/Carbonite.Notes.toc",
-            "Carbonite.Warehouse/Carbonite.Warehouse.toc",
+            "Carbonite.Warehouse/Carbonite.Warehouse.toc", "Carbonite.Gathermate2_Data/Carbonite.Gathermate2_Data-Camelot.toc",
         }
         for _, path in ipairs(tocs) do
             local toc = loader.read(path)
