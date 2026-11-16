@@ -67,3 +67,4 @@ L["Carbonite Notes"] = "Carbonite Notes"
 L["NxTOGGLEFAV"] = "show/hide Notes"
 
 
+L["Ctrl+C:"] = true

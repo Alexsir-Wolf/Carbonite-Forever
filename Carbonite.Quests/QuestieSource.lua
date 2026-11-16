@@ -34,6 +34,7 @@
 
 local Nx = _G.Nx
 if not Nx or not Nx.Quest then return end
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite.Quest", true)
 
 local QS = {}
 Nx.Quest.QuestieSource = QS
@@ -58,7 +59,7 @@ QS.filled = {}
 local function Say(msg)
     if said then return end
     said = true
-    Nx.prt("QuestieDB quests not added: %s", tostring(msg))
+    Nx.prt(L["QuestieDB quests not added: %s"], tostring(msg))
 end
 
 --------------------------------------------------------------------------------------------

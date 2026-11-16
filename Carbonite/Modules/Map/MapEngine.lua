@@ -435,7 +435,7 @@ function Nx.Map:Open()
     elseif mapOptsVer == 0 then
         mapOpts.Version = NxMAPOPTS_VERSION
     elseif mapOptsVer < NxMAPOPTS_VERSION then
-        Nx.prt("Reset map options %f", NxMAPOPTS_VERSION)
+        Nx.prt(L["Reset map options %f"], NxMAPOPTS_VERSION)
         installMapDefaults()
     end
 
@@ -682,9 +682,9 @@ function Nx.Map:Test()
             arr[znm] = i
         else
             if znm then
-                Nx.prt("dupe " .. znm)
+                Nx.prtD("dupe " .. znm)
             else
-                Nx.prt("no zone " .. i)
+                Nx.prtD("no zone " .. i)
             end
         end
     end
@@ -4201,7 +4201,7 @@ function Nx.Map:Menu_OnReportAllAFK (item)
         end
     end
 
-    Nx.prt ("%d reported", cnt)
+    Nx.prt ("%d " .. L["reported"], cnt)
 end
 --]]
 
@@ -4398,7 +4398,7 @@ function Nx.Map:BGMenu_OnStatus(item)
     if id == "1" then
         self:BGMenu_Send()
     else
-        Nx.prt("No Status")
+        Nx.prt(L["No Status"])
     end
 end
 
@@ -14133,7 +14133,7 @@ function Nx.Map:InitTables()
                         winfo[5] = cy + winfo.Y
                     else
                         if n ~= nil and n ~= 0 then
-                            Nx.prt("Map Error: " .. tostring(n))
+                            Nx.prt(L["Map Error: %s"], tostring(n))
                         end
                     end
                 else
@@ -14154,7 +14154,7 @@ function Nx.Map:InitTables()
                     winfo[5] = cy + winfo.Y
                 else
                     if n ~= nil and n ~= 0 then
-                        Nx.prt("Map Error: " .. tostring(n))
+                        Nx.prt(L["Map Error: %s"], tostring(n))
                     end
                 end
                 winfo.Cont = 90
@@ -14194,7 +14194,7 @@ function Nx.Map:InitTables()
             assert (entryId)
 
             if entryId == "0" then
-                Nx.prt("Instance " .. name .. " trying entryId 0")
+                Nx.prtD("Instance " .. name .. " trying entryId 0")
                 entryId = "125"
             end
 --[[
@@ -14274,7 +14274,7 @@ function Nx.Map:InitTables()
                 local mapId2 = tonumber(z2)
 
                 if not (mapId1 and mapId2) then
-                    Nx.prt ("zone conn err %s to %s", z1 - 35, z2 - 35)
+                    Nx.prtD ("zone conn err %s to %s", z1 - 35, z2 - 35)
                     conTime = 0
                 end
 
@@ -15411,16 +15411,16 @@ function Nx.Map:ParseTargetStr (str)
 
         if not mid then
             if cont ~= 0 then
-                Nx.prt("zone %s not found on continent %s",zone,Nx.Map.MapInfo[cont].Name)
+                Nx.prt(L["zone %s not found on continent %s"],zone,Nx.Map.MapInfo[cont].Name)
             else
-                Nx.prt ("zone %s not found", zone)
+                Nx.prt (L["zone %s not found"], zone)
             end
             return
         end
     end
 
     if not zx or not zy then
-        Nx.prt ("zone coordinate error")
+        Nx.prt (L["zone coordinate error"])
         return
     end
 
@@ -16139,7 +16139,7 @@ function Nx.Map.Dock:MinimapDetachFrms()
 
         for n, f in ipairs (self.MMFrms) do
             if frms[f] then
-                Nx.prt ("Dup frm %s #%s", f:GetName() or "nil", n)
+                Nx.prtD ("Dup frm %s #%s", f:GetName() or "nil", n)
             end
             frms[f] = n
         end
@@ -16305,7 +16305,7 @@ function Nx.Map:RouteMerge (points)
         end
     end
 
-    Nx.prt ("Merged %s in %.1f secs", startCnt - #points, GetTime() - tm)
+    Nx.prtD ("Merged %s in %.1f secs", startCnt - #points, GetTime() - tm)
 end
 
 ---
@@ -16422,7 +16422,7 @@ function Nx.Map:Route (points)
 
     local scale = self:GetWorldZoneScale (self.MapId)
     local len = self:RouteLen (route)
-    Nx.prt ("Routed %s nodes, %d yards in %.1f secs", #route, len * scale * 4.575, GetTime() - tm)
+    Nx.prt (L["Routed %s nodes, %d yards in %.1f secs"], #route, len * scale * 4.575, GetTime() - tm)
 
     return route
 end

@@ -169,3 +169,7 @@ L["Adds a drop shadow to this font"] = true
 L["None"] = true
 L["Outline"] = true
 L["Thick Outline"] = true
+L["Unable to open profession link"] = true
+L["No edit box open!"] = true
+L["Total Time Played: %s"] = true
+L["Time played this level: %s"] = true

@@ -1025,7 +1025,7 @@ Nx.GatherImportState = nil
 function Nx:GatherImportCarb (nodeType)
     -- Prevent multiple imports at once
     if Nx.GatherImportState then
-        Nx.prt("Import already in progress, please wait...")
+        Nx.prt(L["Import already in progress, please wait..."])
         return
     end
 
@@ -1077,7 +1077,7 @@ function Nx:GatherImportCarb (nodeType)
     end
 
     if #srcTables == 0 then
-        Nx.prt("No data to import for " .. nodeType)
+        Nx.prt(L["No data to import for %s"], nodeType)
         return
     end
 
@@ -1093,11 +1093,11 @@ function Nx:GatherImportCarb (nodeType)
 
     local totalCount = #importList
     if totalCount == 0 then
-        Nx.prt("No data to import")
+        Nx.prt(L["No data to import"])
         return
     end
 
-    Nx.prt("Starting import of %d nodes (this may take a moment)...", totalCount)
+    Nx.prt(L["Starting import of %d nodes (this may take a moment)..."], totalCount)
 
     -- Setup batched import state
     Nx.GatherImportState = {
@@ -1161,6 +1161,6 @@ function Nx:GatherImportBatch()
     elseif state.currentIndex % 5000 < state.batchSize then
         -- Progress update every 5000 nodes
         local progress = floor(state.currentIndex / state.totalCount * 100)
-        Nx.prt("Import progress: %d%% (%d/%d)", progress, state.currentIndex, state.totalCount)
+        Nx.prt(L["Import progress: %d%% (%d/%d)"], progress, state.currentIndex, state.totalCount)
     end
 end

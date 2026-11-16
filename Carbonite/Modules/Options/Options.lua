@@ -20,6 +20,7 @@ local AceConfig       = LibStub("AceConfig-3.0")
 local AceConfigReg    = LibStub("AceConfigRegistry-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceDBOptions    = LibStub("AceDBOptions-3.0")
+local L               = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 
 local Options = Module:New("Options", {
     defaults = {
@@ -42,8 +43,8 @@ local function unavailableGroup(name, reason)
         args = {
             unavailable = {
                 type = "description",
-                name = "These settings are not available yet. Reopen the options window after Carbonite finishes loading.\n\n"
-                    .. tostring(reason or "The options provider did not return a settings group."),
+                name = L["These settings are not available yet. Reopen the options window after Carbonite finishes loading."] .. "\n\n"
+                    .. tostring(reason or L["The options provider did not return a settings group."]),
                 order = 1,
                 width = "full",
             },
@@ -75,12 +76,13 @@ local function buildRootGroup()
         args.about = {
             order = 0,
             type  = "group",
-            name  = "About",
+            name  = L["About"],
             args  = {
                 blurb = {
                     type = "description",
-                    name = ("|cffc0c0ffCarbonite|r  -  version |cffd700ff%s|r\n\nFull featured map and questing addon.\n")
-                            :format(Carbonite.VERSION_STRING or "dev"),
+                    name = ("|cffc0c0ffCarbonite|r  -  %s |cffd700ff%s|r\n\n%s\n")
+                            :format(L["Version"], Carbonite.VERSION_STRING or "dev",
+                                L["Full featured map and questing addon."]),
                     order = 1,
                 },
             },
@@ -101,7 +103,7 @@ local function buildRootGroup()
         local ok, table_ = pcall(entry.provider)
         if not ok or type(table_) ~= "table" or table_.type ~= "group"
             or type(table_.args) ~= "table" then
-            local reason = ok and "The options provider returned an invalid settings group." or table_
+            local reason = ok and L["The options provider returned an invalid settings group."] or table_
             table_ = unavailableGroup(entry.displayName or id, reason)
             if Carbonite.Core.Logger then
                 pcall(function()
@@ -120,7 +122,7 @@ local function buildRootGroup()
     if Carbonite.db then
         local ok, profiles = pcall(AceDBOptions.GetOptionsTable, AceDBOptions, Carbonite.db)
         args.profiles = ok and type(profiles) == "table" and profiles
-            or unavailableGroup("Profiles", profiles)
+            or unavailableGroup(L["Profiles"], profiles)
         args.profiles.order = 1000
     end
 

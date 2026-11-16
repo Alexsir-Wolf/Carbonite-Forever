@@ -25,7 +25,7 @@ local function _tt_neq(a, b) return a ~= b end
 --
 function Nx:NXOnUpdate (elapsed)
     if InCombatLockdown() and not Nx.Initialized and not Nx.CombatMessage then
-        Nx.prt("You are in combat! Carbonite will resume loading when your safe.")
+        Nx.prt(L["You are in combat! Carbonite will resume loading when you are safe."])
         Nx.CombatMessage = true
     end
     local Nx = Nx
