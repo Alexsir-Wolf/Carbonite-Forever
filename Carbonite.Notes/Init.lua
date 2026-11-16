@@ -35,6 +35,9 @@ local defaults = {
             GatherLiteSize  = 14,
             GatherLiteSkillColor = true,   -- Tint GatherLite nodes by the chance of a skill point
             ZygorArrow      = true,    -- Route ZygorGuidesViewer arrow through Carbonite HUD
+            LibraryBooks    = true,    -- Forever library books still to find, on the map
+            Convergences    = true,    -- Forever convergences, for Skyborne characters
+            ConvergencesAll = false,   -- ...and for every character
             TomTomArrow     = true,    -- Point Carbonite HUD at the real TomTom arrow target, hide TomTom arrow
         },
         Addons = {},
