@@ -974,12 +974,12 @@ function Nx.Quest:GetOptionsConfig()
                             type = "range",
                             name = L["Watch Delay Time"],
                             desc = L["Sets the forced delay time of watch update in ms, performance toggle for systems that need it"],
-                            min = 250,
-                            max = 1000,
+                            min = 1000,
+                            max = 5000,
                             step = 1,
-                            bigStep = 1,
+                            bigStep = 100,
                             get = function()
-                                return Nx.qdb.profile.QuestWatch.RefreshTimer
+                                return Nx.Quest.Watch:RefreshInterval() * 1000
                             end,
                             set = function(info,value)
                                 Nx.qdb.profile.QuestWatch.RefreshTimer = value

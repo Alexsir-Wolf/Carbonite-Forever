@@ -791,18 +791,14 @@ function Nx.Quest:OnUpdate (elapsed)
         return
     end
 
-    -- DeaTHCorE - missing questwatch update... the quest range as a example are updated very late without updates,
-    -- so i have added here a update every 1 secound. this update is any more required for update questwatch itembutton in
-    -- conjunction with the InCombatLockdown() call ( :Hide() quest itembutton is a example for missing update by InCombatLockdown(),
-    -- the call of :Hide() are not called a the frame lists etcetera are wiped.    )
-    -- I have tested with a CPU Profiling addon and no performence lost i have seen...
-    -- I call the update here to spare one more timer ;)
+    -- Periodic watch refresh: keeps distances and quest item buttons current
+    -- between quest events. The interval is the "Watch Delay Time" option.
     if not elap then
         elap = GetTime()
         return
     end
     local t = GetTime()
-    if t - elap >= 1 then
+    if t - elap >= Nx.Quest.Watch:RefreshInterval() then
         Nx.Quest.Watch:Update()
         elap = t
     end
