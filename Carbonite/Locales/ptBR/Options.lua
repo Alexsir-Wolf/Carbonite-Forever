@@ -6,7 +6,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("Carbonite", "ptBR")
 if not L then return end
 
 -- Profiles Menu
-L["Profiles"] = "Perfil"
+L["Profiles"] = "Perfis"
 L["New"] = "Novo"
 L["You can change the active database profile, so you can have different settings for every character."] = "Você pode mudar a database de perfil ativa, para que tenha configurações diferentes pra cada personagem."
 L["Reset the current profile back to it's default values, in case your configuration is broken, or you simply want to start over."] = "Reseta o teu perfil pra o normal, em caso a configuração esteja com problemas."
@@ -26,7 +26,6 @@ L["Deletes a profile from the database."] = "Apague um perfil da database."
 L["Main Options"] = "Opções Principais"
 L["\nCarbonite is a full featured, powerful map addon providing a versitile easy to use google style map which either can replace or work with the current blizzard maps.\n\nThrough modules it can also be expanded to do even more to help make your game easier."] = "Carbonite é um addon de mapa que facilita e melhora a interface do jogo modificando o mapa para um estilo GoogleMaps."
 L["Release Version"] = "Versão"
-L["Maintained by"] = "Modificado por"
 L["Website"] = "Website"
 L["For support, please visit the forums for Carbonite on WoW Interface."] = "Carbonite ainda esta em fase Beta"
 L["Special thanks to"] = "Agradecimento Especiais"
@@ -88,7 +87,6 @@ L["When enabled, will attempt to draw a marker on the map for friends & guildmat
 L["Show Other people in Cities"] = "Mostrar Outras Pessoas em Cidades"
 L["When enabled, will attempt to draw a marker on the map for other Carbonite users."] = "Quando ativado, tentará desenhar um marcador no mapa para outros usuários do Carbonite."
 L["Show Other people In Zone"] = "Mostrar Outras Pessoas na Zona"
-L["When enabled, will attempt to draw a marker on the map for other Carbonite users."] = "Quando ativado, tentará desenhar um marcador no mapa para outros usuários do Carbonite."
 L["Restore map scale after track"] = "Restaurar escala do mapa após rastreamento"
 L["When enabled, restores your previous map scale when tracking is cleared."] = "Quando ativado, restaura a escala anterior do mapa quando o rastreamento é limpo."
 L["Use Travel Routing"] = "Usar Roteamento de Viagem"
@@ -269,10 +267,8 @@ L["Delete Misc Gather Locations"] = "Apagar Locais de Coleta Diversos"
 L["Import Herbs From GatherMate2_Data"] = "Importar Ervas do GatherMate2_Data"
 L["Import Mines From GatherMate2_Data"] = "Importar Minérios do GatherMate2_Data"
 L["Import Misc From GatherMate2_Data"] = "Importar Diversos do GatherMate2_Data"
-L["Herbalism"] = "Herborismo"
 L["Display"] = "Exibição"
 L["Nodes On Map"] = "Pontos no Mapa"
-L["Mining"] = "Mineração"
 L["Timber"] = true
 L["Delete Timber Gather Locations"] = "Apagar Locais de Coleta de Madeira"
 L["Small Timber"] = true
@@ -280,9 +276,7 @@ L["Medium Timber"] = true
 L["Large Timber"] = true
 L["Show Timber Locations"] = "Mostrar Locais de Madeira"
 L["Lumbermill"] = "Serraria"
-L["Delete"] = "Apagar"
 L["Import"] = "Importar"
-L["Cancel"] = true
 L["Enable All"] = "Ativar Todos"
 L["Disable All"] = "Desativar Todos"
 
@@ -352,20 +346,17 @@ L["When Enabled, Attempts to emulate tomtom's features (requires reload)"] = "Qu
 
 -- Configuration Headers
 L["General"] = "Geral"
-L["Battlegrounds"] = "Campos de Batalha"
 L["Fonts"] = "Fontes"
 L["Guide & Gather"] = "Guia e Coleta"
 L["Maps"] = "Mapas"
 L["Menus"] = "Menus"
 L["Privacy"] = "Privacidade"
-L["Profiles"] = "Perfil"
 L["Skin"] = "Aparência"
 L["Tracking HUD"] = "HUD de Rastreamento"
 
 -- General Text
 L["Reload UI"] = "Recarregar IU"
 L["Reload"] = "Recarregar"
-L["Cancel"] = "Cancelar"
 L["Reset options"] = "Redefinir opções"
 L["Reset global options"] = "Redefinir opções globais"
 L["Reset window layouts"] = "Redefinir posições das janelas"
@@ -387,7 +378,6 @@ L["Font Outline"] = "Contorno da fonte"
 L["Font Shadow"] = "Sombra da fonte"
 L["Sets the outline style of this font"] = "Define o estilo de contorno desta fonte"
 L["Adds a drop shadow to this font"] = "Adiciona uma sombra a esta fonte"
-L["None"] = "Nenhum"
 L["Outline"] = "Contorno"
 L["Thick Outline"] = "Contorno grosso"
 L["Main"] = "Principal"

@@ -24,7 +24,7 @@ L["Show"] = "Mostrar"
 L["New Info Window"] = "Nova janela de info"
 L["Delete This Window"] = "Excluir esta janela"
 L["Options"] = "Opções"
-L["Info"] = true
+L["Info"] = "Info"
 L["Edit View"] = "Editar visualização"
 L["Stop Edit"] = "Parar edição"
 L["Change Text"] = "Alterar texto"
@@ -39,8 +39,6 @@ L["Fifteen seconds until the Arena"] = "Quinze segundos até a Arena"
 L["Reset old info data %f"] = "Dados antigos de info redefinidos %f"
 L[" begins? in (%d+) "] = " begins? in (%d+) "
 L["(%d+) minutes? until the battle"] = "(%d+) minutes? until the battle"
-L["Info"] = true
-L["Info"] = "Info"
 -- Kill marker icons (Carbonite map skull/seal markers)
 L["Kill Icons"] = "Ícones de Morte"
 L["Show kill markers on map"] = "Mostrar marcadores de morte no mapa"

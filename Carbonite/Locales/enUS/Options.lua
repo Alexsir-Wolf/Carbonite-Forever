@@ -22,7 +22,6 @@ L["Deletes a profile from the database."] = true
 L["Main Options"] = true
 L["\nCarbonite is a full featured, powerful map addon providing a versitile easy to use google style map which either can replace or work with the current blizzard maps.\n\nThrough modules it can also be expanded to do even more to help make your game easier."] = true
 L["Release Version"] = true
-L["Maintained by"] = true
 L["Website"] = true
 L["For support, please visit the forums for Carbonite on WoW Interface."] = true
 L["Special thanks to"] = true
@@ -84,7 +83,6 @@ L["When enabled, will attempt to draw a marker on the map for friends & guildmat
 L["Show Other people in Cities"] = true
 L["When enabled, will attempt to draw a marker on the map for other Carbonite users."] = true
 L["Show Other people In Zone"] = true
-L["When enabled, will attempt to draw a marker on the map for other Carbonite users."] = true
 L["Restore map scale after track"] = true
 L["When enabled, restores your previous map scale when tracking is cleared."] = true
 L["Use Travel Routing"] = true
@@ -265,20 +263,11 @@ L["Delete Misc Gather Locations"] = true
 L["Import Herbs From GatherMate2_Data"] = true
 L["Import Mines From GatherMate2_Data"] = true
 L["Import Misc From GatherMate2_Data"] = true
-L["Herbalism"] = true
 L["Display"] = true
 L["Nodes On Map"] = true
-L["Mining"] = true
-L["Timber"] = true
 L["Delete Timber Gather Locations"] = true
-L["Small Timber"] = true
-L["Medium Timber"] = true
-L["Large Timber"] = true
-L["Show Timber Locations"] = true
 L["Lumbermill"] = true
-L["Delete"] = true
 L["Import"] = true
-L["Cancel"] = true
 
 L["Enable All"] = true
 L["Disable All"] = true
@@ -349,20 +338,17 @@ L["When Enabled, Attempts to emulate tomtom's features (requires reload)"] = tru
 
 -- Configuration Headers
 L["General"] = true
-L["Battlegrounds"] = true
 L["Fonts"] = true
 L["Guide & Gather"] = true
 L["Maps"] = true
 L["Menus"] = true
 L["Privacy"] = true
-L["Profiles"] = true
 L["Skin"] = true
 L["Tracking HUD"] = true
 
 -- General Text
 L["Reload UI"] = true
 L["Reload"] = true
-L["Cancel"] = true
 L["Reset options"] = true
 L["Reset global options"] = true
 L["Reset window layouts"] = true
@@ -380,7 +366,6 @@ L["Font Outline"] = true
 L["Font Shadow"] = true
 L["Sets the outline style of this font"] = true
 L["Adds a drop shadow to this font"] = true
-L["None"] = true
 L["Outline"] = true
 L["Thick Outline"] = true
 L["Main"] = true
