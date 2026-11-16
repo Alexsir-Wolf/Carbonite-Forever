@@ -66,6 +66,12 @@ function W.env(overrides)
         return t
     end
     env.CreateFrame = function(_, name) return W.frame(name) end
+    -- LibStub("AceLocale-3.0"):GetLocale(...) gives a locale that returns the key.
+    local locale = setmetatable({}, { __index = function(_, k) return k end })
+    env.LibStub = function()
+        return setmetatable({ GetLocale = function() return locale end },
+            { __index = function() return W.anything() end })
+    end
     env.C_Timer = { After = function(_, fn) fn() end }
     env.Enum = { UIMapType = { Cosmic = 0, World = 1, Continent = 2, Zone = 3, Dungeon = 4, Micro = 5, Orphan = 6 } }
     env.Carbonite = {
@@ -87,11 +93,17 @@ function W.anything()
     return any
 end
 
--- Like W.env, but globals the test did not provide resolve to W.anything().
-function W.lenientEnv(overrides)
+-- Like W.env, but globals the test did not provide resolve to W.anything(), except the
+-- names in `missing`, which stay nil (an API the simulated client lacks).
+function W.lenientEnv(overrides, missing)
     local env = W.env(overrides)
     local any = W.anything()
-    return setmetatable(env, { __index = function() return any end })
+    local absent = {}
+    for _, name in ipairs(missing or {}) do absent[name] = true end
+    return setmetatable(env, { __index = function(_, k)
+        if absent[k] then return nil end
+        return any
+    end })
 end
 
 -- A namespace table such as Nx for files that define methods on many sub-tables: a missing
