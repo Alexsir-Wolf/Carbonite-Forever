@@ -331,6 +331,8 @@ L["Auto Track Corpse"] = true
 L["When Enabled, Will automatically track your corpse upon death"] = true
 L["Enable TomTom Emulation"] = true
 L["When Enabled, Attempts to emulate tomtom's features (requires reload)"] = true
+L["Show the game's 3D pin on the destination"] = true
+L["When enabled, the game's waypoint pin, with the distance, marks Carbonite's navigation target in the world"] = true
 
 -- Configuration Headers
 L["General"] = true
