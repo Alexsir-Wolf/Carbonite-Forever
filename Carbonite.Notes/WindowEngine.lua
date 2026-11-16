@@ -4,8 +4,8 @@
 -- (Update / UpdateFolder / UpdateItems / AddonFolders).
 --
 -- This is the bulky end of NxFav.lua. Everything in this file
--- references Nx.Notes state set up by Init.lua (Folders, NoteIcons,
--- safecall) and by Storage.lua (ParseItem / ParseItemNote /
+-- references Nx.Notes state set up by Init.lua (Folders, NoteIcons)
+-- and by Storage.lua (ParseItem / ParseItemNote /
 -- ParseItemTarget / AddFolder / AddFavorite / etc.).
 
 local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite.Notes", true)
@@ -15,25 +15,7 @@ if not Nx then return end
 Nx.Notes = Nx.Notes or {}
 
 -- Convenience locals for hot-path use.
-local safecall  = Nx.Notes.safecall
 local addonNotes = Nx.Notes.addonNotes
-
--- -------------------------------------------------------------------
--- HandyNotes pin handlers
---   Used by Create() (legacy) when wiring per-pin mouse handlers.
--- -------------------------------------------------------------------
-
-local handypin = {}
-
-function handypin:OnEnter(motion)
-    WorldMapBlobFrame:SetScript("OnUpdate", nil)
-    safecall(HandyNotes.plugins[self.pluginName].OnEnter, self, self.mapFile, self.coord)
-end
-
-function handypin:OnLeave(motion)
-    WorldMapBlobFrame:SetScript("OnUpdate", WorldMapBlobFrame_OnUpdate)
-    safecall(HandyNotes.plugins[self.pluginName].OnLeave, self, self.mapFile, self.coord)
-end
 
 -- -------------------------------------------------------------------
 -- Window creation

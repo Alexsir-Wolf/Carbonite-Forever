@@ -42,4 +42,3 @@ WatchHider.lua
 QuestWatchSurface.lua
 QuestRouting.lua
 Plugin.lua
-Data\Shared\QuestDataLoader.lua
