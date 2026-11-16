@@ -32,7 +32,7 @@
 --   QS.ForeverLoc(f, s)  one location string projected with f(uiMapId, x, y)
 --   QS.ConvertLoadedCoords(lib)  project the Era points of records not yet converted
 --   QS.XPAt(questLevel, xp, playerLevel)  XP a quest gives at a player level
---   Nx.Quest:GetXP(qId)  that XP for the player, from the QuestXP table, or nil
+--   Nx.Quest:GetXP(qId)  that XP for the player: the client's for a logged quest, else the QuestXP table, or nil
 --   Nx.Quest:XPText(qId) the XP as " 1.650 XP" for lists and tooltips, or ""
 
 local Nx = _G.Nx
@@ -594,13 +594,26 @@ local function XPTable()
     return type(module) == "table" and type(module.db) == "table" and module.db or nil
 end
 
+-- XP the client gives for a quest in the log, already cut for the player's
+-- level; nil when the client has no number for it (not cached, or a secret value).
+local function LogXP(qId)
+    local get = rawget(_G, "GetQuestLogRewardXP")
+    if type(get) ~= "function" then return nil end
+    local ok, xp = pcall(get, qId)
+    if not ok or type(xp) ~= "number" then return nil end
+    local positive, isPositive = pcall(function() return xp > 0 end)
+    return positive and isPositive and xp or nil
+end
+
 function Nx.Quest:GetXP(qId)
-    local db = XPTable()
-    local entry = db and db[qId]
-    if type(entry) ~= "table" or not entry[2] then return nil end
     local level = UnitLevel("player")
     local maxLevel = GetMaxPlayerLevel and GetMaxPlayerLevel()
     if maxLevel and level >= maxLevel then return nil end
+    local logXP = LogXP(qId)
+    if logXP then return logXP end
+    local db = XPTable()
+    local entry = db and db[qId]
+    if type(entry) ~= "table" or not entry[2] then return nil end
     local xp = QS.XPAt(entry[1] or level, entry[2], level)
     return xp > 0 and xp or nil
 end
