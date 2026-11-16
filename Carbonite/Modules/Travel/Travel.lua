@@ -11,7 +11,7 @@ local Module = Carbonite.Core.Module
 local Travel = Module:New("Travel")
 
 function Travel:OnEnable()
-    Carbonite.Core.SlashCommands:Register("travel", function(rest)
+    Carbonite.Core.SlashCommands:RegisterDebug("travel", function(rest)
         local args = {}
         for w in rest:gmatch("%S+") do args[#args + 1] = w end
         if args[1] == "add" and self.Add then
@@ -19,7 +19,7 @@ function Travel:OnEnable()
             self:Add(LibStub("AceLocale-3.0"):GetLocale("Carbonite")["Flight Master"])
             self.log:info("flight master locations reloaded")
         else
-            self.log:info("usage: /carb travel add")
+            self.log:info("usage: /carb debug travel add")
         end
     end, "travel commands")
 end

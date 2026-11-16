@@ -94,7 +94,7 @@ end
 -- Slash command: /cb whoami dumps the live profile snapshot.
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("whoami", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("whoami", function()
         local log = Carbonite.Core.Logger:Get("PlayerCharacter")
         local localized, token = PlayerCharacter:GetClass()
         log:info("name    : %s", PlayerCharacter:GetName())

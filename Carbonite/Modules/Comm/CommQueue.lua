@@ -103,7 +103,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("comq", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("comq", function()
         local log = Carbonite.Core.Logger:Get("CommQueue")
         local snap = CommQueue:Snapshot()
         log:info("Chan=%d Guild=%d Friend=%d Zone=%d Pals=%d ChanQ=%d rate=%.2f",

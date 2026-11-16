@@ -809,7 +809,7 @@ if Carbonite and Carbonite.Core and Carbonite.Core.EventBus then
             log:info("trace restored from SavedVariables (%s)",
                 Nx.Quest.TrackQuiet and "quiet" or "chat")
         end
-        Carbonite.Core.SlashCommands:Register("qtrack", function(rest)
+        Carbonite.Core.SlashCommands:RegisterDebug("qtrack", function(rest)
             local cmd = tostring(rest or ""):lower():match("^%s*(%S*)")
 
             local function persist()
@@ -910,10 +910,10 @@ if Carbonite and Carbonite.Core and Carbonite.Core.EventBus then
                     _G.NXQuest and _G.NXQuest.TrackLog and #_G.NXQuest.TrackLog or 0)
                 return
             else
-                log:info("usage: /cb qtrack [on|off|state|path|wipe]")
+                log:info("usage: /carb debug qtrack [on|off|state|path|wipe]")
                 return
             end
             log:info("trace %s", Nx.Quest.TrackDebug and "ON" or "OFF")
-        end, "trace quest tracking decisions (on|off|state|wipe)")
+        end, "[on|off|state|wipe] - trace quest tracking decisions")
     end)
 end

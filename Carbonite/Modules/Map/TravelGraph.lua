@@ -67,7 +67,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("fly", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("fly", function()
         local log = Carbonite.Core.Logger:Get("TravelGraph")
         local mm = TravelGraph:HasFlyingMount()
         log:info("riding skill: %d", TravelGraph:GetRidingSkill())

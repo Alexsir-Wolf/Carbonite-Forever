@@ -70,7 +70,7 @@ end
 -- Slash command: /cb mount tells the user about their mount status.
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("mount", function()
+    Carbonite.Core.SlashCommands:RegisterDebug("mount", function()
         local log = Carbonite.Core.Logger:Get("MountHelper")
         log:info("riding skill : %d", MountHelper:GetRidingSkill())
         log:info("flyable area : %s", tostring(MountHelper:IsFlyableArea()))

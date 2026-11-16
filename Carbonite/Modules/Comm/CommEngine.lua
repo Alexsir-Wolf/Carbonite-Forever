@@ -2148,7 +2148,7 @@ end
 if Carbonite and Carbonite.Core and Carbonite.Core.EventBus then
     Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
         if not Carbonite.Core.SlashCommands then return end
-        Carbonite.Core.SlashCommands:Register("comself", function()
+        Carbonite.Core.SlashCommands:RegisterDebug("comself", function()
             Nx.Com:DumpSelfDiag()
         end, "print own identity and every remote player entry (self-dot diagnostics)")
     end)

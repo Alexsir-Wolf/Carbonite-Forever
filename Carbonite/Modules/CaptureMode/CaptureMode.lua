@@ -45,7 +45,7 @@ end
 
 Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
     if not Carbonite.Core.SlashCommands then return end
-    Carbonite.Core.SlashCommands:Register("capture", function(rest)
+    Carbonite.Core.SlashCommands:RegisterDebug("capture", function(rest)
         rest = (rest or ""):lower()
         if rest == "on" then CaptureMode:SetEnabled(true)
         elseif rest == "off" then CaptureMode:SetEnabled(false)
@@ -56,5 +56,5 @@ Carbonite.Core.EventBus:Subscribe("CARBONITE_ENABLE", function()
                 CaptureMode:IsEnabled() and "on" or "off",
                 CaptureMode:IsSharing() and "on" or "off")
         end
-    end, "developer capture-mode toggle (/cb capture [on|off|items])")
+    end, "[on|off|items] - developer capture mode")
 end)
