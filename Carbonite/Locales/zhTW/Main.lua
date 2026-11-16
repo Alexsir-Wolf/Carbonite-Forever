@@ -157,9 +157,6 @@ L["CLICK (.+):"] = true
 L["Key %s %s #%s %s"] = "按鍵 %s %s #%s %s"
 L["shift left/right click to change size"] = "Shift-左鍵/右鍵點擊以變更大小"
 L["Reset old tool bar data"] = "重設舊的工具列資料"
-L["|cffffff00%dg"] = "|cffffff00%dg"
-L["%s |cffbfbfbf%ds"] = "%s |cffbfbfbf%ds"
-L["%s |cff7f7f00%dc"] = "%s |cff7f7f00%dc"
 
 -- NxTravel.lua
 L["Connection: %s to %s"] = "連接：%s 到 %s"

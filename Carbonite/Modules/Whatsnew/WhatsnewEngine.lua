@@ -206,7 +206,7 @@ function Nx.Whatsnew:Update()
     table.sort(keys, function(a, b) return a > b end)
     for _, ts in ipairs(keys) do
         list:ItemAdd(cnt)
-        list:ItemSet(2, date("%m/%d/%y", ts))
+        list:ItemSet(2, date(L["%m/%d/%y"], ts))
         if cnt == self.SelectedLine then
             display = entries[ts]
         end
