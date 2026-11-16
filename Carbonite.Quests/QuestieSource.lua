@@ -36,8 +36,8 @@
 --   Nx.Quest:GetXP(qId)  that XP for the player: the client's for a logged quest, else the QuestXP table, or nil
 --   Nx.Quest:XPText(qId) the XP as " 1.650 XP" for lists and tooltips, or ""
 --   Nx.Quest:MeetsQuestieRequirements(qId)  false when QuestieDB says the character cannot
---                        take it: a profession below the skill it asks, or a quest that
---                        excludes it already done or in the log
+--                        take it: a profession below the skill it asks, reputation outside
+--                        the range it asks, or a quest that excludes it done or in the log
 
 local Nx = _G.Nx
 if not Nx or not Nx.Quest then return end
@@ -633,7 +633,7 @@ end
 -- Requirements Carbonite's data lacks (#80)
 --------------------------------------------------------------------------------------------
 
-local requirements = {}     -- qId -> { skill = { skillLineId, value }, exclusive = { qId... } } or false
+local requirements = {}     -- qId -> { skill, exclusive, minRep, maxRep } or false
 
 local function Requirements(qId)
     local cached = requirements[qId]
@@ -642,7 +642,7 @@ local function Requirements(qId)
     local lib = _G.LibQuestieDB
     local getAll = type(lib) == "table" and type(lib.Quest) == "table" and lib.Quest.GetAll
     local ok, v = false, nil
-    if type(getAll) == "function" then ok, v = pcall(getAll, qId, { "requiredSkill", "exclusiveTo" }) end
+    if type(getAll) == "function" then ok, v = pcall(getAll, qId, { "requiredSkill", "exclusiveTo", "requiredMinRep", "requiredMaxRep" }) end
     local req = false
     if ok and type(v) == "table" then
         local skill, exclusive = v[1], v[2]
@@ -653,9 +653,24 @@ local function Requirements(qId)
             req = req or {}
             req.exclusive = exclusive
         end
+        for key, n in pairs({ minRep = 3, maxRep = 4 }) do
+            local r = v[n]
+            if type(r) == "table" and type(r[1]) == "number" and type(r[2]) == "number" then
+                req = req or {}
+                req[key] = r
+            end
+        end
     end
     requirements[qId] = req
     return req
+end
+
+-- Reputation with a faction, as QuestieDB counts it (raw points), or nil.
+local function Reputation(factionId)
+    local get = _G.GetFactionInfoByID
+    if type(get) ~= "function" then return nil end
+    local _, _, _, _, _, value = get(factionId)
+    return type(value) == "number" and value or nil
 end
 
 local function Done(qId)
@@ -671,6 +686,14 @@ function Nx.Quest:MeetsQuestieRequirements(qId)
         local api = _G.Carbonite and _G.Carbonite.Compat and _G.Carbonite.Compat.Api
         local rank = api and api.Skill and api.Skill:GetRank(req.skill[1]) or 0
         if rank < (req.skill[2] or 1) then return false end
+    end
+    if req.minRep then
+        local value = Reputation(req.minRep[1])
+        if value and value < req.minRep[2] then return false end
+    end
+    if req.maxRep then
+        local value = Reputation(req.maxRep[1])
+        if value and value >= req.maxRep[2] then return false end
     end
     for _, other in ipairs(req.exclusive or {}) do
         if Done(other) or (self.IdToCurQ and self.IdToCurQ[other]) then return false end
