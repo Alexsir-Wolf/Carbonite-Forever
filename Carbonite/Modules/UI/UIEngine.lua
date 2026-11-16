@@ -1204,319 +1204,6 @@ function Nx.Font:Update()
 end
 
 -------------------------------------------------------------------------------
--- SKIN SYSTEM
--- Manages visual themes for windows and UI elements
--------------------------------------------------------------------------------
-
----
--- Initialize skin system with predefined themes
---
-function Nx.Skin:Init()
-
-    Nx.Skins = {
-        ["Blackout"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"] = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Addons\\Carbonite\\Gfx\\Skin\\EdgeSquare",
-                ["tile"] = true,
-                ["tileSize"] = 8,
-                ["edgeSize"] = 8,
-                ["insets"] = { ["left"] = 0, ["right"] = 0, ["top"] = 0, ["bottom"] = 0 }
-            },
-            ["BdCol"] = "0|0|0|1",
-            ["BgCol"] = "0|0|0|1",
-        },
-        ["Blackout Blues"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"] = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Tooltips\\UI-Tooltip-Border",
-                ["tile"] = true,
-                ["tileSize"] = 9,
-                ["edgeSize"] = 9,
-                ["insets"] = { ["left"] = 1, ["right"] = 1, ["top"] = 1, ["bottom"] = 1 }
-            },
-            ["BdCol"] = ".8|.8|1|1",
-            ["BgCol"] = "0|0|0|1",
-        },
-        ["Dialog Blue"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"] = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\DialogFrame\\UI-DialogBox-Border",
-                ["tile"] = true,
-                ["tileSize"] = 16,
-                ["edgeSize"] = 16,
-                ["insets"] = { ["left"] = 2, ["right"] = 2, ["top"] = 2, ["bottom"] = 2 }
-            },
-            ["BdCol"] = ".8|.8|1|1",
-            ["BgCol"] = ".125|.125|.125|.88",
-        },
-        ["Dialog Gold"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"] = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
-                ["tile"] = true,
-                ["tileSize"] = 16,
-                ["edgeSize"] = 16,
-                ["insets"] = { ["left"] = 2, ["right"] = 2, ["top"] = 2, ["bottom"] = 2 }
-            },
-            ["BdCol"] = "1|1|1|1",
-            ["BgCol"] = ".15|.15|0|.88",            -- { .15, .15, 0, .88 },
-        },
-        ["Simple Blue"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"] = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Addons\\Carbonite\\Gfx\\Skin\\EdgeSquare",
---                ["edgeFile"] = "Interface\\PVPFrame\\UI-Character-PVP-Highlight",
-                ["tile"] = true,
-                ["tileSize"] = 8,
-                ["edgeSize"] = 8,
-                ["insets"] = { ["left"] = 0, ["right"] = 0, ["top"] = 0, ["bottom"] = 0 }
-            },
-            ["BdCol"] = "0.7|0.7|1|0.8",
-            ["BgCol"] = ".125|.125|.125|.88",        -- { .125, .125, .125, .88 },
-        },
-        ["Stone"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"] = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Glues\\Common\\TextPanel-Border",
---                ["tile"] = true,
-                ["tileSize"] = 256,
-                ["edgeSize"] = 16,
-                ["insets"] = { ["left"] = 3, ["right"] = 2, ["top"] = 2, ["bottom"] = 2 }
-            },
-            ["BdCol"] = "1|1|1|1",
-            ["BgCol"] = "0.06|0.06|0.06|.9",
-        },
-        ["Tool Blue"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"] = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Tooltips\\UI-Tooltip-Border",
---                ["edgeFile"] = "Interface\\Minimap\\TooltipBackdrop",
-                ["tile"] = true,
-                ["tileSize"] = 9,
-                ["edgeSize"] = 9,
-                ["insets"] = { ["left"] = 1, ["right"] = 1, ["top"] = 1, ["bottom"] = 1 }
-            },
-            ["BdCol"] = ".8|1|1|.8",
-            ["BgCol"] = ".125|.125|.125|.88",        -- { .125, .125, .125, .88 },
-        },
-        -- Modern themes. The chrome uses Blizzard's ChatBubble border (a
-        -- thin, clean 1-pixel-feel edge) which holds up at high UI scales
-        -- where the legacy 8x8 EdgeSquare looks fuzzy. BdColResolve is a
-        -- function-valued override read by Skin:Update() so themes can
-        -- pick up live game state (class, faction).
-        ["Modern Dark"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"]   = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Tooltips\\UI-Tooltip-Border",
-                ["tile"]     = true,
-                ["tileSize"] = 9,
-                ["edgeSize"] = 9,
-                ["insets"]   = { ["left"] = 1, ["right"] = 1, ["top"] = 1, ["bottom"] = 1 }
-            },
-            ["BdCol"] = "0.30|0.36|0.46|0.95",
-            ["BgCol"] = "0.06|0.07|0.10|0.92",
-        },
-        ["Modern Light"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"]   = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Tooltips\\UI-Tooltip-Border",
-                ["tile"]     = true,
-                ["tileSize"] = 9,
-                ["edgeSize"] = 9,
-                ["insets"]   = { ["left"] = 1, ["right"] = 1, ["top"] = 1, ["bottom"] = 1 }
-            },
-            ["BdCol"] = "0.50|0.55|0.65|0.95",
-            ["BgCol"] = "0.88|0.88|0.92|0.92",
-        },
-        ["Glass"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"]   = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Tooltips\\UI-Tooltip-Border",
-                ["tile"]     = true,
-                ["tileSize"] = 9,
-                ["edgeSize"] = 9,
-                ["insets"]   = { ["left"] = 1, ["right"] = 1, ["top"] = 1, ["bottom"] = 1 }
-            },
-            ["BdCol"] = "1|1|1|0.40",
-            ["BgCol"] = "0|0|0|0.40",
-        },
-        ["Class Color"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"]   = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Tooltips\\UI-Tooltip-Border",
-                ["tile"]     = true,
-                ["tileSize"] = 9,
-                ["edgeSize"] = 9,
-                ["insets"]   = { ["left"] = 1, ["right"] = 1, ["top"] = 1, ["bottom"] = 1 }
-            },
-            ["BdCol"] = "0.40|0.55|0.95|0.85",  -- fallback
-            ["BgCol"] = "0.06|0.07|0.10|0.92",
-            ["BdColResolve"] = function()
-                local _, class = UnitClass("player")
-                local cc = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)
-                local c = class and cc and cc[class]
-                if c then
-                    return string.format("%f|%f|%f|0.90", c.r, c.g, c.b)
-                end
-            end,
-        },
-        ["Faction"] = {
-            ["Folder"] = "",
-            ["WinBrH"] = "WinBrH",
-            ["WinBrV"] = "WinBrV",
-            ["TabOff"] = "TabOff",
-            ["TabOn"] = "TabOn",
-            ["Backdrop"] = {
-                ["bgFile"]   = "Interface\\Buttons\\White8x8",
-                ["edgeFile"] = "Interface\\Tooltips\\UI-Tooltip-Border",
-                ["tile"]     = true,
-                ["tileSize"] = 9,
-                ["edgeSize"] = 9,
-                ["insets"]   = { ["left"] = 1, ["right"] = 1, ["top"] = 1, ["bottom"] = 1 }
-            },
-            ["BdCol"] = "0.40|0.55|0.95|0.85",  -- fallback (Alliance-ish)
-            ["BgCol"] = "0.06|0.07|0.10|0.92",
-            ["BdColResolve"] = function()
-                local f = UnitFactionGroup("player")
-                if f == "Alliance" then return "0.18|0.45|0.95|0.90" end
-                if f == "Horde"    then return "0.85|0.20|0.20|0.90" end
-            end,
-        },
-    }
-    self:Set (Nx.db.profile.Skin["Name"], true)
-end
-
-function Nx.Skin:Set (skinName, init)
-
-    self.Data = Nx.Skins[skinName or ""]
-
-    if not self.Data then
-        -- New default for fresh profiles. Existing users keep whatever
-        -- they had set; only the empty/missing-name case picks this up.
-        skinName = "Modern Dark"
-        self.Data = Nx.Skins[skinName]
-    end
-
-    Nx.db.profile.Skin.Name = skinName
-
-    local data = self.Data
-
-    self.Path = "Interface\\Addons\\Carbonite\\Gfx\\Skin\\" .. data["Folder"]
-
-    if not init then
-        Nx.db.profile.Skin.WinBdColor = data["BdCol"]
-        Nx.db.profile.Skin.WinFixedBgColor = ".5|.5|.5|.5"
-        Nx.db.profile.Skin.WinSizedBgColor = data["BgCol"]
-    end
-
-    self:Update()
-end
-
-function Nx.Skin:Update()
-    -- Themes can opt into a live-state border color (e.g. class color,
-    -- faction color) by exposing a BdColResolve function. When present
-    -- it overrides the saved WinBdColor each Update; the saved value
-    -- still acts as the fallback when the resolver returns nil.
-    local data = self.Data
-    local resolved
-    if data and type(data["BdColResolve"]) == "function" then
-        local ok, val = pcall(data.BdColResolve)
-        if ok then resolved = val end
-    end
-    local bdColStr = resolved or Nx.db.profile.Skin.WinBdColor
-
-    self.BdCol = { Nx.Util_str2rgba (bdColStr) }
-    self.BgCol = { Nx.Util_str2rgba (Nx.db.profile.Skin.WinSizedBgColor) }
-    self.FixedBgCol = { Nx.Util_str2rgba (Nx.db.profile.Skin.WinFixedBgColor) }
-
-    Nx.Window:ResetBackdrops()
-    Nx.Menu:ResetSkins()
-end
-
-function Nx.Skin:GetBackdrop()
-    return self.Data["Backdrop"]
-end
-
--- Returns the Blizzard NineSlice layout name this theme wants applied,
--- or nil for legacy-backdrop themes. Used by Nx.Window:ResetBackdrops
--- to switch between SetBackdrop and NineSliceUtil.ApplyLayoutByName.
-function Nx.Skin:GetNineSliceLayout()
-    return self.Data and self.Data["NineSlice"]
-end
-
-function Nx.Skin:GetBorderCol()
-    return self.BdCol
-end
-
-function Nx.Skin:GetBGCol()
-    return self.BgCol
-end
-
-function Nx.Skin:GetFixedSizeBGCol()
-    return self.FixedBgCol
-end
-
-function Nx.Skin:GetTex (txName)
-    return self.Path .. txName
-end
-
--------------------------------------------------------------------------------
 -- WINDOW SYSTEM
 -- Creates and manages movable, resizable windows with borders and titles
 -------------------------------------------------------------------------------
@@ -1889,7 +1576,18 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
 
         svdata["Hide"] = hide
         svdata["FI"] = self.CFadeIn or 1
-        svdata["FO"] = self.CFadeOut or .75
+        svdata["FO"] = self.CFadeOut or 1
+        svdata["FOV"] = 2
+    end
+
+    -- Windows used to go to 75% opacity with the mouse away, which let the
+    -- scenery show through the text. Opaque is the default now; a window
+    -- still at the old default moves to it once, a chosen value stays.
+    if svdata["FOV"] ~= 2 then
+        if svdata["FO"] == .75 then
+            svdata["FO"] = 1
+        end
+        svdata["FOV"] = 2
     end
 
     -- Debug
@@ -4362,7 +4060,7 @@ function Nx.Button:Init()
     f:Hide()
 
     local t = f:CreateTexture()
-    t:SetColorTexture (Nx.Util_str2rgba ("0.06|0.06|0.250|1"))
+    Carbonite.UI.Skin:Paint (t, "hover")
     t:SetAllPoints (f)
     t:SetBlendMode ("ADD")
     f.texture = t
@@ -5031,14 +4729,9 @@ function Nx.Button:Update()
             of:SetHeight (f:GetHeight() + 2)
         end
 
-        if self.Pressed then
-            of.texture:SetColorTexture (Nx.Util_str2rgba (".188|.188|.5|1"))
-        elseif self.IsListRow then
-            -- Subtler tint for row-wide highlight so it doesn't shout.
-            of.texture:SetColorTexture (Nx.Util_str2rgba ("0.5|0.5|0.7|0.18"))
-        else
-            of.texture:SetColorTexture (Nx.Util_str2rgba ("0.06|0.06|.250|1"))
-        end
+        -- Row-wide highlight uses a subtler tint so it doesn't shout.
+        local token = self.Pressed and "pressed" or self.IsListRow and "rowHover" or "hover"
+        of.texture:SetColorTexture (Carbonite.UI.Skin:GetToken (token))
 
 --        local lev = f:GetFrameLevel()
 --        of:SetFrameLevel (lev + 1)        -- Causing glitch when button pressed
@@ -6325,7 +6018,7 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
 
     frm.texture = frm:CreateTexture()
     frm.texture:SetAllPoints (frm)
-    frm.texture:SetColorTexture (0, 0, 0, .3)
+    Carbonite.UI.Skin:Paint (frm.texture, "listBg")
 
     frm:SetPoint ("TOPLEFT", xpos, ypos)
     frm:Show()
@@ -7839,8 +7532,6 @@ end
 
 function Nx.TabBar:Create (name, parentFrm, width, height)
 
-    local c2rgba = Nx.Util_str2rgba
-
     parentFrm = parentFrm or UIParent
 
     -- New
@@ -7873,7 +7564,7 @@ function Nx.TabBar:Create (name, parentFrm, width, height)
 --    f:SetScript ("OnUpdate", self.OnUpdate)
 
     local t = f:CreateTexture()
-    t:SetColorTexture (c2rgba ("0|0|0|.5"))
+    Carbonite.UI.Skin:Paint (t, "tabBarBg")
     t:SetAllPoints (f)
     f.texture = t
 
@@ -7892,7 +7583,6 @@ end
 
 function Nx.TabBar:CreateBorders()
 
-    local c2rgba = Nx.Util_str2rgba
 
     local f = CreateFrame ("Frame", nil, self.Frm, "BackdropTemplate")
 
@@ -7905,7 +7595,7 @@ function Nx.TabBar:CreateBorders()
     f:SetHeight (4)
 
     local t = f:CreateTexture()
-    t:SetColorTexture (c2rgba (".313|.313|.313|1"))
+    Carbonite.UI.Skin:Paint (t, "separator")
     t:SetAllPoints (f)
     f.texture = t
 
@@ -8505,7 +8195,7 @@ function Nx.Slider:Create(parentFrm, typ, size, tlOff)
 
     frm.texture = frm:CreateTexture()
     frm.texture:SetAllPoints (frm)
-    frm.texture:SetColorTexture (.3, .3, .4, .6)
+    Carbonite.UI.Skin:Paint (frm.texture, "scrollTrack")
 
     frm:SetPoint ("TOPRIGHT", parentFrm, "TOPRIGHT", 0, -tlOff)
     frm:SetPoint ("BOTTOMRIGHT", parentFrm, "BOTTOMRIGHT", 0, 0)
@@ -8522,7 +8212,7 @@ function Nx.Slider:Create(parentFrm, typ, size, tlOff)
 
     tfrm.texture = tfrm:CreateTexture()
     tfrm.texture:SetAllPoints (tfrm)
-    tfrm.texture:SetColorTexture (.3, .3, .7, .9)
+    Carbonite.UI.Skin:Paint (tfrm.texture, "scrollThumb")
 
     tfrm:SetPoint ("TOPLEFT", 1, 1)
     tfrm:Show()

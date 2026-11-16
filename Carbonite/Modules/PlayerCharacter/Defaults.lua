@@ -359,9 +359,6 @@ Nx.Defaults = {
         },
         Skin = {
           Name = "",
-          WinBdColor = ".8|.8|1|1",
-          WinFixedBgColor = ".5|.5|.5|.5",
-          WinSizedBgColor = ".121|.121|.121|.88",
         },
         Map = {
             ButLAlt = "None",

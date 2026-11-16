@@ -69,12 +69,22 @@ Skin.themes = {
     ["Modern Dark"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.30|0.36|0.46|0.95",
-        bgColor     = "0.06|0.07|0.10|0.92",
+        bgColor     = "0.06|0.07|0.10|1",
     },
     ["Modern Light"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.50|0.55|0.65|0.95",
-        bgColor     = "0.88|0.88|0.92|0.92",
+        bgColor     = "0.88|0.88|0.92|1",
+        tokens = {
+            hover       = "0.18|0.16|0.04|1",
+            pressed     = "0.55|0.62|0.80|1",
+            rowHover    = "0.20|0.30|0.60|0.18",
+            listBg      = "1|1|1|0.25",
+            tabBarBg    = "0.80|0.80|0.85|0.6",
+            separator   = "0.60|0.60|0.65|1",
+            scrollTrack = "0.70|0.72|0.80|0.6",
+            scrollThumb = "0.35|0.42|0.65|0.9",
+        },
     },
     ["Glass"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
@@ -84,7 +94,7 @@ Skin.themes = {
     ["Class Color"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.40|0.55|0.95|0.85",
-        bgColor     = "0.06|0.07|0.10|0.92",
+        bgColor     = "0.06|0.07|0.10|1",
         resolveBorder = function()
             local _, class = UnitClass("player")
             local cc = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)
@@ -95,7 +105,7 @@ Skin.themes = {
     ["Faction"] = {
         backdrop = backdrop("Interface\\Tooltips\\UI-Tooltip-Border"),
         borderColor = "0.40|0.55|0.95|0.85",
-        bgColor     = "0.06|0.07|0.10|0.92",
+        bgColor     = "0.06|0.07|0.10|1",
         resolveBorder = function()
             local f = UnitFactionGroup("player")
             if f == "Alliance" then return "0.18|0.45|0.95|0.90" end
@@ -105,6 +115,27 @@ Skin.themes = {
 }
 
 Skin.activeName = "Modern Dark"
+
+-- Colors of the parts every window shares. A theme overrides the ones it
+-- needs in its own `tokens`; the rest come from here (the dark look).
+--   hover       mouse-over glow of a button (added on top, ADD blend)
+--   pressed     button held down
+--   rowHover    mouse-over band of a list row
+--   listBg      list body
+--   tabBarBg    tab bar strip
+--   separator   tab bar border lines
+--   scrollTrack scroll bar track
+--   scrollThumb scroll bar thumb
+Skin.tokens = {
+    hover       = "0.06|0.06|0.25|1",
+    pressed     = "0.188|0.188|0.5|1",
+    rowHover    = "0.5|0.5|0.7|0.18",
+    listBg      = "0|0|0|0.3",
+    tabBarBg    = "0|0|0|0.5",
+    separator   = "0.313|0.313|0.313|1",
+    scrollTrack = "0.3|0.3|0.4|0.6",
+    scrollThumb = "0.3|0.3|0.7|0.9",
+}
 
 -- Parse a "r|g|b|a" string the legacy save format uses.
 local function parseColor(s)
@@ -121,21 +152,45 @@ function Skin:GetBackdrop()
     return self:GetActive().backdrop
 end
 
+-- The color the player picked in the options, saved in the profile. Picking a
+-- theme writes its colors there (Skin:Set), so this is the theme's color
+-- until the player changes it.
+local function saved(key)
+    local Nx = _G.Nx
+    local skin = Nx and Nx.db and Nx.db.profile and Nx.db.profile.Skin
+    return skin and skin[key]
+end
+
 function Skin:GetBorderColor()
     local t = self:GetActive()
     if type(t.resolveBorder) == "function" then
         local ok, val = pcall(t.resolveBorder)
         if ok and val then return { parseColor(val) } end
     end
-    return { parseColor(t.borderColor) }
+    return { parseColor(saved("WinBdColor") or t.borderColor) }
 end
 
 function Skin:GetBackgroundColor()
-    return { parseColor(self:GetActive().bgColor) }
+    return { parseColor(saved("WinSizedBgColor") or self:GetActive().bgColor) }
 end
 
 function Skin:GetFixedBackgroundColor()
-    return { parseColor(".5|.5|.5|.5") }
+    return { parseColor(saved("WinFixedBgColor") or ".5|.5|.5|.5") }
+end
+
+--- r, g, b, a of a shared color (Skin.tokens) in the active theme.
+function Skin:GetToken(name)
+    local t = self:GetActive().tokens
+    return parseColor(t and t[name] or self.tokens[name])
+end
+
+-- Textures painted with a token, repainted when the theme changes.
+local painted = setmetatable({}, { __mode = "k" })
+
+--- Color a texture with a token and keep it in step with the theme.
+function Skin:Paint(texture, name)
+    painted[texture] = name
+    texture:SetColorTexture(self:GetToken(name))
 end
 
 -- Apply current theme's backdrop to a frame in one call.
@@ -148,22 +203,34 @@ function Skin:Apply(frame)
     if frame.SetBackdropColor then frame:SetBackdropColor(br, bg, bb, ba) end
 end
 
+-- Translucent backgrounds the modern themes had before they turned opaque.
+-- Picking a theme used to copy its colors into the profile, so a profile
+-- still holding one of these never chose it: it goes back to the theme's.
+local OLD_BACKGROUNDS = {
+    ["0.06|0.07|0.10|0.92"] = true,
+    ["0.88|0.88|0.92|0.92"] = true,
+}
+
 function Skin:Set(name, init)
     if not self.themes[name] then name = "Modern Dark" end
     self.activeName = name
-    if _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.Skin then
-        _G.Nx.db.profile.Skin.Name = name
+    local skin = _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.Skin
+    if skin then
+        skin.Name = name
         if not init then
-            local t = self.themes[name]
-            _G.Nx.db.profile.Skin.WinBdColor      = t.borderColor
-            _G.Nx.db.profile.Skin.WinFixedBgColor = ".5|.5|.5|.5"
-            _G.Nx.db.profile.Skin.WinSizedBgColor = t.bgColor
+            -- A new theme brings its own colors; the pickers start from them.
+            skin.WinBdColor, skin.WinFixedBgColor, skin.WinSizedBgColor = nil, nil, nil
+        elseif OLD_BACKGROUNDS[skin.WinSizedBgColor] then
+            skin.WinSizedBgColor = nil
         end
     end
     self:Update()
 end
 
 function Skin:Update()
+    for texture, name in pairs(painted) do
+        texture:SetColorTexture(self:GetToken(name))
+    end
     Carbonite.Core.EventBus:Fire("SKIN_UPDATED", self.activeName)
     -- Push to legacy Window/Menu resets so existing widgets restyle.
     if _G.Nx and _G.Nx.Window and _G.Nx.Window.ResetBackdrops then _G.Nx.Window:ResetBackdrops() end
