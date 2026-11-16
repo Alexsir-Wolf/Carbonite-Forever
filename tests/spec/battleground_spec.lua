@@ -26,3 +26,14 @@ describe("Battleground:Refresh", function()
         expect(env.Nx.InBG).toBe(true)
     end)
 end)
+
+describe("Battleground:IsMicroDungeon sem mapa (#1)", function()
+    it("retorna false para mapID nulo sem chamar C_Map.GetMapInfo", function()
+        local _, BG = load({ C_Map = { GetMapInfo = function(id)
+            if id == nil then error("Usage: local info = C_Map.GetMapInfo(uiMapID)") end
+            return { mapType = 3 }
+        end } })
+        expect(function() return BG:IsMicroDungeon(nil) end).toNotThrow()
+        expect(BG:IsMicroDungeon(nil)).toBe(false)
+    end)
+end)
