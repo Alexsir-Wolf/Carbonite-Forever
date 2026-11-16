@@ -15833,6 +15833,28 @@ function Nx.NXMapKeyTargetSkip()
     end
 end
 
+-- Key bindings the minimap button's menu had no way to reach (#46).
+function Nx.NXMapKeyClearTargets()
+    Nx.Map:GetMap (1):ClearTargets()
+end
+
+function Nx.NXKeyOpenOptions()
+    if Carbonite.Opts and Carbonite.Opts.Open then
+        Carbonite.Opts:Open()
+    end
+end
+
+function Nx.NXKeyToggleHUD()
+    Nx.db.profile.Track.Hide = not Nx.db.profile.Track.Hide
+    Nx.HUD:UpdateOptions()
+end
+
+function Nx.NXKeyToggleInfo()
+    if Nx.Info and Nx.Info.ToggleShow then
+        Nx.Info:ToggleShow()
+    end
+end
+
 -------------------------------------------------------------------------------
 -- MINIMAP BUTTON DOCK
 -- Window for collecting and organizing minimap buttons from other addons

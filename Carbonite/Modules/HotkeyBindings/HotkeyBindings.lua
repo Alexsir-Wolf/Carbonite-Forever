@@ -30,6 +30,10 @@ local BUILTIN = {
     NxMAPTOGMINE       = "Toggle mining gather node overlay",
     NxTOGGLEGUIDE      = "Toggle the Carbonite guide pane",
     NxMAPSKIPTARGET    = "Skip to the next waypoint target",
+    NxMAPCLEARTARGET   = "Clear every waypoint target",
+    NxOPENOPTIONS      = "Open the Carbonite options",
+    NxTOGGLEHUD        = "Show or hide the tracking HUD",
+    NxTOGGLEINFO       = "Show or hide the Info windows",
 }
 
 local extras = {}    -- action -> { name, description, handler }
