@@ -520,6 +520,10 @@ for _, folder in ipairs(Nx.GuideInfo) do
         if Nx.MOPMaps then
             tinsert(folder, { T = L["Battle Pet Trainer"], Tx = "INV_Pet_BattlePetTraining" })
         end
+        -- Spirit Healer: where the flavor has the data (Data/camelot/Guides/SpiritHealer.lua)
+        if Nx.GuideData and Nx.GuideData[L["Spirit Healer"]] then
+            tinsert(folder, { T = L["Spirit Healer"], Tx = "Spell_Holy_Resurrection" })
+        end
     end
 
     ---------------------------------------------------------------------------
