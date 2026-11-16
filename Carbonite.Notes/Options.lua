@@ -248,6 +248,19 @@ function Nx.Notes:GetOptionsConfig()
                     end,
                     disabled = function() return not Nx.Notes:IsGatherLiteAvailable() end,
                 },
+                gatherliteskill = {
+                    order = 15, type = "toggle", width = "full",
+                    name = L["Color gathering nodes by skill-up chance"],
+                    desc = L["Red: skill too low. Orange, yellow, green and gray: the chance of a skill point, as in the game"],
+                    get = function() return Nx.fdb.profile.Notes.GatherLiteSkillColor end,
+                    set = function()
+                        Nx.fdb.profile.Notes.GatherLiteSkillColor = not Nx.fdb.profile.Notes.GatherLiteSkillColor
+                        Nx.Map:GetMap(1):ClearIconType("!GLT")
+                        Nx.Notes:BustIntegrationCache("GatherLite")
+                        Nx.Notes:GatherLite(Nx.Map:GetCurrentMapAreaID())
+                    end,
+                    disabled = function() return not Nx.Notes:IsGatherLiteAvailable() end,
+                },
             },
         }
     end

@@ -33,6 +33,7 @@ local defaults = {
             RXPArrow        = true,    -- Route RXPGuides arrow through Carbonite HUD
             GatherLite      = true,    -- Show GatherLite gathering nodes
             GatherLiteSize  = 14,
+            GatherLiteSkillColor = true,   -- Tint GatherLite nodes by the chance of a skill point
             ZygorArrow      = true,    -- Route ZygorGuidesViewer arrow through Carbonite HUD
             TomTomArrow     = true,    -- Point Carbonite HUD at the real TomTom arrow target, hide TomTom arrow
         },
