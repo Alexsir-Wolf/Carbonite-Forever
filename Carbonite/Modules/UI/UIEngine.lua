@@ -865,7 +865,8 @@ end
 -------------------------------------------------------------------------------
 
 ---
--- Format copper value as gold/silver/copper string
+-- Format copper value as gold/silver/copper string, with the client's own
+-- coin symbols (g/s/c in English, o/p/c in pt-BR)
 -- @param money  Amount in copper
 -- @return       Formatted string like "1g 23s 45c"
 --
@@ -886,19 +887,19 @@ function Nx.Util_GetMoneyStr(money)
     -- Gold
     local g = floor(money / 10000)
     if g > 0 then
-        str = format(L["|cffffff00%dg"], g)
+        str = format("|cffffff00%d%s", g, GOLD_AMOUNT_SYMBOL or "g")
     end
 
     -- Silver
     local s = mod(floor(money / 100), 100)
     if s > 0 then
-        str = format(L["%s |cffbfbfbf%ds"], str, s)
+        str = format("%s |cffbfbfbf%d%s", str, s, SILVER_AMOUNT_SYMBOL or "s")
     end
 
     -- Copper
     local c = mod(money, 100)
     if c > 0 then
-        str = format(L["%s |cff7f7f00%dc"], str, c)
+        str = format("%s |cff7f7f00%d%s", str, c, COPPER_AMOUNT_SYMBOL or "c")
     end
 
     return pre .. strtrim(str)
@@ -933,7 +934,7 @@ function Nx.Util_SecondsToDays(seconds)
     local fhours = math.floor((bit.mod(seconds, 86400)) / 3600)
     local fminutes = math.floor(bit.mod((bit.mod(seconds, 86400)), 3600) / 60)
     local fseconds = math.floor(bit.mod(bit.mod((bit.mod(seconds, 86400)), 3600), 60))
-    return fdays .. " days, " .. fhours .. " hours, " .. fminutes .. " minutes, " .. fseconds .. " seconds"
+    return format(L["%d days, %d hours, %d minutes, %d seconds"], fdays, fhours, fminutes, fseconds)
 end
 
 ---

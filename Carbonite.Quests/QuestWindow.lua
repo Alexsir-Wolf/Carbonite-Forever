@@ -2681,7 +2681,7 @@ function Nx.Quest.List:Update()
 
                 if self.Filters[self.TabSelected] ~= "" then
 
-                    local str = strlower (format ("%2d %s %s%s", lvl, title, date ("%m/%d %H:%M:%S", qTime), dailyName))
+                    local str = strlower (format ("%2d %s %s%s", lvl, title, date (L["%m/%d %H:%M:%S"], qTime), dailyName))
                     local filtStr = strlower (self.Filters[self.TabSelected])
 
                     show = strfind (str, filtStr, 1, true)
@@ -2706,7 +2706,7 @@ function Nx.Quest.List:Update()
                     local color = GetCachedDifficultyColorStr(lvl)
 
                     t.Desc = format ("%s %s%s%s", lvlStr, haveStr, color, title)
-                    t.Col4 = format ("%s %s", date ("|cff9f9fcf%m/%d %H:%M:%S", qTime), dailyName)
+                    t.Col4 = format ("%s %s", "|cff9f9fcf" .. date (L["%m/%d %H:%M:%S"], qTime), dailyName)
                 end
             end
         end

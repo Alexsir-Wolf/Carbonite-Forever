@@ -163,9 +163,6 @@ L["CLICK (.+):"] = true
 L["Key %s %s #%s %s"] = "Tecla %s %s #%s %s"
 L["shift left/right click to change size"] = "shift + clique esquerdo/direito para mudar o tamanho"
 L["Reset old tool bar data"] = "Dados antigos da barra de ferramentas redefinidos"
-L["|cffffff00%dg"] = "|cffffff00%dg"
-L["%s |cffbfbfbf%ds"] = "%s |cffbfbfbf%ds"
-L["%s |cff7f7f00%dc"] = "%s |cff7f7f00%dc"
 
 -- NxTravel.lua
 L["Connection: %s to %s"] = "Conexão: %s para %s"
@@ -291,3 +288,5 @@ L["zone %s not found on continent %s"] = "zona %s não encontrada no continente 
 L["zone %s not found"] = "zona %s não encontrada"
 L["zone coordinate error"] = "erro nas coordenadas da zona"
 L["Routed %s nodes, %d yards in %.1f secs"] = "Rota com %s pontos, %d jardas em %.1f s"
+L["%d days, %d hours, %d minutes, %d seconds"] = "%d dias, %d horas, %d minutos e %d segundos"
+L["%m/%d/%y"] = "%d/%m/%y"

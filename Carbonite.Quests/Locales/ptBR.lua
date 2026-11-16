@@ -437,3 +437,4 @@ L["Spoken Play button turned off for this session: %s"] = "Botão Play do Spoken
 L["QUEST LOADER"] = "CARREGADOR DE MISSÕES"
 L["%d Quests Loaded"] = "%d missões carregadas"
 L["Starting Background Quest Data Loading..."] = "Iniciando o carregamento dos dados de missões em segundo plano..."
+L["%m/%d %H:%M:%S"] = "%d/%m %H:%M:%S"

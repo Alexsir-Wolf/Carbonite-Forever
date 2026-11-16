@@ -151,9 +151,6 @@ L["CLICK (.+):"] = true
 L["Key %s %s #%s %s"] = true
 L["shift left/right click to change size"] = true
 L["Reset old tool bar data"] = true
-L["|cffffff00%dg"] = true
-L["%s |cffbfbfbf%ds"] = true
-L["%s |cff7f7f00%dc"] = true
 
 -- NxTravel.lua
 L["Connection: %s to %s"] = true
@@ -277,3 +274,5 @@ L["zone %s not found on continent %s"] = true
 L["zone %s not found"] = true
 L["zone coordinate error"] = true
 L["Routed %s nodes, %d yards in %.1f secs"] = true
+L["%d days, %d hours, %d minutes, %d seconds"] = true
+L["%m/%d/%y"] = true

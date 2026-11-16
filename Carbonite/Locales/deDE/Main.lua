@@ -165,9 +165,6 @@ L["CLICK (.+):"] = true
 L["Key %s %s #%s %s"] = "Taste %s %s #%s %s"
 L["shift left/right click to change size"] = "Umschalt Links/Rechts Klick um Grß195\182\195\159e zu \194\164ndern"
 L["Reset old tool bar data"] = "Alte Funktionsleistendaten zur\195\188cksetzen"
-L["|cffffff00%dg"] = "|cffffff00%dg"
-L["%s |cffbfbfbf%ds"] = "%s |cffbfbfbf%ds"
-L["%s |cff7f7f00%dc"] = "%s |cff7f7f00%dk"
 
 -- NxTravel.lua
 L["Connection: %s to %s"] = "Verbindung: %s nach %s"

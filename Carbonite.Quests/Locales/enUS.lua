@@ -436,3 +436,4 @@ L["Spoken Play button turned off for this session: %s"] = true
 L["QUEST LOADER"] = true
 L["%d Quests Loaded"] = true
 L["Starting Background Quest Data Loading..."] = true
+L["%m/%d %H:%M:%S"] = true
