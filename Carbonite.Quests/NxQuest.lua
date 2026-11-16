@@ -253,72 +253,22 @@ function Nx.Quest.GetQuestTagInfoCompat(questID)
 end
 local GetQuestTagInfoCompat = Nx.Quest.GetQuestTagInfoCompat
 
--- IsUnitOnQuest shim for retail (uses C_QuestLog.IsUnitOnQuest)
-if C_QuestLog and C_QuestLog.IsUnitOnQuest then
-    function IsUnitOnQuest(questIndex, unit)
-        -- Retail uses questID, not questIndex, so we need to convert
-        -- Also retail parameter order is (unit, questID), not (questIndex, unit)
+-- Is a party member on the quest at this log index? Modern clients have
+-- C_QuestLog.IsUnitOnQuest(unit, questID); older ones the global IsUnitOnQuest(questIndex,
+-- unit). Kept off the global namespace: other addons probe these names to learn which API
+-- the client has, and the native function must not be replaced (#14).
+function Nx.Quest.IsUnitOnQuestByIndex(questIndex, unit)
+    if C_QuestLog and C_QuestLog.IsUnitOnQuest and C_QuestLog.GetQuestIDForLogIndex then
         local questID = C_QuestLog.GetQuestIDForLogIndex(questIndex)
         if questID then
             return C_QuestLog.IsUnitOnQuest(unit, questID)
         end
         return false
     end
-end
-
--- IsQuestWatched shim for retail (uses C_QuestLog.GetQuestWatchType)
-if C_QuestLog and C_QuestLog.GetQuestWatchType and not IsQuestWatched then
-    function IsQuestWatched(questIndex)
-        -- Retail uses questID, not questIndex
-        local questID = C_QuestLog.GetQuestIDForLogIndex(questIndex)
-        if questID then
-            -- GetQuestWatchType returns nil if not watched, or a watch type if watched
-            return C_QuestLog.GetQuestWatchType(questID) ~= nil
-        end
-        return false
+    if IsUnitOnQuest then
+        return IsUnitOnQuest(questIndex, unit)
     end
-end
-
--- AddQuestWatch shim for retail
-if C_QuestLog and C_QuestLog.AddQuestWatch and not AddQuestWatch then
-    function AddQuestWatch(questIndex)
-        if not questIndex or questIndex <= 0 then return end
-        local questID = C_QuestLog.GetQuestIDForLogIndex(questIndex)
-        if questID then
-            -- Combat-defer: insecure watch mutations run Blizzard's
-            -- QuestDataProvider refresh in our taint and trip the
-            -- combat-protected SetPassThroughButtons (same family as
-            -- the C_SuperTrack sites). Synchronous out of combat.
-            Nx.SuperTrackSafe(function()
-                if C_QuestLog.GetQuestWatchType
-                   and C_QuestLog.GetQuestWatchType(questID) ~= nil then
-                    return
-                end
-                C_QuestLog.AddQuestWatch(questID)
-            end)
-        end
-    end
-end
-
--- RemoveQuestWatch shim for retail
-if C_QuestLog and C_QuestLog.RemoveQuestWatch and not RemoveQuestWatch then
-    function RemoveQuestWatch(questIndex)
-        -- nil / 0 = "not a Blizzard log entry" (e.g. Carbonite's
-        -- Goto cur entries have QI = 0). The native API errors on
-        -- non-integer args, so bail before the C call.
-        if not questIndex or questIndex <= 0 then return end
-        local questID = C_QuestLog.GetQuestIDForLogIndex(questIndex)
-        if questID then
-            -- Combat-defer (see AddQuestWatch shim above).
-            Nx.SuperTrackSafe(function()
-                if C_QuestLog.GetQuestWatchType
-                   and C_QuestLog.GetQuestWatchType(questID) == nil then
-                    return
-                end
-                C_QuestLog.RemoveQuestWatch(questID)
-            end)
-        end
-    end
+    return false
 end
 
 -------------------------------------------------------------------------------

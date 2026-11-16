@@ -2445,7 +2445,7 @@ function Nx.Quest.List:Update()
 
             if qn > 0 then
                 for n = 1, 4 do
-                    if IsUnitOnQuest (qn, "party"..n) then
+                    if Nx.Quest.IsUnitOnQuestByIndex (qn, "party"..n) then
                         if onQ > 0 then
                             onQStr = onQStr .. "," .. UnitName ("party" .. n)
                         else
