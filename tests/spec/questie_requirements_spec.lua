@@ -10,6 +10,7 @@ local function load(fields, opts)
         Support = { Get = function() return nil end },
         Quest = { GetAll = function(qId) return fields[qId] or {} end },
     }
+    env.GetFactionInfoByID = function(id) return "f", "", 0, 0, 0, (opts.rep or {})[id] or 0 end
     env.C_QuestLog = { IsQuestFlaggedCompleted = function(q) return (opts.done or {})[q] or false end }
     env.Carbonite = { Compat = { Api = { Skill = { GetRank = function(_, line) return (opts.ranks or {})[line] or 0 end } } } }
     env.Nx = wow.namespace({ Quest = wow.namespace({ IdToCurQ = opts.inLog or {} }) })
@@ -31,6 +32,13 @@ describe("requisitos do QuestieDB", function()
         expect(load(fields):MeetsQuestieRequirements(100)).toBe(true)
         expect(load(fields, { done = { [201] = true } }):MeetsQuestieRequirements(100)).toBe(false)
         expect(load(fields, { inLog = { [200] = 1 } }):MeetsQuestieRequirements(100)).toBe(false)
+    end)
+
+    it("reputação fora da faixa pedida", function()
+        local fields = { [100] = { nil, nil, { 59, 3000 } }, [101] = { nil, nil, nil, { 59, 9000 } } }
+        expect(load(fields, { rep = { [59] = 5000 } }):MeetsQuestieRequirements(100)).toBe(true)
+        expect(load(fields, { rep = { [59] = 1000 } }):MeetsQuestieRequirements(100)).toBe(false)
+        expect(load(fields, { rep = { [59] = 9500 } }):MeetsQuestieRequirements(101)).toBe(false)
     end)
 
     it("o filtro de disponíveis do mapa usa os requisitos", function()
