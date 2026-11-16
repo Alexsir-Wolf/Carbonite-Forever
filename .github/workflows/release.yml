@@ -8,7 +8,9 @@ name: Package and release
 on:
   push:
     tags:
-      - '**'
+      # Forever edition releases only (e.g. v12.1.0-00023-forever.1). Upstream tags that
+      # come along with a merge must not publish a release here.
+      - 'v*-forever*'
 
 # a workflow is built up as jobs, and within these jobs are steps
 jobs:
