@@ -442,6 +442,7 @@ Nx.Quest.defaults = {
             MapBlizzardIcons = true,                    -- Blizzard quest atlases on the map (#49)
             MapQuestIconScale = 1,                      -- Quest icon scale on the map
             MapShowWatchAreas = true,                   -- Show watched areas on map
+            MapShowObjectiveAreas = true,               -- Group objective spawns into areas (#65)
             MapWatchAreaAlpha = "1|1|1|.4",             -- Watch area alpha
             MapWatchAreaGfx = "Solid",                  -- Watch area graphic
             MapWatchAreaTrackColor = ".7|.7|.7|.5",    -- Tracked area color
