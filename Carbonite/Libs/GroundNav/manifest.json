@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/cjber/shortest-path-forever",
+  "revision": "01559975bff0320a9fd2be496a774e20978aa807",
+  "license": "GPL-3.0-or-later",
+  "copied_from": "GatherLite 8.4.11, plugins/routes/navigation/vendor (same files, unchanged)",
+  "files": {
+    "LICENSE": {
+      "upstream_sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "vendored_sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    "Path.lua": {
+      "upstream_sha256": "40429e5e11699bdfaf7f56aeb80934ea4749c616c1201a692ae9b1781d897264",
+      "vendored_sha256": "ecba9cff528362aeb3aeea1685858d887928d4a184149f4e835785d3f9f4061a"
+    },
+    "PathGrid.lua": {
+      "upstream_sha256": "55e19303764b61ea30f59f2c86cb1397864521151415cc02a362dac708f71103",
+      "vendored_sha256": "b10d060ec2c06cab18b2d0ddb16186c06f4bc2950632e6e2ec30620688b7e6f6"
+    },
+    "THIRD_PARTY.md": {
+      "upstream_sha256": "3c51756c412b722593b38c254b42804eff71505bdc652670a3538303ffb982ca",
+      "vendored_sha256": "3c51756c412b722593b38c254b42804eff71505bdc652670a3538303ffb982ca"
+    }
+  }
+}
