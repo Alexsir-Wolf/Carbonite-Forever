@@ -64,14 +64,9 @@ L[" Location: %s%s (%d, %d)"] = " Position: %s%s (%d, %d)"
 L[" Start XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = " Start EP: %s%s/%s (%.0f%%)|r ausgeruht: %s%.0f%%"
 L[" XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = " EP: %s%s/%s (%.0f%%)|r ausgeruht: %s%.0f%%"
 L[" Honor: %s%s|r  Conquest: %s%s"] = " Ehrenpunkte: %s%s|r  Eroberungspunkte: %s%s"
-L[" Valor: %s%s|r  Justice: %s%s"] = " Tapferkeit: %s%s|r  Gerechtigkeit: %s%s"
 --L[" %s %s%s"] = true
-L["|cffafdfafAll: %s. |cffafdfafPlayed: %s%s"] = "|cffafdfafAlles: %s. |cffafdfafgespielt: %s%s"
 L["%s's Items"] = "Gegenstände von %s"
 L["|cffff1010No bank data - visit your bank"] = "|cffff1010Keine Bankdaten vorhanden - besuche die Bank"
-L["|cffff1010No reagent bank data - visit your bank"] = "|cffff1010Keine Daten f\195\188r Handwerkslager vorhanden - besuche die Bank"
-L["---- Equipped ----"] = "---- Angelegt ----"
-L["---- %s Equipped ----"] = "---- %s Angelegt ----"
 L["All Items"] = "Alle Items"
 L["%s |cffcfcfff(%s Bank)"] = "%s |cffcfcfff(%s Bank)"
 L["%s |cffcfffff(%s Mail)"] = "%s |cffcfffff(%s Post)"
@@ -93,14 +88,11 @@ L["LOOT_OPENED %s (%s %s)"] = "LOOT_OFFEN %s (%s %s)"
 L["no LootTarget"] = "kein LootZiel"
 L["LOOT_SLOT_CLEARED #%s %s (quest)"] = "LOOT_SLOT_CLEARED #%s %s (Quest)"
 L["%s deleted"] = "%s gel\195\182scht"
-L["enchant:(%d+)"] = true
-L["item:(%d+)"] = true
 
 -- Keybinds / Tastaturbelegungen
 L["Carbonite Warehouse"] = "Carbonite Lager"
 L["NxTOGGLEWAREHOUSE"] = "Lager ein/ausblenden"
 
-L["Guilds"] = "Gilden"
 L["Characters"] = "Charaktere"
 L["Guild Bank"] = "Gildenbank"
 L["Current Funds"] = "verf/195/188gbare Mittel"
@@ -139,7 +131,6 @@ L["When you open a merchant, will auto sell your blue items."] = "Automatischer 
 L["When you open a merchant, will auto sell your purple items."] = "Automatischer Verkauf deiner epischen Gegenst\195\164nde, sobald ein H\195\164ndler angesprochen wird"
 L["iLevel"] = "iLevel"
 L["Enable iLevel Limit"] = "iLevel Limit festlegen"
-L["Only sells items that are under the ilvl specified"] = "Nur Gegenst\195\164nde unterhalb des angegbenen iLevel werden verkauft"
 L["Sets the maximum item level which will be auto sold"] = "Festlegung des maximalen iLevel bis zu welchem automatisch verkauft wird"
 L["Sell BOP Items"] = "Verkaufe BOP Gegenst\195\164nde"
 L["When enabled will sell items that are BOP"] = "Verkauf aller seelengebunden Gegenst\195\164nde"

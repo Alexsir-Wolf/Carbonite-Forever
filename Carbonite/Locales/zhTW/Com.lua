@@ -25,7 +25,6 @@ L["Deathknight"] = "死亡騎士"
 L["Monk"] = "武僧"
 
 L["Com options reset (%f, %f)"] = "通訊選項已重設 (%f, %f)"
-L["ComTest"] = "ComTest"
 L["Disabling com functions!"] = "停用通訊功能！"
 L["JoinChan Err %s"] = "加入頻道錯誤 %s"
 L["SendSecG Error: %s"] = "SendSecG 錯誤：%s"

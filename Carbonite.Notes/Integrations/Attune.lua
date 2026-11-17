@@ -25,7 +25,7 @@ end
 
 local function pinLink(uiMapID, x, y)
     return format("|cffffff00|Hworldmap:%d:%d:%d|h[|A:Waypoint-MapPin-ChatIcon:13:13:0:0|a %s]|h|r",
-        uiMapID, floor(x * 100 + 0.5), floor(y * 100 + 0.5), MAP_PIN_HYPERLINK or "Map Pin")
+        uiMapID, floor(x * 100 + 0.5), floor(y * 100 + 0.5), MAP_PIN_HYPERLINK or L["Map Pin"])
 end
 
 local function insertIntoChat(text)

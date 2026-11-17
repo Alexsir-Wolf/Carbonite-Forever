@@ -4099,7 +4099,7 @@ function Nx.Map:GMenu_OnTogInst()
             local atlas = _G["AtlasMaps"]
 
             if not (Nx.Map.InstanceInfo[mapId] or atlas) then
-                UIErrorsFrame:AddMessage("This instance map requires the Atlas addon be installed", 1, .1, .1, 1)
+                UIErrorsFrame:AddMessage(L["This instance map requires the Atlas addon be installed"], 1, .1, .1, 1)
                 return
             end
 
@@ -4269,12 +4269,10 @@ function Nx.Map:BGMenu_Send(msg)
     end
 
     -- Build player count string
-    local dstr = ", No "
+    local dstr = format(L[", No %s in area"], Nx.Map.PlFactionShort)
     if cnt > 0 then
-        dstr = format(", %d ", cnt)
+        dstr = format(L[", %d %s in area"], cnt, Nx.Map.PlFactionShort)
     end
-
-    dstr = dstr .. Nx.Map.PlFactionShort .. " in area"
 
     -- Send to instance chat
     if msg then
@@ -5765,7 +5763,8 @@ function Nx.Map.OnUpdate(this, elapsed)
             local getPVPInfo = (C_PvP and C_PvP.GetZonePVPInfo) or _G.GetZonePVPInfo
             local pvpType = getPVPInfo and getPVPInfo()
             if pvpType and pvpType ~= "" then
-                s = (s or "") .. " (" .. (rawget (L, pvpType) or pvpType) .. ")"
+                local pvpLabel = { contested = L["contested"], friendly = L["friendly"], hostile = L["hostile"] }
+                s = (s or "") .. " (" .. (pvpLabel[pvpType] or pvpType) .. ")"
             end
             local t2 = format ("%s %s", s, cursorLocXY)
             if t2 ~= map.LastTitle2 then
@@ -6210,13 +6209,13 @@ function Nx.Map:Update (elapsed)
 
         if Nx.InArena then
             local s = Nx.Map:GetShortName (Nx.InArena)
-            Nx.UEvents:AddInfo (format ("Left %s %d %d %dD %dH", s, cb.KBs, cb.Deaths, cb.DamDone, cb.HealDone))
+            Nx.UEvents:AddInfo (format (L["Left %s %d %d %dD %dH"], s, cb.KBs, cb.Deaths, cb.DamDone, cb.HealDone))
 
         else
             local total = cb.KBs + cb.Deaths + cb.HKs + cb.Honor
             if total > 0 then
                 local sname = Nx.Map:GetShortName (Nx.InBGMapId) or "?"
-                Nx.UEvents:AddInfo (format ("Left %s %d %d %d %d", sname, cb.KBs, cb.Deaths, cb.HKs, cb.Honor))
+                Nx.UEvents:AddInfo (format (L["Left %s %d %d %d %d"], sname, cb.KBs, cb.Deaths, cb.HKs, cb.Honor))
 
                 local tm = GetTime() - cb.BGEnterTime
                 --local _, honor = GetCurrencyInfo (392)        --V4
@@ -7071,7 +7070,7 @@ function Nx.Map:Update (elapsed)
                                 -- has a clean visual category for both.
                                 bPOIs[#bPOIs + 1] = {
                                     position      = { x = t.x, y = t.y },
-                                    name          = title or (cls == threat and "Threat" or "Bonus Objective"),
+                                    name          = title or (cls == threat and L["Threat"] or L["Bonus Objective"]),
                                     atlasName     = "Bonus-Objective-Star",
                                     textureWidth  = 18,
                                     textureHeight = 18,
@@ -7600,7 +7599,7 @@ function Nx.Map:Update (elapsed)
 
             local f = self:GetIcon (1)
 
-            f.NxTip = "Your corpse"
+            f.NxTip = L["Your corpse"]
             f.texture:SetTexture ("Interface\\Minimap\\POIIcons")
             self:ClipFrameZ (f, cX * 100, cY * 100, 16, 16, 0)
             -- Override clipping (FIX maybe?)
@@ -8109,7 +8108,7 @@ local function GetCachedGarrisonPlots(map, mapId)
             cachedPlots[#cachedPlots + 1] = {
                 wx = wx,
                 wy = wy,
-                name = plot.name or "Garrison Plot",
+                name = plot.name or L["Garrison Plot"],
                 atlasName = plot.atlasName,
             }
         end
@@ -8801,7 +8800,7 @@ function Nx.Map:UpdateTargets()
             end
 
             -- Notify player
-            UIErrorsFrame:AddMessage("Target " .. tar.TargetName .. " reached", 1, 1, 1, 1)
+            UIErrorsFrame:AddMessage(format(L["Target %s reached"], tar.TargetName), 1, 1, 1, 1)
 
             self.Guide:ClearAll()
 
@@ -12584,7 +12583,7 @@ function Nx.Map:IconOnMouseDown(button)
             map.BGMsg = this.NXData
             map.BGIncNum = map.BGIncNum + 1
 
-            UIErrorsFrame:AddMessage("Inc " .. map.BGIncNum, 1, 1, 1, 1)
+            UIErrorsFrame:AddMessage(L["Inc"] .. " " .. map.BGIncNum, 1, 1, 1, 1)
 
             BGInc = Nx:ScheduleTimer(map.BGIncSendTimer, 1.5, map)
         else
@@ -13255,7 +13254,7 @@ function Nx.Map:IconOnEnter(motion)
                         if MAP_TOOLTIP_TIME_LEFT then
                             GameTooltip_AddNormalLine(Nx.TooltipText, MAP_TOOLTIP_TIME_LEFT:format(timeString))
                         else
-                            GameTooltip_AddNormalLine(Nx.TooltipText, "Time left: " .. timeString)
+                            GameTooltip_AddNormalLine(Nx.TooltipText, L["Time left:"] .. " " .. timeString)
                         end
                     end
                 end
@@ -13359,7 +13358,7 @@ function Nx.Map:IconOnUpdateTooltip()
                             if MAP_TOOLTIP_TIME_LEFT then
                                 GameTooltip_AddNormalLine(Nx.TooltipText, MAP_TOOLTIP_TIME_LEFT:format(timeString))
                             else
-                                GameTooltip_AddNormalLine(Nx.TooltipText, "Time left: " .. timeString)
+                                GameTooltip_AddNormalLine(Nx.TooltipText, L["Time left:"] .. " " .. timeString)
                             end
                         end
                     end
@@ -14969,7 +14968,7 @@ function Nx.Map:GetWorldZoneInfo (cont, zone)
     if not cont or not zone then
         return "unknown", 0, 0, 1002, 668
     end
-    local name = Nx.Map:GetMapNameByID(zone) or "Unknown Zone"
+    local name = Nx.Map:GetMapNameByID(zone) or L["Unknown Zone"]
 --    local cont = self.MapWorldInfo[zone].Cont
     local info = self.MapInfo[cont]
     if not info then

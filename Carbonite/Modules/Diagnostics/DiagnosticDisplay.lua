@@ -1,6 +1,8 @@
 -- Carbonite diagnostics presentation. Reads snapshots on demand; no update
 -- loop, quest API scans, or timing hooks belong in this file.
 local Carbonite, Nx = _G.Carbonite, _G.Nx
+-- Only the options tab name is translated; the profiler itself stays in English for bug reports.
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 local Profiler = Nx and Nx.QuestProfiler
 if not Carbonite or not Profiler then return end
 
@@ -399,7 +401,7 @@ function Profiler:GetOptionsConfig(scope)
     }
     advanced.clear.confirm = "Clear this view's samples, timing totals and idle reference?"
     local group = {
-        type = "group", name = "Diagnostics", order = 90, childGroups = "tab",
+        type = "group", name = L["Diagnostics"], order = 90, childGroups = "tab",
         args = {
             overview = { type = "group", name = "Overview", order = 1, args = overview },
             compare = { type = "group", name = "Compare", order = 2, args = compare },

@@ -86,3 +86,6 @@ L["Size of the GatherLite icons on the map."] = true
 L["Marks on the map the library books you have not found yet."] = true
 L["Shows the Skyborne convergences on the map."] = true
 L["Shows the convergences of all your characters, not only this one."] = true
+L["Map Pin"] = true
+L["NPC ID: %s"] = true
+L["Note:"] = true

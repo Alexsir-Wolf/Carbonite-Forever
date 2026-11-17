@@ -37,6 +37,7 @@ function Nx.NXMiniMapBut:Init()
     menu:AddItem (0, L["Options"], self.Menu_OnOptions, self)
     menu:AddItem (0, L["Show Map"], self.Menu_OnShowMap, self)
     menu:AddItem (0, L["Show Events"], self.Menu_OnShowEvents, self)
+    menu:AddItem (0, L["Show Journey"], self.Menu_OnShowJourney, self)
 
     if Nx.db.profile.Debug.DebugCom then
         menu:AddItem (0, "", nil, self)
@@ -76,7 +77,7 @@ function Nx.NXMiniMapBut:Init()
 
     local ok, var = pcall (GetCVar, "scriptProfile")
     if ok and var ~= "0" then
-        Nx:ShowMessage ("Profiling is on. This decreases game performance. Disable?", "Disable and Reload", self.ToggleProfiling, "Cancel")
+        Nx:ShowMessage (L["Profiling is on. This decreases game performance. Disable?"], L["Disable and Reload"], self.ToggleProfiling, L["Cancel"])
     end
 end
 
@@ -92,6 +93,10 @@ function Nx.NXMiniMapBut:Menu_OnShowEvents()
     Nx.UEvents.List:Open()
 end
 
+function Nx.NXMiniMapBut:Menu_OnShowJourney()
+    Carbonite.Modules.Journey:ToggleShow()
+end
+
 function Nx.NXMiniMapBut:Menu_OnHideWatch (item)
     local hide = item:GetChecked()
     Nx.Quest.Watch.Win:Show (not hide)
@@ -102,7 +107,7 @@ function Nx.NXMiniMapBut:Menu_OnShowCom()
 end
 
 function Nx.NXMiniMapBut:Menu_OnProfiling()
-    Nx:ShowMessage ("Toggle profiling? Reloads UI", "Reload", self.ToggleProfiling, "Cancel")
+    Nx:ShowMessage (L["Toggle profiling? Reloads UI"], L["Reload"], self.ToggleProfiling, L["Cancel"])
 end
 
 function Nx.NXMiniMapBut:ToggleProfiling()

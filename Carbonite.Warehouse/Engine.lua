@@ -695,7 +695,7 @@ function Nx.Warehouse:AddSelectionSummary(list)
         list:ItemSet(3, format(L["  Bags: %d  Bank: %d  Mail: %d"], bagTotal, bankTotal, mailTotal))
         if hasAccountBank then
             list:ItemAdd(0)
-            list:ItemSet(3, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal))
+            list:ItemSet(3, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
             list:ItemAdd(0)
             list:ItemSet(3, format(L["  Shared scan: %s"], accountStatus))
         end
@@ -720,7 +720,7 @@ function Nx.Warehouse:AddSelectionSummary(list)
     list:ItemSet(3, format(L["  Bank: %d  Mail: %d"], bankTotal + reagentTotal, mailTotal))
     if hasAccountBank then
         list:ItemAdd(0)
-        list:ItemSet(3, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal))
+        list:ItemSet(3, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
     end
 
     list:ItemAdd(0)
@@ -1294,7 +1294,7 @@ function Nx.Warehouse:UpdateItems()
         for name, data in pairs (accountRecord.Inv) do
             self:AddItem (account, 2, name, data)
         end
-        self:AddItemSection (list, "WarbandBank", _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", account)
+        self:AddItemSection (list, "WarbandBank", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], account)
     end
 
     self:AddProfessionSection (list, cn1, cn2, allCharacters)
@@ -1378,7 +1378,7 @@ function Nx.Warehouse:UpdateItem (pre, name, bagCnt, bankCnt, mailCnt, link, sho
         istr = format (L["%s |cffcfffff(%s Mail)"], istr, mailCnt)
     end
     if accountCnt > 0 then
-        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank"
+        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"]
         istr = format("%s |cffcfffaf(%s %s)", istr, accountCnt, accountLabel)
     end
 
@@ -1618,7 +1618,7 @@ function Nx.Warehouse:FindCharsWithItem (link, specific)
 
     if accountCnt > 0 then
         local s
-        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank"
+        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"]
         if specific == "tooltip" then
             s = format("|cFFFFFF00%s#|cFFFF0000[|cFF00FF00%s:%d|cFFFF0000]", accountLabel, accountLabel, accountCnt)
         else
@@ -1800,13 +1800,13 @@ local function GetProfessionRecipeRow(profT, recipeID, scopeLabel, filterStr)
         local lines = {
             recipeName,
             scopeLabel,
-            format("Quality outputs: %d", #qualityOutputs),
+            format(L["Quality outputs: %d"], #qualityOutputs),
         }
         for index, output in ipairs(qualityOutputs) do
-            local outputText = output.link or output.name or format("Item %d", output.id)
+            local outputText = output.link or output.name or format(L["Item %d"], output.id)
             lines[#lines + 1] = format("  Q%d  %s", index, outputText)
         end
-        lines[#lines + 1] = "|cff888888Alt: item tooltip|r"
+        lines[#lines + 1] = "|cff888888" .. L["Alt: item tooltip"] .. "|r"
         if itemLink then
             tooltip = "!" .. itemLink .. "^" .. table.concat(lines, "\n")
         else
