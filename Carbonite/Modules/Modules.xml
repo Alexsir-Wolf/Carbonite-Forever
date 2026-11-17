@@ -25,6 +25,8 @@
     <Script file="Comm\CommReceive.lua" />
     <Script file="Comm\ChannelManager.lua" />
     <Script file="Comm\WireFormat.lua" />
+    <!-- Notice of a newer Carbonite-Forever seen in group/guild (#92). -->
+    <Script file="Comm\VersionCheck.lua" />
 
     <!-- Map needs Pin / Layer / pin classes before the Map module
          itself can refer to them. Order matters here. -->
