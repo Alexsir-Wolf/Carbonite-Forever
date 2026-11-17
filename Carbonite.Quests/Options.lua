@@ -505,6 +505,20 @@ function Nx.Quest:GetOptionsConfig()
                                 Nx.Quest:RefreshMapQuestIcons()
                             end,
                         },
+                        qobjareas = {
+                            order = 31.65,
+                            type = "toggle",
+                            name = L["Show Objective Areas"],
+                            width = "full",
+                            desc = L["Draws one shaded area around each group of nearby spawns of an objective instead of one icon per spawn"],
+                            get = function()
+                                return Nx.qdb.profile.Quest.MapShowObjectiveAreas ~= false
+                            end,
+                            set = function()
+                                Nx.qdb.profile.Quest.MapShowObjectiveAreas = Nx.qdb.profile.Quest.MapShowObjectiveAreas == false
+                                Nx.Quest:RefreshMapQuestIcons()
+                            end,
+                        },
                         qiconscale = {
                             order = 31.7,
                             type = "range",
