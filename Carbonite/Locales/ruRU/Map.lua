@@ -127,7 +127,6 @@ L["No edit box open!"] = "Окно для редактирования не от
 L["Incoming"] = "Входящие"
 L["Speed"] = "Скорость"
 L["players"] = "игроки"
-L["Unknown map name"] = "Неизвестное имя карты"
 L["Show Instance Map"] = "Показывать карту подземелья"
 L["Instance Scale..."] = "Масштаб карты подземелья"
 L["Player Arrow"] = "Стрелочка игрока"

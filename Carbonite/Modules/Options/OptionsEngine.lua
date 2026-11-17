@@ -788,7 +788,7 @@ local function mapConfig()
                                 Nx.db.profile.Map.LocTipAnchor = vals[name]
                             end,
                             values    = function()
-                                return Nx.Opts:CalcChoices("Anchor0")
+                                return Nx.Opts:CalcChoiceLabels("Anchor0")
                             end,
                         },
                         TooltipAnchorRel = {
@@ -810,7 +810,7 @@ local function mapConfig()
                                 Nx.db.profile.Map.LocTipAnchorRel = vals[name]
                             end,
                             values    = function()
-                                return Nx.Opts:CalcChoices("Anchor0")
+                                return Nx.Opts:CalcChoiceLabels("Anchor0")
                             end,
                         },
                         TopToolTip = {
@@ -1430,7 +1430,7 @@ local function mapConfig()
                                 Nx.db.profile.MiniMap.ButCorner = vals[name]
                             end,
                             values    = function()
-                                return Nx.Opts:CalcChoices("Corner")
+                                return Nx.Opts:CalcChoiceLabels("Corner")
                             end,
                         },
                         spacer3 = {
@@ -2019,7 +2019,7 @@ local function guidegatherConfig()
                         -- ============================================
                         -- CLASSIC
                         -- ============================================
-                        hdrClassic = { order = 10, type = "header", name = "|cff00ff00Classic|r" },
+                        hdrClassic = { order = 10, type = "header", name = "|cff00ff00" .. L["Classic"] .. "|r" },
                         h2 = { order = 11, type = "toggle", width = "full", name = L["Arthas' Tears"], get = function() return Nx.db.profile.Guide.ShowHerbs[2] end, set = function() Nx.db.profile.Guide.ShowHerbs[2] = not Nx.db.profile.Guide.ShowHerbs[2] end },
                         h3 = { order = 12, type = "toggle", width = "full", name = L["Black Lotus"], get = function() return Nx.db.profile.Guide.ShowHerbs[3] end, set = function() Nx.db.profile.Guide.ShowHerbs[3] = not Nx.db.profile.Guide.ShowHerbs[3] end },
                         h4 = { order = 13, type = "toggle", width = "full", name = L["Blindweed"], get = function() return Nx.db.profile.Guide.ShowHerbs[4] end, set = function() Nx.db.profile.Guide.ShowHerbs[4] = not Nx.db.profile.Guide.ShowHerbs[4] end },
@@ -2225,7 +2225,7 @@ local function guidegatherConfig()
                         -- ============================================
                         -- CLASSIC
                         -- ============================================
-                        mhdrClassic = { order = 10, type = "header", name = "|cff00ff00Classic|r" },
+                        mhdrClassic = { order = 10, type = "header", name = "|cff00ff00" .. L["Classic"] .. "|r" },
                         m3 = { order = 11, type = "toggle", width = "full", name = L["Copper Vein"], get = function() return Nx.db.profile.Guide.ShowMines[3] end, set = function() Nx.db.profile.Guide.ShowMines[3] = not Nx.db.profile.Guide.ShowMines[3] end },
                         m4 = { order = 12, type = "toggle", width = "full", name = L["Dark Iron Deposit"], get = function() return Nx.db.profile.Guide.ShowMines[4] end, set = function() Nx.db.profile.Guide.ShowMines[4] = not Nx.db.profile.Guide.ShowMines[4] end },
                         m6 = { order = 13, type = "toggle", width = "full", name = L["Gold Vein"], get = function() return Nx.db.profile.Guide.ShowMines[6] end, set = function() Nx.db.profile.Guide.ShowMines[6] = not Nx.db.profile.Guide.ShowMines[6] end },
@@ -2648,7 +2648,7 @@ local function skinConfig()
                         Nx.Skin:Set(Nx.db.profile.Skin.Name)
                     end,
                     values    = function()
-                        return Nx.Opts:CalcChoices("Skins")
+                        return Nx.Opts:CalcChoiceLabels("Skins")
                     end,
                 },
                 skinBord = {
@@ -2777,7 +2777,7 @@ local function trackConfig()
                         Nx.HUD:UpdateOptions()
                     end,
                     values    = function()
-                        return Nx.Opts:CalcChoices("HUDAGfx")
+                        return Nx.Opts:CalcChoiceLabels("HUDAGfx")
                     end,
                 },
                 spacer = {
@@ -3116,6 +3116,18 @@ Nx.OptsDataSoundsIDs = {
 -- Initialize options data
 -- Called before UI init to set up choice tables
 --
+---
+-- Choices of a dropdown as the player reads them. The profile keeps the
+-- English value; only the label is translated.
+--
+function Nx.Opts:CalcChoiceLabels(name)
+    local labels = {}
+    for k, v in pairs(self:CalcChoices(name) or {}) do
+        labels[k] = v ~= "" and L[v] or v
+    end
+    return labels
+end
+
 function Nx.Opts:Init()
 
     self.ChoicesAnchor = {
@@ -3522,7 +3534,7 @@ function Nx.Opts:NXCmdImportCharSettings()
             end
         end
 
-        Nx:ShowMessage (format ("Import %s character data and reload?", name), "Import", func, "Cancel")
+        Nx:ShowMessage (format (L["Import %s character data and reload?"], name), L["Import"], func, L["Cancel"])
     end
 
     local t = {}
@@ -3549,7 +3561,7 @@ function Nx.Opts:NXCmdDeleteCharSettings()
             Nx:DeleteCharacterData (name)
         end
 
-        Nx:ShowMessage (format ("Delete %s character data?", name), "Delete", func, "Cancel")
+        Nx:ShowMessage (format (L["Delete %s character data?"], name), L["Delete"], func, L["Cancel"])
     end
 
     local rcName = Nx:GetRealmCharName()
@@ -3585,7 +3597,7 @@ function Nx.Opts:NXCmdResetOpts()
         self:NXCmdUIChange()
     end
 
-    Nx:ShowMessage (L["Reset options"] .. "?", "Reset", func, "Cancel")
+    Nx:ShowMessage (L["Reset options"] .. "?", L["Reset"], func, L["Cancel"])
 end
 
 function Nx.Opts:NXCmdResetWinLayouts()
@@ -3594,7 +3606,7 @@ function Nx.Opts:NXCmdResetWinLayouts()
         Nx.Window:ResetLayouts()
     end
 
-    Nx:ShowMessage (L["Reset window layouts"] .. "?", "Reset", func, "Cancel")
+    Nx:ShowMessage (L["Reset window layouts"] .. "?", L["Reset"], func, L["Cancel"])
 end
 
 function Nx.Opts:NXCmdResetWatchWinLayout()

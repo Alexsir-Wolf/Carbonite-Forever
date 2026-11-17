@@ -13,6 +13,7 @@
 --   ZoneIterator:GetContinentCount()      -> int
 
 local Carbonite = _G.Carbonite
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 local ZoneIterator = {}
 Carbonite.Modules.Map.ZoneIterator = ZoneIterator
 
@@ -38,7 +39,7 @@ function ZoneIterator:GetZoneInfo(cont, zone)
         return "unknown", 0, 0, 1002, 668
     end
 
-    local name = (m.GetMapNameByID and m:GetMapNameByID(zone)) or "Unknown Zone"
+    local name = (m.GetMapNameByID and m:GetMapNameByID(zone)) or L["Unknown Zone"]
     local info = m.MapInfo and m.MapInfo[cont]
     if not info then return name, 0, 0, 1002, 668 end
 

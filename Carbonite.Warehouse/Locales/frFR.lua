@@ -93,8 +93,6 @@ L["LOOT_OPENED %s (%s %s)"] = "BUTIN_OUVERT %s (%s %s)"
 L["no LootTarget"] = "pas de cible pour butin"
 L["LOOT_SLOT_CLEARED #%s %s (quest)"] = "LOOT_SLOT_CLEARED #%s %s (quête)"
 L["%s deleted"] = "%s effac\195\169"
-L["enchant:(%d+)"] = true
-L["item:(%d+)"] = true
 
 -- Keybinds
 L["Carbonite Warehouse"] = "Carbonite Inventaires/D\195\169p\195\180ts"

@@ -105,7 +105,6 @@ L["No edit box open!"] = "¡No hay ningún cuadro de texto abierto!"
 L["Incoming"] = true
 L["Speed"] = "Velocidad"
 L["players"] = "jugadores"
-L["Unknown map name"] = "Nombre de mapa desconocido"
 L["Show Instance Map"] = "Mostrar mapa de instancia"
 L["Instance Scale..."] = "Escala de instancia..."
 L["Player Arrow"] = "Flecha del jugador"

@@ -25,7 +25,6 @@ L["Deathknight"] = "죽음의기사"
 L["Monk"] = "수도사"
 
 L["Com options reset (%f, %f)"] = "통신 옵션 초기화 (%f, %f)"
-L["ComTest"] = "ComTest"
 L["Disabling com functions!"] = "통신 기능 비활성화!"
 L["JoinChan Err %s"] = "JoinChan 오류 %s"
 L["SendSecG Error: %s"] = "SendSecG 오류: %s"

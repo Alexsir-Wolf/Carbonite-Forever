@@ -94,8 +94,6 @@ L["LOOT_OPENED %s (%s %s)"] = "LOOT_OPENED %s (%s %s)"
 L["no LootTarget"] = "sem LootTarget"
 L["LOOT_SLOT_CLEARED #%s %s (quest)"] = "LOOT_SLOT_CLEARED #%s %s (missão)"
 L["%s deleted"] = "%s excluído"
-L["enchant:(%d+)"] = true
-L["item:(%d+)"] = true
 
 -- Keybinds
 L["Carbonite Warehouse"] = "Carbonite-Forever Warehouse"
