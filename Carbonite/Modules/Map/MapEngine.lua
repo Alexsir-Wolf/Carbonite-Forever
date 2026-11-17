@@ -1041,6 +1041,9 @@ function Nx.Map:Create(index)
 
     ---------------------------------------------------------------------------
     -- MAIN CONTEXT MENU
+    -- Only what is used day to day, at most 15 entries and no sliders (#60).
+    -- Scales, transparencies, minimap docking and route radii are in the
+    -- Options (Maps page), saved under the same keys.
     ---------------------------------------------------------------------------
 
     local menu = Nx.Menu:Create(f)
@@ -1057,12 +1060,8 @@ function Nx.Map:Create(index)
 
     -- View options
     m.MenuIPlyrFollow = menu:AddItem(0, L["Follow You"], self.Menu_OnPlyrFollow, m)
-
-    local item = menu:AddItem(0, L["Select Cities Last"], self.SetLevelWorldHotspots, m)
-    item:SetChecked(m, "NXCitiesUnder")
-
-    m.MenuIMonitorZone = menu:AddItem(0, L["Monitor Zone"], self.Menu_OnMonitorZone, m)
     m.MenuIInstanceMaps = menu:AddItem(0, L["Show Instance Map"], self.Menu_InstanceMap, m)
+    m.MenuIMonitorZone = menu:AddItem(0, L["Monitor Zone"], self.Menu_OnMonitorZone, m)
 
     menu:AddItem(0, "", nil, self)  -- Separator
 
@@ -1101,15 +1100,9 @@ function Nx.Map:Create(index)
     end
     routeMenu:AddItem(0, L["Reverse Targets"], func, m)
 
-    -- Route options
+    -- Route options (the gather radii are in Options > Maps > Route)
     local item = routeMenu:AddItem(0, L["Recycle Reached Targets"])
     item:SetChecked(Nx.db.profile.Route, "Recycle")
-
-    local item = routeMenu:AddItem(0, L["Gather Target Radius"])
-    item:SetSlider(Nx.db.profile.Route, 7, 300, nil, "GatherRadius")
-
-    local item = routeMenu:AddItem(0, L["Gather Merge Radius"])
-    item:SetSlider(Nx.db.profile.Route, 0, 100, nil, "MergeRadius")
 
     ---------------------------------------------------------------------------
     -- SHOW SUBMENU
@@ -1254,6 +1247,10 @@ function Nx.Map:Create(index)
     local item = showMenu:AddItem(0, L["Show Extras"], forceShowCont, Map)
     item:SetChecked(Nx.db.profile.Map, "ShowCExtra")
 
+    -- Which hotspot wins when a city overlaps its zone on the world map
+    local item = showMenu:AddItem(0, L["Select Cities Last"], self.SetLevelWorldHotspots, m)
+    item:SetChecked(m, "NXCitiesUnder")
+
 
     -- Kill tracking toggle
     local item = showMenu:AddItem(0, L["Show Kill Icons"], self.Menu_OnShowKills, m)
@@ -1261,275 +1258,36 @@ function Nx.Map:Create(index)
 
 
     ---------------------------------------------------------------------------
-    -- MINIMAP SUBMENU
-    -- Controls for minimap integration and display
+    -- MINIMAP FULL SIZE
+    -- Transparency and docking sliders are in Options > Maps > MiniMap
     ---------------------------------------------------------------------------
 
     if not Nx.Free then
-        local mmmenu = Nx.Menu:Create(f)
-        menu:AddSubMenu(mmmenu, L["Minimap..."])
-
-        -- Full size toggle
         local function func(self, item)
             self.LOpts.NXMMFull = item:GetChecked()
             self.MMZoomChanged = true
         end
 
-        local item = mmmenu:AddItem(0, L["Full Size"], func, m)
+        local item = menu:AddItem(0, L["Minimap Full Size"], func, m)
         self.MMMenuIFull = item
         item:SetChecked(opts.NXMMFull)
-
-        -- Minimap transparency
-        local function func(self, item)
-            self.LOpts.NXMMAlpha = item:GetSlider()
-        end
-
-        local item = mmmenu:AddItem(0, L["Transparency"], func, m)
-        item:SetSlider(opts.NXMMAlpha, 0, 1)
-
-        -- Docked minimap scale
-        local function func(self, item)
-            self.LOpts.NXMMDockScale = item:GetSlider()
-            self.MMZoomChanged = true
-        end
-
-        local item = mmmenu:AddItem(0, L["Docked Scale"], func, m)
-        item:SetSlider(opts.NXMMDockScale, .01, 3)
-
-        -- Docked scale in battlegrounds
-        local function func(self, item)
-            self.LOpts.NXMMDockScaleBG = item:GetSlider()
-            self.MMZoomChanged = true
-        end
-
-        local item = mmmenu:AddItem(0, L["Docked Scale In BG"], func, m)
-        item:SetSlider(opts.NXMMDockScaleBG, .01, 3)
-
-        -- Docked transparency
-        local function func(self, item)
-            self.LOpts.NXMMDockAlpha = item:GetSlider()
-        end
-
-        local item = mmmenu:AddItem(0, L["Docked Transparency"], func, m)
-        item:SetSlider(opts.NXMMDockAlpha, 0, 1)
-
-        -- Auto-dock threshold
-        local function func(self, item)
-            self.LOpts.NXMMDockOnAtScale = item:GetSlider()
-        end
-
-        local item = mmmenu:AddItem(0, L["Docking Below Map Scale"], func, m)
-        item:SetSlider(opts.NXMMDockOnAtScale, 0, 5)
     end
-
-    ---------------------------------------------------------------------------
-    -- SCALE SUBMENU
-    -- Size and scale controls for map elements
-    ---------------------------------------------------------------------------
-
-    local smenu = Nx.Menu:Create(f)
-    menu:AddSubMenu(smenu, L["Scale..."])
-
-    -- Auto-scale range
-    local item = smenu:AddItem(0, L["Auto Scale Min"])
-    item:SetSlider(opts, .01, 10, nil, "NXAutoScaleMin")
-
-    local item = smenu:AddItem(0, L["Auto Scale Max"])
-    item:SetSlider(opts, .25, 10, nil, "NXAutoScaleMax")
-
-    -- Player dot scales
-    local item = smenu:AddItem(0, L["Zone Dot Scale"], self.Menu_OnDotZoneScale, m)
-    item:SetSlider(m.DotZoneScale, 0.1, 10)
-
-    local item = smenu:AddItem(0, L["Friend/Guild Dot Scale"], self.Menu_OnDotPalScale, m)
-    item:SetSlider(m.DotPalScale, 0.1, 10)
-
-    local item = smenu:AddItem(0, L["Party Dot Scale"], self.Menu_OnDotPartyScale, m)
-    item:SetSlider(m.DotPartyScale, 0.1, 10)
-
-    local item = smenu:AddItem(0, L["Raid Dot Scale"], self.Menu_OnDotRaidScale, m)
-    item:SetSlider(m.DotRaidScale, 0.1, 10)
-
-    -- Icon scales
-    local item = smenu:AddItem(0, L["Icon Scale"], self.Menu_OnIconScale, m)
-    item:SetSlider(m.IconScale, 0.1, 10)
-
-    local item = smenu:AddItem(0, L["Navigation Icon Scale"], self.Menu_OnIconNavScale, m)
-    item:SetSlider(m.IconNavScale, 0.1, 10)
-
-    -- Detail and POI scale thresholds
-    local function func(self, item)
-        self.LOpts.NXDetailScale = item:GetSlider()
-    end
-
-    local item = smenu:AddItem(0, L["Details At Scale"], func, m)
-    item:SetSlider(opts.NXDetailScale, .05, 10)
-
-    local item = smenu:AddItem(0, L["Gather Icons At Scale"])
-    item:SetSlider(Nx.db.profile.Map, .01, 10, nil, "IconGatherAtScale")
-
-    local item = smenu:AddItem(0, L["POI Icons At Scale"])
-    item:SetSlider(opts, .1, 10, nil, "NXPOIAtScale")
-
-    ---------------------------------------------------------------------------
-    -- INSTANCE SCALE SUBMENU
-    -- Scale controls specific to instance/dungeon maps
-    ---------------------------------------------------------------------------
-
-    local ismenu = Nx.Menu:Create(f)
-    menu:AddSubMenu(ismenu, L["Instance Scale..."])
-
-    local item = ismenu:AddItem(0, L["Player Arrow"])
-    item:SetSlider(Nx.db.profile.Map, 1, 50, nil, "InstancePlayerSize")
-
-    local item = ismenu:AddItem(0, L["Group Player Size"])
-    item:SetSlider(Nx.db.profile.Map, 1, 50, nil, "InstanceGroupSize")
-
-    local item = ismenu:AddItem(0, L["Raid Boss Size"])
-    item:SetSlider(Nx.db.profile.Map, 1, 50, nil, "InstanceBossSize")
-
-    local item = ismenu:AddItem(0, L["Icon Scaling Size"])
-    item:SetSlider(Nx.db.profile.Map, 1, 50, nil, "InstanceScale")
 
     if Nx.DungeonChart then Nx.DungeonChart:AddMenu(menu, f) end
 
     ---------------------------------------------------------------------------
-    -- TRANSPARENCY SUBMENU
-    -- Alpha/opacity controls for various map elements
-    ---------------------------------------------------------------------------
-
-    local tmenu = Nx.Menu:Create(f)
-    m.TransMenu = tmenu
-
-    menu:AddSubMenu(tmenu, L["Transparency..."])
-
-    -- Detail layer transparency
-    local item = tmenu:AddItem(0, L["Detail Transparency"], self.Menu_OnDetailAlpha, m)
-    item:SetSlider(opts.NXDetailAlpha, .25, 1)
-
-    -- Background fade settings
-    local item = tmenu:AddItem(0, L["Fade In Transparency"], self.Menu_OnBackgndAlphaFull, m)
-    item:SetSlider(m.BackgndAlphaFull, .25, 1)
-
-    local item = tmenu:AddItem(0, L["Fade Out Transparency"], self.Menu_OnBackgndAlphaFade, m)
-    item:SetSlider(m.BackgndAlphaFade, 0, 1)
-
-    -- Gather icon transparency with update callback
-    local function func(self)
-        self.Guide:UpdateGatherFolders()
-    end
-
-    local item = tmenu:AddItem(0, L["Gather Icon Transparency"], func, m)
-    item:SetSlider(Nx.db.profile.Map, .2, 1, nil, "IconGatherA")
-
-    -- POI transparency
-    local item = tmenu:AddItem(0, L["POI Icon Transparency"])
-    item:SetSlider(Nx.db.profile.Map, .2, 1, nil, "IconPOIAlpha")
-
-    -- Unexplored area transparency
-    local function func(self, item)
-        self.LOpts.NXUnexploredAlpha = item:GetSlider()
-    end
-
-    local item = tmenu:AddItem(0, L["Unexplored Transparency"], func, m)
-    item:SetSlider(opts.NXUnexploredAlpha, 0, .9)
-
-    -- Archaeology and quest blob transparency
-    local item = tmenu:AddItem(0, L["Archaeology Blob Transparency"], self.Menu_OnArchAlpha, m)
-    item:SetSlider(m.ArchAlpha, 0, 1)
-
-    local item = tmenu:AddItem(0, L["Quest Blob Transparency"], self.Menu_OnQuestAlpha, m)
-    item:SetSlider(m.QuestAlpha, 0, 1)
-
-    ---------------------------------------------------------------------------
     -- OPTIONS MENU ENTRY
+    -- Scale, Instance Scale, Transparency and Route sliders live there
     ---------------------------------------------------------------------------
 
-    local item = menu:AddItem(0, L["Options..."], self.Menu_OnOptions, m)
+    menu:AddItem(0, L["Options..."], self.Menu_OnOptions, m)
 
     ---------------------------------------------------------------------------
     -- DEBUG MENU (only shown when debug mode is enabled)
     ---------------------------------------------------------------------------
 
     if Nx.db.profile.Debug.DebugMap then
-        m.DebugMap = true
-
-        local dbmenu = Nx.Menu:Create(f)
-
-        menu:AddItem(0, "", nil, self)  -- Separator
-        menu:AddSubMenu(dbmenu, L["Debug..."])
-
-        -- Debug mode toggle
-        local function func(self, item)
-            self.Debug = item:GetChecked()
-        end
-
-        local item = dbmenu:AddItem(0, L["Map Debug"], func, m)
-        item:SetChecked(false)
-
-        -- Hotspot debugging
-        local item = dbmenu:AddItem(0, L["Hotspots"], func, m)
-        item:SetChecked(m, "DebugHotspots")
-
-        dbmenu:AddItem(0, L["Hotspots pack"], self.PackHotspotsDebug, m)
-
-        -- Timing debug
-        local function func(self, item)
-            self.DebugTime = item:GetChecked()
-        end
-
-        local item = dbmenu:AddItem(0, L["Map Debug Time"], func, m)
-        item:SetChecked(false)
-
-        -- Coordinate precision
-        local item = dbmenu:AddItem(0, L["Map Full Coords"], self.Menu_OnMapDebugFullCoords, m)
-        item:SetChecked(m.DebugFullCoords)
-
-        -- Quest debug (if quest module is loaded)
-        if Nx.Quest then
-            local item = dbmenu:AddItem(0, L["Quest Debug"], self.Menu_OnQuestDebug, m)
-            item:SetChecked(Nx.Quest.Debug)
-        end
-
-        -- Scale adjustment slider
-        local function func(self, item)
-            self.DebugScale = item:GetSlider()
-        end
-
-        local item = dbmenu:AddItem(0, L["Scale"], func, m)
-        item:SetSlider(0, 4, 6)
-
-        -- Zone offset sliders for calibration
-        local item = dbmenu:AddItem(0, L["ZWOff"], function(self, item)
-            self.DebugMZWOff = item:GetSlider()
-        end, m)
-        item:SetSlider(0, -400, 400)
-
-        local item = dbmenu:AddItem(0, L["ZHOff"], function(self, item)
-            self.DebugMZHOff = item:GetSlider()
-        end, m)
-        item:SetSlider(0, -400, 400)
-
-        local item = dbmenu:AddItem(0, L["XOff"], function(self, item)
-            self.DebugMXOff = item:GetSlider()
-        end, m)
-        item:SetSlider(0, -400, 400)
-
-        local item = dbmenu:AddItem(0, L["YOff"], function(self, item)
-            self.DebugMYOff = item:GetSlider()
-        end, m)
-        item:SetSlider(0, -400, 400)
-
-        -- Player offset sliders
-        local item = dbmenu:AddItem(0, L["PXOff"], function(self, item)
-            self.DebugPXOff = item:GetSlider()
-        end, m)
-        item:SetSlider(0, -400, 400)
-
-        local item = dbmenu:AddItem(0, L["PYOff"], function(self, item)
-            self.DebugPYOff = item:GetSlider()
-        end, m)
-        item:SetSlider(0, -400, 400)
+        m:CreateDebugMenu(menu, f)
     end
 
     ---------------------------------------------------------------------------
@@ -1810,6 +1568,92 @@ function Nx.Map:UpdateToolBar()
     else
         frm:Hide()
     end
+end
+
+---
+-- Developer-only submenu of the map menu (Debug > Map Debug on).
+-- Its calibration sliders are not saved settings, so they stay here.
+-- @param menu  Main map menu
+-- @param f     Map frame that owns the menus
+--
+function Nx.Map:CreateDebugMenu(menu, f)
+    local m = self
+    m.DebugMap = true
+
+    local dbmenu = Nx.Menu:Create(f)
+    menu:AddSubMenu(dbmenu, L["Debug..."])
+
+    -- Debug mode toggle
+    local function func(self, item)
+        self.Debug = item:GetChecked()
+    end
+
+    local item = dbmenu:AddItem(0, L["Map Debug"], func, m)
+    item:SetChecked(false)
+
+    -- Hotspot debugging
+    local item = dbmenu:AddItem(0, L["Hotspots"], func, m)
+    item:SetChecked(m, "DebugHotspots")
+
+    dbmenu:AddItem(0, L["Hotspots pack"], self.PackHotspotsDebug, m)
+
+    -- Timing debug
+    local function func(self, item)
+        self.DebugTime = item:GetChecked()
+    end
+
+    local item = dbmenu:AddItem(0, L["Map Debug Time"], func, m)
+    item:SetChecked(false)
+
+    -- Coordinate precision
+    local item = dbmenu:AddItem(0, L["Map Full Coords"], self.Menu_OnMapDebugFullCoords, m)
+    item:SetChecked(m.DebugFullCoords)
+
+    -- Quest debug (if quest module is loaded)
+    if Nx.Quest then
+        local item = dbmenu:AddItem(0, L["Quest Debug"], self.Menu_OnQuestDebug, m)
+        item:SetChecked(Nx.Quest.Debug)
+    end
+
+    -- Scale adjustment slider
+    local function func(self, item)
+        self.DebugScale = item:GetSlider()
+    end
+
+    local item = dbmenu:AddItem(0, L["Scale"], func, m)
+    item:SetSlider(0, 4, 6)
+
+    -- Zone offset sliders for calibration
+    local item = dbmenu:AddItem(0, L["ZWOff"], function(self, item)
+        self.DebugMZWOff = item:GetSlider()
+    end, m)
+    item:SetSlider(0, -400, 400)
+
+    local item = dbmenu:AddItem(0, L["ZHOff"], function(self, item)
+        self.DebugMZHOff = item:GetSlider()
+    end, m)
+    item:SetSlider(0, -400, 400)
+
+    local item = dbmenu:AddItem(0, L["XOff"], function(self, item)
+        self.DebugMXOff = item:GetSlider()
+    end, m)
+    item:SetSlider(0, -400, 400)
+
+    local item = dbmenu:AddItem(0, L["YOff"], function(self, item)
+        self.DebugMYOff = item:GetSlider()
+    end, m)
+    item:SetSlider(0, -400, 400)
+
+    -- Player offset sliders
+    local item = dbmenu:AddItem(0, L["PXOff"], function(self, item)
+        self.DebugPXOff = item:GetSlider()
+    end, m)
+    item:SetSlider(0, -400, 400)
+
+    local item = dbmenu:AddItem(0, L["PYOff"], function(self, item)
+        self.DebugPYOff = item:GetSlider()
+    end, m)
+    item:SetSlider(0, -400, 400)
 end
 
 ---
@@ -4079,50 +3923,6 @@ end
 
 function Nx.Map:Menu_OnShowKills (item)
     self.KillShow = item:GetChecked()
-end
-
-function Nx.Map:Menu_OnDetailAlpha (item)
-    self.LOpts.NXDetailAlpha = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnBackgndAlphaFade (item)
-    self.BackgndAlphaFade = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnArchAlpha (item)
-    self.ArchAlpha = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnQuestAlpha (item)
-    self.QuestAlpha = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnBackgndAlphaFull (item)
-    self.BackgndAlphaFull = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnDotZoneScale (item)
-    self.DotZoneScale = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnDotPalScale (item)
-    self.DotPalScale = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnDotPartyScale (item)
-    self.DotPartyScale = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnDotRaidScale (item)
-    self.DotRaidScale = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnIconScale (item)
-    self.IconScale = item:GetSlider()
-end
-
-function Nx.Map:Menu_OnIconNavScale (item)
-    self.IconNavScale = item:GetSlider()
 end
 
 function Nx.Map:Menu_OnOptions (item)
