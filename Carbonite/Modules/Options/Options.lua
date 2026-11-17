@@ -64,6 +64,179 @@ local function widenSliders(group)
     end
 end
 
+-------------------------------------------------------------------------------
+-- BASIC AND ADVANCED MODES (#64)
+-- The basic mode, the default, shows only the most used options. The
+-- "Show advanced options" switch at the top of each page reveals the rest.
+-- Only the `hidden` field of the options changes; no saved key does.
+-------------------------------------------------------------------------------
+
+-- Order and name of each section, grouped by task: map and navigation,
+-- quests, gathering, the module windows, then look and feel.
+local LAYOUT = {
+    Main                 = { order = 0,  name = L["About"] },
+    General              = { order = 1,  name = L["General"] },
+    Maps                 = { order = 10, name = L["Map and Minimap"] },
+    ["Tracking HUD"]     = { order = 15, name = L["Navigation Arrow (HUD)"] },
+    ["Quest Module"]     = { order = 20, name = L["Quests"] },
+    ["Guide & Gather"]   = { order = 30, name = L["Guide and Gathering"] },
+    ["Notes Module"]     = { order = 40, name = L["Notes and Integrations"] },
+    ["Warehouse Module"] = { order = 45, name = L["Warehouse"] },
+    ["Info Module"]      = { order = 50, name = L["Info Windows"] },
+    Battlegrounds        = { order = 55, name = L["Battlegrounds"] },
+    Skin                 = { order = 60, name = L["Appearance"] },
+    Fonts                = { order = 62, name = L["Fonts"] },
+    Menus                = { order = 65, name = L["Menus"] },
+    Privacy              = { order = 70, name = L["Privacy"] },
+}
+
+-- Options of the basic mode, as paths inside each section. A group path
+-- keeps the whole group. A section listed with no paths only appears in the
+-- advanced mode; a section not listed (About, Privacy, plugins) never hides.
+local BASIC = {
+    General = { "loginMsg", "maxCamera", "hideGriff" },
+    Maps = {
+        "mainMap.maxMap", "mainMap.hidecombat", "mainMap.useRoute", "mainMap.showTrail",
+        "mainMap.showToolBar", "mainMap.showTitleXY", "mainMap.showPOI",
+        "miniMap.MMOwn", "miniMap.MMDockAlways", "miniMap.MMIconScale",
+        "buttonFrame.MMButOwn", "buttonFrame.MMButShowCarb", "view3d.View3D",
+    },
+    ["Tracking HUD"] = {
+        "hideHUD", "hideLock", "ArrowSize", "showText", "autotaxi", "autocorpse", "emutomtom", "blizzardpin",
+    },
+    ["Quest Module"] = {
+        "quest.qtool", "quest.qauto", "quest.qautoturn", "quest.qobjareas", "quest.qiconscale",
+        "watch.qwhide", "watch.qwlock", "watch.qwautonew", "watch.qwremovecomplete", "watch.qwshowdist",
+        "watch.qwhideblizz", "watch.QuestWatchFontSize", "sounds.sndEnable",
+    },
+    ["Guide & Gather"] = { "gatherOpts.gatherEnable" },
+    ["Notes Module"] = { "notemap", "handy", "rarescanner", "questie", "questieSE", "rxp", "gatherlite", "tomtomarrow" },
+    ["Warehouse Module"] = {
+        "main.toolTip", "main.showGold", "seller.greys.sellgreys", "repair.autorepair", "repair.guildrepair",
+    },
+    ["Info Module"] = { "InfoLock", "KillIconsEnable" },
+    Skin = { "SkinSelect" },
+    Fonts = { "MediumFontSize", "MapFontSize" },
+    Battlegrounds = {},
+    Menus = {},
+}
+
+-- Same lists as sets of paths.
+local basicSets = {}
+for id, paths in pairs(BASIC) do
+    local set = {}
+    for _, path in ipairs(paths) do set[path] = true end
+    basicSets[id] = set
+end
+
+-- Without a saved-variable database yet, the choice lasts for the session.
+local session = {}
+
+local function savedOptions()
+    local profile = Carbonite.db and Carbonite.db.profile
+    if not profile then return session end
+    profile.Options = profile.Options or {}
+    return profile.Options
+end
+
+local function showAdvanced()
+    return savedOptions().ShowAdvanced == true
+end
+
+-- The hidden function this module put on each option, to wrap it only once.
+local wrappers = setmetatable({}, { __mode = "k" })
+
+-- Hide `opt` in the basic mode, keeping its own hidden rule for the advanced one.
+local function hideInBasic(opt)
+    if wrappers[opt] and opt.hidden == wrappers[opt] then return end
+    local original = opt.hidden
+    local function hidden(info, ...)
+        if not showAdvanced() then return true end
+        if type(original) == "function" then return original(info, ...) end
+        if type(original) == "string" then
+            local handler = info and info.handler
+            return handler and handler[original](handler, info, ...)
+        end
+        return original
+    end
+    wrappers[opt] = hidden
+    opt.hidden = hidden
+end
+
+-- Switch at the top of every section that has advanced options.
+local advancedToggle = {
+    order = 0,
+    type = "toggle",
+    width = "full",
+    name = L["Show advanced options"],
+    desc = L["Shows every Carbonite setting. When off, each page shows only the most used ones."],
+    get = function() return showAdvanced() end,
+    set = function(_, value)
+        savedOptions().ShowAdvanced = value and true or nil
+        AceConfigReg:NotifyChange("Carbonite")
+    end,
+}
+
+local function orderOf(opt)
+    return type(opt.order) == "number" and opt.order or 100
+end
+
+local function decorative(opt)
+    return opt.type == "header" or opt.type == "description"
+end
+
+-- Hide in the basic mode what `set` does not list under `group`. Returns true
+-- when the group keeps at least one option in the basic mode.
+local function applyBasic(group, set, prefix)
+    local keys = {}
+    for key in pairs(group.args) do keys[#keys + 1] = key end
+    table.sort(keys, function(a, b)
+        local oa, ob = orderOf(group.args[a]), orderOf(group.args[b])
+        if oa ~= ob then return oa < ob end
+        return a < b
+    end)
+
+    local basic, any = {}, false
+    for _, key in ipairs(keys) do
+        local opt, path = group.args[key], prefix .. key
+        if opt == advancedToggle then
+            basic[key] = true
+        else
+            if set[path] then
+                basic[key] = true
+            elseif opt.type == "group" then
+                basic[key] = applyBasic(opt, set, path .. ".")
+            elseif not decorative(opt) then
+                basic[key] = false
+            end
+            any = any or basic[key] == true
+        end
+    end
+
+    -- A header stays when an option of its block stays; a spacer stays
+    -- before an option that stays.
+    for i, key in ipairs(keys) do
+        local opt = group.args[key]
+        if decorative(opt) and not set[prefix .. key] then
+            local keep = false
+            for j = i + 1, #keys do
+                local nextOpt = group.args[keys[j]]
+                if nextOpt.type == "header" then break end
+                if not decorative(nextOpt) then
+                    keep = keep or basic[keys[j]]
+                    if opt.type == "description" then break end
+                end
+            end
+            basic[key] = keep
+        end
+    end
+
+    for key, keep in pairs(basic) do
+        if not keep then hideInBasic(group.args[key]) end
+    end
+    return any
+end
+
 -- Root group: built lazily each time AceConfig asks for the table so
 -- providers registered after OnEnable (e.g. by plugins loaded later)
 -- still appear. The legacy NxOptions section provides a "Main" tab
@@ -112,9 +285,15 @@ local function buildRootGroup()
             end
         end
         widenSliders(table_)
+        local layout = LAYOUT[id] or {}
         args[id] = table_
-        args[id].order = entry.order or 100
-        args[id].name  = entry.displayName or id
+        args[id].order = layout.order or entry.order or 100
+        args[id].name  = layout.name or entry.displayName or id
+        local set = basicSets[id]
+        if set and table_.args.unavailable == nil then
+            table_.args.showAdvanced = advancedToggle
+            if not applyBasic(table_, set, "") then hideInBasic(table_) end
+        end
     end
 
     -- Profiles options should not prevent every other category from rendering
@@ -168,6 +347,15 @@ end
 
 function Options:Refresh()
     AceConfigReg:NotifyChange("Carbonite")
+end
+
+-- Basic mode (false, the default) or advanced mode (true).
+function Options:ShowAdvanced()
+    return showAdvanced()
+end
+
+function Options:SetShowAdvanced(value)
+    advancedToggle.set(nil, value)
 end
 
 function Options:OnEnable()
