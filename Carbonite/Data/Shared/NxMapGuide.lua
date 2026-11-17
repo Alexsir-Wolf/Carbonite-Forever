@@ -1819,7 +1819,18 @@ function Nx.Map.Guide:UpdateMapIcons()
                             local startName, zone, x, y, level = Quest:GetSEPos (quest["Start"])
                             local wx, wy = Map:GetWorldPos (mapId, x, y)
                             local tx = anyDaily and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimB" or "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaim"
+                            local iconScale = 1
+                            -- Blizzard quest atlases and the quest icon scale (#49)
+                            -- live in Carbonite.Quests, which owns this data.
+                            if Quest.GetMapIconTexture then
+                                tx = Quest.GetMapIconTexture (anyDaily and "daily" or "available")
+                                iconScale = Quest.GetMapIconScale()
+                            end
                             local icon = map:AddIconPt (show and "!GQ" or "!GQC", wx, wy, level, nil, tx)
+                            -- Per-pin size: pooled pins keep the class size
+                            -- they were allocated with, so set it every time.
+                            local iconSize = (show and 16 or 10) * iconScale
+                            icon.w, icon.h = iconSize, iconSize
 --                            local tx = "Interface\\Minimap\\ObjectIconsAtlas"--anyDaily and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimB" or "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaim"
 --                            local tx1, txy1, tx2, ty2 = GetObjectIconTextureCoords(anyDaily and 4713 or 4726)
 --                            local icon = map:AddIconPt (show and "!GQ" or "!GQC", wx, wy, level, nil, tx, tx1, txy1, tx2, ty2)
