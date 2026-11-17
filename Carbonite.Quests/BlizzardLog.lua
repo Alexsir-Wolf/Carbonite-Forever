@@ -1229,7 +1229,7 @@ function Nx.Quest:GetHistoryTimer()
             QHistQuery = Nx:ScheduleTimer(Nx.Quest.QuestQueryTimer, .1, Nx.Quest)
         end
 
-        Nx:ShowMessage (L["Get character's quest completion data from the server?"], "Get", func, "Cancel")
+        Nx:ShowMessage (L["Get character's quest completion data from the server?"], L["Get"], func, L["Cancel"])
     end
 end
 

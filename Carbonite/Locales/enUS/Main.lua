@@ -269,3 +269,5 @@ L["Profiling is on. This decreases game performance. Disable?"] = true
 L["Disable and Reload"] = true
 L["Toggle profiling? Reloads UI"] = true
 L["the community."] = true
+L["Forever"] = true
+L["Quests"] = true
