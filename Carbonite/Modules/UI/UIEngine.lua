@@ -1649,6 +1649,14 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
     win.Frm = f
     f.NxWin = win
 
+    -- Order in which the windows were brought to the front: with the same
+    -- strata and level, the last one raised draws on top. The dungeon chart's
+    -- minimap uses it to know which windows are over the map (#103).
+    hooksecurefunc (f, "Raise", function()
+        Nx.Window.RaiseSeq = (Nx.Window.RaiseSeq or 0) + 1
+        win.RaisedSeq = Nx.Window.RaiseSeq
+    end)
+
 --    f:SetAttribute ("showstates", "1")
 
     f:SetResizeBounds (minResizeW or 100, minResizeH or 40)
