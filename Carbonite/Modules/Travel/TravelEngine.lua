@@ -287,6 +287,12 @@ function Travel.TakeTaxiNode(node)
 
     Nx.Map.TaxiETA = false
 
+    -- Time this flight so the next one between these nodes has a duration (#139)
+    local flightTimes = Carbonite.Modules.FlightTimes
+    if flightTimes then
+        flightTimes:Begin(self.TaxiNameStart, map.TaxiName)
+    end
+
     -- Calculate expected travel time
     local tm = self:TaxiCalcTime(node)
 
@@ -340,21 +346,17 @@ function Travel:TaxiCalcTime(dest)
                 local routeName = srcName .. "#" .. destName
 
                 if t == 0 then
-                    -- Check if we have saved time data
+                    -- Per-character times saved by older versions
                     local tt = Nx.db.char.Travel["TaxiTime"]
-                    t = tt[routeName]
+                    t = tt and tt[routeName]
 
                     if not t then
                         if Nx.db.profile.Debug.DebugMap then
                             Nx.prt(" No taxi data %s to %s", srcName, destName)
                         end
 
-                        -- Mark for saving if this is a single-segment route
-                        if rCnt == 1 then
-                            self.TaxiSaveName = routeName
-                        end
-
-                        return 0
+                        -- A multi-hop flight already taken as a whole
+                        return self:TaxiFindRecordedTime(self.TaxiNameStart, TaxiNodeName(dest))
                     end
                 end
 
@@ -401,15 +403,35 @@ end
 -- @param destName Destination taxi node name
 -- @return Flight time in seconds, or 0 if not found
 function Travel:TaxiFindConnectionTime(srcName, destName)
-    local srcNPCName, x, y = Nx.Map.Guide:FindTaxis(srcName)
-    local destNPCName, x, y = Nx.Map.Guide:FindTaxis(destName)
+    local t = self:TaxiFindShippedTime(srcName, destName)
+    if t > 0 then
+        return t
+    end
+    return self:TaxiFindRecordedTime(srcName, destName)
+end
+
+--- Flight time measured in game and saved account-wide (#139)
+-- @return Flight time in seconds, or 0 if never flown
+function Travel:TaxiFindRecordedTime(srcName, destName)
+    local flightTimes = Carbonite.Modules.FlightTimes
+    return flightTimes and flightTimes:Get(srcName, destName) or 0
+end
+
+--- Flight time from the shipped Nx.FlightConnection data (empty for now)
+-- @return Flight time in seconds, or 0 if not found
+function Travel:TaxiFindShippedTime(srcName, destName)
+    local conn = Nx.FlightConnection
+    if type(conn) ~= "string" or conn == "" then
+        return 0
+    end
+
+    local srcNPCName = Nx.Map.Guide:FindTaxis(srcName)
+    local destNPCName = Nx.Map.Guide:FindTaxis(destName)
 
     -- Flight connection data format (6 bytes per entry):
     -- aa = index of start NPC (base 221 encoded)
     -- bb = index of end NPC (base 221 encoded)
     -- cc = flight time in 10ths of a second (base 221 encoded)
-
-    local conn = Nx.FlightConnection
 
     for n = 1, #conn, 6 do
         local a1, a2, b1, b2, c1, c2 = strbyte(conn, n, n + 5)
@@ -463,20 +485,6 @@ function Travel:TaxiTimer()
         return .5  -- Continue timer every 0.5 seconds
     end
     -- Return nil to stop timer when no longer on taxi
-end
-
----------------------------------------------------------------------------------------
--- Flight Time Saving
----------------------------------------------------------------------------------------
-
---- Save discovered flight time for a route segment
--- Called when we learn a new flight time that wasn't in the database
--- @param tm The flight time in seconds
-function Travel:TaxiSaveTime(tm)
-    if self.TaxiSaveName then
-        Nx.db.char.Travel["TaxiTime"][self.TaxiSaveName] = tm
-        self.TaxiSaveName = false
-    end
 end
 
 ---------------------------------------------------------------------------------------

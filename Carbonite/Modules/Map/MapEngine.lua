@@ -6477,9 +6477,8 @@ function Nx.Map:Update (elapsed)
         Map.TaxiOn = false
         Map.TaxiX = nil        -- Clear so if we pop on a taxi by a unhooked method we don't track old
 
+        -- The time is recorded by Modules/Travel/FlightTimes.lua (#139)
         local tm = GetTime() - Map.TaxiStartTime
-
-        Nx.Travel:TaxiSaveTime (tm)
 
         if Nx.db.profile.Debug.DebugMap then
             Nx.prt ("Taxi time %.1f seconds", tm)

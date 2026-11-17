@@ -88,6 +88,8 @@
     <Script file="HUD\HUDEngine.lua" />
     <!-- Travel: same split (shell, then engine relocated from NxTravel.lua). -->
     <Script file="Travel\Travel.lua" />
+    <!-- Measured flight times per pair of nodes, account-wide (#139). -->
+    <Script file="Travel\FlightTimes.lua" />
     <Script file="Travel\TravelEngine.lua" />
 
     <!-- Cross-cutting modules. -->
