@@ -155,3 +155,7 @@ L["Use DungeonJournal Maps"] = true
 L["No dungeon map addon is loaded"] = true
 L["Entrance"] = true
 L["The game now provides a map for this dungeon (map %d)"] = true
+L["Bosses (route order)"] = true
+L["No boss data for this dungeon"] = true
+L["(next)"] = true
+L["Next boss"] = true
