@@ -94,7 +94,7 @@ local LAYOUT = {
 -- keeps the whole group. A section listed with no paths only appears in the
 -- advanced mode; a section not listed (About, Privacy, plugins) never hides.
 local BASIC = {
-    General = { "loginMsg", "maxCamera", "hideGriff" },
+    General = { "loginMsg", "versionCheck", "maxCamera", "hideGriff" },
     Maps = {
         "mainMap.maxMap", "mainMap.hidecombat", "mainMap.useRoute", "mainMap.showTrail",
         "mainMap.showToolBar", "mainMap.showTitleXY", "mainMap.showPOI",

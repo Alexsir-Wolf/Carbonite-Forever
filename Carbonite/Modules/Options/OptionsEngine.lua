@@ -289,6 +289,20 @@ local function generalOptions()
                         Nx.db.profile.General.LoginMessage = not Nx.db.profile.General.LoginMessage
                     end,
                 },
+                -- Notice of a newer Carbonite-Forever (#92)
+                versionCheck = {
+                    order = 1.5,
+                    type = "toggle",
+                    width = "full",
+                    name = L["Warn When A New Version Is Available"],
+                    desc = L["When enabled, Carbonite-Forever tells other copies in your group, raid and guild which version it is (only the version) and warns you in chat, once per session, when a newer one exists."],
+                    get = function()
+                        return Nx.db.profile.General.VersionCheck ~= false
+                    end,
+                    set = function(_, value)
+                        Nx.db.profile.General.VersionCheck = value and true or false
+                    end,
+                },
                 -- Buyout per item in the auction house (was on the minimap button menu, #46)
                 auctionPerItem = {
                     order = 2.5,
