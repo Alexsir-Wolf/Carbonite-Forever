@@ -742,6 +742,16 @@ function Nx.Quest:OnUserWaypointUpdated()
         self:SeedUserWaypoint()
         return
     end
+    -- The 3D pin Carbonite itself put on its own target (BlizzardPin.lua) is
+    -- not a waypoint the player dropped. The Forever client reports it a
+    -- little moved or on a parent map, so the re-seed alone did not match:
+    -- the target was swapped for a "user waypoint" one and then cleared.
+    local pin = Carbonite and Carbonite.Modules and Carbonite.Modules.Map
+        and Carbonite.Modules.Map.BlizzardPin
+    if pin and pin.OwnsWaypoint and pin:OwnsWaypoint() then
+        self.LastUserWaypointSig = UserWaypointSig()
+        return
+    end
     if self:IsIgnoredRXPWaypoint() then
         return
     end
