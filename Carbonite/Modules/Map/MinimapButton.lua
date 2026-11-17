@@ -33,10 +33,12 @@ end
 local TEX_IDLE  = "Interface\\AddOns\\Carbonite\\Gfx\\MMBut"
 local TEX_GLOW  = "Interface\\AddOns\\Carbonite\\Gfx\\MMButFilled"
 
+-- The art sits on the `icon` texture (Carbonite.xml) inside the round
+-- border, not on the button's NormalTexture.
 function MinimapButton:SetGlow(on)
     local f = self:GetFrame()
-    if not f or not f.SetNormalTexture then return end
-    f:SetNormalTexture(on and TEX_GLOW or TEX_IDLE)
+    if not f or not f.icon then return end
+    f.icon:SetTexture(on and TEX_GLOW or TEX_IDLE)
     Carbonite.Core.EventBus:Fire("MAP_MINIMAP_BUTTON_GLOW", on == true)
 end
 
@@ -102,7 +104,7 @@ function MinimapButton:ShowTooltip(ownerFrame)
     add("Alt left click toggle Watch List")
     add("Middle click toggle Guide")
     add("Right click for Menu")
-    if not mmown then add("Shift drag to move") end
+    if not mmown then add("Drag to move") end
 
     if Carbonite.UI.Tooltip then Carbonite.UI.Tooltip:Show(ownerFrame, "ANCHOR_LEFT", lines) end
 end
