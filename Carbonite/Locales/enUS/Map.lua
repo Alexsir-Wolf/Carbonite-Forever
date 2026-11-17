@@ -28,6 +28,7 @@ L["Show Quest Blobs"] = true
 L["Show Gossip POIs"] = true
 L["Show Bonus Objectives"] = true
 L["Show Unexplored Areas"] = true
+L["Show Zone Levels"] = true
 L["Quest Givers: Only Available Quests"] = true
 L["Quest Givers: Daily and Weekly Quests"] = true
 L["Quest Givers: Repeatable Quests"] = true
