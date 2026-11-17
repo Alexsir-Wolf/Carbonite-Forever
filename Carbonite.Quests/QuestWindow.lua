@@ -83,6 +83,86 @@ local GetCachedDifficultyColorStr = Nx.Quest.GetCachedDifficultyColorStr
 -- Arithmetic decoding retains modern quest IDs above the 32-bit bit-op range.
 local GetPackedQuestID = Nx.Quest.GetPackedQuestID
 
+-------------------------------------------------------------------------------
+-- Look of the quest log rows, after the game's own quest log (#48)
+-------------------------------------------------------------------------------
+
+-- State icon of a quest: the client's atlases, first one it has, else the
+-- gossip icons every client ships.
+local STATE_ICONS = {
+    available  = { "QuestNormal", file = "Interface\\GossipFrame\\AvailableQuestIcon" },
+    daily      = { "QuestDaily", file = "Interface\\GossipFrame\\DailyQuestIcon" },
+    inProgress = { "Quest-In-Progress-Icon", file = "Interface\\GossipFrame\\IncompleteQuestIcon" },
+    complete   = { "QuestTurnin", file = "Interface\\GossipFrame\\ActiveQuestIcon" },
+    done       = { "checkmark-minimal", "common-icon-checkmark", file = "Interface\\RaidFrame\\ReadyCheck-Ready" },
+    failed     = { "common-icon-redx", file = "Interface\\RaidFrame\\ReadyCheck-NotReady" },
+}
+Nx.Quest.List.StateIcons = STATE_ICONS
+
+local STATE_ICON_SIZE = 14
+
+-- Width of the right column (tag and XP) and of the button column.
+local TAG_COLUMN_W = 140
+local BUTTON_COLUMN_W = 20
+
+---
+-- Inline texture markup of a quest state icon ("" for an unknown state).
+--
+function Nx.Quest.List.StateIcon (state)
+    local icon = STATE_ICONS[state]
+    if not icon then
+        return ""
+    end
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    for _, name in ipairs (icon) do
+        if info and info (name) then
+            return format ("|A:%s:%d:%d|a ", name, STATE_ICON_SIZE, STATE_ICON_SIZE)
+        end
+    end
+    return format ("|T%s:%d:%d|t ", icon.file, STATE_ICON_SIZE, STATE_ICON_SIZE)
+end
+
+---
+-- Color code of a Skin token, so text follows the theme like the bands do.
+--
+function Nx.Quest.List.Ink (token)
+    local skin = Carbonite and Carbonite.UI and Carbonite.UI.Skin
+    if not skin then
+        return ""
+    end
+    local r, g, b = skin:GetToken (token)
+    return format ("|cff%02x%02x%02x", floor (r * 255 + .5), floor (g * 255 + .5), floor (b * 255 + .5))
+end
+
+---
+-- "[level] title" in the quest's difficulty color, as the game's quest log.
+--
+function Nx.Quest.List.LevelTitle (level, title, color)
+    if level and level > 0 then
+        return format ("%s[%d] %s", color, level, title)
+    end
+    return color .. title
+end
+
+---
+-- Fit the columns to the list width: the title takes the room left by the
+-- button column and the tag/XP column, which hugs the right edge.
+-- Returns true when a width changed.
+--
+function Nx.Quest.List.FitColumns (list, width)
+    if type (width) ~= "number" or width <= 0 then
+        return false
+    end
+    local sliderW = list.Slider and list.Slider.Frm:GetWidth() or 10
+    local nameW = max (100, width - BUTTON_COLUMN_W - TAG_COLUMN_W - sliderW - 4)
+    local changed = list:ColumnGetWidth (2) ~= nameW or list:ColumnGetWidth (4) ~= TAG_COLUMN_W
+    list:ColumnSetWidth (1, BUTTON_COLUMN_W)
+    list:ColumnSetWidth (2, nameW)
+    list:ColumnSetWidth (3, 0)
+    list:ColumnSetWidth (4, TAG_COLUMN_W)
+    return changed
+end
+
 -- Quest list
 -------------------------------------------------------------------------------
 
@@ -319,13 +399,19 @@ function Nx.Quest.List:Open()
 
     list:SetLineHeight (0, 6)
 
-    list:ColumnAdd ("", 1, 20)
+    list:ColumnAdd ("", 1, BUTTON_COLUMN_W)
     list:ColumnAdd ("", 2, 300)
 --    list:ColumnAdd ("Lvl", 3, 20, "CENTER")
     list:ColumnAdd ("", 3, 0)
-    list:ColumnAdd ("", 4, 600)
-    list:ColumnAdd ("", 5, 200)
-    list:ColumnAdd ("", 6, 500)
+    list:ColumnAdd ("", 4, TAG_COLUMN_W, "RIGHT")
+
+    -- Title fills the row, tag and XP sit at the right edge (#48)
+    list.Frm.NxSetSize = function (_, width, height)
+        if Nx.Quest.List.FitColumns (list, width) then
+            list.SSW = nil
+            list:SetSize (width, height)
+        end
+    end
 
     -- Create menu
 
@@ -1316,6 +1402,11 @@ function Nx.Quest.List:OnListEvent (eventName, sel, val2, click)
                     end
                 end
             end
+
+        elseif hdrCur and eventName == "select" and self.TabSelected == 1 then
+
+            -- A click on the zone bar opens or closes it, as in the game's log
+            Quest.HeaderHide[hdrCur.Header] = not Quest.HeaderHide[hdrCur.Header] or nil
         end
 
         Nx.Quest:SelectBlizz (qIndex)
@@ -2324,6 +2415,13 @@ function Nx.Quest.List:Update()
     -- List
 
     local list = self.List
+
+    -- The selected line, found again after the rebuild: the objectives under
+    -- the selected quest come and go, so line numbers shift (#48).
+    local keepData = self.TabSelected == 1 and list:ItemGetData() or 0
+    local selQId = keepData > 0 and GetPackedQuestID (keepData) or 0
+    local selQn = keepData > 0 and bit_band (keepData, 0xff) or 0
+
     list:Empty()
 
     local greenRange = 5
@@ -2337,6 +2435,11 @@ function Nx.Quest.List:Update()
     if self.TabSelected == 1 then
 
         local oldSelectedQuestID = QuestAPI and QuestAPI:GetSelectedQuestID() or 0
+
+        local QList = Nx.Quest.List
+        local headerInk = QList.Ink ("title")
+        local stripe = false
+        local keepLine
 
         local header
         local curq = Quest.CurQ
@@ -2375,14 +2478,9 @@ function Nx.Quest.List:Update()
 
             if not self.ShowParty or onQ > 0 then
 
-                local lvlStr = "  "
-                if level > 0 then
-                    lvlStr = format ("|cffd0d0d0%2d", level)
-                end
-
                 local color = GetCachedDifficultyColorStr(level)
 
-                local nameStr = format ("%s %s%s", lvlStr, color, title)
+                local nameStr = QList.LevelTitle (level, title, color)
 
                 if quest and quest.CNum then
                     nameStr = nameStr .. format (L[" (Part %d of %d)"], quest.CNum, cur.CNumMax)
@@ -2418,10 +2516,13 @@ function Nx.Quest.List:Update()
                 if self.QOpts.NXShowHeaders and cur.Header ~= header then
                     header = cur.Header
                     if show then
+                        -- Zone bar: +/- to collapse, text in the theme's title color
                         list:ItemAdd (0)
-                        list:ItemSet (2, format ("|cffffd100%s", header))
+                        list:ItemSet (2, headerInk .. header)
                         list:ItemSetDataEx (list:ItemGetNum(), cur, 1)
-                        list:ItemSetButton ("QuestHdr", Quest.HeaderHide[cur.Header])
+                        list:ItemSetButton ("QuestLogHdr", Quest.HeaderHide[cur.Header])
+                        list:ItemSetBand ("listHeader")
+                        stripe = false
                     end
                 end
 
@@ -2459,10 +2560,24 @@ function Nx.Quest.List:Update()
                         nameStr = "> " .. nameStr
                     end
 
-                    list:ItemSet (2, nameStr)
+                    local state = isComplete == 1 and "complete" or isComplete and "failed" or "inProgress"
+
+                    list:ItemSet (2, QList.StateIcon (state) .. nameStr)
                     list:ItemSet (4, (tag or "") .. Quest:XPText (qId))
 
-                    if self.QOpts.NXShowObj then
+                    stripe = not stripe
+                    if stripe then
+                        list:ItemSetBand ("rowStripe")
+                    end
+
+                    local selected = qId == selQId and qn == selQn
+                    if selected and keepData == qId * 0x10000 + qn then
+                        keepLine = list:ItemGetNum()
+                    end
+
+                    -- Objectives with their progress: under the selected quest,
+                    -- or under every quest with the "Show Objectives" option
+                    if self.QOpts.NXShowObj or selected then
 
                         local num = GetNumQuestLeaderBoards (qn)
                         local oCompColor = Nx.Quest.Cols["oCompColor"]
@@ -2498,6 +2613,10 @@ function Nx.Quest.List:Update()
 
                             list:ItemAdd (qId * 0x10000 + ln * 0x100 + qn)
 
+                            if selected and keepData == qId * 0x10000 + ln * 0x100 + qn then
+                                keepLine = list:ItemGetNum()
+                            end
+
                             local trkStr = ""
 
                             if zone then
@@ -2519,6 +2638,10 @@ function Nx.Quest.List:Update()
 
         if oldSelectedQuestID and oldSelectedQuestID > 0 and QuestAPI then
             QuestAPI:SetSelectedQuestID(oldSelectedQuestID)
+        end
+
+        if keepLine then
+            list:Select (keepLine)
         end
 
     end
@@ -2574,7 +2697,6 @@ function Nx.Quest.List:Update()
 
 --                Nx.prt ("%s [%s] %s", qname, qId, quest.CNum or "")
 
-                local lvlStr = format ("|cffd0d0d0%2d", lvl)
                 local title = qname
 
                 if quest and quest.CNum then
@@ -2626,7 +2748,7 @@ function Nx.Quest.List:Update()
 
                     local color = GetCachedDifficultyColorStr(lvl)
 
-                    t.Desc = format ("%s %s%s%s", lvlStr, haveStr, color, title)
+                    t.Desc = Nx.Quest.List.StateIcon ("done") .. haveStr .. Nx.Quest.List.LevelTitle (lvl, title, color)
                     t.Col4 = format ("%s %s", "|cff9f9fcf" .. date (L["%m/%d %H:%M:%S"], qTime), dailyName)
                 end
             end
@@ -2634,16 +2756,20 @@ function Nx.Quest.List:Update()
 
         sort (sortT, function (a, b) return a.T > b.T end)
 
-        for _, qEntry in ipairs (sortT) do
+        for n, qEntry in ipairs (sortT) do
 
             list:ItemAdd (qEntry.QId * 0x10000)
             list:ItemSet (2, qEntry.Desc)
             list:ItemSet (4, qEntry.Col4)
+            if n % 2 == 1 then
+                list:ItemSetBand ("rowStripe")
+            end
         end
 
         local str = (showAllZones and "All" or Map:IdToName (mapId)) .. L[" Completed"]
 
-        list:ItemSet (2, format ("|cffc0c0c0%s (%d)", str, dbTitleNum), dbTitleIndex)
+        list:ItemSet (2, Nx.Quest.List.Ink ("title") .. format ("%s (%d)", str, dbTitleNum), dbTitleIndex)
+        list:ItemSetBand ("listHeader", dbTitleIndex)
     end
 
     -- Add database quests
@@ -2674,6 +2800,7 @@ function Nx.Quest.List:Update()
         list:ItemAdd (0)
 
         local addBlank
+        local dbStripe = false
 
 --        local qsIndex = 1
 --        local qsLast = #Quest.Sorted
@@ -2727,7 +2854,6 @@ function Nx.Quest.List:Update()
 
                 if show then
 
-                    local lvlStr = format ("|cffd0d0d0%2d", lvl)
                     -- Prefer the live, localized title; fall back to Questie's
                     -- per-locale patch table; final fallback is the English
                     -- name baked into the Quest header. A live-cache miss kicks
@@ -2823,15 +2949,18 @@ function Nx.Quest.List:Update()
 
                         list:ItemAdd (qId * 0x10000)
 
-                        local haveStr = ""
-
-                        if qIds[qId] then
-                            haveStr = "|cffe0e0e0+ "
-                        end
+                        -- State: done, in the log, or still to take
+                        local state = qCompleted and "done" or qIds[qId] and "inProgress"
+                            or freq and "daily" or "available"
 
                         local color = GetCachedDifficultyColorStr(lvl)
 
-                        local str = format ("%s %s%s%s", lvlStr, haveStr, color, title)
+                        local str = Nx.Quest.List.StateIcon (state) .. Nx.Quest.List.LevelTitle (lvl, title, color)
+
+                        dbStripe = not dbStripe
+                        if dbStripe then
+                            list:ItemSetBand ("rowStripe")
+                        end
 
                         if showQId then
                             str = str .. format (" [%s]", qId)
@@ -2886,11 +3015,14 @@ function Nx.Quest.List:Update()
 
         local str = (showAllZones and "Full" or Map:IdToName (mapId)) .. L[" Database"]
 
-        list:ItemSet (2, format ("|cffc0c0c0%s (%d)", str, dbTitleNum), dbTitleIndex)
+        local titleInk = Nx.Quest.List.Ink ("title")
+        list:ItemSet (2, titleInk .. format ("%s (%d)", str, dbTitleNum), dbTitleIndex)
+        list:ItemSetBand ("listHeader", dbTitleIndex)
 
         local low = max (1, showLowLevel and 1 or minLevel)
         local high = min (Nx.MaxPlayerLevel, maxLevel)
-        list:ItemSet (2, "|cffc0c0c0" .. format (L["Levels %d to %d"], low, high), dbTitleIndex + 1)
+        list:ItemSet (2, titleInk .. format (L["Levels %d to %d"], low, high), dbTitleIndex + 1)
+        list:ItemSetBand ("listHeader", dbTitleIndex + 1)
     end
 
     -- Add other player quests
