@@ -107,6 +107,7 @@ local function createOptions()
 					order = 2,
 					type = "color",
 					width = "full",
+					desc = L["Background color of the info windows."],
 					name = L["Info Window Background Color"],
 					hasAlpha = true,
 					get = function()

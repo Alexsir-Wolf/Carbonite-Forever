@@ -68,3 +68,5 @@ L["Total"] = "Total"
 L["crit"] = "crítico"
 L["hit"] = "acerto"
 L["honor"] = "honra"
+-- Options: basic mode, sections and help (#64)
+L["Background color of the info windows."] = "Cor de fundo das janelas de informação."

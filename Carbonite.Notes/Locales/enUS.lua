@@ -77,3 +77,12 @@ L["Convergence"] = true
 L["Show library books still to find"] = true
 L["Show convergences (Skyborne)"] = true
 L["Show convergences for every character"] = true
+-- Options: basic mode, sections and help (#64)
+L["Size of the HandyNotes icons on the map."] = true
+L["Size of the RareScanner icons on the map."] = true
+L["Size of the Questie icons on the map."] = true
+L["Size of the RXPGuides icons on the map."] = true
+L["Size of the GatherLite icons on the map."] = true
+L["Marks on the map the library books you have not found yet."] = true
+L["Shows the Skyborne convergences on the map."] = true
+L["Shows the convergences of all your characters, not only this one."] = true
