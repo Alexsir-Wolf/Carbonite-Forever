@@ -24,6 +24,26 @@ Carbonite.Modules.Map.BlizzardPin = BP
 local SYNC_SECONDS = 0.5
 
 local placed    -- { uiMapID, x, y } of the pin this module put down, nil when none
+local seen      -- the same pin as the client reports it back (moved a little, or on a parent map)
+local placedAt = 0
+local OWN_SECONDS = 2   -- right after placing, the reported waypoint is ours
+local setting = false  -- inside our own Set/Clear call: its events are ours
+local mapOpened = false -- the world map was shown since the pin was placed
+
+-- The player drops a pin only on the world map. While it has not been opened
+-- since the pin was placed, any waypoint change is Carbonite's own pin
+-- (re-placed when the target moved or another one was added).
+local function MapUsed()
+    local worldMap = _G.WorldMapFrame
+    return mapOpened or (worldMap and worldMap:IsShown()) or false
+end
+
+do
+    local worldMap = _G.WorldMapFrame
+    if worldMap and worldMap.HookScript then
+        worldMap:HookScript("OnShow", function() mapOpened = true end)
+    end
+end
 
 local function Enabled()
     local profile = Nx.db and Nx.db.profile
@@ -51,6 +71,9 @@ function BP:Desired()
     local tar = map and map.Targets and map.Targets[1]
     -- A target made from the Blizzard pin already has its pin.
     if not tar or tar.UserWaypoint or not tar.MapId or not tar.TargetMX then return nil end
+    -- A tracked quest keeps the game's own quest super-track: super-tracking
+    -- the pin instead made Carbonite drop the active quest (SuperTrack.lua).
+    if tar.TargetType == "Q" then return nil end
     local zx, zy = map:GetZonePos(tar.MapId, tar.TargetMX, tar.TargetMY)
     if type(zx) ~= "number" or type(zy) ~= "number" then return nil end
     zx, zy = zx / 100, zy / 100
@@ -62,13 +85,55 @@ end
 
 -- Whether the user waypoint in place now is the one this module put down.
 -- The client keeps the position as floats, so it is compared loosely.
+-- World position (instance, x, y in yards) of a point on a map, or nil.
+local function worldOf(mapId, x, y)
+    local get, vec = _G.C_Map.GetWorldPosFromMapPos, _G.CreateVector2D
+    if not (get and vec) then return nil end
+    local ok, inst, pos = pcall(get, mapId, vec(x, y))
+    if not ok or not inst or not pos then return nil end
+    local wx, wy = pos:GetXY()
+    return inst, wx, wy
+end
+
+local SAME_YARDS = 3
+
+-- Same pin: same map and position, or the same spot in the world. The
+-- Forever client gives the pin back rounded or on a parent map, and not
+-- always soon after it was put down.
+local function same(point, ref)
+    if not ref then return false end
+    local pos = point.position
+    if point.uiMapID == ref[1] and math.abs(pos.x - ref[2]) < 0.001
+            and math.abs(pos.y - ref[3]) < 0.001 then
+        return true
+    end
+    local i1, x1, y1 = worldOf(point.uiMapID, pos.x, pos.y)
+    local i2, x2, y2 = worldOf(ref[1], ref[2], ref[3])
+    return i1 ~= nil and i1 == i2 and ((x1 - x2) ^ 2 + (y1 - y2) ^ 2) <= SAME_YARDS ^ 2
+end
+
 local function StillOurs()
     local get = _G.C_Map.GetUserWaypoint
     local point = get and get()
     local pos = point and point.position
     if not (placed and point and pos and pos.x and pos.y) then return false end
-    return point.uiMapID == placed[1] and math.abs(pos.x - placed[2]) < 0.001
-        and math.abs(pos.y - placed[3]) < 0.001
+    if not MapUsed() then return true end
+    if same(point, placed) or same(point, seen) then return true end
+    -- Right after placing it, the client reports the pin as it stored it:
+    -- that is the pin to compare with from now on.
+    local now = GetTime and GetTime() or 0
+    if now - placedAt <= OWN_SECONDS then
+        seen = { point.uiMapID, pos.x, pos.y }
+        return true
+    end
+    return false
+end
+
+-- Whether the user waypoint in place now is the pin this module put down
+-- (SuperTrack.lua then does not take it for one the player dropped).
+function BP:OwnsWaypoint()
+    if setting then return true end
+    return Available() and StillOurs() or false
 end
 
 -- Takes the pin away only while it is still ours: one the player put down
@@ -76,9 +141,11 @@ end
 local function Clear()
     if not placed then return end
     local mine = StillOurs()
-    placed = nil
+    placed, seen = nil, nil
     if mine then
-        _G.C_Map.ClearUserWaypoint()
+        setting = true
+        pcall(_G.C_Map.ClearUserWaypoint)
+        setting = false
         Reseed()
     end
 end
@@ -92,10 +159,27 @@ function BP:Sync()
         return
     end
     if placed and placed[1] == mapId and placed[2] == x and placed[3] == y then return end
+    -- The client may fire USER_WAYPOINT_UPDATED and SUPER_TRACKING_CHANGED
+    -- inside these calls: the new pin is recorded first, so the listeners
+    -- already see it as ours.
+    local old, oldSeen, oldAt, oldMap = placed, seen, placedAt, mapOpened
+    placed, seen = { mapId, x, y }, nil
+    placedAt = GetTime and GetTime() or 0
+    mapOpened = false
+    setting = true
     local ok = pcall(_G.C_Map.SetUserWaypoint, _G.UiMapPoint.CreateFromCoordinates(mapId, x, y))
-    if not ok then return end
-    pcall(_G.C_SuperTrack.SetSuperTrackedUserWaypoint, true)
-    placed = { mapId, x, y }
+    if ok then pcall(_G.C_SuperTrack.SetSuperTrackedUserWaypoint, true) end
+    setting = false
+    if not ok then
+        placed, seen, placedAt, mapOpened = old, oldSeen, oldAt, oldMap
+        return
+    end
+    -- What the client stored, when it already says: the pin to recognise.
+    local get = _G.C_Map.GetUserWaypoint
+    local point = get and get()
+    if point and point.position and point.position.x then
+        seen = { point.uiMapID, point.position.x, point.position.y }
+    end
     Reseed()
 end
 
