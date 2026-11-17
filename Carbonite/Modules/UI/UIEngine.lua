@@ -7030,8 +7030,12 @@ function Nx.List:UpdateBands (lineH, hdrH)
         end
     end
 
-    for n = self.Vis + 1, #bands do
-        bands[n]:Hide()
+    -- Bands exist only for the lines that had one: the table has holes, and
+    -- #bands can point past one (shrinking the window raised an error here).
+    for n, t in pairs (bands) do
+        if n > self.Vis then
+            t:Hide()
+        end
     end
 end
 
