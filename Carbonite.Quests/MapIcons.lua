@@ -1112,6 +1112,8 @@ function Nx.Quest:UpdateIcons (map)
             .. "|" .. (showOnMap and 1 or 0)
             .. "|" .. (qprof.MapShowWatchAreas and 1 or 0)
             .. "|" .. (qprof.ShowAllMapPOIs and 1 or 0)
+            .. "|" .. (qprof.MapBlizzardIcons ~= false and 1 or 0)
+            .. "|" .. (qprof.MapQuestIconScale or 1)
     -- The dirty-check now guards only the heavy per-quest walk
     -- (Pin/Layer-backed POIs). The BONUS TASKS / WORLD QUESTS block
     -- below uses the legacy direct-stamp pool (IconWQFrms), which the
@@ -1255,13 +1257,13 @@ function Nx.Quest:UpdateIcons (map)
                     if cur.PartyNames then
                         tip = tip .. "\n" .. cur.PartyNames
                     end
-                    Nx.Quest:AddPOI(wx, wy, {
+                    Nx.Quest:AddPOI(wx, wy, Quest.StyleMapIcon(
+                        Quest.GetEndIconKind(cur, cur.QId, true), {
                         tip    = tip,
-                        tex    = "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconQuestion",
                         NXType = 9000,
                         NXData = cur,
                         mapID  = mapId,
-                    })
+                    }))
                 else
                     local f = map:GetIconStatic (4)
                     if map:ClipFrameByMapType (f, wx, wy, navscale, navscale, 0) then
@@ -1372,13 +1374,13 @@ function Nx.Quest:UpdateIcons (map)
                         local wx, wy = map:GetWorldPos (mapId, x, y)
                         if Nx.Quest.AddPOI then
                             local tip = format (L["%s\nStart: %s (%.1f %.1f)"], qname, startName, x, y)
-                            Nx.Quest:AddPOI(wx, wy, {
+                            Nx.Quest:AddPOI(wx, wy, Quest.StyleMapIcon(
+                                Quest.GetStartIconKind(trackId), {
                                 tip      = tip,
-                                tex      = "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaim",
                                 NXType   = 9000,
                                 NXData   = cur,
                                 mapID    = mapId,
-                            })
+                            }))
                         else
                             local f = map:GetIconStatic (4)
                             if map:ClipFrameByMapType (f, wx, wy, navscale, navscale, 0) then
@@ -1412,15 +1414,15 @@ function Nx.Quest:UpdateIcons (map)
                         local vc = isSuperTracked
                             and {1, 0.85, 0, 1}      -- Active quest: Blizzard gold
                             or  {.6, 1, .6, 1}
-                        Nx.Quest:AddPOI(wx, wy, {
+                        Nx.Quest:AddPOI(wx, wy, Quest.StyleMapIcon(
+                            Quest.GetEndIconKind(cur, trackId), {
                             tip         = tip,
-                            tex         = "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconQuestion",
                             NXType      = 9000,
                             NXData      = cur,
                             mapID       = mapId,
                             vertexColor = vc,
                             showGlow    = isSuperTracked,
-                        })
+                        }))
                     else
                         local f = map:GetIconStatic (4)
                         if map:ClipFrameByMapType (f, wx, wy, navscale, navscale, 0) then
@@ -1615,16 +1617,15 @@ function Nx.Quest:UpdateIcons (map)
                                                     local pvc = isSuperTracked
                                                         and {1, 0.85, 0, 1}
                                                         or  {r, g, b, .9}
-                                                    Nx.Quest:AddPOI(wx, wy, {
+                                                    Nx.Quest:AddPOI(wx, wy, Quest.StyleMapIcon("objective", {
                                                         tip         = ptip,
-                                                        tex         = "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconQTarget",
                                                         NXType      = 9000 + n,
                                                         NXData      = cur,
                                                         mapID       = projectedMapID,
                                                         vertexColor = pvc,
                                                         showGlow    = isSuperTracked,
                                                         label       = tostring(objectiveIndex),
-                                                    })
+                                                    }))
                                                 elseif projectedMapID then
                                                     local f = map:GetIconStatic (4)
                                                     if map:ClipFrameByMapType (f, wx, wy, navscale, navscale, 0) then
@@ -1728,16 +1729,15 @@ function Nx.Quest:UpdateIcons (map)
                                     and {1, 0.85, 0, 1}
                                     or  {r, g, b, .9}
                                 if Nx.Quest.AddPOI then
-                                    Nx.Quest:AddPOI(areaMarkerX, areaMarkerY, {
+                                    Nx.Quest:AddPOI(areaMarkerX, areaMarkerY, Quest.StyleMapIcon("objective", {
                                         tip         = tip,
-                                        tex         = "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconQTarget",
                                         NXType      = 9000 + n,
                                         NXData      = cur,
                                         mapID       = areaMarkerMapID,
                                         vertexColor = mvc,
                                         showGlow    = isSuperTracked,
                                         label       = tostring(objectiveIndex),
-                                    })
+                                    }))
                                 else
                                     local f = map:GetIconStatic(4)
                                     if map:ClipFrameByMapType(f, areaMarkerX,

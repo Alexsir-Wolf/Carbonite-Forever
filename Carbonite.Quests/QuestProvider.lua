@@ -205,3 +205,128 @@ function Nx.Quest:ClearProviderPins()
     local p = provider()
     if p then p:Clear() end
 end
+
+-- ---------------------------------------------------------------
+-- Quest map icon look (#49)
+-- ---------------------------------------------------------------
+-- The bundled Gfx\Map icons date from the original Carbonite. The modern
+-- client ships the same symbols as atlases (the ones its own world map
+-- and minimap use), so quest POIs and quest givers read like the rest of
+-- the UI. Each kind lists atlas candidates in order of preference; the
+-- first one the client knows wins, and a client without any of them (or
+-- without C_Texture) keeps the legacy texture, exactly like
+-- Nx.Quest.SetParchment does for the details background.
+
+local GFX = "Interface\\AddOns\\Carbonite\\Gfx\\Map\\"
+
+local MAP_ICON_LEGACY = {
+    available        = GFX .. "IconExclaim",
+    daily            = GFX .. "IconExclaimB",
+    turnin           = GFX .. "IconQuestion",
+    repeatableTurnin = GFX .. "IconQuestion",
+    inProgress       = GFX .. "IconQuestion",
+    objective        = GFX .. "IconQTarget",
+}
+
+local MAP_ICON_ATLASES = {
+    available        = { "QuestNormal" },
+    daily            = { "QuestDaily", "quest-recurring-available" },
+    turnin           = { "QuestTurnin" },
+    repeatableTurnin = { "QuestRepeatableTurnin", "quest-recurring-turnin" },
+    inProgress       = { "Quest-In-Progress-Icon" },
+    objective        = { "QuestObjective", "QuestBonusObjective" },
+}
+Nx.Quest.MapIconAtlases = MAP_ICON_ATLASES
+
+-- Atlas availability never changes during a session, so each name is
+-- looked up once (the guide asks for every quest giver on the map).
+local atlasKnown = {}
+
+local function HasAtlas(name)
+    local known = atlasKnown[name]
+    if known == nil then
+        local info = _G.C_Texture and _G.C_Texture.GetAtlasInfo
+        known = (type(info) == "function" and info(name)) and true or false
+        atlasKnown[name] = known
+    end
+    return known
+end
+
+local function QuestProfile()
+    local qdb = Nx.qdb
+    return qdb and qdb.profile and qdb.profile.Quest
+end
+
+function Nx.Quest.UseBlizzardMapIcons()
+    local prof = QuestProfile()
+    return not prof or prof.MapBlizzardIcons ~= false
+end
+
+function Nx.Quest.GetMapIconScale()
+    local prof = QuestProfile()
+    local s = prof and tonumber(prof.MapQuestIconScale)
+    if not s or s <= 0 then return 1 end
+    return s
+end
+
+-- Returns the texture string for a quest icon kind ("atlas:<name>" when
+-- the client has a matching atlas) and whether it is an atlas.
+function Nx.Quest.GetMapIconTexture(kind)
+    local legacy = MAP_ICON_LEGACY[kind] or MAP_ICON_LEGACY.available
+    if Nx.Quest.UseBlizzardMapIcons() then
+        local list = MAP_ICON_ATLASES[kind]
+        if list then
+            for i = 1, #list do
+                if HasAtlas(list[i]) then
+                    return "atlas:" .. list[i], true
+                end
+            end
+        end
+    end
+    return legacy, false
+end
+
+local function IsRepeatable(cur, questID)
+    local freq = cur and cur.Daily
+    if freq and freq ~= 0 then return true end
+    return questID and Nx.QuestFreq and Nx.QuestFreq[questID] and true or false
+end
+
+-- Kind of the start / end marker of a quest. Quests outside the log
+-- show where they are picked up; quests in the log show where they are
+-- turned in, as "ready" only once every objective is done (`complete`
+-- overrides cur.Complete, e.g. with the party-merged state).
+function Nx.Quest.GetStartIconKind(questID)
+    return IsRepeatable(nil, questID) and "daily" or "available"
+end
+
+function Nx.Quest.GetEndIconKind(cur, questID, complete)
+    if complete == nil and cur then
+        complete = cur.Complete == 1 or cur.Complete == true
+    end
+    if cur and not complete then
+        return "inProgress"
+    end
+    return IsRepeatable(cur, questID) and "repeatableTurnin" or "turnin"
+end
+
+-- Fills the texture and size of a quest POI. Atlases are drawn in their
+-- own colors, so the per-quest tint meant for the white legacy icons is
+-- dropped (the glow still marks the super-tracked quest).
+function Nx.Quest.StyleMapIcon(kind, opts)
+    local tex, isAtlas = Nx.Quest.GetMapIconTexture(kind)
+    opts.tex = tex
+    if isAtlas then opts.vertexColor = nil end
+    local size = 16 * Nx.Quest.GetMapIconScale()
+    opts.w, opts.h = size, size
+    return opts
+end
+
+-- Options changed: rebuild the quest POIs and the guide's quest givers.
+function Nx.Quest:RefreshMapQuestIcons()
+    self._iconDirty = true
+    local guide = Nx.Map and Nx.Map.Guide
+    if guide and guide.UpdateMapIcons then
+        guide:UpdateMapIcons()
+    end
+end
