@@ -281,7 +281,7 @@ function Nx.Notes:GetOptionsConfig()
                 },
                 gatherliteskill = {
                     order = 15, type = "toggle", width = "full",
-                    name = L["Color gathering nodes by skill-up chance"],
+                    name = L["Color gathering node names by skill-up chance"],
                     desc = L["Red: skill too low. Orange, yellow, green and gray: the chance of a skill point, as in the game"],
                     get = function() return Nx.fdb.profile.Notes.GatherLiteSkillColor end,
                     set = function()
