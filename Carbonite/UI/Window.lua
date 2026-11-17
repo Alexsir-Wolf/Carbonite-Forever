@@ -57,12 +57,14 @@ function Window:Create(spec)
 
     -- Title bar
     local titleBar = f:CreateTexture(nil, "ARTWORK")
-    titleBar:SetColorTexture(0, 0, 0, 0.6)
+    Carbonite.UI.Skin:Paint(titleBar, "titleBar")
     titleBar:SetPoint("TOPLEFT", 6, -6)
     titleBar:SetPoint("TOPRIGHT", -6, -6)
     titleBar:SetHeight(20)
 
-    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local title = f:CreateFontString(nil, "OVERLAY")
+    Carbonite.UI.Font:SetRole(title, "title")
+    Carbonite.UI.Skin:PaintText(title, "title")
     title:SetPoint("LEFT", titleBar, "LEFT", 6, 0)
     title:SetText(spec.title or "")
     f.titleText = title

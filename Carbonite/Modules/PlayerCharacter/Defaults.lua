@@ -336,6 +336,7 @@ Nx.Defaults = {
           DebugUnit = false,
         },
         Font = {
+            Scale = 1,                  -- global scale of every Carbonite font (#44)
             Small = "Friz",
             SmallSize = 10,
             SmallSpacing = 0,

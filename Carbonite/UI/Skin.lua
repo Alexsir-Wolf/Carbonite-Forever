@@ -57,6 +57,12 @@ Skin.themes = {
             title       = "1|0.82|0|1",
             titleBar    = "0.22|0.16|0.08|0.85",
             toolSlot    = "0.06|0.05|0.03|0.9",
+            rowAlt      = "1|0.82|0.5|0.05",
+            listHeaderText = "1|0.82|0|1",
+            headerRule  = "1|0.82|0|0.8",
+            buttonText  = "1|0.82|0|1",
+            menuHover   = "0.45|0.36|0.12|1",
+            panelBg     = "0.08|0.06|0.04|0.7",
         },
     },
     ["Blackout"] = {
@@ -121,6 +127,12 @@ Skin.themes = {
             title       = "0.10|0.12|0.20|1",
             titleBar    = "0.75|0.76|0.82|0.85",
             toolSlot    = "0.92|0.92|0.95|0.9",
+            rowAlt      = "0.10|0.12|0.30|0.06",
+            listHeaderText = "0.10|0.12|0.30|1",
+            headerRule  = "0.35|0.42|0.65|0.8",
+            muted       = "0.40|0.40|0.45|1",
+            menuHover   = "0.55|0.62|0.80|1",
+            panelBg     = "0.80|0.80|0.85|0.7",
         },
     },
     ["Glass"] = {
@@ -168,6 +180,15 @@ Skin.activeName = "Blizzard"
 --   title       title text of a window
 --   titleBar    strip behind a window's title
 --   toolSlot    square behind each tool bar icon
+--   rowAlt      band on every other list row (#43)
+--   listHeaderText  column names of a list header
+--   headerRule  line under a window header, fading to the right (#43)
+--   muted       hints and secondary text (placeholders, folder paths)
+--   buttonText  caption of a text button and of an idle tab
+--   tabTextActive   caption of the selected tab
+--   menuText    menu item; menuDisabled a greyed menu item
+--   menuHover   mouse-over band of a menu item (alpha comes from the fade)
+--   panelBg     plain panel behind a graph or a borderless window
 Skin.tokens = {
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
@@ -182,6 +203,16 @@ Skin.tokens = {
     title       = "1|1|1|1",
     titleBar    = "0.2|0.2|0.3|0.6",
     toolSlot    = "0|0|0|0.6",
+    rowAlt      = "1|1|1|0.04",
+    listHeaderText = "0.8|0.8|1|1",
+    headerRule  = "0.8|0.8|1|0.6",
+    muted       = "0.55|0.55|0.55|1",
+    buttonText  = "1|0.75|0.69|1",
+    tabTextActive = "1|1|1|1",
+    menuText    = "0.97|0.97|0.97|1",
+    menuDisabled = "0.44|0.44|0.44|1",
+    menuHover   = "0.2|0.2|0.5|1",
+    panelBg     = "0.125|0.125|0.125|0.7",
 }
 
 -- Parse a "r|g|b|a" string the legacy save format uses.
@@ -229,6 +260,12 @@ end
 function Skin:GetToken(name)
     local t = self:GetActive().tokens
     return parseColor(t and t[name] or self.tokens[name])
+end
+
+--- "|cffRRGGBB" escape of a token, for text built with color codes.
+function Skin:TextCode(name)
+    local r, g, b = self:GetToken(name)
+    return ("|cff%02x%02x%02x"):format(math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5), math.floor(b * 255 + 0.5))
 end
 
 -- Textures painted with a token, repainted when the theme changes.

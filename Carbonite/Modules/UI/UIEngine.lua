@@ -1672,7 +1672,7 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
     if not win.Border then
 
         local t = f:CreateTexture()
-        t:SetColorTexture (c2rgba (".125|.125|.125|.75"))
+        Carbonite.UI.Skin:Paint (t, "panelBg")
         t:SetAllPoints (f)
         f.texture = t
     end
@@ -1685,7 +1685,7 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
 
         local fstr = f:CreateFontString()
         win.TitleFStr[n] = fstr
-        fstr:SetFontObject ("NxFontS")
+        Carbonite.UI.Font:SetRole (fstr, "small")
         fstr:SetJustifyH ("LEFT")
         fstr:SetJustifyV ("MIDDLE")
         fstr:SetHeight (win.TitleLineH)
@@ -2292,12 +2292,12 @@ function Nx.Window:SetTitleLineH (height)
     self.TitleH = self.TitleLines * self.TitleLineH + 2
     self.TopH = self.TitleH + self.BorderH
 
-    local fname = height <= 10 and "NxFontS" or "NxFontM"
+    local role = height <= 10 and "small" or "normal"
 
     for n = 1, self.TitleLines do
 
         local fstr = self.TitleFStr[n]
-        fstr:SetFontObject (fname)
+        Carbonite.UI.Font:SetRole (fstr, role)
         fstr:SetHeight (height)
     end
 end
@@ -4255,7 +4255,7 @@ function Nx.Button:Create (parentFrm, typ, text, tip, bx, by, side, width, heigh
 
         local fstr = f:CreateFontString()
         but.FStr = fstr
-        fstr:SetFontObject ("NxFontS")
+        Carbonite.UI.Font:SetRole (fstr, "small")
         fstr:SetJustifyH ("CENTER")
         fstr:SetHeight (height)
         but:SetText (text, 0, 0)
@@ -4372,7 +4372,7 @@ function Nx.Button:SetText (text, x, y)
     local fstr = self.FStr
 
     if strbyte (text) ~= 124 then        -- |
-        text = "|cffffbfaf" .. text
+        text = Carbonite.UI.Skin:TextCode ("buttonText") .. text
     end
 
     fstr:SetText (text)
@@ -5493,9 +5493,9 @@ function Nx.Menu:Update()
                     end
 
                     if item.ShowState < 0 then
-                        fstr:SetText ("|cff707070" .. item.Text)
+                        fstr:SetText (Carbonite.UI.Skin:TextCode ("menuDisabled") .. item.Text)
                     else
-                        fstr:SetText ("|cfff7f7f7" .. item.Text)
+                        fstr:SetText (Carbonite.UI.Skin:TextCode ("menuText") .. item.Text)
                     end
 
                     fstr:Show()
@@ -5540,7 +5540,7 @@ function Nx.Menu:Update()
 
                         frm.texture = frm:CreateTexture()
                         frm.texture:SetAllPoints (frm)
-                        frm.texture:SetColorTexture (0, 0, 0, .5)
+                        Carbonite.UI.Skin:Paint (frm.texture, "scrollTrack")
                     end
 
                     local tfrm = item.SliderThumbFrm
@@ -5555,7 +5555,7 @@ function Nx.Menu:Update()
 
                         tfrm.texture = tfrm:CreateTexture()
                         tfrm.texture:SetAllPoints (tfrm)
-                        tfrm.texture:SetColorTexture (.5, 1, .5, 1)
+                        Carbonite.UI.Skin:Paint (tfrm.texture, "scrollThumb")
                     end
 
                     frm:SetPoint ("TOPLEFT", 12, -itemH - 1)
@@ -5692,7 +5692,8 @@ function Nx.Menu:Item_OnUpdate (elapsed)
 
     item.Alpha = Nx.Util_StepValue (item.Alpha, item.AlphaTarget, elapsed * 4)
 
-    this.texture:SetVertexColor (.2, .2, .5, item.Alpha)
+    local r, g, b = Carbonite.UI.Skin:GetToken ("menuHover")
+    this.texture:SetVertexColor (r, g, b, item.Alpha)
 
     if item.Slider and item == Nx.Menu.SliderMoving then
         Nx.Menu:Item_HandleSlider (item)
@@ -6822,7 +6823,7 @@ function Nx.List:ColumnAdd (name, columnId, width, justifyH, font)
         fstr:SetHeight (self.HdrH)
 
         fstr:SetText (name)
-        fstr:SetTextColor (.8, .8, 1, 1)
+        Carbonite.UI.Skin:PaintText (fstr, "listHeaderText")
         fstr:Show()
     end
 
@@ -6856,7 +6857,6 @@ function Nx.List:ColumnSetName (columnId, name)
         end
 
         fstr:SetText (name)
-        fstr:SetTextColor (.8, .8, 1, 1)
 
         self.SSW = nil        -- Cause resize
     end
@@ -7671,7 +7671,7 @@ function Nx.TabBar:AddTab (name, index, width, press, template, butId)
 
         but:SetPressed (true)
 
-        local txt = "|cffffffff" .. name
+        local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. name
         but:SetText (txt, 0, 2)
     end
 end
@@ -7708,7 +7708,7 @@ function Nx.TabBar:Select (index, force)
 
     but:SetPressed (true)
 
-    local txt = "|cffffffff" .. selTab.Name
+    local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. selTab.Name
     but:SetText (txt, 0, 2)
 
     if self.UserFunc then
@@ -8608,7 +8608,7 @@ function Nx.Graph:Create(width, height, parentFrm)
     f:SetPoint ("TOPLEFT", 0, 0)
 
     local t = f:CreateTexture()
-    t:SetColorTexture (c2rgba (".125|.125|.125|.625"))
+    Carbonite.UI.Skin:Paint (t, "panelBg")
     t:SetAllPoints (f)
     f.texture = t
 
