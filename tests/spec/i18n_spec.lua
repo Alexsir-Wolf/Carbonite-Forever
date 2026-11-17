@@ -179,7 +179,7 @@ end
 
 local function listFiles()
     local out = {}
-    local p = io.popen('find . -name "*.lua" -not -path "./.git/*" -not -path "./tests/*" '
+    local p = io.popen('find . -name "*.lua" -not -path "./.git/*" -not -path "./.claude/*" -not -path "./tests/*" '
         .. '-not -path "*/Libs/*" -not -path "*/Locales/*" -not -path "./docs/*" | sort')
     for line in p:lines() do out[#out + 1] = (line:gsub("^%./", "")) end
     p:close()
