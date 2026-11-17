@@ -42,4 +42,5 @@ ObjectiveCapture.lua
 SuperTrack.lua
 WatchHider.lua
 QuestWatchSurface.lua
+ForeverCoreColumn.lua
 QuestRouting.lua
