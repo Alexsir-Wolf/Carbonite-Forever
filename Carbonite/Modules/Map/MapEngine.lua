@@ -1101,6 +1101,12 @@ function Nx.Map:Create(index)
     end
     routeMenu:AddItem(0, L["Reverse Targets"], func, m)
 
+    -- List and edit the goto queue (#70)
+    local function func()
+        Nx.NXKeyToggleTargets()
+    end
+    routeMenu:AddItem(0, L["Destinations..."], func, m)
+
     -- Route options (the gather radii are in Options > Maps > Route)
     local item = routeMenu:AddItem(0, L["Recycle Reached Targets"])
     item:SetChecked(Nx.db.profile.Route, "Recycle")
@@ -15852,6 +15858,12 @@ function Nx.NXKeyToggleInfo()
     if Nx.Info and Nx.Info.ToggleShow then
         Nx.Info:ToggleShow()
     end
+end
+
+-- Destinations window: the goto queue (#70).
+function Nx.NXKeyToggleTargets()
+    local win = Carbonite.Modules.Map.TargetsWindow
+    if win then win:ToggleShow() end
 end
 
 -------------------------------------------------------------------------------

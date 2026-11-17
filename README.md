@@ -28,6 +28,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 ### Navegação
 - **Goto:** marque qualquer ponto do mapa, uma coordenada (`/carb goto x y`) ou um ícone. O mapa ajusta o zoom para mostrar você e o destino.
 - **Seta HUD:** aponta para o destino e mostra nome, distância e tempo estimado de chegada.
+- **Fila de destinos:** Shift+clique em Goto adiciona o destino sem apagar os outros; ao chegar, a seta passa ao próximo. A janela Destinos (`/carb destinos`, Rota... > Destinos... no menu do mapa ou um atalho de teclado) lista a fila com zona e distância e permite subir, descer, ir agora, remover, inverter e limpar.
 - **Rotas:** caminho entre zonas por estradas, conexões e pontos de voo.
 - Compatível com os comandos do TomTom: `/way`, `/cway`, `/wayback`.
 
@@ -120,6 +121,7 @@ Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai 
 | `/carb goto <x> <y>` | Marca um destino na zona atual |
 | `/carb resetwindows` | Volta as janelas para a posição padrão |
 | `/carb jornada` | Jornada do personagem (níveis, quests, zonas, mortes e masmorras) |
+| `/carb destinos` | Janela da fila de destinos (ordenar, ir agora, remover, inverter) |
 | `/carb debug` | Comandos de diagnóstico, como o `profiler` |
 | `/way x y` | Destino no formato do TomTom |
 
