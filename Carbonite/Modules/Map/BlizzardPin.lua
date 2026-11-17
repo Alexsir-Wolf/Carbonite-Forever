@@ -54,6 +54,9 @@ function BP:Desired()
     local tar = map and map.Targets and map.Targets[1]
     -- A target made from the Blizzard pin already has its pin.
     if not tar or tar.UserWaypoint or not tar.MapId or not tar.TargetMX then return nil end
+    -- A tracked quest keeps the game's own quest super-track: super-tracking
+    -- the pin instead made Carbonite drop the active quest (SuperTrack.lua).
+    if tar.TargetType == "Q" then return nil end
     local zx, zy = map:GetZonePos(tar.MapId, tar.TargetMX, tar.TargetMY)
     if type(zx) ~= "number" or type(zy) ~= "number" then return nil end
     zx, zy = zx / 100, zy / 100

@@ -869,6 +869,13 @@ function Nx.Quest:OnSuperTrackChanged(isRefresh, evtTime)
         if self:IsIgnoredRXPWaypoint() then
             return
         end
+        -- Carbonite's own 3D pin on its target is not the player switching
+        -- to a waypoint: keep the active quest (BlizzardPin.lua).
+        local pin = Carbonite and Carbonite.Modules and Carbonite.Modules.Map
+            and Carbonite.Modules.Map.BlizzardPin
+        if pin and pin.OwnsWaypoint and pin:OwnsWaypoint() then
+            return
+        end
         self.ActiveQID = 0
         self.ActiveObjI = 0
         if self.UpdateQuestBlob then
