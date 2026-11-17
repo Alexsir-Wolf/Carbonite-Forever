@@ -5497,8 +5497,8 @@ function Nx.Menu:Open()
     self.Alpha = 0
     self.AlphaTarget = 1
 
-    local menuW = self.Width
     local menuH = self:Update() + 14
+    local menuW = self.CurWidth or self.Width
 
     mf:SetFrameStrata ("DIALOG")
     mf:SetClampedToScreen (true)
@@ -5526,13 +5526,48 @@ function Nx.Menu:Open()
     mf:Raise()
 end
 
+---
+-- Menu width: the width it was made with, or wider so the longest shown
+-- item fits (translated texts did not fit and were cut with "...").
+-- Item frames and texts made before are resized to it.
+--
+local MENU_TEXT_X = 20
+
+function Nx.Menu:FitWidth (menuX)
+    local measure = self.MeasureFStr
+    if not measure then
+        measure = self.MainFrm:CreateFontString()
+        measure:SetFontObject ("NxFontMenu")
+        measure:Hide()
+        self.MeasureFStr = measure
+    end
+    local textW = 0
+    for _, item in ipairs (self.Items) do
+        if item.ShowState and item.Text and not item.Spacer then
+            measure:SetText (item.Text)
+            textW = max (textW, measure:GetStringWidth() or 0)
+        end
+    end
+    local w = max (self.Width, ceil (textW) + MENU_TEXT_X + menuX * 2 + 4)
+    self.CurWidth = w
+    for _, item in ipairs (self.Items) do
+        if item.Frm then
+            item.Frm:SetWidth (w - menuX * 2)
+        end
+        if item.TextFStr then
+            item.TextFStr:SetWidth (w - menuX * 2 - MENU_TEXT_X)
+        end
+    end
+    return w
+end
+
 function Nx.Menu:Update()
 
     local mf = self.MainFrm
 
     local menuX = 14
     local menuY = 14
-    local menuW = self.Width
+    local menuW = self:FitWidth (menuX)
 
     for n = 1, #self.Items do
 
@@ -5591,8 +5626,8 @@ function Nx.Menu:Update()
                         fstr = itemF:CreateFontString()
                         item.TextFStr = fstr
                         fstr:SetFontObject ("NxFontMenu")
-                        fstr:SetPoint ("TOPLEFT", 20, 0)
-                        fstr:SetWidth (menuW - 20)
+                        fstr:SetPoint ("TOPLEFT", MENU_TEXT_X, 0)
+                        fstr:SetWidth (menuW - menuX * 2 - MENU_TEXT_X)
                         fstr:SetHeight (12)
                         fstr:SetJustifyH ("LEFT")
                     end
