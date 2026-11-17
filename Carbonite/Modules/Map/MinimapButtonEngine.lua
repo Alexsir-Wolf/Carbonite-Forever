@@ -24,6 +24,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 function Nx.NXMiniMapBut:Init()
     local f = NXMiniMapBut
 
+    self:ApplyStyle (f)
+
     if not Nx.db.profile.MiniMap.ButOwn then
         f:RegisterForDrag ("LeftButton")
     end
@@ -135,14 +137,92 @@ function Nx.NXMiniMapBut:NXOnEnter (frm)
     tip:AddLine (L["Right click for Menu"], 1, 1, 1, true)
 
     if not mmown then
-        tip:AddLine (L["Shift drag to move"], 1, 1, 1, true)
+        tip:AddLine (L["Drag to move"], 1, 1, 1, true)
     end
     tip:AppendText ("")
+end
+
+-- Same layout LibDBIcon gives every launcher, so the button matches the
+-- other minimap icons. The XML declares the Retail layout; the Classic
+-- clients use the older, slightly larger tracking-border art.
+function Nx.NXMiniMapBut:ApplyStyle (frm)
+    if not frm or not frm.icon or not frm.border or not frm.background then
+        return
+    end
+
+    if not Nx.isRetail then
+        frm.border:SetSize (53, 53)
+        frm.border:ClearAllPoints()
+        frm.border:SetPoint ("TOPLEFT", frm, "TOPLEFT")
+        frm.background:SetSize (20, 20)
+        frm.background:ClearAllPoints()
+        frm.background:SetPoint ("TOPLEFT", frm, "TOPLEFT", 7, -5)
+        frm.icon:SetSize (17, 17)
+        frm.icon:ClearAllPoints()
+        frm.icon:SetPoint ("TOPLEFT", frm, "TOPLEFT", 7, -6)
+    end
+
+    self:UpdateIconCoord (frm)
+end
+
+-- The icon is cropped 5% while idle and shown whole while pressed, which
+-- reads as the button sinking in (LibDBIcon's pressed effect).
+function Nx.NXMiniMapBut:UpdateIconCoord (frm)
+    if not frm or not frm.icon then
+        return
+    end
+    local d = frm.NXMouseDown and 0 or .05
+    frm.icon:SetTexCoord (d, 1 - d, d, 1 - d)
+end
+
+function Nx.NXMiniMapBut:NXOnMouseDown (frm, button)
+    -- A new press starts as a click; dragging flags it below.
+    frm.NXDragged = false
+    frm.NXMouseDown = true
+    self:UpdateIconCoord (frm)
+end
+
+function Nx.NXMiniMapBut:NXOnMouseUp (frm, button)
+    frm.NXMouseDown = false
+    self:UpdateIconCoord (frm)
+end
+
+-- Left drag (no modifier) slides the button around the minimap rim;
+-- NXOnUpdate follows the cursor while NXDrag is set. Docked buttons
+-- (ButOwn) are placed by the dock and never drag.
+function Nx.NXMiniMapBut:NXOnDragStart (frm, button)
+    if button ~= "LeftButton" or Nx.db.profile.MiniMap.ButOwn then
+        return
+    end
+    frm.NXDrag = true
+    frm.NXDragged = true
+    frm.NXMouseDown = true
+    self:UpdateIconCoord (frm)
+    if Nx.TooltipText then
+        Nx.TooltipText:Hide()
+    end
+end
+
+function Nx.NXMiniMapBut:NXOnDragStop (frm)
+    local wasDragging = frm.NXDrag
+    frm.NXDrag = false
+    frm.NXMouseDown = false
+    self:UpdateIconCoord (frm)
+    if wasDragging then
+        self:Move()
+    end
 end
 
 function Nx.NXMiniMapBut:NXOnClick (button, down)
 
 --    Nx.prt (button)
+
+    -- The release that ends a drag must not also toggle the map.
+    local frm = _G.NXMiniMapBut
+    if frm and frm.NXDragged then
+        frm.NXDragged = false
+        return
+    end
 
     if button == "LeftButton" then
 

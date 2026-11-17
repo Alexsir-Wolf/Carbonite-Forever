@@ -25,6 +25,7 @@ Options.lua
 Init.lua
 TrackerHider.lua
 QuestMapCompatibility.lua
+ObjectiveAreas.lua
 MapIcons.lua
 QuestProvider.lua
 WorldQuestWindow.lua
@@ -42,4 +43,5 @@ ObjectiveCapture.lua
 SuperTrack.lua
 WatchHider.lua
 QuestWatchSurface.lua
+ForeverCoreColumn.lua
 QuestRouting.lua

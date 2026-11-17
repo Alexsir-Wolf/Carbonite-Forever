@@ -464,6 +464,42 @@ function MapIDs:GetZoneDescription(mapID)
 end
 
 -- ---------------------------------------------------------------------
+-- Zone level labels drawn over the continent map (#68).
+-- ---------------------------------------------------------------------
+
+-- Label text for one zone: "Name\n10-20" in the faction color, or just
+-- the range when no name is given. Cities and zones without a level
+-- range ("Any") get no label.
+function MapIDs:GetZoneLevelLabel(mapID, name)
+    local color, desc, minLvl = self:GetZoneDescription(mapID)
+    if not minLvl or minLvl <= 0 then return nil end
+    if name and name ~= "" then
+        return ("%s%s\n%s|r"):format(color, name, desc)
+    end
+    return ("%s%s|r"):format(color, desc)
+end
+
+-- The label shows while the zone is between MIN_PX wide on screen (room
+-- for the text) and MAX_FRACTION of the map width (beyond that the view is
+-- the zone itself). Small map windows (docked minimap) never show them.
+MapIDs.ZONE_LEVEL_MIN_PX = 60
+MapIDs.ZONE_LEVEL_FADE_PX = 40
+MapIDs.ZONE_LEVEL_MAX_FRACTION = .6
+MapIDs.ZONE_LEVEL_MIN_MAP_W = 300
+
+-- Alpha (0..1) of a zone level label; 0 means hidden.
+function MapIDs.ZoneLevelLabelAlpha(zonePx, mapW)
+    if not zonePx or not mapW or mapW < MapIDs.ZONE_LEVEL_MIN_MAP_W then return 0 end
+    local minPx = MapIDs.ZONE_LEVEL_MIN_PX
+    local maxPx = mapW * MapIDs.ZONE_LEVEL_MAX_FRACTION
+    if zonePx < minPx or zonePx > maxPx then return 0 end
+    local fadeIn = (zonePx - minPx) / MapIDs.ZONE_LEVEL_FADE_PX
+    local fadeOut = (maxPx - zonePx) / (maxPx * .25)
+    local a = math.min(1, fadeIn, fadeOut)
+    return a > 0 and a or 0
+end
+
+-- ---------------------------------------------------------------------
 -- Legacy rewire. Replaces the corresponding Nx.Map: methods so all
 -- existing callers route through here.
 -- ---------------------------------------------------------------------

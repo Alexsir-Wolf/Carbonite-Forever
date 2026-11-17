@@ -68,7 +68,6 @@ L[" Honor: %s%s|r  Conquest: %s%s"] = " 명예: %s%s|r  정복: %s%s"
 --L[" %s %s%s"] = true
 L["%s's Items"] = "%s의 아이템"
 L["|cffff1010No bank data - visit your bank"] = "|cffff1010은행 데이터 없음 - 은행을 방문하세요"
-L["---- Equipped ----"] = "---- 착용 중 ----"
 L["All Items"] = "모든 아이템"
 L["%s |cffcfcfff(%s Bank)"] = "%s |cffcfcfff(%s 은행)"
 L["%s |cffcfffff(%s Mail)"] = "%s |cffcfffff(%s 우편)"

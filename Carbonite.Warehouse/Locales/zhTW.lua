@@ -68,7 +68,6 @@ L[" Honor: %s%s|r  Conquest: %s%s"] = " 榮譽：%s%s|r  征服：%s%s"
 --L[" %s %s%s"] = true
 L["%s's Items"] = "%s 的物品"
 L["|cffff1010No bank data - visit your bank"] = "|cffff1010沒有銀行資料 - 請造訪你的銀行"
-L["---- Equipped ----"] = "---- 已裝備 ----"
 L["All Items"] = "所有物品"
 L["%s |cffcfcfff(%s Bank)"] = "%s |cffcfcfff(%s 銀行)"
 L["%s |cffcfffff(%s Mail)"] = "%s |cffcfffff(%s 郵件)"

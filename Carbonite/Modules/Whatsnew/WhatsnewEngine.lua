@@ -134,7 +134,7 @@ end
 --- Record current time as last-read; clear the minimap-button glow.
 function Nx.Whatsnew:Recordtime()
     Nx.db.profile.Whatsnew.lastreadtime = time()
-    NXMiniMapBut:SetNormalTexture("Interface\\AddOns\\Carbonite\\Gfx\\MMBut")
+    NXMiniMapBut.icon:SetTexture("Interface\\AddOns\\Carbonite\\Gfx\\MMBut")
 end
 
 --- Highest changelog timestamp across all categories.
@@ -172,7 +172,7 @@ end
 --- so the window stops auto-popping until a newer changelog is added.
 function Nx.Whatsnew:DismissUpdate()
     Nx.db.profile.Whatsnew.lastreadtime = self:GetMaxTime()
-    NXMiniMapBut:SetNormalTexture("Interface\\AddOns\\Carbonite\\Gfx\\MMBut")
+    NXMiniMapBut.icon:SetTexture("Interface\\AddOns\\Carbonite\\Gfx\\MMBut")
     if self.Win then self.Win:Show(false) end
 end
 

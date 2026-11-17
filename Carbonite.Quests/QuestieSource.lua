@@ -38,6 +38,7 @@
 --   Nx.Quest:MeetsQuestieRequirements(qId)  false when QuestieDB says the character cannot
 --                        take it: a profession below the skill it asks, reputation outside
 --                        the range it asks, or a quest that excludes it done or in the log
+--   Nx.Quest:QuestieQuestKind(qId)  "event", "daily" (also weekly, monthly), "repeatable" or nil
 
 local Nx = _G.Nx
 if not Nx or not Nx.Quest then return end
@@ -677,6 +678,53 @@ local function Done(qId)
     local log = _G.C_QuestLog
     if log and log.IsQuestFlaggedCompleted and log.IsQuestFlaggedCompleted(qId) then return true end
     return Nx.Quest:GetQuest(qId) == "C"
+end
+
+--------------------------------------------------------------------------------------------
+-- Quest kind: event, daily or repeatable (#80)
+--------------------------------------------------------------------------------------------
+
+-- questFlags DAILY 4096, WEEKLY 32768, MONTHLY 65536; specialFlags 1 repeatable, 2 needs a
+-- world event (cmangos quest_template, as Questie reads them).
+local QUEST_FLAGS_PERIODIC = { 4096, 32768, 65536 }
+local SPECIAL_REPEATABLE, SPECIAL_EVENT = 1, 2
+
+-- QuestSort ids (negative zoneOrSort) of holidays and recurring world events.
+local EVENT_SORTS = {
+    [-404] = true, [-402] = true, [-378] = true, [-376] = true, [-375] = true, [-374] = true,
+    [-370] = true, [-369] = true, [-366] = true, [-364] = true, [-41] = true, [-22] = true,
+    [-21] = true,
+}
+
+local function HasFlag(flags, flag)
+    return type(flags) == "number" and flags % (flag * 2) >= flag
+end
+
+local kinds = {}            -- qId -> "event" | "daily" | "repeatable" | false
+
+-- One kind per quest, the event first: a holiday daily counts as an event quest, and a
+-- daily (also repeatable in the data) as a daily. nil for an ordinary quest or no QuestieDB.
+function Nx.Quest:QuestieQuestKind(qId)
+    local cached = kinds[qId]
+    if cached ~= nil then return cached or nil end
+    local lib = _G.LibQuestieDB
+    local getAll = type(lib) == "table" and type(lib.Quest) == "table" and lib.Quest.GetAll
+    local ok, v = false, nil
+    if type(getAll) == "function" then ok, v = pcall(getAll, qId, { "questFlags", "specialFlags", "zoneOrSort" }) end
+    local kind = false
+    if ok and type(v) == "table" then
+        local questFlags, special, zoneOrSort = v[1], v[2], v[3]
+        if HasFlag(special, SPECIAL_EVENT) or EVENT_SORTS[zoneOrSort] then
+            kind = "event"
+        else
+            for _, flag in ipairs(QUEST_FLAGS_PERIODIC) do
+                if HasFlag(questFlags, flag) then kind = "daily" end
+            end
+            if not kind and HasFlag(special, SPECIAL_REPEATABLE) then kind = "repeatable" end
+        end
+    end
+    kinds[qId] = kind
+    return kind or nil
 end
 
 function Nx.Quest:MeetsQuestieRequirements(qId)
