@@ -3346,8 +3346,10 @@ function Nx.Map:MinimapUpdate()
             zoomType = 0
         end
 
+        -- Docked (or full size): the "Docked Transparency" option (#32).
+        -- It used to be forced to 1, so that slider did nothing.
         if zoomType == 0 then
-            al = 1
+            al = lOpts.NXMMDockAlpha or 1
         end
 
         -- Modifier key overrides. Skipped for an unmapped instance: indoors
@@ -3591,8 +3593,10 @@ function Nx.Map:MinimapUpdateEnd()
 
 --        Nx.prt ("zoom %d", zoom)
 
+        -- Same alpha as the update pass: the docked option, opaque for the
+        -- live minimap of an unmapped instance (#32).
         if self.MMZoomType == 0 then
-            mm:SetAlpha (1)
+            mm:SetAlpha (self.MMUnmappedInstance and 1 or (self.LOpts.NXMMDockAlpha or 1))
         end
 
 --        if Gatherer then
