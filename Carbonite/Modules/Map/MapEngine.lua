@@ -7799,6 +7799,19 @@ function Nx.Map:Update (elapsed)
             self.Level = self.Level + 2
         end
 
+        -- Closest spirit healer to the corpse (#77)
+        local corpseMap = C_Map.GetBestMapForUnit("player")
+        local hX, hY = self:NearestSpiritHealer (corpseMap, cX * 100, cY * 100)
+        if hX then
+            local f = self:GetIcon (1)
+            f.NxTip = L["Spirit Healer"]
+            f.texture:SetTexture ("Interface\\Icons\\Spell_Holy_Resurrection")
+            f.texture:SetTexCoord (.08, .92, .08, .92)
+            local x, y = self:GetWorldPos (corpseMap, hX, hY)
+            self:ClipFrameByMapType (f, x, y, 20, 20, 0)
+            self.Level = self.Level + 2
+        end
+
     elseif ontaxi and Map.TaxiX then
 
         if Nx.db.profile.Track.ATTaxi then
@@ -10727,6 +10740,43 @@ function Nx.Map:DrawZoneRect (mapId, x, y, w, h, tip)
     end
 end
 --]]
+
+--------
+-- Closest spirit healer of the Guide data (Data/camelot/Guides/SpiritHealer.lua)
+-- to a point of the map (0-100), for the corpse while the player is dead (#77).
+-- The answer is cached per map and point, so the map update pays for the
+-- search only when the corpse moves.
+
+function Nx.Map:NearestSpiritHealer (mapId, x, y)
+
+    local data = Nx.GuideData and Nx.GuideData[L["Spirit Healer"]]
+    local row = data and mapId and data[mapId]
+    if not row then
+        return
+    end
+
+    local cache = self.SpiritHealerNear
+    if cache and cache.MapId == mapId and cache.X == x and cache.Y == y then
+        return cache.HX, cache.HY
+    end
+
+    local wx, wy = self:GetWorldPos (mapId, x, y)
+    if not wx then
+        return
+    end
+    local bestX, bestY, bestD
+    for px, py in string.gmatch (row, "[^,|]+,([%d%.]+),([%d%.]+)") do
+        px, py = tonumber (px), tonumber (py)
+        local hx, hy = self:GetWorldPos (mapId, px, py)
+        local d = hx and (hx - wx) ^ 2 + (hy - wy) ^ 2
+        if d and (not bestD or d < bestD) then
+            bestX, bestY, bestD = px, py, d
+        end
+    end
+
+    self.SpiritHealerNear = { MapId = mapId, X = x, Y = y, HX = bestX, HY = bestY }
+    return bestX, bestY
+end
 
 --------
 -- Zone clip a frame to the map and set position, size and texture coords
