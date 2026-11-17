@@ -3382,8 +3382,11 @@ function Nx.Quest:FitDetailsScrollChild()
         end
     end
 
-    local minH = scroll:GetHeight() / child:GetScale()
-    child:SetHeight (max (top - low + 16, minH))
+    -- The scroll range is the child's raw height minus the scroll frame's,
+    -- with no regard for the child's scale (measured: child 598 at scale 1.45
+    -- in a 688 frame gave range 0). So the height goes in on-screen units.
+    local scale = child:GetScale()
+    child:SetHeight (max ((top - low + 16) * scale, scroll:GetHeight()))
     scroll:UpdateScrollChildRect()
 end
 

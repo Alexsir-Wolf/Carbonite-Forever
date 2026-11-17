@@ -13,7 +13,7 @@ local function region(top, bottom, scale)
     }
 end
 
-local function fit(rewards)
+local function fit(rewards, scale)
     local missing = { "QuestInfoFrame", "MapQuestInfoRewardsFrame" }
     if not rewards then missing[#missing + 1] = "QuestInfoRewardsFrame" end
     local env = wow.lenientEnv(nil, missing)
@@ -22,7 +22,7 @@ local function fit(rewards)
     local text = region(990, 700)
     child.GetRegions = function() return text end
     child.SetHeight = function(_, h) height = h end
-    child.GetScale = function() return 1 end
+    child.GetScale = function() return scale or 1 end
     env.NXQuestLogDetailScrollChildFrame = child
     env.NxQuestD = { GetHeight = function() return 400 end, UpdateScrollChildRect = function() end }
     env.QuestInfoRewardsFrame = rewards
@@ -39,6 +39,11 @@ describe("rolagem dos detalhes da quest", function()
 
     it("inclui o bloco de recompensas desenhado no painel, mesmo de outro pai", function()
         expect(fit(region(690, 500))).toBe(516)
+    end)
+
+    it("com o texto em escala, a altura vai em unidades da tela (medido: escala 1,45 zerava a rolagem)", function()
+        -- 316 of content at 1.45 is 458.2 on screen, more than the 400 of the panel.
+        expect(math.abs(fit(nil, 1.45) - 316 * 1.45) < 1e-9).toBe(true)
     end)
 
     it("ignora um bloco de recompensas mostrado fora do painel", function()
