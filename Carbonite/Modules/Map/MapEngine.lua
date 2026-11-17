@@ -2894,6 +2894,59 @@ function Nx.Map:MinimapSyncLayer(preferredLevel, hostOffset, aboveHost)
     return level
 end
 
+-- Screen rectangle of a frame (left, bottom, right, top), or nil.
+local function screenRect(f)
+    local l, b, w, h = f:GetRect()
+    if not l then return nil end
+    local s = f:GetEffectiveScale()
+    return l * s, b * s, (l + w) * s, (b + h) * s
+end
+
+-- True when win draws above the map window: higher strata, a higher level
+-- in the same one, or the same level and raised after it (the quest log
+-- opened over the map). Measured on Forever: both at level 1.
+local function aboveMapWindow(win, mapWin)
+    local f, host = win.Frm, mapWin.Frm
+    local rank = MINIMAP_STRATA_RANK[f:GetFrameStrata()] or -1
+    local hostRank = MINIMAP_STRATA_RANK[host:GetFrameStrata()] or -1
+    if rank ~= hostRank then
+        return rank > hostRank
+    end
+    local level, hostLevel = f:GetFrameLevel(), host:GetFrameLevel()
+    if level ~= hostLevel then
+        return level > hostLevel
+    end
+    return (win.RaisedSeq or 0) > (mapWin.RaisedSeq or 0)
+end
+
+---
+-- True when another shown Carbonite window above the map window overlaps the
+-- minimap. Those windows share the map window's strata, under the
+-- minimap's. Windows behind the map (the watch list) do not count.
+--
+function Nx.Map:MinimapCoveredByWindow()
+    local mm, host = self.MMFrm, self.Win and self.Win.Frm
+    if not (mm and host) then return false end
+    local l, b, r, t = screenRect(mm)
+    if l then
+        self.MMLastRect = { l, b, r, t }
+    elseif self.MMLastRect then
+        l, b, r, t = unpack(self.MMLastRect)
+    else
+        return false
+    end
+    for win in pairs(Nx.Window.Wins or {}) do
+        local f = win.Frm
+        if win ~= self.Win and f and f:IsVisible() and aboveMapWindow(win, self.Win) then
+            local wl, wb, wr, wt = screenRect(f)
+            if wl and wl < r and wr > l and wb < t and wt > b then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 -- UIParent ownership keeps the minimap outside the movable map hierarchy.
 -- Synchronize visibility explicitly, including updates while the map is closed.
 function Nx.Map:MinimapIsHostVisible()
@@ -3539,6 +3592,14 @@ function Nx.Map:MinimapUpdateEnd()
         -- Recover from Blizzard's toggle state and any earlier collapse only
         -- after the frame is confirmed inside the Carbonite map.
         self.MMHiddenByMap = nil
+
+        -- In a dungeon chart's boss panel the minimap is one strata above the
+        -- map window, so a Carbonite window opened over the map (quest log,
+        -- watch list) still had it on top. Hide it while one covers it.
+        if self.UInstChartFrm and self:MinimapCoveredByWindow() then
+            mm:Hide()
+            return
+        end
         mm:Show()
 
         local lvl
