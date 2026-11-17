@@ -833,6 +833,7 @@ function Travel:MakePath(tracking, srcMapId, srcX, srcY, dstMapId, dstX, dstY, t
                 t1.TargetMY = y
                 t1.TargetTex = node1.Tex
                 t1.TargetName = node1.Name
+                t1.MapId = node1.MapId        -- continent of each leg (#37)
 
                 if node1.Flight then
                     t1.Mode = "F"
@@ -1008,6 +1009,7 @@ function Travel:MakePath(tracking, srcMapId, srcX, srcY, dstMapId, dstX, dstY, t
                     t1.TargetMY = y
                     t1.TargetTex = node1.Tex
                     t1.TargetName = node1.Name
+                    t1.MapId = node1.MapId    -- continent of each leg (#37)
 
                     if node1.Flight then
                         t1.Mode = "F"
