@@ -81,6 +81,7 @@ function Nx.Whatsnew:Create()
     self.SelectedLine = 1
     win.Frm.NxInst = self
     win:CreateButtons(true, true)
+    win:ApplyModernHeader()
     win:InitLayoutData(nil, -.25, -.15, -.5, -.6)
     win.Frm:SetToplevel(true)
     win:Show(false)
@@ -96,6 +97,7 @@ function Nx.Whatsnew:Create()
     self.List = list
     list:SetUser(self, self.OnListEvent)
     list:SetLineHeight(4)
+    list:SetModernRows()
     list:ColumnAdd("", 1, 24)
     list:ColumnAdd(L["Date"], 2, 200)
     list:SetUser(self, self.OnListEvent)
@@ -107,9 +109,10 @@ function Nx.Whatsnew:Create()
     detail:ColumnAdd("", 1, 500)
     win:Attach(detail.Frm, .2, 1, 0, .94)
 
-    -- Category-selector buttons across the top.
+    -- Category-selector buttons across the top, right of the title, which
+    -- is larger in the modern header (#43).
     local _, bh = win:GetBorderSize()
-    local pos = 150
+    local pos = 200
     for i, name in pairs(Nx.Whatsnew.Categories) do
         local function func() Nx.Whatsnew:Cat_button(i) end
         local label = L[name]

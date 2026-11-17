@@ -201,6 +201,8 @@ L["Shows the dungeon finder minimap button in the button panel"] = "Mostra o bot
 
 -- Font Options
 L["Font Options"] = "Opções de Fonte"
+L["Font Scale"] = "Escala das Fontes"
+L["Makes every Carbonite font bigger or smaller, keeping the sizes chosen below"] = "Aumenta ou diminui todas as fontes do Carbonite, mantendo os tamanhos escolhidos abaixo"
 L["Small Font"] = "Fonte Pequena"
 L["Sets the font to be used for small text"] = "Define a fonte usada para textos pequenos"
 L["Small Font Size"] = "Tamanho da Fonte Pequena"

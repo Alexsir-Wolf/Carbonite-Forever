@@ -44,15 +44,16 @@ local function rebuildRowPool(list)
 
         local hl = row:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints(row)
-        hl:SetColorTexture(1, 1, 1, 0.10)
+        Carbonite.UI.Skin:Paint(hl, "rowHover")
 
         local sel = row:CreateTexture(nil, "BACKGROUND")
         sel:SetAllPoints(row)
-        sel:SetColorTexture(0.25, 0.4, 0.7, 0.35)
+        Carbonite.UI.Skin:Paint(sel, "selection")
         sel:Hide()
         row.selectionTex = sel
 
-        local fs = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        local fs = row:CreateFontString(nil, "OVERLAY")
+        Carbonite.UI.Font:SetRole(fs, "normal")
         fs:SetPoint("LEFT", row, "LEFT", 4, 0)
         fs:SetJustifyH("LEFT")
         fs:SetWidth(row:GetWidth() - 8)

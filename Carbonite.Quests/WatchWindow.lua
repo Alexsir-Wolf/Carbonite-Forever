@@ -183,18 +183,8 @@ function Nx.Quest.Watch:ModernAvailable()
     if self.ModernOK ~= nil then
         return self.ModernOK
     end
-    local ok = false
-    if C_Texture and C_Texture.GetAtlasInfo then
-        ok = true
-        for _, atlas in ipairs (MODERN_ATLASES) do
-            local okCall, info = pcall (C_Texture.GetAtlasInfo, atlas)
-            if not okCall or not info then
-                ok = false
-                self.ModernMissing = atlas
-                break
-            end
-        end
-    end
+    local ok, missing = Carbonite.UI.Skin:HasAtlases (MODERN_ATLASES)
+    self.ModernMissing = missing
     self.ModernOK = ok
     return ok
 end
@@ -223,21 +213,9 @@ local function PositionWatchHeaderControls (win, top, height)
     end
 end
 
-local function MakeHeaderLine (f, bw, y)
-    local t = f:CreateTexture (nil, "OVERLAY", nil, -7)
-    t:SetHeight (1)
-    t:SetPoint ("TOPLEFT", f, "TOPLEFT", MODERN_EDGE, y)
-    t:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -MODERN_EDGE, y)
-    t:SetColorTexture (1, 1, 1, 1)
-    local grad = false
-    if t.SetGradient and CreateColor then
-        grad = pcall (t.SetGradient, t, "HORIZONTAL",
-            CreateColor (1, .82, 0, .8), CreateColor (1, .82, 0, .05))
-    end
-    if not grad then
-        t:SetColorTexture (1, .82, 0, .45)
-    end
-    return t
+-- The gold rule of the header, shared with the other windows (#43).
+local function MakeHeaderLine (f, y)
+    return Carbonite.UI.Skin:AddHeaderRule (f, y, MODERN_EDGE)
 end
 
 function Nx.Quest.Watch:SetupModernChrome (win)
@@ -285,8 +263,8 @@ function Nx.Quest.Watch:SetupModernChrome (win)
     end
     PositionWatchHeaderControls (win, barTop, barH)
 
-    self.HdrLine1 = MakeHeaderLine (f, bw, -bh - titleH)
-    self.HdrLine2 = MakeHeaderLine (f, bw, -bh - titleH - lineH)
+    self.HdrLine1 = MakeHeaderLine (f, -bh - titleH)
+    self.HdrLine2 = MakeHeaderLine (f, -bh - titleH - lineH)
 
     win.TitleFStr[2]:SetText ("")
 
@@ -3562,7 +3540,7 @@ do
                     local title = f:CreateFontString (nil, "OVERLAY", "GameFontNormal")
                     title:SetPoint ("TOPLEFT", 10, -8)
                     title:SetText ("|cffffd100" .. L["Quest Watch"] .. "|r  icon test (/carb debug qwtest icons to close)")
-                    MakeHeaderLine (f, 8, -24)
+                    MakeHeaderLine (f, -24)
 
                     local rows = {
                         { "QuestWatchDone", false, "complete, untracked" },

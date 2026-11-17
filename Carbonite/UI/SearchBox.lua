@@ -108,12 +108,13 @@ function SearchBox:Create(parent, onChanged, opts)
     icon:SetTexture(ICON_SEARCH)
     icon:SetSize(14, 14)
     icon:SetPoint("LEFT", f, "LEFT", 3, -1)
-    icon:SetVertexColor(0.7, 0.7, 0.7)
+    local Skin = Carbonite.UI.Skin
+    if Skin and Skin.GetToken then icon:SetVertexColor(Skin:GetToken("muted")) end
     box.Icon = icon
 
     local hint = f:CreateFontString(nil, "ARTWORK")
     hint:SetFontObject(opts.font or "NxFontS")
-    hint:SetTextColor(0.55, 0.55, 0.55)
+    if Skin and Skin.PaintText then Skin:PaintText(hint, "muted") end
     hint:SetPoint("LEFT", f, "LEFT", 19, 0)
     hint:SetText(opts.placeholder or L["Search..."])
     box.Hint = hint

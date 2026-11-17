@@ -26,6 +26,35 @@ Font.slots = {
     ["Font.Menu"]   = { object = "NxFontMenu",   inherit = "GameFontNormalSmall", scope = "db" },
 }
 
+-- Font roles (#44). A window asks for the role of a text, never for a fixed
+-- font, so the face and size the player picks and the global scale reach
+-- every window:
+--   title   window titles
+--   normal  body text (the "Normal Font" slot)
+--   small   secondary text, list columns, buttons (the "Small Font" slot)
+--   number  counters and amounts (narrow face, follows the small size)
+-- A role either reuses a slot's font object or owns one derived from a slot:
+-- `add` pixels over the slot size, an optional fixed `face` and a shadow.
+Font.roles = {
+    title  = { object = "NxFontTitle",  slot = "Font.Medium", add = 2, shadow = true },
+    normal = { slot = "Font.Medium" },
+    small  = { slot = "Font.Small" },
+    number = { object = "NxFontNumber", slot = "Font.Small", add = 1, face = "Fonts\\ARIALN.TTF", shadow = true },
+}
+
+-- Sizes of a slot before the player's profile is read (Defaults.lua).
+local BASE_SIZE = { ["Font.Small"] = 10, ["Font.Medium"] = 12 }
+
+-- Global scale of every Carbonite font (profile.Font.Scale), kept in a sane range.
+Font.SCALE_MIN, Font.SCALE_MAX = 0.7, 1.6
+
+function Font:GetScale()
+    local Nx = _G.Nx
+    local f = Nx and Nx.db and Nx.db.profile and Nx.db.profile.Font
+    local scale = tonumber(f and f.Scale) or 1
+    return math.min(math.max(scale, self.SCALE_MIN), self.SCALE_MAX)
+end
+
 -- Built-in font faces. LibSharedMedia-discovered fonts append here.
 Font.faces = {
     { "Arial",    "Fonts\\ARIALN.TTF" },
@@ -51,9 +80,65 @@ local function ensureFontObject(slot)
     return obj
 end
 
+-- Font object of a role that owns one, created from its slot's look.
+local function ensureRoleObject(role)
+    if role.fontObject then return role.fontObject end
+    local obj = CreateFont(role.object)
+    local slot = Font.slots[role.slot]
+    obj:SetFontObject(slot and slot.inherit or "GameFontNormal")
+    role.fontObject = obj
+    return obj
+end
+
+--- Name of the font object of a role ("title", "normal", "small", "number"),
+--- for SetFontObject. An unknown role falls back to "small".
+function Font:GetRole(name)
+    local role = self.roles[name] or self.roles.small
+    if role.object then
+        ensureRoleObject(role)
+        return role.object
+    end
+    return self.slots[role.slot].object
+end
+
+--- Give a font string the font of a role.
+function Font:SetRole(fontString, name)
+    fontString:SetFontObject(self:GetRole(name))
+end
+
+--- Pixel size of a role with the player's sizes and the global scale.
+function Font:GetRoleSize(name)
+    local role = self.roles[name] or self.roles.small
+    local cat, sub = role.slot:match("^(.-)%.(.+)$")
+    local Nx = _G.Nx
+    local profile = Nx and Nx.db and Nx.db.profile
+    local size = profile and profile[cat] and profile[cat][sub .. "Size"] or BASE_SIZE[role.slot] or 12
+    return math.floor((size + (role.add or 0)) * self:GetScale() + 0.5)
+end
+
+-- Refresh the font objects the roles own (the others are slots).
+function Font:UpdateRoles()
+    local Nx = _G.Nx
+    local profile = Nx and Nx.db and Nx.db.profile
+    for name, role in pairs(self.roles) do
+        if role.object then
+            local obj = ensureRoleObject(role)
+            local cat, sub = role.slot:match("^(.-)%.(.+)$")
+            local face = role.face or self:GetFacePath(profile and profile[cat] and profile[cat][sub])
+            local _, _, flags = obj:GetFont()
+            obj:SetFont(face, self:GetRoleSize(name), flags or "")
+            if role.shadow then
+                obj:SetShadowColor(0, 0, 0, 1)
+                obj:SetShadowOffset(1, -1)
+            end
+        end
+    end
+end
+
 -- Creates every slot's FontObject. Safe to call repeatedly.
 function Font:Init()
     for _, slot in pairs(self.slots) do ensureFontObject(slot) end
+    for _, role in pairs(self.roles) do if role.object then ensureRoleObject(role) end end
     self:ScanShared()
     self:Update()
     self.initialized = true
@@ -121,6 +206,7 @@ function Font:Update()
     local Nx = _G.Nx
     if not Nx or not Nx.db then return end
 
+    local scale = self:GetScale()
     for key, slot in pairs(self.slots) do
         local obj = ensureFontObject(slot)
         local fname, _, flags = obj:GetFont()
@@ -130,7 +216,7 @@ function Font:Update()
             local profileCat = cat and profile[cat]
             if profileCat then
                 local file = self:GetFacePath(profileCat[sub])
-                local size = profileCat[sub .. "Size"] or 12
+                local size = math.floor((profileCat[sub .. "Size"] or 12) * scale + 0.5)
                 -- Optional per-slot outline flag ("", "OUTLINE",
                 -- "THICKOUTLINE"). Only slots whose profile defines a
                 -- <sub>Outline key are affected; others keep the flags
@@ -153,6 +239,7 @@ function Font:Update()
             end
         end
     end
+    self:UpdateRoles()
 
     -- Redraw the legacy List + Window subsystems. A NextUpdateFull only
     -- marks lists dirty (re-renders on the next SetSize); an outline/shadow
@@ -191,6 +278,8 @@ Carbonite.Core.EventBus:Subscribe("CARBONITE_LOADED", function()
     target.GetName     = function(_, index) return Font:GetFaceName(index) end
     target.GetFile     = function(_, name)  return Font:GetFacePath(name) end
     target.Update      = function() Font:Update() end
+    target.GetRole     = function(_, name) return Font:GetRole(name) end
+    target.SetRole     = function(_, fontString, name) Font:SetRole(fontString, name) end
     target.Fonts       = Font.slots
     target.Faces       = Font.faces
     target.AddonFonts  = Font.facesByName
