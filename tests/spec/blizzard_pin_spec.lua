@@ -6,7 +6,12 @@ local function load(opts)
     local state = { waypoint = nil, sets = 0, clears = 0, seeds = 0, tracked = false, now = 0 }
     env.GetTime = function() return state.now end
     env.InCombatLockdown = function() return opts.combat or false end
-    env.WorldMapFrame = { IsShown = function() return opts.mapOpen or false end }
+    env.WorldMapFrame = {
+        IsShown = function() return opts.mapOpen or false end,
+        HookScript = function(_, _, fn) state.onMapShow = fn end,
+    }
+    -- The player opens the world map (and closes it again).
+    state.openMap = function() state.onMapShow() end
     env.UiMapPoint = { CreateFromCoordinates = function(m, x, y) return { uiMapID = m, position = { x = x, y = y } } end }
     env.C_Map = {
         SetUserWaypoint = function(p) state.waypoint = p state.sets = state.sets + 1 end,
@@ -57,6 +62,7 @@ describe("pino 3D", function()
         map.Targets[1] = target(1429, 10, 10)
         BP:Sync()
         state.now = state.now + 10
+        state.openMap()
         state.waypoint = { uiMapID = 1429, position = { x = 0.9, y = 0.9 } }   -- o jogador pôs outro
         map.Targets[1] = nil
         BP:Sync()
@@ -94,6 +100,7 @@ describe("pino 3D: o marcador devolvido pelo cliente continua sendo nosso", func
         state.now = 130
         expect(BP:OwnsWaypoint()).toBe(true)
         -- A different point dropped later by the player is not.
+        state.openMap()
         state.waypoint = { uiMapID = 1411, position = { x = 0.9, y = 0.9 } }
         expect(BP:OwnsWaypoint()).toBe(false)
     end)
@@ -126,6 +133,7 @@ describe("pino 3D: mesmo ponto no mundo", function()
         state.now = 60                                         -- the event comes late
         state.waypoint = { uiMapID = 1411, position = { x = 0.242, y = 0.365 } }
         expect(BP:OwnsWaypoint()).toBe(true)
+        state.openMap()
         state.waypoint = { uiMapID = 1411, position = { x = 0.5, y = 0.5 } }
         expect(BP:OwnsWaypoint()).toBe(false)
     end)
@@ -143,5 +151,32 @@ describe("pino 3D e o rastreio de quests", function()
         local src = loader.read("Carbonite.Quests/SuperTrack.lua")
         local _, n = src:gsub("if pin and pin.OwnsWaypoint and pin:OwnsWaypoint%(%) then", "")
         expect(n).toBe(2)
+    end)
+end)
+
+describe("pino 3D: eventos do próprio pino", function()
+    it("evento disparado dentro de SetUserWaypoint já vê o pino novo como nosso", function()
+        local BP, map, state, env = load()
+        local during
+        env.C_Map.SetUserWaypoint = function(p)
+            state.waypoint = p
+            during = BP:OwnsWaypoint()
+        end
+        state.now = 100
+        map.Targets[1] = target(1429, 42, 65)
+        BP:Sync()
+        state.now = 200
+        map.Targets[1] = target(1429, 10, 20)   -- destino trocado bem depois
+        BP:Sync()
+        expect(during).toBe(true)
+    end)
+
+    it("sem o mapa do jogo aberto, o pino reposto continua nosso mesmo que o cliente o mova", function()
+        local BP, map, state = load()
+        map.Targets[1] = target(1429, 42, 65)
+        BP:Sync()
+        state.now = 300
+        state.waypoint = { uiMapID = 1411, position = { x = 0.3, y = 0.7 } }
+        expect(BP:OwnsWaypoint()).toBe(true)
     end)
 end)
