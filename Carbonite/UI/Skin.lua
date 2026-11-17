@@ -54,6 +54,9 @@ Skin.themes = {
             scrollThumb = "0.60|0.48|0.24|1",
             listHeader  = "0.22|0.16|0.08|1",
             selection   = "0.55|0.42|0.05|0.45",
+            title       = "1|0.82|0|1",
+            titleBar    = "0.22|0.16|0.08|0.85",
+            toolSlot    = "0.06|0.05|0.03|0.9",
         },
     },
     ["Blackout"] = {
@@ -115,6 +118,9 @@ Skin.themes = {
             scrollThumb = "0.35|0.42|0.65|0.9",
             listHeader  = "0.75|0.76|0.82|1",
             selection   = "0.25|0.30|0.50|0.35",
+            title       = "0.10|0.12|0.20|1",
+            titleBar    = "0.75|0.76|0.82|0.85",
+            toolSlot    = "0.92|0.92|0.95|0.9",
         },
     },
     ["Glass"] = {
@@ -159,6 +165,9 @@ Skin.activeName = "Blizzard"
 --   scrollThumb scroll bar thumb
 --   listHeader  column header strip of a list
 --   selection   selected list row (added on top, ADD blend)
+--   title       title text of a window
+--   titleBar    strip behind a window's title
+--   toolSlot    square behind each tool bar icon
 Skin.tokens = {
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
@@ -170,6 +179,9 @@ Skin.tokens = {
     scrollThumb = "0.3|0.3|0.7|0.9",
     listHeader  = "0.2|0.2|0.3|1",
     selection   = "0.4|0.4|0.5|0.4",
+    title       = "1|1|1|1",
+    titleBar    = "0.2|0.2|0.3|0.6",
+    toolSlot    = "0|0|0|0.6",
 }
 
 -- Parse a "r|g|b|a" string the legacy save format uses.
@@ -228,6 +240,15 @@ function Skin:Paint(texture, name)
     texture:SetColorTexture(self:GetToken(name))
 end
 
+-- Font strings colored with a token, recolored when the theme changes.
+local inked = setmetatable({}, { __mode = "k" })
+
+--- Color a font string's text with a token and keep it in step with the theme.
+function Skin:PaintText(fontString, name)
+    inked[fontString] = name
+    fontString:SetTextColor(self:GetToken(name))
+end
+
 -- Apply current theme's backdrop to a frame in one call.
 function Skin:Apply(frame)
     if not frame or not frame.SetBackdrop then return end
@@ -266,6 +287,9 @@ end
 function Skin:Update()
     for texture, name in pairs(painted) do
         texture:SetColorTexture(self:GetToken(name))
+    end
+    for fontString, name in pairs(inked) do
+        fontString:SetTextColor(self:GetToken(name))
     end
     Carbonite.Core.EventBus:Fire("SKIN_UPDATED", self.activeName)
     -- Push to legacy Window/Menu resets so existing widgets restyle.
