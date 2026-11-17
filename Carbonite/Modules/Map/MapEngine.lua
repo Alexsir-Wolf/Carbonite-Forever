@@ -6559,7 +6559,15 @@ function Nx.Map:Update (elapsed)
 
                     elseif #self.Tracking > 0 then
 
+                        -- Fit the first real waypoint, not a walking path
+                        -- corner a few yards ahead (#79).
                         local tr = self.Tracking[1]
+                        for _, entry in ipairs (self.Tracking) do
+                            if not entry.GroundStep then
+                                tr = entry
+                                break
+                            end
+                        end
                         midX = tr.TargetMX
                         midY = tr.TargetMY
                         dtx = abs (tr.TargetX1 - tr.TargetX2)
@@ -7581,6 +7589,12 @@ function Nx.Map:Update (elapsed)
         self:UpdateTargets()
         self:UpdateTracking()
         self.Level = self.Level + 2
+    else
+        -- No target: drop walking paths and the decoded terrain (#79).
+        local ground = Carbonite.Modules.Map.GroundRoute
+        if ground and ground:Busy() then
+            ground:Clear()
+        end
     end
 
     self.TrackETA = false
@@ -8844,7 +8858,10 @@ function Nx.Map:UpdateTracking()
     local srcX = self.PlyrX
     local srcY = self.PlyrY
 
-    -- Draw tracking for each waypoint in sequence
+    -- Draw tracking for each waypoint in sequence. Walking path steps (#79)
+    -- lead to the first real waypoint: the HUD points at the first step but
+    -- counts the distance along all of them.
+    local leading = true
     for n = 1, #self.Tracking do
         local tr = self.Tracking[n]
 
@@ -8855,6 +8872,11 @@ function Nx.Map:UpdateTracking()
             self.TrackName = tr.TargetName
             dist1 = self.TrackDistYd
             dir1 = self.TrackDir
+        elseif leading then
+            dist1 = (dist1 or 0) + (self.TrackDistYd or 0)
+        end
+        if not tr.GroundStep then
+            leading = false
         end
 
         -- Chain from this target to next
@@ -8903,6 +8925,12 @@ function Nx.Map:CalcTracking()
         srcX = tar.TargetMX
         srcY = tar.TargetMY
         srcMapId = tar.MapId
+    end
+
+    -- Walking legs around the terrain (#79); straight while no path is known.
+    local ground = Carbonite.Modules.Map.GroundRoute
+    if ground then
+        self.Tracking = ground:Expand(self, tr)
     end
 end
 
@@ -8978,7 +9006,9 @@ function Nx.Map:DrawTracking(srcX, srcY, dstX, dstY, mode, target)
         end
     end
 
-    if target and (not questTarget or not blobDrawsDestination) then
+    -- A walking path step (#79) is a corner of the line, not a destination.
+    if target and not target.GroundStep
+        and (not questTarget or not blobDrawsDestination) then
         local f = self:GetIcon (1)
         f.NxTarget = target;
 
@@ -9062,6 +9092,12 @@ function Nx.Map:DrawTracking(srcX, srcY, dstX, dstY, mode, target)
             cnt = cnt + .5
         end
         cnt = min (floor (cnt), 40)
+
+        -- Path corners can be close together: keep one arrow per segment so
+        -- the walking line (#79) never shows gaps.
+        if cnt < 1 and target and target.GroundStep then
+            cnt = 1
+        end
 
         if cnt >= 1 then
 
