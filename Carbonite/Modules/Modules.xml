@@ -101,6 +101,8 @@
     <!-- Measured flight times per pair of nodes, account-wide (#139). -->
     <Script file="Travel\FlightTimes.lua" />
     <Script file="Travel\TravelEngine.lua" />
+    <!-- Hearthstone and mage teleports in the route (#37). -->
+    <Script file="Travel\Teleports.lua" />
 
     <!-- Cross-cutting modules. -->
     <Script file="Whatsnew\Whatsnew.lua" />
