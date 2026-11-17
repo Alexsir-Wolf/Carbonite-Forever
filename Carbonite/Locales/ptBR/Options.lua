@@ -339,7 +339,6 @@ L["Reset window layouts"] = "Redefinir posições das janelas"
 L["Yes"] = "Sim"
 L["No"] = "Não"
 L["Ok"] = "Ok"
-L["Put the game minimap into the Carbonite map?\n\nThis will make one unified map. The minimap buttons will go into the Carbonite button window. This can also be changed using the Map Minimap options page."] = "Colocar o minimapa do jogo dentro do mapa do Carbonite-Forever?\n\nIsso criará um mapa unificado. Os botões do minimapa irão para a janela de botões do Carbonite. Isso também pode ser alterado na página de opções Mapa > Minimapa."
 L["Consider installing Carbonite.Combined.Maps.%s addon to gain FPS using compressed maps."] = "Considere instalar o addon Carbonite.Combined.Maps.%s para ganhar FPS usando mapas compactados."
 
 -- Font outline/shadow options
