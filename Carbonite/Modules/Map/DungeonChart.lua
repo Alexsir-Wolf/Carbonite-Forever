@@ -679,7 +679,12 @@ local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests)
             local tip = { b.name, state == "killed" and L["Killed"] or state == "next" and L["Next boss"] or nil }
             local old = view.Pins[n + 1]
             local keep = old and old.PortraitOK and old.PortraitNpc == b.npc
-            local p = add(keep and false or PIN_BOSS, b.x, b.y, tip, nil, nil, nil, state == "next" and 1.9 or 1.6)
+            -- false keeps the portrait already on the pin. The and/or form of
+            -- this choice always gave PIN_BOSS: each redraw swapped the
+            -- portrait for the skull, so the icons blinked on zoom and clicks.
+            local tex = PIN_BOSS
+            if keep then tex = false end
+            local p = add(tex, b.x, b.y, tip, nil, nil, nil, state == "next" and 1.9 or 1.6)
             if not keep then
                 p.PortraitNpc = b.npc
                 p.PortraitOK = DG and b.npc and DG.SetBossPortrait(p.Icon, b.npc) or false

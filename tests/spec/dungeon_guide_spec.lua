@@ -413,7 +413,10 @@ describe("DungeonGuide: retratos e estado dos chefes", function()
 
     it("a planta usa o retrato nos chefes e a dica de posição some na masmorra", function()
         expect(loader.read("Carbonite/Modules/Map/DungeonChart.lua"):find("DG.SetBossPortrait(p.Icon, b.npc)", 1, true) ~= nil).toBe(true)
-        expect(loader.read("Carbonite/Modules/Map/MapEngine.lua"):find("if tipStr and (self:IsUnmappedInstance() or (chart and chart.IsActive and chart:IsActive())) then", 1, true) ~= nil).toBe(true)
+        local tip = loader.read("Carbonite/Modules/Map/MapTooltip.lua")
+        expect(tip:find("or (chart and chart.IsActive and chart:IsActive()) then", 1, true) ~= nil).toBe(true)
+        -- The redraw keeps the portrait: no "keep and false or" idiom, which is always the skull.
+        expect(loader.read("Carbonite/Modules/Map/DungeonChart.lua"):find("keep and false or", 1, true)).toBeNil()
     end)
 end)
 
