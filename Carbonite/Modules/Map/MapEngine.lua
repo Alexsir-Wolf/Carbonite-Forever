@@ -1737,10 +1737,11 @@ function Nx.Map:SetLocationTip(tipStr)
     local f = self.LocTipFrm
     local a = Nx.db.profile.Map.LocTipAnchor
 
-    -- Inside a dungeon without a map the cursor's zone, skill and distance
-    -- are made up from the outdoor map under it, and the tip covered the
-    -- boss panel: no tip there.
-    if tipStr and self:IsUnmappedInstance() then
+    -- Inside a dungeon (no map, or its chart shown) the cursor's zone, skill
+    -- and distance are made up from the outdoor map under it, and the tip
+    -- covered the boss panel: no tip there.
+    local chart = Nx.DungeonChart
+    if tipStr and (self:IsUnmappedInstance() or (chart and chart.IsActive and chart:IsActive())) then
         tipStr = nil
     end
 
