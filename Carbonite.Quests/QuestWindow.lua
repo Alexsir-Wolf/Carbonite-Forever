@@ -2575,9 +2575,10 @@ function Nx.Quest.List:Update()
                         keepLine = list:ItemGetNum()
                     end
 
-                    -- Objectives with their progress: under the selected quest,
-                    -- or under every quest with the "Show Objectives" option
-                    if self.QOpts.NXShowObj or selected then
+                    -- Objectives with their progress, under every quest, only
+                    -- with the "Show Objectives" option: the details pane next
+                    -- to the list already shows the selected quest's ones.
+                    if self.QOpts.NXShowObj then
 
                         local num = GetNumQuestLeaderBoards (qn)
                         local oCompColor = Nx.Quest.Cols["oCompColor"]
