@@ -20,7 +20,8 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - Mostra no título a zona, as coordenadas e a velocidade de movimento. Os tooltips das zonas mostram a faixa de nível e a facção.
 - Integra o minimapa da Blizzard à janela do mapa (modo acoplado) e organiza os botões de minimapa de outros addons.
 - Em battlegrounds, mostra os objetivos com timers e ordens rápidas. Segure **Alt** para ver os nomes dos jogadores.
-- Mapas de masmorra estáticos no menu do mapa, a partir do ForeverDungeonJournal ou do FojjiCore, quando instalados.
+- Mapas de masmorra estáticos no menu do mapa, a partir do ForeverDungeonJournal, do FojjiCore ou do MapUtils, quando instalados.
+- Dentro de masmorras (o cliente não dá mapa nem posição lá), a tecla **M** abre a planta da masmorra com a rota até os chefes: linha da entrada passando pelos chefes, os mortos apagados e o próximo destacado. O minimapa ao vivo fica num canto, mostrando onde você está, e um painel ao lado lista os chefes na ordem. Na janela acoplada, o minimapa ao vivo continua como antes.
 - API para outros addons desenharem ícones no mapa do Carbonite ([Map Provider API](Carbonite/Docs/MapProvider.md)).
 
 ### Navegação
@@ -72,7 +73,8 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - Opcionais:
   - **QuestieDB:** necessário para as quests do Forever que faltam na base do Carbonite. Ative só o QuestieDB; o Questie pode ficar desligado.
   - **Spoken** (com o módulo Spoken_Quests): necessário para o botão de narração na lista de quests.
-  - **ForeverDungeonJournal** ou **FojjiCore:** mapas estáticos de masmorra no menu do mapa.
+  - **ForeverDungeonJournal** ou **FojjiCore:** planta da masmorra (arte, chefes e a ordem da rota; o FojjiCore também sabe os chefes mortos). Lidos durante o jogo; o Carbonite não copia esses dados.
+  - **[MapUtils](https://www.curseforge.com/projects/1463967):** arte das masmorras quando nem o ForeverDungeonJournal nem o FojjiCore têm a masmorra. Sem nenhum dos três, a tecla **M** mostra o minimapa ao vivo e o painel com os chefes (os dados de chefes do Carbonite vêm do MapUtils e não dependem dele instalado).
 
 ## Instalação
 
@@ -130,7 +132,7 @@ Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai 
 - As mudanças desta edição são de **Alexsir-Wolf**. A lista completa está no histórico de commits deste repositório.
 - Os dados de quests do Forever pertencem à equipe do Questie e são lidos do QuestieDB que você instalou. Esta edição não copia esses dados.
 - As pedras de encontro do Guia (`Carbonite/Data/camelot/Guides/MeetingStone.lua`) vêm da base de objetos do **QuestieDB** (Forever), também sob a GPL v3.
-- A perícia de pesca de cada zona (`Carbonite/Modules/Map/ZoneFishing.lua`), os curandeiros espirituais do Guia (`Carbonite/Data/camelot/Guides/SpiritHealer.lua`) e os livros da biblioteca e convergências (`Carbonite.Notes/Integrations/ForeverPoints.lua`) vêm do **MapUtils**, de D4KiR, também sob a GPL v3.
+- A perícia de pesca de cada zona (`Carbonite/Modules/Map/ZoneFishing.lua`), os curandeiros espirituais do Guia (`Carbonite/Data/camelot/Guides/SpiritHealer.lua`) e os livros da biblioteca e convergências (`Carbonite.Notes/Integrations/ForeverPoints.lua`) vêm do **MapUtils**, de D4KiR, também sob a GPL v3. Também vêm dele os andares, entradas, chefes, quests e itens de quest das masmorras (`Carbonite/Modules/Map/DungeonPins.lua`, de `shared/InstancePins` e `data/*/instances.lua`).
 - Licença: [GNU GPL v3](LICENSE). O código continua aberto, e as mudanças precisam manter a mesma licença.
 
 ### Apoie o Carbonite

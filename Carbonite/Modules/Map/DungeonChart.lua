@@ -25,16 +25,81 @@ local function loadable(name)
     return C_AddOns and C_AddOns.IsAddOnLoadable and C_AddOns.IsAddOnLoadable(name) or false
 end
 
+local function addonLoaded(name)
+    if C_AddOns and C_AddOns.IsAddOnLoaded then return C_AddOns.IsAddOnLoaded(name) and true or false end
+    return _G.IsAddOnLoaded and _G.IsAddOnLoaded(name) and true or false
+end
+
 local function prefs()
     local map = Nx.db and Nx.db.profile and Nx.db.profile.Map
     if map and map.DungeonChartAuto == nil then map.DungeonChartAuto = true end
     return map or {}
 end
 
+-- MapUtils' dungeon art (its media folder) with DungeonPins.lua's floors,
+-- entrances, floor links and bosses, in ForeverDungeonJournal's layout so
+-- the same drawing code shows it. Art: 1024 wide, `heights` tall, at the
+-- top of a 1024x1024 file.
+local MU_MEDIA = "Interface\\AddOns\\MapUtils\\media\\"
+
+function DC.PinMap(inst, pins, heights)
+    local data = { name = inst.name, floors = {}, entrances = {}, transitions = {} }
+    local index = {}
+    for f, fl in ipairs(inst.floors or {}) do
+        index[fl.key] = f
+        data.floors[f] = { texture = MU_MEDIA .. fl.key, texBottom = (heights and heights[fl.key] or 683) / 1024,
+            uiMapID = fl.map, key = fl.key, label = fl.label }
+    end
+    for f, fl in ipairs(inst.floors or {}) do
+        for _, row in ipairs(pins and pins[fl.key] or {}) do
+            if row[1] == "entrance" then
+                data.entrances[#data.entrances + 1] = { floor = f, x = row[2], y = row[3] }
+            elseif row[1] == "level" and index[row[4]] then
+                data.transitions[#data.transitions + 1] = { floor = f, to = index[row[4]], x = row[2], y = row[3] }
+            end
+        end
+    end
+    data.bosses = Nx.DungeonGuide and Nx.DungeonGuide.PinBosses(inst) or {}
+    return data
+end
+
+local muApi
+local function MU()
+    local P = Nx.DungeonPins
+    if not (P and addonLoaded("MapUtils")) then return end
+    if not muApi then
+        local maps = {}
+        for _, inst in pairs(P.instances) do
+            if inst.floors and inst.floors[1] then
+                maps[inst.name] = DC.PinMap(inst, P.pins, P.heights)
+            end
+        end
+        local function here()
+            local DG = Nx.DungeonGuide
+            local h = DG and DG:Here()
+            return h and h.data and maps[h.data.name] and h or nil
+        end
+        muApi = {
+            DUNGEON_MAPS = maps,
+            CurrentDungeon = function()
+                local h = here()
+                return h and h.data.name
+            end,
+            LocalizeDungeonName = function(name)
+                local h = here()
+                return h and h.data.name == name and h.name or name
+            end,
+        }
+    end
+    return muApi
+end
+
 local function source()
     local fojji, dj = Fojji(), DJ()
     if dj and (prefs().DungeonChartUseDJ or not fojji) then return "dj", dj end
     if fojji then return "fojji", fojji end
+    local mu = MU()
+    if mu then return "mu", mu end
 end
 
 local function djText(dj, key, ...)
@@ -106,8 +171,10 @@ function DC:Refresh()
         local ok, name = pcall(dj.CurrentDungeon)
         here.dj = ok and name and dj.DUNGEON_MAPS[name] and name or nil
     end
+    local mu = MU()
+    if mu then here.mu = mu.CurrentDungeon() end
     local old = self.Here or {}
-    if here.fojji ~= old.fojji or here.dj ~= old.dj then
+    if here.fojji ~= old.fojji or here.dj ~= old.dj or here.mu ~= old.mu then
         self.Dismissed = nil
     end
     self.Here = here
@@ -119,10 +186,13 @@ function DC:Current(src)
         return self.Browse.src == src and self.Browse.value or nil
     end
     if self.Native then return nil end
-    -- Without a game map for the dungeon, the window shows the live minimap
-    -- (UnmappedInstance.lua): the chart then opens only from the map menu.
+    -- Without a game map for the dungeon, the docked window shows the live
+    -- minimap (UnmappedInstance.lua); the maximized one (M) opens the chart
+    -- (#103). The map menu opens it in both.
     local map = Nx.Map.Maps and Nx.Map.Maps[1]
-    if map and map.UInstViewActive then return nil end
+    if map and map.UInstViewActive and not (map.IsWindowMaximized and map:IsWindowMaximized()) then
+        return nil
+    end
     local here = self.Here and self.Here[src]
     if here and not self.Dismissed and prefs().DungeonChartAuto then return here end
 end
@@ -179,7 +249,7 @@ function DC:OpenPicker()
         table.sort(rest)
         for _, name in ipairs(rest) do names[#names + 1] = name end
         for _, name in ipairs(names) do
-            local item = menu:AddItem(0, djName(api, name), function() DC:Open("dj", name) end)
+            local item = menu:AddItem(0, djName(api, name), function() DC:Open(src, name) end)
             if name == current then item:SetChecked(true) end
         end
     end
@@ -358,13 +428,13 @@ function DC:ZoomAt(factor)
 end
 
 function DC:SetFloor(n)
-    local src, api = source()
+    local src, api = self.Src, self.Api
     local f = self.Frame
-    if not f then return end
+    if not f or not src then return end
     if src == "fojji" and f.Chart then
         f.Chart:SetFloor(n)
-    elseif src == "dj" then
-        local data = api.DUNGEON_MAPS[self:Current("dj") or ""]
+    else
+        local data = api.DUNGEON_MAPS[self:Current(src) or ""]
         if not data then return end
         n = max(1, min(#(data.floors or {}), n))
         if n ~= self.Floor then
@@ -453,25 +523,107 @@ local function pin(view, i)
     return p
 end
 
-local function drawDJPins(view, dj, data, floorN, w, h, scale)
+local function floorLabel(dj, data, n)
+    local fl = data.floors and data.floors[n]
+    return fl and fl.label or djFloorLabel(dj, n)
+end
+
+-- The chart's bosses in its order (the run order), with the kills seen.
+function DC.BossList(dj, data)
+    local DG = Nx.DungeonGuide
+    local list = {}
+    for i, b in ipairs(data.bosses or {}) do
+        local name = djBoss(dj, b.name)
+        list[i] = { name = name, npc = b.npc, floor = b.floor or 1, x = b.x, y = b.y,
+            killed = DG and DG:IsKilled(name, b.npc) or false }
+    end
+    return list
+end
+
+-- Lines from the entrance through the bosses of this floor, in order. The
+-- leg to the next boss alive stands out; legs already walked are dimmed.
+-- Straight lines: no position or path data exists inside the dungeon.
+function DC.RouteLegs(data, bosses, floorN)
+    local nextBoss = Nx.DungeonGuide and Nx.DungeonGuide.NextBoss(bosses)
+    local points = {}
+    local entrances = data.entrances or (data.entrance and { data.entrance }) or {}
+    for _, e in ipairs(entrances) do
+        if (e.floor or 1) == floorN and e.x and e.y then
+            points[1] = { x = e.x, y = e.y }
+            break
+        end
+    end
+    for i, b in ipairs(bosses) do
+        if b.floor == floorN and b.x and b.y then points[#points + 1] = { x = b.x, y = b.y, boss = i } end
+    end
+    local legs = {}
+    for i = 2, #points do
+        local to = points[i].boss
+        local state = "ahead"
+        if not nextBoss or to < nextBoss then
+            state = "done"
+        elseif to == nextBoss then
+            state = "next"
+        end
+        legs[#legs + 1] = { x1 = points[i - 1].x, y1 = points[i - 1].y, x2 = points[i].x, y2 = points[i].y, state = state }
+    end
+    return legs
+end
+
+local LEG_STYLE = {
+    done = { .5, .5, .5, .45, 2 },
+    next = { .25, 1, .25, .95, 4 },
+    ahead = { 1, .82, 0, .6, 2 },
+}
+
+local function drawRoute(view, legs, w, h)
+    view.Lines = view.Lines or {}
+    for _, line in ipairs(view.Lines) do line:Hide() end
+    if not view.Canvas.CreateLine then return end
+    for i, leg in ipairs(legs) do
+        local line = view.Lines[i]
+        if not line then
+            line = view.Canvas:CreateLine(nil, "OVERLAY")
+            view.Lines[i] = line
+        end
+        local s = LEG_STYLE[leg.state]
+        line:SetColorTexture(s[1], s[2], s[3], s[4])
+        line:SetThickness(s[5])
+        line:SetStartPoint("TOPLEFT", view.Canvas, leg.x1 * w, -leg.y1 * h)
+        line:SetEndPoint("TOPLEFT", view.Canvas, leg.x2 * w, -leg.y2 * h)
+        line:Show()
+    end
+end
+
+local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses)
     for _, p in ipairs(view.Pins) do p:Hide() end
     local n = 0
     local size = max(14, min(26, 18 * scale))
-    local function add(tex, x, y, tip, num, toFloor, color)
+    local function add(tex, x, y, tip, num, toFloor, color, grow)
         n = n + 1
         local p = pin(view, n)
         p.Icon:SetTexture(tex)
+        p.Icon:SetDesaturated(color == false)
         if color then p.Icon:SetVertexColor(color[1], color[2], color[3]) else p.Icon:SetVertexColor(1, 1, 1) end
+        p:SetAlpha(color == false and .55 or 1)
         p.Num:SetText(num or "")
         p.Tip = tip
         p.ToFloor = toFloor
-        p:SetSize(size, size)
+        p:SetSize(size * (grow or 1), size * (grow or 1))
         p:ClearAllPoints()
         p:SetPoint("CENTER", view.Canvas, "TOPLEFT", x * w, -y * h)
+        return p
     end
-    for i, b in ipairs(data.bosses or {}) do
-        if (b.floor or 1) == floorN and b.x and b.y then
-            add(PIN_BOSS, b.x, b.y, { djBoss(dj, b.name) }, i)
+    local nextBoss = Nx.DungeonGuide and Nx.DungeonGuide.NextBoss(bosses)
+    for i, b in ipairs(bosses) do
+        if b.floor == floorN and b.x and b.y then
+            if b.killed then
+                add(PIN_BOSS, b.x, b.y, { b.name, L["Killed"] }, i, nil, false)
+            elseif i == nextBoss then
+                add(PIN_BOSS, b.x, b.y, { b.name, L["Next boss"] }, i, nil, { .4, 1, .4 }, 1.35)
+            else
+                add(PIN_BOSS, b.x, b.y, { b.name }, i)
+            end
         end
     end
     local entrances = data.entrances or (data.entrance and { data.entrance }) or {}
@@ -482,7 +634,7 @@ local function drawDJPins(view, dj, data, floorN, w, h, scale)
     end
     for _, t in ipairs(data.transitions or {}) do
         if (t.floor or 1) == floorN and t.x and t.y then
-            local label = t.labelKey and djText(dj, t.labelKey, t.to) or (t.to and djFloorLabel(dj, t.to))
+            local label = t.labelKey and djText(dj, t.labelKey, t.to) or (t.to and floorLabel(dj, data, t.to))
             add(t.to and PIN_LINK or PIN_NOTE, t.x, t.y, { label or "" }, nil, t.to)
         end
     end
@@ -520,10 +672,13 @@ function DC:UpdateDJ(f, dj, name, W, H)
     view.Canvas:ClearAllPoints()
     view.Canvas:SetPoint("CENTER", view, "CENTER", self.PanX, -self.PanY)
     drawDJArt(view, dj, fl, cw, ch)
-    drawDJPins(view, dj, data, floorN, cw, ch, fit * zoom)
+    local bosses = DC.BossList(dj, data)
+    drawRoute(view, DC.RouteLegs(data, bosses, floorN), cw, ch)
+    drawDJPins(view, dj, data, floorN, cw, ch, fit * zoom, bosses)
+    self:ShareBosses(bosses)
 
     local title = djName(dj, name)
-    if #floors > 1 then title = title .. "  |cff9d9d9d" .. djFloorLabel(dj, floorN) end
+    if #floors > 1 then title = title .. "  |cff9d9d9d" .. floorLabel(dj, data, floorN) end
     f.Title:SetText(title)
     f.Prev:SetShown(#floors > 1)
     f.Next:SetShown(#floors > 1)
@@ -543,12 +698,41 @@ function DC:UpdateFojji(f, fojji, d, W, H)
     f.Title:SetText(fojjiTitle(fojji, d))
     f.Prev:Hide()
     f.Next:Hide()
+    local runs = fojji.Runs
+    local bosses = {}
+    for _, boss in ipairs(d.bosses or {}) do
+        if not boss.rare and type(boss.name) == "string" then
+            bosses[#bosses + 1] = { name = boss.name, floor = boss.f or 1,
+                killed = runs and runs.Killed and runs.Killed(boss) and true or false }
+        end
+    end
+    self:ShareBosses(bosses)
+end
+
+-- The boss list of the dungeon the player is in goes to the guide panel.
+function DC:ShareBosses(bosses)
+    local DG = Nx.DungeonGuide
+    local here = DG and not self.Browse and DG:Here()
+    if here then DG:SetChartBosses(here.id, bosses) end
+end
+
+-- The chart for the dungeon the player is in, else the one being browsed:
+-- the preferred addon's, else MapUtils' when only it has this dungeon.
+function DC:Source()
+    local src, api = source()
+    local value = src and self:Current(src)
+    if not value and src ~= "mu" and not self.Browse then
+        local mu = MU()
+        local muValue = mu and self:Current("mu")
+        if muValue then src, api, value = "mu", mu, muValue end
+    end
+    return src, api, value
 end
 
 function DC:Update(map)
     if map ~= Nx.Map:GetMap(1) then return end
-    local src, api = source()
-    local value = src and self:Current(src)
+    local src, api, value = self:Source()
+    self.Src, self.Api = src, api
     local frame = self.Frame
     if not value then
         if frame and frame:IsShown() then
@@ -562,7 +746,10 @@ function DC:Update(map)
         self.Frame = frame
         self.Dirty = true
     end
-    local W, H = map.MapW or 0, map.MapH or 0
+    -- In an instance without a game map, the guide panel takes the right
+    -- side (DungeonGuide.lua) and UnmappedInstance.lua sets the level.
+    local unmapped = map.UInstViewActive
+    local W, H = (map.MapW or 0) - (unmapped and map.UInstPanelW or 0), map.MapH or 0
     if W <= BAR_H or H <= BAR_H * 2 then
         frame:Hide()
         return
@@ -571,16 +758,23 @@ function DC:Update(map)
         frame:Show()
         self.Dirty = true
     end
-    local level = (map.Level or map.Frm:GetFrameLevel()) + 60
+    local level = unmapped and 0 or (map.Level or map.Frm:GetFrameLevel()) + 60
     local sig = format("%s|%d|%d|%d", src, W, H, level)
     if sig ~= self.Sig then
         self.Sig = sig
         self.Dirty = true
-        frame:SetFrameLevel(level)
-        frame.Bar:SetFrameLevel(level + 50)
+        if not unmapped then
+            frame:SetFrameLevel(level)
+            frame.Bar:SetFrameLevel(level + 50)
+        end
         frame:ClearAllPoints()
         frame:SetPoint("TOPLEFT", map.Frm, "TOPLEFT", map.PadX or 0, -(map.TitleH or 0))
         frame:SetSize(W, H)
+    end
+    local DG = Nx.DungeonGuide
+    if DG and DG.Version ~= self.KillVersion then
+        self.KillVersion = DG.Version
+        self.Dirty = true
     end
     if value ~= self.Shown then self.Dirty = true end
     if not self.Dirty then return end
@@ -599,7 +793,7 @@ end
 function DC:AddMenu(menu, parentFrm)
     local hasFojji = loadable("FojjiCore_DungeonJournal") or Fojji() ~= nil
     local hasDJ = loadable("ForeverDungeonJournal") or DJ() ~= nil
-    if not (hasFojji or hasDJ) then return end
+    if not (hasFojji or hasDJ or MU()) then return end
     local sub = Nx.Menu:Create(parentFrm, 240)
     menu:AddSubMenu(sub, L["Dungeon Maps..."])
     local item = sub:AddItem(0, L["Show In Dungeons"], function() DC.Dirty = true end)
