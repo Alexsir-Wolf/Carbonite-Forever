@@ -421,10 +421,10 @@ describe("DungeonGuide: retratos e estado dos chefes", function()
 end)
 
 describe("DungeonGuide: minimapa no canto da planta", function()
-    it("fica redondo mesmo com a opção de acoplado quadrado", function()
+    it("fica quadrado no painel, mesmo com a opção de acoplado redondo", function()
         local engine = loader.read("Carbonite/Modules/Map/MapEngine.lua")
         expect(engine:find('self:MinimapUpdateMask("DockSquare", self.UInstChartFrm ~= nil and self:IsUnmappedInstance())', 1, true) ~= nil).toBe(true)
-        expect(engine:find("local name = not forceRound and Nx.db.profile.MiniMap[optName]", 1, true) ~= nil).toBe(true)
+        expect(engine:find("(forceSquare or Nx.db.profile.MiniMap[optName])", 1, true) ~= nil).toBe(true)
     end)
 end)
 
