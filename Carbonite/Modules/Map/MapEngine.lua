@@ -3676,6 +3676,11 @@ function Nx.Map:MinimapUpdateMask (optName, forceRound)
 
     local roundMask = Nx.isRetail and "Interface\\CharacterFrame\\TempPortraitAlphaMask" or "textures\\MinimapMask"
     local name = not forceRound and Nx.db.profile.MiniMap[optName] and "Interface\\Buttons\\White8x8" or roundMask
+    -- The forced round mask (dungeon chart) uses the portrait mask: the
+    -- classic "textures\MinimapMask" left the minimap blank on Forever.
+    if forceRound then
+        name = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+    end
 
 --    if IsControlKeyDown() then
 --        self.MMMaskName = nil

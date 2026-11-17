@@ -695,6 +695,12 @@ local function BuildPanel(map)
     text:SetJustifyH("LEFT")
     text:SetJustifyV("TOP")
     f.Text = text
+    -- Gold ring around the live minimap shown under the bosses.
+    local ring = f:CreateTexture(nil, "ARTWORK")
+    ring:SetTexture(ROUND)
+    ring:SetVertexColor(DG.RING.alive[1], DG.RING.alive[2], DG.RING.alive[3])
+    ring:Hide()
+    f.MMRing = ring
     f.Rows = {}
     return f
 end
@@ -762,6 +768,7 @@ end
 function DG:UpdatePanel(map, w, h)
     local panel = self.Panel
     if not w or w <= 0 or not map or not map.Frm then
+        self.PanelMinimap = nil
         if panel and panel:IsShown() then panel:Hide() end
         return
     end
@@ -775,7 +782,10 @@ function DG:UpdatePanel(map, w, h)
         return
     end
     local x = (map.PadX or 0) + (map.MapW or 0) - w
-    local sig = format("%d|%d|%d|%d|%d", x, map.TitleH or 0, w, h, self.Version)
+    -- Over a dungeon chart the live minimap sits in the panel, under the
+    -- bosses (map:GetUnmappedInstanceMinimapBox reads PanelMinimap).
+    local mmSize = map.UInstChartFrm and math.floor(math.min(w - 50, 180)) or 0
+    local sig = format("%d|%d|%d|%d|%d|%d", x, map.TitleH or 0, w, h, self.Version, mmSize)
     if sig ~= self.PanelSig or self.Dirty then
         self.PanelSig = sig
         panel:ClearAllPoints()
@@ -786,22 +796,37 @@ function DG:UpdatePanel(map, w, h)
         local bosses = self:Bosses(here)
         panel.Heading:SetText(bosses[1] and L["Bosses (route order)"] or ("|cff9d9d9d" .. L["No boss data for this dungeon"] .. "|r"))
         FillRows(panel, bosses)
+        local mmGap = mmSize > 0 and mmSize + 24 or 0
         panel.Text:ClearAllPoints()
-        panel.Text:SetPoint("TOPLEFT", panel.Heading, "BOTTOMLEFT", 0, -10 - #bosses * ROW_H)
+        panel.Text:SetPoint("TOPLEFT", panel.Heading, "BOTTOMLEFT", 0, -10 - #bosses * ROW_H - mmGap)
         panel.Text:SetPoint("RIGHT", panel.Content, "RIGHT")
         panel.Text:SetText(table.concat(self:QuestLines(here), "\n"))
 
-        -- Center the whole block (name, bosses, quests) in the panel.
-        local contentH = (panel.Title:GetStringHeight() or 16) + 12
-            + (panel.Heading:GetStringHeight() or 14) + 10 + #bosses * ROW_H
-            + (panel.Text:GetStringHeight() or 0)
+        -- Center the whole block (name, bosses, minimap, quests) in the panel.
+        local titleH = (panel.Title:GetStringHeight() or 16) + 12
+        local bossesH = (panel.Heading:GetStringHeight() or 14) + 10 + #bosses * ROW_H
+        local contentH = titleH + bossesH + mmGap + (panel.Text:GetStringHeight() or 0)
         local top = 10
         local free = h - top - contentH
+        local contentTop = top + max(0, free / 2)
         panel.Content:ClearAllPoints()
         panel.Content:SetPoint("LEFT", 10, 0)
         panel.Content:SetPoint("RIGHT", -10, 0)
-        panel.Content:SetPoint("TOP", panel, "TOP", 0, -(top + max(0, free / 2)))
+        panel.Content:SetPoint("TOP", panel, "TOP", 0, -contentTop)
         panel.Content:SetHeight(contentH)
+
+        -- Minimap slot: map-area offsets of its square, and a ring behind it.
+        if mmSize > 0 then
+            local slotY = contentTop + titleH + bossesH + 12
+            self.PanelMinimap = { size = mmSize, x = (map.MapW or 0) - w + (w - mmSize) / 2, y = slotY }
+            panel.MMRing:ClearAllPoints()
+            panel.MMRing:SetPoint("TOP", panel, "TOP", 0, -(slotY - 4))
+            panel.MMRing:SetSize(mmSize + 8, mmSize + 8)
+            panel.MMRing:Show()
+        else
+            self.PanelMinimap = nil
+            panel.MMRing:Hide()
+        end
         self.Dirty = nil
     end
     if not panel:IsShown() then panel:Show() end
