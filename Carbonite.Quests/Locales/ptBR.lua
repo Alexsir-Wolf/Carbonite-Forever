@@ -311,7 +311,7 @@ L["%s\nEnd: %s (%.1f %.1f)"] = "%s\nFim: %s (%.1f %.1f)"
 L["Quest: "] = "Missão: "
 L["%s\nStart: %s (%.1f %.1f)"] = "%s\nInício: %s (%.1f %.1f)"
 L["End: "] = "Fim: "
-L["%s\nObj: %s"] = "%s\nObj: %s"
+L["%s\nObj: %s"] = "%s\nObjetivo: %s"
 L["Difficulty: "] = "Dificuldade: "
 L["Bronze"] = "Bronze"
 L["Silver"] = "Prata"
@@ -340,8 +340,8 @@ L["Get Quests"] = "Obter missões"
 
 -- Keybinds
 L["Carbonite Quests"] = "Carbonite-Forever Quests"
-L["NxTOGGLEWATCHMINI"] = "QuestWatchlist mini/maximize"
-L["NxWATCHUSEITEM"] = "Use Questitem"
+L["NxTOGGLEWATCHMINI"] = "Minimizar/maximizar o monitor de missões"
+L["NxWATCHUSEITEM"] = "Usar o item da missão"
 
 -- Font outline/shadow options
 L["Font Outline"] = "Contorno da fonte"

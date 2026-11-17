@@ -70,7 +70,7 @@ L["Lightforged Beacon"] = "Farol Forjado na Luz"
 L["Mana Loom"] = "Tear de Mana"
 L["Moonwell"] = "Poço Lunar"
 L["Name"] = "Nome"
-L["Info"] = "Info"
+L["Info"] = "Informações"
 L["Back "] = "Voltar "
 
 -- Menus
