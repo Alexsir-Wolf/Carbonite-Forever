@@ -3411,28 +3411,15 @@ function Nx.Opts:InitTimer()
 end
 
 --------
--- Show quick options timer
+-- First-run questions, a moment after login
 
 function Nx.Opts:QuickOptsTimer()
 
-    local i = Nx.db.profile.Version.QuickVer or 0
-
-    local ver = 5
-
-    Nx.db.profile.Version.QuickVer = ver
-
-    if i < ver then
-
-        local function func()
-            Nx.db.profile.MiniMap.Own = true
-            Nx.db.profile.MiniMap.ButOwn = true
-            Nx.db.profile.MiniMap.ShowOldNameplate = false
-            ReloadUI()
-        end
-
-        local s = L["Put the game minimap into the Carbonite map?\n\nThis will make one unified map. The minimap buttons will go into the Carbonite button window. This can also be changed using the Map Minimap options page."]
-
-        Nx:ShowMessage (s, L["Yes"], func, L["No"])
+    -- The first-run assistant (#63) asks the minimap question the old
+    -- one-dialog "quick options" (Version.QuickVer) asked, among others.
+    local Assistant = Carbonite.Modules and Carbonite.Modules.Assistant
+    if Assistant then
+        Assistant:AutoShow()
     end
 
     -- Suggest compressed maps addon for retail (one-time dialog)
