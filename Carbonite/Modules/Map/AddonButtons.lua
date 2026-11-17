@@ -176,17 +176,13 @@ local function handyNotesHandler(_, _, click)
     end
 end
 
--- Dark backdrop behind the icon. Stays inside the button frame so
--- the visible bounds match the rest of the toolbar (extending the
--- backdrop beyond the frame made buttons look 1-2px higher than
--- native MapCombat / MapZIn). Visible only where the icon texture
--- has transparency.
-local function addBackdrop(frm)
-    if not frm or frm._nxAddonBg then return end
-    local bg = frm:CreateTexture(nil, "BACKGROUND")
-    bg:SetColorTexture(0, 0, 0, 0.85)
-    bg:SetAllPoints(frm)
-    frm._nxAddonBg = bg
+-- The slot behind the icon comes from the tool bar (Nx.ToolBar:StyleTool),
+-- the same as the native buttons. The tooltip uses the game's own colors:
+-- gold title, green click and white action, as on Blizzard's buttons.
+local function fontColor(name)
+    local c = _G[name]
+    if c and c.GetRGB then return c:GetRGB() end
+    return 1, 1, 1
 end
 
 local function registerOne(typeId, icon, label, handler, initialPressed, tip)
@@ -228,7 +224,7 @@ end
 local function decorateTool(nxBut, handler, tip)
     local ourFrm = nxBut and nxBut.Frm
     if not (ourFrm and ourFrm.IsObjectType and ourFrm:IsObjectType("Frame")) then return end
-    addBackdrop(ourFrm)
+    if ourFrm._nxAddonTip then return end
     -- (Right-click reaches our handler via the PassRightClick flag
     -- on this button's TypeData — no UserFunc monkey-patch needed.)
     -- Replace OnEnter/OnLeave with our own multi-line tooltip
@@ -237,6 +233,7 @@ local function decorateTool(nxBut, handler, tip)
     -- early in some path we couldn't trace). Using AddLine directly
     -- gives deterministic multi-line output.
     if tip and tip.title then
+        ourFrm._nxAddonTip = true
         local Nx = _G.Nx
         local TT = Nx and Nx.TooltipText
         local origOnEnter = ourFrm:GetScript("OnEnter")
@@ -247,10 +244,11 @@ local function decorateTool(nxBut, handler, tip)
             TT:Hide()
             TT:SetOwner(self, "ANCHOR_LEFT", 0, 5)
             TT:ClearLines()
-            TT:AddLine(tip.title, 1, 0.84, 0)
+            TT:AddLine(tip.title, fontColor("NORMAL_FONT_COLOR"))
+            local gr, gg, gb = fontColor("GREEN_FONT_COLOR")
+            local hr, hg, hb = fontColor("HIGHLIGHT_FONT_COLOR")
             for _, row in ipairs(tip.rows) do
-                TT:AddDoubleLine(row[1], row[2],
-                    0.5, 0.78, 1, 1, 1, 1)
+                TT:AddDoubleLine(row[1], row[2], gr, gg, gb, hr, hg, hb)
             end
             TT:Show()
             Nx.TooltipOwner = self
@@ -293,10 +291,10 @@ local function appendOne(typeId, label, handler, initialPressed, tip)
 end
 
 -- Re-apply decorations to every adopted button. Called after a
--- toolbar rebuild — addBackdrop / OnEnter overrides live on the
+-- toolbar rebuild — the OnEnter / OnLeave overrides live on the
 -- button frame, not on the TypeData, so a fresh frame won't have
--- them. Idempotent thanks to the `frm._nxAddonBg` short-circuit in
--- addBackdrop.
+-- them. Idempotent thanks to the `frm._nxAddonTip` short-circuit in
+-- decorateTool.
 function AddonButtons:RedecorateAll()
     local map = carboniteMap()
     if not map or not map.ToolBar then return end

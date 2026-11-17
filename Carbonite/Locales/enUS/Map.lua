@@ -66,6 +66,7 @@ L["3D Terrain Zoom Limit"] = true
 L["3D Max Zoom"] = true
 L["3D Hide Pins Behind Terrain"] = true
 L["3D View"] = true
+L["3D"] = true
 L["Show Instance Raid Bosses"] = true
 L["Show Continent POIs"] = true
 L["Transparency and Docking"] = true
