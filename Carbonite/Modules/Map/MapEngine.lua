@@ -3084,9 +3084,17 @@ function Nx.Map:MinimapSyncBreadcrumbFrame(frame, minimapLevel)
             if strata and frame:GetFrameStrata() ~= strata then
                 frame:SetFrameStrata(strata)
             end
+            if frame.NxBreadcrumbBase then
+                frame:SetFrameLevel(frame.NxBreadcrumbBase)
+            end
             frame.NxBreadcrumbRaised = nil
         end
         return false
+    end
+
+    -- The level the trail was drawn at, above the map artwork.
+    if not frame.NxBreadcrumbRaised then
+        frame.NxBreadcrumbBase = frame:GetFrameLevel()
     end
 
     local mm = self.MMFrm
@@ -3095,9 +3103,12 @@ function Nx.Map:MinimapSyncBreadcrumbFrame(frame, minimapLevel)
         frame:SetFrameStrata(strata)
     end
 
+    -- Above the minimap, but never below where it was drawn: the minimap
+    -- sits at a low level, and "minimap + 2" put the route under the zone
+    -- artwork, so it vanished at the zooms that show the minimap.
     local level = type(minimapLevel) == "number"
         and minimapLevel or mm:GetFrameLevel()
-    frame:SetFrameLevel(level + 2)
+    frame:SetFrameLevel(max(level + 2, frame.NxBreadcrumbBase or 0))
     frame.NxBreadcrumbRaised = true
     return true
 end
