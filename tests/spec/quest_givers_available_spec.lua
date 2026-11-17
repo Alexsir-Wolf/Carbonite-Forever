@@ -39,3 +39,14 @@ describe("quem dá quests: só disponíveis", function()
         expect(loader.read("Carbonite/Modules/Map/MapEngine.lua"):find('L["Quest Givers: Only Available Quests"]', 1, true) ~= nil).toBe(true)
     end)
 end)
+
+describe("padrões de quem dá quests", function()
+    it("ficam no perfil, onde o mapa os lê", function()
+        local src = loader.read("Carbonite/Modules/PlayerCharacter/Defaults.lua")
+        local profileAt = src:find("    profile = {", 1, true)
+        for _, key in ipairs({ "QuestGiversAvailable", "QuestGiversDaily", "QuestGiversRepeatable", "QuestGiversEvent" }) do
+            local at = src:find(key .. " = true", 1, true)
+            expect(at ~= nil and at > profileAt).toBe(true)
+        end
+    end)
+end)
