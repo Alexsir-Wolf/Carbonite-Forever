@@ -15,6 +15,7 @@
     <Script file="Window.lua" />
     <Script file="Button.lua" />
     <Script file="EditBox.lua" />
+    <Script file="SearchBox.lua" />
     <Script file="Slider.lua" />
     <Script file="TabBar.lua" />
     <Script file="DropDown.lua" />

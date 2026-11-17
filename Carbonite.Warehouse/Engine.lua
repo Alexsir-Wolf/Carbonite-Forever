@@ -221,10 +221,8 @@ function Nx.Warehouse:Create()
 
     -- Filter Edit Box
 
-    self.EditBox = Nx.EditBox:Create (win.Frm, self, self.OnEditBox, 60)
-    self.EditBox.FilterDesc = L["Search items..."]
-    self.EditBox.FilterDescEsc = gsub (L["Search items..."], "%p", "%%%0")
-    self.EditBox.Frm:SetText(self.EditBox.FilterDesc)
+    self.EditBox = Nx.SearchBox:Create (win.Frm, function() self:Update() end,
+        { placeholder = L["Search items..."], maxLetters = 60 })
 
     win:Attach (self.EditBox.Frm, paneSplit, 1, 0, 18)
 
@@ -402,16 +400,6 @@ function Nx.Warehouse:ToggleShow()
     end
 
 --PAIDE!
-end
-
---------
--- Handle item list filter edit box
-
-function Nx.Warehouse:OnEditBox (editbox, message)
-
-    if message == "Changed" then
-        self:Update()
-    end
 end
 
 -------------------------------------------------------------------------------
@@ -1385,11 +1373,7 @@ function Nx.Warehouse:UpdateItem (pre, name, bagCnt, bankCnt, mailCnt, link, sho
     local filterStr = self.EditBox:GetText()
 
     if filterStr ~= "" then
-
-        local lstr = strlower (format ("%s", istr))
-        local filtStr = strlower (filterStr)
-
-        show = strfind (lstr, filtStr, 1, true)
+        show = Nx.SearchBox.Matches (format ("%s", istr), filterStr)
     end
 
     if show then
@@ -1777,7 +1761,7 @@ local function GetProfessionRecipeRow(profT, recipeID, scopeLabel, filterStr)
     end
 
     if filterStr ~= "" then
-        local searchable = strlower(table.concat(searchParts, " "))
+        local searchable = Nx.SearchBox.Normalize(table.concat(searchParts, " "))
         if not strfind(searchable, filterStr, 1, true) then
             return nil
         end
@@ -1909,7 +1893,7 @@ function Nx.Warehouse:UpdateProfessions()
     if profT then
         self:MigrateProfessionTable(profT)
 
-        local filterStr = strlower(self.EditBox:GetText() or "")
+        local filterStr = Nx.SearchBox.Normalize(self.EditBox:GetText())
         local rendered = {}
         local scoped = {}
         local totalRows = 0

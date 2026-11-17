@@ -21,7 +21,7 @@ local function load(over)
         GetQuestLogTitle = function() return game.logTitle, game.logLevel end,
         C_QuestLog = {},
     })
-    env.Nx = { db = { char = {}, profile = { General = {} } } }
+    env.Nx = { db = { char = {}, profile = { General = {} } }, SearchBox = wow.searchBox() }
     loader.run(env, "Carbonite/Modules/Journey/Journey.lua")
     local J = env.Carbonite.Modules.Journey
     local function fire(event, ...)
