@@ -695,12 +695,6 @@ local function BuildPanel(map)
     text:SetJustifyH("LEFT")
     text:SetJustifyV("TOP")
     f.Text = text
-    -- Gold ring around the live minimap shown under the bosses.
-    local ring = f:CreateTexture(nil, "ARTWORK")
-    ring:SetTexture(ROUND)
-    ring:SetVertexColor(DG.RING.alive[1], DG.RING.alive[2], DG.RING.alive[3])
-    ring:Hide()
-    f.MMRing = ring
     f.Rows = {}
     return f
 end
@@ -815,17 +809,13 @@ function DG:UpdatePanel(map, w, h)
         panel.Content:SetPoint("TOP", panel, "TOP", 0, -contentTop)
         panel.Content:SetHeight(contentH)
 
-        -- Minimap slot: map-area offsets of its square, and a ring behind it.
+        -- Minimap slot: map-area offsets of its square, on the panel's own
+        -- dark background.
         if mmSize > 0 then
             local slotY = contentTop + titleH + bossesH + 12
             self.PanelMinimap = { size = mmSize, x = (map.MapW or 0) - w + (w - mmSize) / 2, y = slotY }
-            panel.MMRing:ClearAllPoints()
-            panel.MMRing:SetPoint("TOP", panel, "TOP", 0, -(slotY - 4))
-            panel.MMRing:SetSize(mmSize + 8, mmSize + 8)
-            panel.MMRing:Show()
         else
             self.PanelMinimap = nil
-            panel.MMRing:Hide()
         end
         self.Dirty = nil
     end
