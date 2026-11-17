@@ -46,6 +46,7 @@ function Nx.Notes:GetOptionsConfig()
                 handysize = {
                     order = 3, type = "range", width = "normal",
                     min = 10, max = 60, step = 5,
+                    desc = L["Size of the HandyNotes icons on the map."],
                     name = Nx.Opts.Unit(L["Handnotes Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.HandyNotesSize end,
                     set = function(_, value)
@@ -85,6 +86,7 @@ function Nx.Notes:GetOptionsConfig()
                 raresize = {
                     order = 5, type = "range", width = "normal",
                     min = 10, max = 60, step = 5,
+                    desc = L["Size of the RareScanner icons on the map."],
                     name = Nx.Opts.Unit(L["RareScanner Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.RareScannerSize end,
                     set = function(_, value)
@@ -139,6 +141,7 @@ function Nx.Notes:GetOptionsConfig()
                 questiesize = {
                     order = 8, type = "range", width = "normal",
                     min = 10, max = 40, step = 1,
+                    desc = L["Size of the Questie icons on the map."],
                     name = Nx.Opts.Unit(L["Questie Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.QuestieSize end,
                     set = function(_, value)
@@ -171,6 +174,7 @@ function Nx.Notes:GetOptionsConfig()
                 rxpsize = {
                     order = 10, type = "range", width = "normal",
                     min = 16, max = 48, step = 2,
+                    desc = L["Size of the RXPGuides icons on the map."],
                     name = Nx.Opts.Unit(L["RXPGuides Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.RXPSize end,
                     set = function(_, value)
@@ -217,6 +221,7 @@ function Nx.Notes:GetOptionsConfig()
                 },
                 librarybooks = {
                     order = 12.6, type = "toggle", width = "full",
+                    desc = L["Marks on the map the library books you have not found yet."],
                     name = L["Show library books still to find"],
                     get = function() return Nx.fdb.profile.Notes.LibraryBooks end,
                     set = function()
@@ -227,6 +232,7 @@ function Nx.Notes:GetOptionsConfig()
                 },
                 convergences = {
                     order = 12.7, type = "toggle", width = "full",
+                    desc = L["Shows the Skyborne convergences on the map."],
                     name = L["Show convergences (Skyborne)"],
                     get = function() return Nx.fdb.profile.Notes.Convergences end,
                     set = function()
@@ -237,6 +243,7 @@ function Nx.Notes:GetOptionsConfig()
                 },
                 convergencesall = {
                     order = 12.8, type = "toggle", width = "full",
+                    desc = L["Shows the convergences of all your characters, not only this one."],
                     name = L["Show convergences for every character"],
                     get = function() return Nx.fdb.profile.Notes.ConvergencesAll end,
                     set = function()
@@ -268,6 +275,7 @@ function Nx.Notes:GetOptionsConfig()
                 gatherlitesize = {
                     order = 14, type = "range", width = "normal",
                     min = 8, max = 32, step = 1,
+                    desc = L["Size of the GatherLite icons on the map."],
                     name = Nx.Opts.Unit(L["GatherLite Icon Size"], "px"),
                     get = function() return Nx.fdb.profile.Notes.GatherLiteSize end,
                     set = function(_, value)

@@ -294,6 +294,7 @@ local function generalOptions()
                     order = 2.5,
                     type = "toggle",
                     width = "full",
+                    desc = L["Shows the buyout price of one unit in the auction house list."],
                     name = L["Show Auction Buyout Per Item"],
                     get = function()
                         local aa = Carbonite:GetModule ("AuctionAssist", true)
@@ -1653,6 +1654,59 @@ local function mapConfig()
         for _, key in ipairs({ "MMAlpha", "MMDockScale", "MMDockScaleBG", "MMDockAlpha", "MMDockOnAtScale" }) do
             map.args.miniMap.args[key].hidden = noMiniMap
         end
+        -- Unit and help of the sliders built by mapRange (#64). "%" shows an
+        -- alpha (0 to 1) as a percentage; the saved value stays the same.
+        local sliderHelp = {
+            mapScale = {
+                AutoScaleMin = { "×", L["Smallest zoom the map uses when it zooms by itself, as while tracking."] },
+                AutoScaleMax = { "×", L["Largest zoom the map uses when it zooms by itself."] },
+                DotZoneScale = { "×", L["Size of the dots of other players in your zone."] },
+                DotPalScale = { "×", L["Size of the dots of friends and guildmates."] },
+                DotPartyScale = { "×", L["Size of the dots of your party members."] },
+                DotRaidScale = { "×", L["Size of the dots of your raid members."] },
+                IconScale = { "×", L["Size of the icons on the map."] },
+                IconNavScale = { "×", L["Size of the travel and navigation icons."] },
+                DetailScale = { "×", L["Zoom from which the detailed map graphics appear."] },
+                IconGatherAtScale = { "×", L["Zoom from which the gather icons appear."] },
+                POIAtScale = { "×", L["Zoom from which the points of interest appear."] },
+                InstancePlayerSize = { "px", L["Size of your arrow on dungeon maps."] },
+                InstanceGroupSize = { "px", L["Size of your group members on dungeon maps."] },
+                InstanceBossSize = { "px", L["Size of the boss icons on dungeon maps."] },
+                InstanceScale = { nil, L["Size of the other icons on dungeon maps."] },
+            },
+            mapAlpha = {
+                DetailAlpha = { "%", L["Opacity of the detailed map graphics."] },
+                BackgndAlphaFull = { "%", L["Map opacity while the mouse is over it."] },
+                BackgndAlphaFade = { "%", L["Map opacity after the mouse leaves it."] },
+                IconGatherA = { "%", L["Opacity of the gather icons."] },
+                IconPOIAlpha = { "%", L["Opacity of the points of interest."] },
+                UnexploredAlpha = { "%", L["Opacity of the areas you have not explored."] },
+                ArchAlpha = { "%", L["Opacity of the archaeology dig site areas."] },
+                QuestAlpha = { "%", L["Opacity of the quest objective areas."] },
+            },
+            mapRoute = {
+                GatherRadius = { L["yds"], L["How close you must get to a gather point of the route to reach it."] },
+                MergeRadius = { L["yds"], L["Gather points closer than this become one route point."] },
+            },
+            miniMap = {
+                MMAlpha = { "%", L["Opacity of the minimap."] },
+                MMDockScale = { "×", L["Zoom of the docked minimap."] },
+                MMDockScaleBG = { "×", L["Zoom of the docked minimap in battlegrounds."] },
+                MMDockAlpha = { "%", L["Opacity of the docked minimap."] },
+                MMDockOnAtScale = { "×", L["The minimap docks when the map zooms out below this scale."] },
+            },
+        }
+        for tab, list in pairs(sliderHelp) do
+            for key, help in pairs(list) do
+                local opt = map.args[tab].args[key]
+                opt.desc = help[2]
+                if help[1] == "%" then
+                    opt.isPercent = true
+                elseif help[1] then
+                    opt.name = Nx.Opts.Unit(opt.name, help[1])
+                end
+            end
+        end
     end
     -- Attach diagnostics when this lazy provider is evaluated. Both modular
     -- and legacy option registration use mapConfig, including cached tables.
@@ -2088,6 +2142,7 @@ local function guidegatherConfig()
                             order = 3,
                             type = "execute",
                             width = "full",
+                            desc = L["Erases every herb location you recorded. It cannot be undone."],
                             name = L["Delete Herbalism Gather Locations"],
                             func = function ()
                                 Nx.Opts:NXCmdDeleteHerb()
@@ -2097,6 +2152,7 @@ local function guidegatherConfig()
                             order = 4,
                             type = "execute",
                             width = "full",
+                            desc = L["Erases every mining location you recorded. It cannot be undone."],
                             name = L["Delete Mining Gather Locations"],
                             func = function ()
                                 Nx.Opts:NXCmdDeleteMine()
@@ -2106,6 +2162,7 @@ local function guidegatherConfig()
                             order = 5,
                             type = "execute",
                             width = "full",
+                            desc = L["Erases every timber location you recorded. It cannot be undone."],
                             name = L["Delete Timber Gather Locations"],
                             hidden = function() return not Nx.isRetail end,
                             func = function ()
@@ -2116,6 +2173,7 @@ local function guidegatherConfig()
                             order = 6,
                             type = "execute",
                             width = "full",
+                            desc = L["Erases every other gather location you recorded. It cannot be undone."],
                             name = L["Delete Misc Gather Locations"],
                             func = function ()
                                 Nx.Opts:NXCmdDeleteMisc()
@@ -2589,6 +2647,22 @@ local function guidegatherConfig()
                 },
             },
         }
+        -- Help of the node lists (#64): one text per list for its toggles.
+        local nodeHelp = {
+            HerbDisp = L["Shows this herb on the map and minimap."],
+            MinesDisp = L["Shows this ore on the map and minimap."],
+            TimberDisp = L["Shows this timber on the map and minimap."],
+        }
+        for tab, help in pairs(nodeHelp) do
+            for key, opt in pairs(guidegather.args[tab].args) do
+                if opt.type == "toggle" and not opt.desc then
+                    opt.desc = help
+                elseif opt.type == "execute" then
+                    opt.desc = key:find("disable", 1, true) and L["Hides every node of this list from the map."]
+                        or L["Shows every node of this list on the map."]
+                end
+            end
+        end
     end
     return guidegather
 end
@@ -2796,6 +2870,7 @@ local function skinConfig()
                     order = 2,
                     type = "color",
                     width = "full",
+                    desc = L["Color of the window borders."],
                     name = L["Border Color of Windows"],
                     hasAlpha = true,
                     get = function()
@@ -2810,6 +2885,7 @@ local function skinConfig()
                     order = 3,
                     type = "color",
                     width = "full",
+                    desc = L["Background color of the windows that cannot be resized."],
                     name = L["Background Color of Fixed Sized Windows"],
                     hasAlpha = true,
                     get = function()
@@ -2824,6 +2900,7 @@ local function skinConfig()
                     order = 4,
                     type = "color",
                     width = "full",
+                    desc = L["Background color of the windows you can resize."],
                     name = L["Background Color of Resizable Windows"],
                     hasAlpha = true,
                     get = function()
@@ -3010,6 +3087,7 @@ local function trackConfig()
                     order = 11,
                     type = "color",
                     width = "full",
+                    desc = L["Color of the HUD target button."],
                     name = L["Color of target button"],
                     hasAlpha = true,
                     get = function()
@@ -3029,6 +3107,7 @@ local function trackConfig()
                     order = 12,
                     type = "color",
                     width = "full",
+                    desc = L["Color of the HUD target button while in combat."],
                     name = L["Color of target button in combat"],
                     hasAlpha = true,
                     get = function()
@@ -3176,6 +3255,8 @@ function Nx:SetupConfig()
     -- group with a child "main" that holds the version blurb / credits.
     -- Strip the outer wrapper so the new unified panel uses that block
     -- as its own About tab.
+    -- The order and name shown come from LAYOUT in Options.lua (#64); the
+    -- values below are only the fallback.
     Options:Register("Main", function()
         local m = mainConfig()
         return (m and m.args and m.args.main) or { type = "group", name = L["Main Options"], args = {} }
