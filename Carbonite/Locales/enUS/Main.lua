@@ -288,6 +288,16 @@ L["open the character journey"] = true
 L["Show Journey"] = true
 L["Record Character Journey"] = true
 L["When enabled, records level ups, completed quests, first visits to zones, deaths and dungeons of each character (/carb jornada)."] = true
+L["Destinations (%d)"] = true
+L["Destinations..."] = true
+L["Move Up"] = true
+L["Move Down"] = true
+L["Go Now"] = true
+L["Remove"] = true
+L["Clear All"] = true
+L["Distance"] = true
+L["No destinations. Shift+click Goto on the map to queue several."] = true
+L["open the destination queue"] = true
 -- First-run setup assistant (#63)
 L["Which map opens with M?"] = true
 L["Carbonite has its own map: zoomable, with quests, routes and gathering nodes. It can take the M key in place of the game's world map."] = true
