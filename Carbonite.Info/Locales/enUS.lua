@@ -64,6 +64,8 @@ L["Total"] = true
 L["crit"] = true
 L["hit"] = true
 L["honor"] = true
+-- Options: basic mode, sections and help (#64)
+L["Background color of the info windows."] = true
 L["HP"] = true
 L["MP"] = true
 L["Durability"] = true
