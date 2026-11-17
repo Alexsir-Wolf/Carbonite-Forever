@@ -37,6 +37,8 @@
     <Script file="Map\ZoneFishing.lua" />
     <Script file="Map\Hotspots.lua" />
     <Script file="Map\Targets.lua" />
+    <!-- Destinations window: list and edit the goto queue (#70). -->
+    <Script file="Map\TargetsWindow.lua" />
     <Script file="Map\BlizzardPin.lua" />
     <Script file="Map\IconTypes.lua" />
     <Script file="Map\Renderer.lua" />
