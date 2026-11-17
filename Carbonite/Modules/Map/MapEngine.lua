@@ -3679,7 +3679,10 @@ function Nx.Map:MinimapUpdateEnd()
         -- surface. Keep it one strata above Carbonite's top-level map canvas
         -- so hover opacity cannot cover the player arrow or tracking
         -- nodes. Overlay mode continues using normal same-strata ordering.
-        lvl = self:MinimapSyncLayer(lvl, 1, true)
+        -- In an unmapped instance the black cover already hides the canvas,
+        -- so the minimap stays in the window's strata: one strata up, it
+        -- covered other addons' frames there (MinimapButtonButton's panel).
+        lvl = self:MinimapSyncLayer(lvl, 1, not unmappedInstance)
         self:MinimapUpdateDetachedFrms (lvl + 1)
         self.Level = max(self.Level, lvl) + 2
     end
