@@ -9,7 +9,7 @@ read_globals = {
     "Nx", "Carbonite", "LibStub", "VoiceOver",
     "C_Map", "C_NamePlate", "C_Timer", "C_QuestLog", "C_SkillInfo", "Enum",
     "CreateFrame", "GetInstanceInfo", "GetQuestLogTitle", "GetNumQuestLogEntries",
-    "GetQuestLogIndexByID", "GetTime", "UnitGUID", "UnitIsFriend", "UnitRace", "InCombatLockdown", "IsInInstance", "UnitFactionGroup", "UnitLevel", "GetMaxPlayerLevel", "BreakUpLargeNumbers",
+    "GetQuestLogIndexByID", "GetTime", "UnitGUID", "UnitName", "GetRealZoneText", "UnitIsFriend", "UnitRace", "InCombatLockdown", "IsInInstance", "UnitFactionGroup", "UnitLevel", "GetMaxPlayerLevel", "BreakUpLargeNumbers",
     "Minimap", "MinimapCluster", "UIParent", "WorldFrame", "GameTooltip",
     "debugprofilestop", "CombatLogGetCurrentEventInfo", "hooksecurefunc", "issecretvalue", "securecall", "strsplit",
     "format", "max", "min", "floor", "ceil", "abs", "tinsert", "tremove", "wipe",

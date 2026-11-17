@@ -23,6 +23,12 @@
 -- * Kills: the combat log (UNIT_DIED, by NPC id or name) and ENCOUNTER_END.
 --   Kept across /reload in Nx.db.char.DungeonKills; reset on entering the
 --   instance again from outside, or another instance.
+-- * Names shown: the client's. Boss names as the game writes them (combat
+--   log, target, mouseover, nameplates; kept in Nx.db.char.DungeonNames),
+--   dungeon names from GetInstanceInfo / GetRealZoneText, floor names from
+--   the client's map groups, quest titles from the quest log. Else the
+--   entries of Carbonite/Locales/<locale>/Dungeons.lua: English, with pt-BR
+--   for dungeons, floors and objects.
 --
 -- Public (Nx.DungeonGuide):
 --   DG:Here()                   { id, name, data } of the current instance
@@ -50,7 +56,91 @@ local PANEL_W = 230
 local REFRESH = 1
 
 local function Pins()
-    return Nx.DungeonPins or { instances = {}, pins = {}, bosses = {}, quests = {} }
+    return Nx.DungeonPins or { instances = {}, pins = {} }
+end
+
+--------------------------------------------------------------------------------
+-- Names: the client's first, else Carbonite/Locales/<locale>/Dungeons.lua
+--------------------------------------------------------------------------------
+
+-- A Dungeons.lua entry, or nil when the locale has none.
+local function Text(key)
+    local ok, s = pcall(function() return L[key] end)
+    if ok and type(s) == "string" and s ~= key then return s end
+end
+
+-- Boss NPC ids of DungeonPins.lua (first and other ids of each boss row): id -> true.
+local bossNpcs
+local function BossNpcs()
+    if not bossNpcs then
+        bossNpcs = {}
+        for _, rows in pairs(Pins().pins) do
+            for _, row in ipairs(rows) do
+                if row[1] == "boss" then
+                    for i = 4, #row do bossNpcs[row[i]] = true end
+                end
+            end
+        end
+    end
+    return bossNpcs
+end
+
+-- Boss names as the client wrote them (combat log, target, mouseover, nameplates).
+local function ClientNames()
+    local char = Nx.db and Nx.db.char
+    if type(char) ~= "table" then
+        DG.SessionNames = DG.SessionNames or {}
+        return DG.SessionNames
+    end
+    char.DungeonNames = type(char.DungeonNames) == "table" and char.DungeonNames or {}
+    return char.DungeonNames
+end
+
+function DG.BossName(npc)
+    return ClientNames()[npc] or Text("boss:" .. tostring(npc)) or tostring(npc)
+end
+
+function DG.InstanceName(id)
+    local here = DG:Here()
+    if here and here.id == id then return here.name end
+    if GetRealZoneText and type(id) == "number" then
+        local ok, name = pcall(GetRealZoneText, id)
+        if ok and type(name) == "string" and name ~= "" then return name end
+    end
+    return Text("dungeon:" .. tostring(id)) or tostring(id)
+end
+
+-- Name of a named floor: the client's map group entry, else Dungeons.lua.
+function DG.FloorName(fl)
+    if not (fl and fl.named) then return nil end
+    local api = _G.C_Map
+    if fl.map and api and api.GetMapGroupID and api.GetMapGroupMembersInfo then
+        local ok, group = pcall(api.GetMapGroupID, fl.map)
+        local okInfo, members = false, nil
+        if ok and group then okInfo, members = pcall(api.GetMapGroupMembersInfo, group) end
+        for _, m in ipairs(okInfo and type(members) == "table" and members or {}) do
+            if m.mapID == fl.map and type(m.name) == "string" and m.name ~= "" then return m.name end
+        end
+    end
+    return Text("floor:" .. fl.key)
+end
+
+function DG.QuestName(qId)
+    return Text("quest:" .. tostring(qId)) or tostring(qId)
+end
+
+function DG.ObjectName(id)
+    return Text("object:" .. tostring(id)) or tostring(id)
+end
+
+-- Keeps the client's name of a boss seen in the game.
+function DG:LearnName(guid, name)
+    local npc = DG.NpcID(guid)
+    if npc and type(name) == "string" and name ~= "" and BossNpcs()[npc] and ClientNames()[npc] ~= name then
+        ClientNames()[npc] = name
+        self.Dirty = true
+        self.Version = self.Version + 1
+    end
 end
 
 -- Boss names as the combat log gives them: no "<title>"; "A / B" is either.
@@ -124,17 +214,18 @@ local function PinBosses(data)
         for _, row in ipairs(P.pins[fl.key] or {}) do
             local kind = row[1]
             if kind == "boss" then
-                points[#points + 1] = { x = row[2], y = row[3], npc = row[4] }
+                local alts = {}
+                for i = 5, #row do alts[#alts + 1] = row[i] end
+                points[#points + 1] = { x = row[2], y = row[3], npc = row[4], alts = alts }
             elseif not x and (kind == "entrance" or (kind == "level" and row[5])) then
                 x, y = row[2], row[3]
             end
         end
         for _, i in ipairs(DG.RouteOrder(points, x, y)) do
             local p = points[i]
-            local name = P.bosses[p.npc]
-            if name and not seen[name] then
-                seen[name] = true
-                list[#list + 1] = { name = name, npc = p.npc, floor = f, x = p.x, y = p.y }
+            if not seen[p.npc] then
+                seen[p.npc] = true
+                list[#list + 1] = { name = DG.BossName(p.npc), npc = p.npc, alts = p.alts, floor = f, x = p.x, y = p.y }
             end
         end
     end
@@ -181,8 +272,12 @@ function DG:Bosses(here)
         or JournalBosses(here.data) or PinBosses(here.data)
     local list, known = {}, {}
     for i, b in ipairs(src) do
-        list[i] = { name = b.name, npc = b.npc, floor = b.floor, x = b.x, y = b.y,
-            killed = b.killed or self:IsKilled(b.name, b.npc) }
+        local killed = b.killed or self:IsKilled(b.name, b.npc)
+        for _, alt in ipairs(b.alts or {}) do
+            killed = killed or self:IsKilled(nil, alt)
+            known[alt] = true
+        end
+        list[i] = { name = b.name, npc = b.npc, alts = b.alts, floor = b.floor, x = b.x, y = b.y, killed = killed }
         for _, n in ipairs(Names(b.name)) do known[n] = true end
         if b.npc then known[b.npc] = true end
     end
@@ -320,7 +415,7 @@ function DG:LogQuests(here)
             local questie = QS and QS.InDungeon and QS.InDungeon(qId, here.id) or nil
             if c.Header == here.name or pinned[qId] or RecordIn(c.Q, maps) or questie then
                 seen[qId] = true
-                list[#list + 1] = { qId = qId, title = c.Title or Pins().quests[qId] or tostring(qId),
+                list[#list + 1] = { qId = qId, title = c.Title or DG.QuestName(qId),
                     complete = c.Complete == 1 or c.Complete == true, objectives = Objectives(c),
                     items = questie and questie.items or {} }
             end
@@ -349,7 +444,7 @@ local function QuestTitle(qId)
         local ok, title = pcall(api.GetQuestInfo, qId)
         if ok and type(title) == "string" and title ~= "" then return title end
     end
-    return Pins().quests[qId] or tostring(qId)
+    return DG.QuestName(qId)
 end
 
 -- Quest pins of one MapUtils floor for the chart: turn-ins of quests in the
@@ -364,7 +459,7 @@ function DG:FloorPins(key)
         elseif kind == "queststart" and not InLog(arg) and not QuestDone(arg) then
             out[#out + 1] = { kind = "start", x = x, y = y, tip = format(L["Starts quest: %s"], QuestTitle(arg)) }
         elseif kind == "item" then
-            out[#out + 1] = { kind = "item", x = x, y = y, tip = format(L["Quest item: %s"], row[5] or "") }
+            out[#out + 1] = { kind = "item", x = x, y = y, tip = format(L["Quest item: %s"], DG.ObjectName(arg)) }
         end
     end
     return out
@@ -375,7 +470,7 @@ function DG.PinItems(data)
     local P, counts, order = Pins(), {}, {}
     for _, fl in ipairs(data and data.floors or {}) do
         for _, row in ipairs(P.pins[fl.key] or {}) do
-            local name = row[1] == "item" and row[5]
+            local name = row[1] == "item" and DG.ObjectName(row[4])
             if name and name ~= "" then
                 if not counts[name] then order[#order + 1] = name end
                 counts[name] = (counts[name] or 0) + 1
@@ -525,9 +620,14 @@ end
 function DG:OnCombatLog(sub, guid, name)
     if sub ~= "UNIT_DIED" then return end
     local npc = NpcID(guid)
+    self:LearnName(guid, name)
     if not self.Known then self:Bosses() end
     if self:IsBoss(name, npc) then self:NoteKill(name, npc) end
 end
+
+-- Only inside an instance: kills, and the client's boss names.
+local INSIDE_EVENTS = { "COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT",
+    "NAME_PLATE_UNIT_ADDED" }
 
 local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -535,11 +635,13 @@ events:RegisterEvent("ENCOUNTER_END")
 events:RegisterEvent("QUEST_LOG_UPDATE")
 events:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_ENTERING_WORLD" then
-        if DG:OnEnterWorld(...) then
-            self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-        else
-            self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+        local inside = DG:OnEnterWorld(...)
+        for _, name in ipairs(INSIDE_EVENTS) do
+            if inside then self:RegisterEvent(name) else self:UnregisterEvent(name) end
         end
+    elseif event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT" or event == "NAME_PLATE_UNIT_ADDED" then
+        local unit = event == "PLAYER_TARGET_CHANGED" and "target" or event == "UPDATE_MOUSEOVER_UNIT" and "mouseover" or ...
+        if unit and UnitGUID then DG:LearnName(UnitGUID(unit), UnitName and UnitName(unit)) end
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         if CombatLogGetCurrentEventInfo then
             local _, sub, _, _, _, _, _, guid, name = CombatLogGetCurrentEventInfo()
