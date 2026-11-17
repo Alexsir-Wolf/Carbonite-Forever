@@ -11,7 +11,10 @@
 --
 -- * Quests: under the dungeon's name in the quest log, given or turned in
 --   inside it (MapUtils' pins), or with an objective or turn-in on its
---   floors in Carbonite's quest data.
+--   floors in Carbonite's quest data, or placed inside it by QuestieDB
+--   (#8; QuestieSource.InDungeon), which also names the objective items
+--   that drop there. QuestieDB has no positions inside instances, so those
+--   are listed in the panel, not drawn on the chart.
 -- * Order: the dungeon chart's when it shows this dungeon (DungeonChart.lua:
 --   ForeverDungeonJournal or FojjiCore, in their run order), else the
 --   client's Encounter Journal when it has one, else MapUtils' boss pins
@@ -309,13 +312,18 @@ function DG:LogQuests(here)
     local cur = Nx.Quest and Nx.Quest.CurQ
     if not here or type(cur) ~= "table" then return {} end
     local maps, pinned = MapSet(here.data), PinQuests(here.data)
+    local QS = Nx.Quest.QuestieSource
     local list, seen = {}, {}
     for _, c in ipairs(cur) do
         local qId = c.QId
-        if qId and not seen[qId] and (c.Header == here.name or pinned[qId] or RecordIn(c.Q, maps)) then
-            seen[qId] = true
-            list[#list + 1] = { qId = qId, title = c.Title or Pins().quests[qId] or tostring(qId),
-                complete = c.Complete == 1 or c.Complete == true, objectives = Objectives(c) }
+        if qId and not seen[qId] then
+            local questie = QS and QS.InDungeon and QS.InDungeon(qId, here.id) or nil
+            if c.Header == here.name or pinned[qId] or RecordIn(c.Q, maps) or questie then
+                seen[qId] = true
+                list[#list + 1] = { qId = qId, title = c.Title or Pins().quests[qId] or tostring(qId),
+                    complete = c.Complete == 1 or c.Complete == true, objectives = Objectives(c),
+                    items = questie and questie.items or {} }
+            end
         end
     end
     return list
@@ -423,6 +431,9 @@ function DG:Lines(here)
         end
         for _, o in ipairs(q.objectives) do
             lines[#lines + 1] = format(o.done and "  |cff808080- %s|r" or "  - %s", o.text)
+        end
+        if q.items[1] then
+            lines[#lines + 1] = "  |cff9d9d9d" .. format(L["Drops here: %s"], table.concat(q.items, ", ")) .. "|r"
         end
     end
     if items[1] then

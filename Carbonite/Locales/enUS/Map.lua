@@ -165,3 +165,4 @@ L["Quest items here: %s"] = true
 L["Turn in: %s"] = true
 L["Starts quest: %s"] = true
 L["Quest item: %s"] = true
+L["Drops here: %s"] = true
