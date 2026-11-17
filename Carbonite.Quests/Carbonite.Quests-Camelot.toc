@@ -30,6 +30,7 @@ Options.lua
 Init.lua
 TrackerHider.lua
 QuestMapCompatibility.lua
+ObjectiveAreas.lua
 MapIcons.lua
 QuestProvider.lua
 WorldQuestWindow.lua
