@@ -20,6 +20,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - Mostra no título a zona, as coordenadas e a velocidade de movimento. Os tooltips das zonas mostram a faixa de nível e a facção.
 - Integra o minimapa da Blizzard à janela do mapa (modo acoplado) e organiza os botões de minimapa de outros addons.
 - Em battlegrounds, mostra os objetivos com timers e ordens rápidas. Segure **Alt** para ver os nomes dos jogadores.
+- Menu do botão direito enxuto, só com o uso do dia a dia (Goto, limpar destino, Mostrar..., rotas). Escalas, transparências, encaixe do minimapa e raios de rota ficam em Opções > Mapas.
 - Mapas de masmorra estáticos no menu do mapa, a partir do ForeverDungeonJournal, do FojjiCore ou do MapUtils, quando instalados.
 - Dentro de masmorras (o cliente não dá mapa nem posição lá), a tecla **M** abre a planta da masmorra com a rota até os chefes: linha da entrada passando pelos chefes, os mortos apagados e o próximo destacado. O minimapa ao vivo fica num canto, mostrando onde você está, e um painel ao lado lista os chefes na ordem e as quests do seu registro para aquela masmorra, com os objetivos. Na planta aparecem também onde entregar essas quests, onde começam outras e os itens de quest que ficam ali. Na janela acoplada, o minimapa ao vivo continua como antes.
 - API para outros addons desenharem ícones no mapa do Carbonite ([Map Provider API](Carbonite/Docs/MapProvider.md)).
@@ -64,6 +65,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - Mostra no mapa o grupo, a raid e outros usuários do Carbonite (amigos e guilda).
 
 ### Mais
+- **Jornada do personagem:** diário com data, hora e zona de cada subida de nível, quest concluída, primeira visita a uma zona, morte e masmorra, por personagem (as 500 mais recentes). Abre com `/carb jornada` ou pelo menu do botão do minimapa; desliga em Opções > Geral.
 - Rastreamento de moedas, aviso de correio, alerta de durabilidade, ajuda no leilão e estatísticas de combate.
 - Perfis de configuração, exportar e importar dados e transferir configurações entre personagens.
 
@@ -117,6 +119,7 @@ Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai 
 | `/carb options` | Opções |
 | `/carb goto <x> <y>` | Marca um destino na zona atual |
 | `/carb resetwindows` | Volta as janelas para a posição padrão |
+| `/carb jornada` | Jornada do personagem (níveis, quests, zonas, mortes e masmorras) |
 | `/carb debug` | Comandos de diagnóstico, como o `profiler` |
 | `/way x y` | Destino no formato do TomTom |
 
@@ -133,6 +136,7 @@ Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai 
 - Os dados de quests do Forever pertencem à equipe do Questie e são lidos do QuestieDB que você instalou. Esta edição não copia esses dados.
 - As pedras de encontro do Guia (`Carbonite/Data/camelot/Guides/MeetingStone.lua`) vêm da base de objetos do **QuestieDB** (Forever), também sob a GPL v3.
 - A perícia de pesca de cada zona (`Carbonite/Modules/Map/ZoneFishing.lua`), os curandeiros espirituais do Guia (`Carbonite/Data/camelot/Guides/SpiritHealer.lua`) e os livros da biblioteca e convergências (`Carbonite.Notes/Integrations/ForeverPoints.lua`) vêm do **MapUtils**, de D4KiR, também sob a GPL v3. Também vêm dele os andares, entradas, chefes, quests e itens de quest das masmorras (`Carbonite/Modules/Map/DungeonPins.lua`, de `shared/InstancePins` e `data/*/instances.lua`).
+- As rotas e períodos dos navios, zepelins e bonde (`Carbonite/Data/camelot/Transports.lua`), os ícones deles (`Carbonite/Gfx/Map/Transports/`) e o cálculo de posição e horário (`Carbonite/Modules/Map/Transports.lua`) também vêm do **MapUtils**, de D4KiR, sob a GPL v3.
 - Licença: [GNU GPL v3](LICENSE). O código continua aberto, e as mudanças precisam manter a mesma licença.
 
 ### Apoie o Carbonite

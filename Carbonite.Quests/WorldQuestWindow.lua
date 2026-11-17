@@ -477,7 +477,7 @@ local function BuildItemTooltipLine(lineData, itemName)
         if IsSafeString(moneyText) and moneyText ~= "" then
             local sellPriceText = leftText
             if not sellPriceText or sellPriceText == "" then
-                sellPriceText = IsSafeString(_G.SELL_PRICE) and _G.SELL_PRICE or "Sell Price:"
+                sellPriceText = IsSafeString(_G.SELL_PRICE) and _G.SELL_PRICE or L["Sell Price:"]
             end
             leftText = sellPriceText .. " " .. moneyText
         end
@@ -687,8 +687,8 @@ local function AddTooltipComparisonDelta(lines, deltaLines, multipleItems)
     end
     if not IsSafeString(summaryHeader) or summaryHeader == "" then
         summaryHeader = multipleItems
-            and "If you replace these items, the following stat changes will occur:"
-            or "If you replace this item, the following stat changes will occur:"
+            and L["If you replace these items, the following stat changes will occur:"]
+            or L["If you replace this item, the following stat changes will occur:"]
     end
 
     lines[#lines + 1] = "|cffffd100" .. summaryHeader .. "|r"
@@ -784,7 +784,7 @@ local function GetQuestRewardItemComparisonLines(tooltipData)
         if pairedItem then
             local pairedHeader = isBagPair
                 and (IsSafeString(_G.IF_EQUIPPED_TOGETHER)
-                    and _G.IF_EQUIPPED_TOGETHER or "Equipped With")
+                    and _G.IF_EQUIPPED_TOGETHER or L["Equipped With"])
                 or equippedHeader
             AddTooltipComparisonItemSummary(lines, pairedItem, pairedHeader)
         end
@@ -2164,7 +2164,7 @@ function Nx.Quest:AddQuestHubTooltipData(tooltip, mapID, hubAreaPoiID)
     if QUEST_HUB_TOOLTIP_AVAILABLE_QUESTS_HEADER then
         GameTooltip_AddHighlightLine(tooltip, QUEST_HUB_TOOLTIP_AVAILABLE_QUESTS_HEADER)
     else
-        GameTooltip_AddHighlightLine(tooltip, "Available Quests:")
+        GameTooltip_AddHighlightLine(tooltip, L["Available Quests:"])
     end
 
     -- Add quest names (limit to 5)
@@ -2217,7 +2217,7 @@ function Nx.Quest:AddQuestHubTooltipData(tooltip, mapID, hubAreaPoiID)
         if QUEST_HUB_TOOLTIP_MORE_QUESTS_REMAINING then
             GameTooltip_AddNormalLine(tooltip, QUEST_HUB_TOOLTIP_MORE_QUESTS_REMAINING:format(remaining))
         else
-            GameTooltip_AddNormalLine(tooltip, "  +" .. remaining .. " more quests")
+            GameTooltip_AddNormalLine(tooltip, "  +" .. format(L["%d more quests"], remaining))
         end
     end
 

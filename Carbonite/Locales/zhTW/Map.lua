@@ -105,7 +105,6 @@ L["No edit box open!"] = "沒有開啟的編輯框！"
 L["Incoming"] = true
 L["Speed"] = "速度"
 L["players"] = "玩家"
-L["Unknown map name"] = "未知地圖名稱"
 L["Show Instance Map"] = "顯示副本地圖"
 L["Instance Scale..."] = "副本地圖縮放..."
 L["Player Arrow"] = "玩家箭頭"

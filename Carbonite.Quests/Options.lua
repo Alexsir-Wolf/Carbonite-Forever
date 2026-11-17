@@ -456,7 +456,7 @@ function Nx.Quest:GetOptionsConfig()
                                 Nx.Quest:CalcWatchColors()
                             end,
                             values    = function()
-                                return Nx.Opts:CalcChoices("QArea")
+                                return Nx.Opts:CalcChoiceLabels("QArea")
                             end,
                         },
                         spacer4 = {
@@ -502,6 +502,20 @@ function Nx.Quest:GetOptionsConfig()
                             end,
                             set = function()
                                 Nx.qdb.profile.Quest.MapBlizzardIcons = Nx.qdb.profile.Quest.MapBlizzardIcons == false
+                                Nx.Quest:RefreshMapQuestIcons()
+                            end,
+                        },
+                        qobjareas = {
+                            order = 31.65,
+                            type = "toggle",
+                            name = L["Show Objective Areas"],
+                            width = "full",
+                            desc = L["Draws one shaded area around each group of nearby spawns of an objective instead of one icon per spawn"],
+                            get = function()
+                                return Nx.qdb.profile.Quest.MapShowObjectiveAreas ~= false
+                            end,
+                            set = function()
+                                Nx.qdb.profile.Quest.MapShowObjectiveAreas = Nx.qdb.profile.Quest.MapShowObjectiveAreas == false
                                 Nx.Quest:RefreshMapQuestIcons()
                             end,
                         },

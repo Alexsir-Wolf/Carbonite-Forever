@@ -28,6 +28,7 @@ include_files = {
     "Carbonite.Quests/SpokenPlay.lua",
     "Carbonite.Quests/Nameplates.lua",
     "Carbonite.Quests/ForeverCoreColumn.lua",
+    "Carbonite.Quests/ObjectiveAreas.lua",
     "Carbonite.Notes/Integrations/TomTomArrow.lua",
     "Carbonite/Modules/Map/BlizzardPin.lua",
     "Carbonite/Modules/Map/ZoneFishing.lua",
@@ -38,4 +39,6 @@ include_files = {
     "Carbonite/Modules/Map/Battleground.lua",
     "Carbonite/Modules/Map/ViewState.lua",
     "Carbonite/Modules/Travel/FlightTimes.lua",
+    "Carbonite/Modules/Map/Transports.lua",
+    "Carbonite/Modules/Journey/Journey.lua",
 }

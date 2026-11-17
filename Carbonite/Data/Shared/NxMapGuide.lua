@@ -2118,6 +2118,11 @@ function Nx.Map.Guide:UpdateTravelIcons (hideFac)
     local map = self.Map
     local mapId = map.MapId
     local folder = self:FindFolder (L["Travel"])
+    -- Piers get the departure time of their vessel on the tip (#78)
+    local Transports = Carbonite.Modules and Carbonite.Modules.Map and Carbonite.Modules.Map.Transports
+    if Transports then
+        Transports:ResetPiers()
+    end
     for showType, folder in ipairs (folder) do
         if folder.MapId == mapId and folder.Fac ~= hideFac then
             local conStr = Nx.ZoneConnections[folder.ConIndex]
@@ -2137,7 +2142,11 @@ function Nx.Map.Guide:UpdateTravelIcons (hideFac)
                 tx = "Interface\\Icons\\INV_Misc_Note_02"
             end
             local icon = map:AddIconPt ("!POI", wx, wy, level1, nil, tx)
-            map:SetIconTip (icon, format ("%s\n%s %.1f %.1f", name1, map:GetMapNameByID(mapId1), x1, y1))
+            local tip = format ("%s\n%s %.1f %.1f", name1, map:GetMapNameByID(mapId1), x1, y1)
+            map:SetIconTip (icon, tip)
+            if Transports then
+                Transports:AddPier (icon, mapId1, x1, y1, tip)
+            end
         end
     end
     local winfo = Map.MapWorldInfo[mapId]

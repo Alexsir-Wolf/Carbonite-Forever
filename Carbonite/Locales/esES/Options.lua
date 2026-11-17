@@ -7,20 +7,6 @@ if not L then return end
 
 -- Profiles Menu
 L["Profiles"] = "Perfiles"
-L["New"] = "Nuevo"
-L["You can change the active database profile, so you can have different settings for every character."] = "Puedes cambiar el perfil activo de la base de datos, para tener diferentes configuraciones para cada personaje."
-L["Reset the current profile back to it's default values, in case your configuration is broken, or you simply want to start over."] = "Restablece el perfil actual a sus valores predeterminados, en caso de que tu configuración esté dañada, o simplemente quieras empezar de nuevo."
-L["Reset Profile"] = "Restablecer Perfil"
-L["Reset the current profile to the defaults"] = "Restablecer el perfil actual a los valores predeterminados"
-L["Current Profile"] = "Perfil Actual"
-L["You can either create a new profile by entering a name in the editbox, or choose one of the already existing profiles."] = "Puedes crear un nuevo perfil introduciendo un nombre en el cuadro de texto, o elegir uno de los perfiles ya existentes."
-L["Create a new empty profile"] = "Crear un nuevo perfil vacío"
-L["Select one of your currently available profiles"] = "Seleccionar uno de tus perfiles disponibles"
-L["Existing Profiles"] = "Perfiles Existentes"
-L["Copy the settings from one existing profile into the currently active profile."] = "Copiar la configuración de un perfil existente en el perfil activo actual."
-L["Delete existing and unused profiles from the database to save space, and cleanup the SavedVariables file."] = "Eliminar perfiles existentes y sin usar de la base de datos para ahorrar espacio y limpiar el archivo SavedVariables."
-L["Delete a Profile"] = "Eliminar un Perfil"
-L["Deletes a profile from the database."] = "Elimina un perfil de la base de datos."
 
 -- Main Menu
 L["Main Options"] = "Opciones Principales"
@@ -28,7 +14,6 @@ L["\nCarbonite is a full featured, powerful map addon providing a versitile easy
 L["Release Version"] = "Versión de Lanzamiento"
 L["Maintained by"] = "Mantenido por"
 L["Website"] = "Sitio Web"
-L["For support, please visit the forums for Carbonite on WoW Interface."] = "Para soporte, por favor visita los foros de Carbonite en WoW Interface."
 L["Special thanks to"] = "Agradecimientos especiales a"
 L["Cirax for Carbonite2 Logo"] = "Cirax por el Logo de Carbonite2"
 L["ircdirk & atl77 for Quest Database updates"] = "ircdirk & atl77 por actualizaciones de la base de datos de misiones"
@@ -68,19 +53,14 @@ L["Map Options"] = "Opciones de Mapa"
 L["Use Carbonite Map instead of Blizzards (Alt-M will open world map)"] = "Usar Mapa de Carbonite en lugar del de Blizzard (Alt-M abrirá el mapa del mundo)"
 L["When enabled, pressing 'M' will maximize the carbonite map instead of opening the world map."] = "Cuando está activado, pulsar 'M' maximizará el mapa de Carbonite en lugar de abrir el mapa del mundo."
 L["Enable Combat Compatibility Mode"] = "Activar Modo de Compatibilidad de Combate"
-L["Take Map Function Control"] = "Tomar Control de Funciones del Mapa"
-L["When enabled Carbonite takes control of 2 blizzard map functions to help prevent map flickers, and unneccsary lag causing calls to change the map."] = "Cuando está activado, Carbonite toma el control de 2 funciones de mapa de Blizzard para ayudar a prevenir parpadeos del mapa y lag innecesario causado por llamadas para cambiar el mapa."
 L["Hide Map In Combat"] = "Ocultar Mapa en Combate"
 L["If large map is open when you enter combat attempts to hide it."] = "Si el mapa grande está abierto cuando entras en combate, intenta ocultarlo."
-L["When Enabled, Carbonite will perform combat checks before any map/window functions. This eliminates other UI's from causing protected mode errors."] = "Cuando está activado, Carbonite realizará comprobaciones de combate antes de cualquier función de mapa/ventana. Esto elimina errores de modo protegido causados por otras interfaces."
 L["Center map when maximizing"] = "Centrar mapa al maximizar"
 L["When enabled, the map will center on your current zone when you maximize it"] = "Cuando está activado, el mapa se centrará en tu zona actual cuando lo maximices"
 L["Ignore mouse on map except when ALT is pressed"] = "Ignorar ratón en el mapa excepto cuando ALT esté pulsado"
 L["When enabled, the small game map will ignore all mouse clicks unless the ALT key is held down."] = "Cuando está activado, el mapa pequeño del juego ignorará todos los clics del ratón a menos que se mantenga pulsada la tecla ALT."
 L["Ignore mouse on full-sized map except when ALT is pressed"] = "Ignorar ratón en el mapa a tamaño completo excepto cuando ALT esté pulsado"
 L["When enabled, the full size map will ignore all mouse clicks unless the ALT key is held down."] = "Cuando está activado, el mapa a tamaño completo ignorará todos los clics del ratón a menos que se mantenga pulsada la tecla ALT."
-L["Move Worldmap Data into Maximized Map"] = "Mover Datos del Mapa del Mundo al Mapa Maximizado"
-L["When enabled, Carbonite will attempt to move anything drawn on your world map onto the Maximized Map."] = "Cuando está activado, Carbonite intentará mover todo lo dibujado en tu mapa del mundo al Mapa Maximizado."
 L["Close Map instead of minimize"] = "Cerrar Mapa en lugar de minimizar"
 L["When enabled, pressing either 'M' or ESC will close the maximized map instead of switching back to small map."] = "Cuando está activado, pulsar 'M' o ESC cerrará el mapa maximizado en lugar de volver al mapa pequeño."
 L["Show Friends/Guildmates in Cities"] = "Mostrar Amigos/Compañeros de Hermandad en Ciudades"
@@ -157,8 +137,6 @@ L["Sets the action performed when clicking 4th mouse button holding CTRL"] = "Es
 L["MiniMap Options"] = "Opciones del Minimapa"
 L["Combine Blizzard Minimap with Carbonite Minimap"] = "Combinar Minimapa de Blizzard con el Minimapa de Carbonite"
 L["When enabled, Carbonite will combine the minimap into itself to create a more functional minimap for you (RELOAD REQUIRED)"] = "Cuando está activado, Carbonite combinará el minimapa consigo mismo para crear un minimapa más funcional (REQUIERE RECARGAR)"
-L["Minimap Shape is Square"] = "La Forma del Minimapa es Cuadrada"
-L["When enabled, Carbonite will change the minimap shape from circle to square"] = "Cuando está activado, Carbonite cambiará la forma del minimapa de circular a cuadrada"
 L["Minimap is drawn above icons"] = "El Minimapa se dibuja sobre los iconos"
 L["When enabled, Carbonite will draw the minimap above your map icons, you can use the CTRL key on your keyboard to toggle which layer is top"] = "Cuando está activado, Carbonite dibujará el minimapa por encima de los iconos del mapa, puedes usar la tecla CTRL para alternar qué capa está encima"
 L["Minimap Icon Scale"] = "Escala de Iconos del Minimapa"
@@ -276,7 +254,6 @@ L["Small Timber"] = true
 L["Medium Timber"] = true
 L["Large Timber"] = true
 L["Show Timber Locations"] = "Mostrar ubicaciones de madera"
-L["Lumbermill"] = "Aserradero"
 L["Delete"] = "Borrar"
 L["Cancel"] = true
 L["Enable All"] = "Activar Todo"
@@ -364,9 +341,6 @@ L["Cancel"] = "Cancelar"
 L["Reset options"] = "Restablecer opciones"
 L["Reset global options"] = "Restablecer opciones globales"
 L["Reset window layouts"] = "Restablecer disposición de ventanas"
-L["Delete Herb Locations"] = true
-L["Delete Mine Locations"] = true
-L["Delete Misc Locations"] = true
 
 L["Yes"] = "Sí"
 L["No"] = "No"

@@ -504,7 +504,7 @@ function Nx.Notes:UpdateItems(selectI)
                     local icon, id, x, y, level = self:ParseItemNote(data)
                     icon = self:GetIconInline(icon)
                     id = Nx.Map:GetMapNameByID(id) or "?"
-                    list:ItemSet(2, "Note:")
+                    list:ItemSet(2, L["Note:"])
                     list:ItemSet(3, format("%s %s", icon, name))
                     list:ItemSet(4, format("|cff80ef80(%s %.1f %.1f)", id, x, y))
                 end

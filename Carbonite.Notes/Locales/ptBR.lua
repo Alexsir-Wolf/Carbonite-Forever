@@ -61,7 +61,7 @@ L["Replaces the ZygorGuides navigation arrow with Carbonite's own HUD travel arr
 
 -- Keybinds
 L["Carbonite Notes"] = "Carbonite-Forever Notes"
-L["NxTOGGLEFAV"] = "show/hide Notes"
+L["NxTOGGLEFAV"] = "Mostrar/ocultar as notas"
 L["Display Questie quest objective icons On Map (Beware: might cause lags and fps loss)"] = "Mostrar ícones de objetivos de missão do Questie no mapa (Atenção: pode causar lentidão e queda de FPS)"
 L["If you have Questie installed, allows its icons for quest objectives on the Carbonite map"] = "Se você tem Questie instalado, permite mostrar seus ícones de objetivos de missão no mapa do Carbonite-Forever"
 L["Display icons for Available quests from Questie on Carbonite Map"] = "Mostrar ícones de missões disponíveis do Questie no mapa do Carbonite-Forever"
@@ -78,3 +78,6 @@ L["Convergence"] = "Convergência"
 L["Show library books still to find"] = "Mostrar os livros da biblioteca que faltam"
 L["Show convergences (Skyborne)"] = "Mostrar as convergências (Skyborne)"
 L["Show convergences for every character"] = "Mostrar as convergências para todos os personagens"
+L["Map Pin"] = "Marcador no mapa"
+L["NPC ID: %s"] = "ID do PNJ: %s"
+L["Note:"] = "Nota:"
