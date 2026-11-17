@@ -846,6 +846,24 @@ local function mapConfig()
                                 end
                             end,
                         },
+                        -- Hearthstone and mage teleports in the route (#37)
+                        teleportRoute = {
+                            order = 14.6,
+                            type = "toggle",
+                            name = L["Use hearthstone and teleports in the route"],
+                            width = "full",
+                            desc = L["When enabled, the route starts with your hearthstone or a mage teleport when that arrives sooner. Needs travel routing."],
+                            get = function()
+                                return Nx.db.profile.Map.RouteTeleports ~= false
+                            end,
+                            set = function()
+                                Nx.db.profile.Map.RouteTeleports = Nx.db.profile.Map.RouteTeleports == false
+                                local tp = _G.Carbonite.Modules.Travel and _G.Carbonite.Modules.Travel.Teleports
+                                if tp then
+                                    tp:Forget()
+                                end
+                            end,
+                        },
                         spacer3 = {
                             order = 15,
                             type = "description",
