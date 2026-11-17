@@ -105,7 +105,6 @@ L["No edit box open!"] = "没有打开的编辑框！"
 L["Incoming"] = "敌人进攻" -- duplicate?
 L["Speed"] = "速度"
 L["players"] = "玩家"
-L["Unknown map name"] = "未知地图名称"
 L["Show Instance Map"] = "显示副本地图"
 L["Instance Scale..."] = "副本地图缩放..."
 L["Player Arrow"] = "玩家箭头"

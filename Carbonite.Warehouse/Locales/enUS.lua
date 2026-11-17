@@ -61,14 +61,9 @@ L[" Location: %s%s (%d, %d)"] = true
 L[" Start XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = true
 L[" XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = true
 L[" Honor: %s%s|r  Conquest: %s%s"] = true
-L[" Valor: %s%s|r  Justice: %s%s"] = true
 --L[" %s %s%s"] = true
-L["|cffafdfafAll: %s. |cffafdfafPlayed: %s%s"] = true
 L["%s's Items"] = true
 L["|cffff1010No bank data - visit your bank"] = true
-L["|cffff1010No reagent bank data - visit your bank"] = true
-L["---- Equipped ----"] = true
-L["---- %s Equipped ----"] = true
 L["All Items"] = true
 L["%s |cffcfcfff(%s Bank)"] = true
 L["%s |cffcfffff(%s Mail)"] = true
@@ -90,14 +85,11 @@ L["LOOT_OPENED %s (%s %s)"] = true
 L["no LootTarget"] = true
 L["LOOT_SLOT_CLEARED #%s %s (quest)"] = true
 L["%s deleted"] = true
-L["enchant:(%d+)"] = true
-L["item:(%d+)"] = true
 
 -- Keybinds
 L["Carbonite Warehouse"] = "Carbonite Warehouse"
 L["NxTOGGLEWAREHOUSE"] = "show/hide Warehouse"
 
-L["Guilds"] = true
 L["Characters"] = true
 L["Guild Bank"] = true
 L["Current Funds"] = true
@@ -135,7 +127,6 @@ L["When you open a merchant, will auto sell your blue items."] = true
 L["When you open a merchant, will auto sell your purple items."] = true
 L["iLevel"] = true
 L["Enable iLevel Limit"] = true
-L["Only sells items that are under the ilvl specified"] = true
 L["Sets the maximum item level which will be auto sold"] = true
 L["Sell BOP Items"] = true
 L["When enabled will sell items that are BOP"] = true
@@ -187,6 +178,13 @@ L["  Mail scan: %s"] = true
 L["  Professions: %s"] = true
 L["Search items..."] = true
 L["Name"] = true
+L["Warband Bank"] = true
+L["Quality outputs: %d"] = true
+L["Item %d"] = true
+L["Alt: item tooltip"] = true
+L["No Currency Data Saved"] = true
+L["Only sells items that are under the item level specified"] = true
+L["Add"] = true
 
 -- Item list sections (#100)
 L["Summary"] = true

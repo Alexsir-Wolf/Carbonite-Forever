@@ -25,7 +25,6 @@ L["Deathknight"] = "Рыдцарь Смерти"
 L["Monk"] = "Монах"
 
 L["Com options reset (%f, %f)"] = "Настройки связи сброшены (%f, %f)"
-L["ComTest"] = "ComTest"
 L["Disabling com functions!"] = "Отключение функций связи!"
 L["JoinChan Err %s"] = "Ошибка JoinChan %s"
 L["SendSecG Error: %s"] = "Ошибка SendSecG: %s"

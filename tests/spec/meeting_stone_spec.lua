@@ -82,7 +82,7 @@ describe("curandeiro espiritual mais próximo do cadáver", function()
 
     it("o mapa desenha o curandeiro só no ramo do cadáver", function()
         local src = loader.read("Carbonite/Modules/Map/MapEngine.lua")
-        local corpse = src:find('f.NxTip = "Your corpse"', 1, true)
+        local corpse = src:find('f.NxTip = L["Your corpse"]', 1, true)
         local healer = src:find('self:NearestSpiritHealer (corpseMap, cX * 100, cY * 100)', 1, true)
         local taxi = src:find('elseif ontaxi and Map.TaxiX then', 1, true)
         expect(corpse ~= nil and healer ~= nil and taxi ~= nil).toBe(true)

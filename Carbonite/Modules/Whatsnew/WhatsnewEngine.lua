@@ -42,6 +42,8 @@ local function entry(title, bullets)
 end
 
 Nx.Whatsnew = {}
+-- Plugins build their entries the same way.
+Nx.Whatsnew.Entry = entry
 Nx.Whatsnew.Categories = {"Forever"}
 Nx.Whatsnew.Forever = {
     [1794744000] = entry("v12.1.0-00023-forever.1", {
@@ -110,8 +112,9 @@ function Nx.Whatsnew:Create()
     local pos = 150
     for i, name in pairs(Nx.Whatsnew.Categories) do
         local function func() Nx.Whatsnew:Cat_button(i) end
-        local but = Nx.Button:Create(win.Frm, "Txt64", name, nil, pos, -bh, "TOPLEFT",
-            string.len(name) * 10, 20, func, self)
+        local label = L[name]
+        local but = Nx.Button:Create(win.Frm, "Txt64", label, nil, pos, -bh, "TOPLEFT",
+            string.len(label) * 10, 20, func, self)
         pos = pos + but.Frm:GetWidth()
     end
 

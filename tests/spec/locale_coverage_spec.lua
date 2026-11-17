@@ -5,14 +5,6 @@
 local UI = { "Bindings", "Com", "Guide", "Main", "Map", "Options" }
 local MODULES = { "Carbonite.Quests", "Carbonite.Notes", "Carbonite.Info", "Carbonite.Warehouse" }
 
--- Same text in both languages on purpose: names, abbreviations, patterns matched against
--- game text.
-local SAME = {
-    ["CLICK (.+):"] = true,
-    ["enchant:(%d+)"] = true,
-    ["item:(%d+)"] = true,
-}
-
 local function keys(files)
     local out = {}
     for _, path in ipairs(files) do
@@ -29,7 +21,7 @@ local function untranslated(enFiles, ptFiles)
     local missing = {}
     for key in pairs(en) do
         local value = pt[key]
-        if not SAME[key] and (value == nil or value == "true") then missing[#missing + 1] = key end
+        if value == nil or value == "true" then missing[#missing + 1] = key end
     end
     table.sort(missing)
     return table.concat(missing, " | ")
