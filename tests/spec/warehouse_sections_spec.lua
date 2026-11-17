@@ -58,6 +58,7 @@ local function setup()
         },
         Split = split,
         Item = { Load = function() end },
+        SearchBox = wow.searchBox(),
         Util_GetMoneyStr = function() return "0" end,
         Util_GetTimeElapsedStr = function() return "1 min" end,
         prt = function() end,

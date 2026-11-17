@@ -297,40 +297,16 @@ function Nx.Quest.List:Open()
     CarboniteQuest:RegisterEvent ("CHAT_MSG_RAID_BOSS_WHISPER", "OnChat_msg_raid_boss_whisper")
     -- Filter Edit Box
 
-    local f = CreateFrame ("EditBox", "NxQuestFilter", win.Frm)
-    self.FilterFrm = f
-
-    f.NxInst = self
-
-    f:SetScript ("OnEditFocusGained", self.FilterOnEditFocusGained)
-    f:SetScript ("OnEditFocusLost", self.FilterOnEditFocusLost)
-    f:SetScript ("OnTextChanged", self.FilterOnTextChanged)
-    f:SetScript ("OnEnterPressed", self.FilterOnEnterPressed)
-    f:SetScript ("OnEscapePressed", self.FilterOnEscapePressed)
-
-    f:SetFontObject ("NxFontS")
-
-    local t = f:CreateTexture()
-    t:SetColorTexture (.1, .2, .3, 1)
-    t:SetAllPoints (f)
-    f.texture = t
-
-    f:SetAutoFocus (false)
-    f:ClearFocus()
-
-    win:Attach (f, 0, 1, 0, 18)
-
-    self.FilterDesc = L["Search: [click]"]
-    self.FilterDescEsc = L["Search: %[click%]"]
-
---    if Nx.Free then
---        self.FilterDesc = L["Search: "] .. Nx.FreeMsg
---    end
-
+    -- One search per tab: the box shows the selected tab's text (OnTabBar).
     self.Filters = { "", "", "", ""}
 
-    f:SetText (self.FilterDesc)
-    f:SetMaxLetters (30)
+    self.SearchBox = Nx.SearchBox:Create (win.Frm, function (text)
+        self.Filters[self.TabSelected] = text
+        self:Update()
+    end, { maxLetters = 30 })
+    self.FilterFrm = self.SearchBox.Frm
+
+    win:Attach (self.FilterFrm, 0, 1, 0, 18)
 
     -- List
 
@@ -890,58 +866,9 @@ end
 
 -------------------------------------------------------------------------------
 
-function Nx.Quest.List:FilterOnEditFocusGained()
-
-    Nx.ShowMessageTrial()
-
-    local this = self            --V4
-    local self = this.NxInst
-
-    local s = self.Filters[self.TabSelected]
-    if s ~= "" then
-        this:SetText (s)
-    else
-        this:SetText ("")
-    end
-end
-
-function Nx.Quest.List:FilterOnEditFocusLost()
-
-    local this = self            --V4
-    local self = this.NxInst
-
-    if self.Filters[self.TabSelected] == "" then
-        this:SetText (self.FilterDesc)
-    end
-end
-
-function Nx.Quest.List:FilterOnTextChanged()
-
-    local this = self            --V4
-    local self = this.NxInst
-    self.Filters[self.TabSelected] = gsub (this:GetText(), self.FilterDescEsc, "")
---    Nx.prt ("Filter #%s = %s", self.TabSelected, self.Filters[self.TabSelected])
-    self:Update()
-end
-
-function Nx.Quest.List:FilterOnEnterPressed()
-    local this = self            --V4
-    this:ClearFocus()
-end
-
-function Nx.Quest.List:FilterOnEscapePressed()
-
-    local this = self            --V4
-    local self = this.NxInst
-    self.Filters[self.TabSelected] = ""
-
-    this:ClearFocus()
-end
-
--------------------------------------------------------------------------------
-
 function Nx.Quest.List:OnTabBar (index, click)
 
+    self.SearchBox:Flush()
     self.FilterFrm:ClearFocus()
 
     self.TabSelected = index
@@ -954,9 +881,7 @@ function Nx.Quest.List:OnTabBar (index, click)
         self:AttachFrames()
     end
 
-    local s = self.Filters[self.TabSelected]
-    s = s ~= "" and s or self.FilterDesc
-    self.FilterFrm:SetText (s)
+    self.SearchBox:SetText (self.Filters[self.TabSelected])
 
     self:Update()
 end
@@ -2487,10 +2412,7 @@ function Nx.Quest.List:Update()
 
                 if self.Filters[self.TabSelected] ~= "" then
 
-                    local str = strlower (format ("%s %s", nameStr, tag or ""))
-                    local filtStr = strlower (self.Filters[self.TabSelected])
-
-                    show = strfind (str, filtStr, 1, true)
+                    show = Nx.SearchBox.Matches (format ("%s %s", nameStr, tag or ""), self.Filters[self.TabSelected])
                 end
 
                 if self.QOpts.NXShowHeaders and cur.Header ~= header then
@@ -2682,10 +2604,8 @@ function Nx.Quest.List:Update()
 
                 if self.Filters[self.TabSelected] ~= "" then
 
-                    local str = strlower (format ("%2d %s %s%s", lvl, title, date (L["%m/%d %H:%M:%S"], qTime), dailyName))
-                    local filtStr = strlower (self.Filters[self.TabSelected])
-
-                    show = strfind (str, filtStr, 1, true)
+                    local str = format ("%2d %s %s%s", lvl, title, date (L["%m/%d %H:%M:%S"], qTime), dailyName)
+                    show = Nx.SearchBox.Matches (str, self.Filters[self.TabSelected])
                 end
 
                 if show then
@@ -2887,10 +2807,7 @@ function Nx.Quest.List:Update()
                             end
                         end
 
-                        local str = strlower (format ("%2d %s %s %s", lvl, title, filterName, tag))
-                        local filtStr = strlower (self.Filters[self.TabSelected])
-
-                        show = strfind (str, filtStr, 1, true)
+                        show = Nx.SearchBox.Matches (format ("%2d %s %s %s", lvl, title, filterName, tag), self.Filters[self.TabSelected])
                     end
 
                     if show then
