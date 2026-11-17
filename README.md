@@ -64,6 +64,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - Mostra no mapa o grupo, a raid e outros usuários do Carbonite (amigos e guilda).
 
 ### Mais
+- **Jornada do personagem:** diário com data, hora e zona de cada subida de nível, quest concluída, primeira visita a uma zona, morte e masmorra, por personagem (as 500 mais recentes). Abre com `/carb jornada` ou pelo menu do botão do minimapa; desliga em Opções > Geral.
 - Rastreamento de moedas, aviso de correio, alerta de durabilidade, ajuda no leilão e estatísticas de combate.
 - Perfis de configuração, exportar e importar dados e transferir configurações entre personagens.
 
@@ -116,6 +117,7 @@ Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai 
 | `/carb options` | Opções |
 | `/carb goto <x> <y>` | Marca um destino na zona atual |
 | `/carb resetwindows` | Volta as janelas para a posição padrão |
+| `/carb jornada` | Jornada do personagem (níveis, quests, zonas, mortes e masmorras) |
 | `/carb debug` | Comandos de diagnóstico, como o `profiler` |
 | `/way x y` | Destino no formato do TomTom |
 

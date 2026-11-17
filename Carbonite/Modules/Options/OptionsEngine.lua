@@ -304,6 +304,20 @@ local function generalOptions()
                         if aa then aa:Enable (value) end
                     end,
                 },
+                -- Character journey diary (#69)
+                journeyRecord = {
+                    order = 2.6,
+                    type = "toggle",
+                    width = "full",
+                    name = L["Record Character Journey"],
+                    desc = L["When enabled, records level ups, completed quests, first visits to zones, deaths and dungeons of each character (/carb jornada)."],
+                    get = function()
+                        return Nx.db.profile.General.JourneyRecord ~= false
+                    end,
+                    set = function(_, value)
+                        Nx.db.profile.General.JourneyRecord = value and true or false
+                    end,
+                },
                 -- Login graphic toggle
                 loginWin = {
                     order = 2,
