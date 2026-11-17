@@ -223,6 +223,13 @@ function DG.DisplayID(npc)
     if type(npc) ~= "number" then return nil end
     local id = displayIDs[npc]
     if id then return id end
+    -- ForeverDungeonJournal's own table of boss looks (Data/Bosses.lua).
+    local ns = _G.ForeverDungeonJournal_NS
+    id = ns and type(ns.STATIC_DISPLAY_IDS) == "table" and ns.STATIC_DISPLAY_IDS[npc]
+    if type(id) == "number" and id > 0 then
+        displayIDs[npc] = id
+        return id
+    end
     local fdj = _G.ForeverDungeonJournalDB
     id = fdj and type(fdj.displayIDs) == "table" and fdj.displayIDs[npc]
     if type(id) == "number" and id > 0 then
@@ -667,20 +674,19 @@ local function BuildPanel(map)
     local bg = f:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     bg:SetColorTexture(.05, .05, .07, .95)
-    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 10, -8)
-    title:SetPoint("TOPRIGHT", -10, -8)
-    title:SetJustifyH("CENTER")
-    title:SetWordWrap(false)
-    f.Title = title
-    -- Bosses and quests, centered in the height left under the title.
+    -- Dungeon name, bosses and quests: one block centered in the panel.
     local content = CreateFrame("Frame", nil, f)
     content:SetPoint("LEFT", 10, 0)
     content:SetPoint("RIGHT", -10, 0)
     f.Content = content
+    local title = content:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT")
+    title:SetPoint("TOPRIGHT")
+    title:SetJustifyH("CENTER")
+    f.Title = title
     local heading = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    heading:SetPoint("TOPLEFT")
-    heading:SetPoint("TOPRIGHT")
+    heading:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -12)
+    heading:SetPoint("TOPRIGHT", title, "BOTTOMRIGHT", 0, -12)
     heading:SetJustifyH("LEFT")
     f.Heading = heading
     local text = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -785,10 +791,11 @@ function DG:UpdatePanel(map, w, h)
         panel.Text:SetPoint("RIGHT", panel.Content, "RIGHT")
         panel.Text:SetText(table.concat(self:QuestLines(here), "\n"))
 
-        -- Center the block in the height under the title.
-        local contentH = (panel.Heading:GetStringHeight() or 14) + 10 + #bosses * ROW_H
+        -- Center the whole block (name, bosses, quests) in the panel.
+        local contentH = (panel.Title:GetStringHeight() or 16) + 12
+            + (panel.Heading:GetStringHeight() or 14) + 10 + #bosses * ROW_H
             + (panel.Text:GetStringHeight() or 0)
-        local top = 34
+        local top = 10
         local free = h - top - contentH
         panel.Content:ClearAllPoints()
         panel.Content:SetPoint("LEFT", 10, 0)

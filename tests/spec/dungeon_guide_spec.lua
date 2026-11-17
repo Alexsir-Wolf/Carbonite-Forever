@@ -390,6 +390,12 @@ describe("DungeonGuide: retratos e estado dos chefes", function()
         expect(tex.path).toBe("baked:7970")
     end)
 
+    it("acha o displayID na tabela fixa de chefes do ForeverDungeonJournal", function()
+        local DG, env = load()
+        env.ForeverDungeonJournal_NS = { STATIC_DISPLAY_IDS = { [11517] = 11611 } }
+        expect(DG.DisplayID(11517)).toBe(11611)
+    end)
+
     it("sem retrato pronto usa o retrato do cliente pelo displayID", function()
         local DG, env = load()
         env.ForeverDungeonJournalDB = { displayIDs = { [11518] = 1234 } }
@@ -407,6 +413,6 @@ describe("DungeonGuide: retratos e estado dos chefes", function()
 
     it("a planta usa o retrato nos chefes e a dica de posição some na masmorra", function()
         expect(loader.read("Carbonite/Modules/Map/DungeonChart.lua"):find("DG.SetBossPortrait(p.Icon, b.npc)", 1, true) ~= nil).toBe(true)
-        expect(loader.read("Carbonite/Modules/Map/MapEngine.lua"):find("if tipStr and self:IsUnmappedInstance() then", 1, true) ~= nil).toBe(true)
+        expect(loader.read("Carbonite/Modules/Map/MapEngine.lua"):find("if tipStr and (self:IsUnmappedInstance() or (chart and chart.IsActive and chart:IsActive())) then", 1, true) ~= nil).toBe(true)
     end)
 end)
