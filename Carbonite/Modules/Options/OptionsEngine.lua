@@ -109,6 +109,61 @@ local function mapButton(order, key, name, desc)
 end
 
 -------------------------------------------------------------------------------
+-- MAP SLIDERS
+-- They were in the map right-click menu (#60). Each one keeps the saved key,
+-- the range and the refresh the menu slider had.
+-------------------------------------------------------------------------------
+
+---
+-- Slider for a saved value.
+-- @param tbl    Function returning the saved table (e.g. Nx.db.profile.MapSettings)
+-- @param key    Key in that table
+-- @param after  Optional function(map, v) run after saving, with the main map
+--
+local function mapRange(order, name, min, max, step, tbl, key, after)
+    return {
+        order = order,
+        type = "range",
+        name = name,
+        min = min, max = max, step = step, bigStep = step,
+        get = function() return tbl()[key] end,
+        set = function(_, v)
+            tbl()[key] = v
+            if after then
+                local m = Nx.Map:GetMap(1)
+                if m then after(m, v) end
+            end
+        end,
+    }
+end
+
+local function mapSettings() return Nx.db.profile.MapSettings end
+local function mapProfile() return Nx.db.profile.Map end
+local function routeProfile() return Nx.db.profile.Route end
+
+---
+-- Slider for a map setting the map keeps in a field while it runs (dot and
+-- icon scales, fades, blob alpha). The map copies the field back to the
+-- setting on logout, so both change together.
+-- @param field  Field of the map object (e.g. "DotZoneScale")
+-- @param key    Key in Nx.db.profile.MapSettings (e.g. "NXDotZoneScale")
+--
+local function mapFieldRange(order, name, min, max, step, field, key)
+    local opt = mapRange(order, name, min, max, step, mapSettings, key, function(m, v) m[field] = v end)
+    opt.get = function()
+        local m = Nx.Map.Maps and Nx.Map:GetMap(1)
+        if m and m[field] ~= nil then return m[field] end
+        return Nx.db.profile.MapSettings[key]
+    end
+    return opt
+end
+
+-- Changing the docked size needs the minimap to recompute its zoom.
+local function mmZoomChanged(m) m.MMZoomChanged = true end
+local function updateGatherFolders(m) m.Guide:UpdateGatherFolders() end
+local function noMiniMap() return Nx.Free end
+
+-------------------------------------------------------------------------------
 -- MAIN CONFIGURATION
 -- Root configuration table with addon info and credits
 -------------------------------------------------------------------------------
@@ -472,6 +527,62 @@ local function mapConfig()
                                 Nx.db.profile.Map.ShowAreaNames2D = v == true
                             end,
                         },
+                    },
+                },
+                -- Sizes of the map, dots and icons (were the Scale... and
+                -- Instance Scale... submenus of the map menu, #60)
+                mapScale = {
+                    order = 4,
+                    type = "group",
+                    name = L["Scale"],
+                    args = {
+                        AutoScaleMin = mapRange(1, L["Auto Scale Min"], .01, 10, .01, mapSettings, "NXAutoScaleMin"),
+                        AutoScaleMax = mapRange(2, L["Auto Scale Max"], .25, 10, .01, mapSettings, "NXAutoScaleMax"),
+                        DotZoneScale = mapFieldRange(3, L["Zone Dot Scale"], .1, 10, .01, "DotZoneScale", "NXDotZoneScale"),
+                        DotPalScale = mapFieldRange(4, L["Friend/Guild Dot Scale"], .1, 10, .01, "DotPalScale", "NXDotPalScale"),
+                        DotPartyScale = mapFieldRange(5, L["Party Dot Scale"], .1, 10, .01, "DotPartyScale", "NXDotPartyScale"),
+                        DotRaidScale = mapFieldRange(6, L["Raid Dot Scale"], .1, 10, .01, "DotRaidScale", "NXDotRaidScale"),
+                        IconScale = mapFieldRange(7, L["Icon Scale"], .1, 10, .01, "IconScale", "NXIconScale"),
+                        IconNavScale = mapFieldRange(8, L["Navigation Icon Scale"], .1, 10, .01, "IconNavScale", "NXIconNavScale"),
+                        DetailScale = mapRange(9, L["Details At Scale"], .05, 10, .01, mapSettings, "NXDetailScale"),
+                        IconGatherAtScale = mapRange(10, L["Gather Icons At Scale"], .01, 10, .01, mapProfile, "IconGatherAtScale"),
+                        POIAtScale = mapRange(11, L["POI Icons At Scale"], .1, 10, .01, mapSettings, "NXPOIAtScale"),
+                        instanceHeader = {
+                            order = 20,
+                            type = "header",
+                            name = L["Instance Scale"],
+                        },
+                        InstancePlayerSize = mapRange(21, L["Player Arrow"], 1, 50, 1, mapProfile, "InstancePlayerSize"),
+                        InstanceGroupSize = mapRange(22, L["Group Player Size"], 1, 50, 1, mapProfile, "InstanceGroupSize"),
+                        InstanceBossSize = mapRange(23, L["Raid Boss Size"], 1, 50, 1, mapProfile, "InstanceBossSize"),
+                        InstanceScale = mapRange(24, L["Icon Scaling Size"], 1, 50, 1, mapProfile, "InstanceScale"),
+                    },
+                },
+                -- Transparency of the map layers and icons (was the
+                -- Transparency... submenu of the map menu, #60)
+                mapAlpha = {
+                    order = 5,
+                    type = "group",
+                    name = L["Transparency"],
+                    args = {
+                        DetailAlpha = mapRange(1, L["Detail Transparency"], .25, 1, .01, mapSettings, "NXDetailAlpha"),
+                        BackgndAlphaFull = mapFieldRange(2, L["Fade In Transparency"], .25, 1, .01, "BackgndAlphaFull", "NXBackgndAlphaFull"),
+                        BackgndAlphaFade = mapFieldRange(3, L["Fade Out Transparency"], 0, 1, .01, "BackgndAlphaFade", "NXBackgndAlphaFade"),
+                        IconGatherA = mapRange(4, L["Gather Icon Transparency"], .2, 1, .01, mapProfile, "IconGatherA", updateGatherFolders),
+                        IconPOIAlpha = mapRange(5, L["POI Icon Transparency"], .2, 1, .01, mapProfile, "IconPOIAlpha"),
+                        UnexploredAlpha = mapRange(6, L["Unexplored Transparency"], 0, .9, .01, mapSettings, "NXUnexploredAlpha"),
+                        ArchAlpha = mapFieldRange(7, L["Archaeology Blob Transparency"], 0, 1, .01, "ArchAlpha", "NXArchAlpha"),
+                        QuestAlpha = mapFieldRange(8, L["Quest Blob Transparency"], 0, 1, .01, "QuestAlpha", "NXQuestAlpha"),
+                    },
+                },
+                -- Gather route radii (were in the Route... submenu, #60)
+                mapRoute = {
+                    order = 6,
+                    type = "group",
+                    name = L["Route"],
+                    args = {
+                        GatherRadius = mapRange(1, L["Gather Target Radius"], 7, 300, 1, routeProfile, "GatherRadius"),
+                        MergeRadius = mapRange(2, L["Gather Merge Radius"], 0, 100, 1, routeProfile, "MergeRadius"),
                     },
                 },
                 -- Main map options tab
@@ -1316,6 +1427,18 @@ local function mapConfig()
                                 Nx.Opts:NXCmdMMButUpdate()
                             end,
                         },
+                        -- Were in the Minimap... submenu of the map menu (#60)
+                        mmSlidersHeader = {
+                            order = 100,
+                            type = "header",
+                            name = L["Transparency and Docking"],
+                            hidden = noMiniMap,
+                        },
+                        MMAlpha = mapRange(101, L["Transparency"], 0, 1, .01, mapSettings, "NXMMAlpha"),
+                        MMDockScale = mapRange(102, L["Docked Scale"], .01, 3, .01, mapSettings, "NXMMDockScale", mmZoomChanged),
+                        MMDockScaleBG = mapRange(103, L["Docked Scale In BG"], .01, 3, .01, mapSettings, "NXMMDockScaleBG", mmZoomChanged),
+                        MMDockAlpha = mapRange(104, L["Docked Transparency"], 0, 1, .01, mapSettings, "NXMMDockAlpha"),
+                        MMDockOnAtScale = mapRange(105, L["Docking Below Map Scale"], 0, 5, .01, mapSettings, "NXMMDockOnAtScale"),
                     },
                 },
                 buttonFrame = {
@@ -1512,6 +1635,10 @@ local function mapConfig()
                 },
             },
         }
+        -- The free edition has no minimap docking, as the old menu did.
+        for _, key in ipairs({ "MMAlpha", "MMDockScale", "MMDockScaleBG", "MMDockAlpha", "MMDockOnAtScale" }) do
+            map.args.miniMap.args[key].hidden = noMiniMap
+        end
     end
     -- Attach diagnostics when this lazy provider is evaluated. Both modular
     -- and legacy option registration use mapConfig, including cached tables.
