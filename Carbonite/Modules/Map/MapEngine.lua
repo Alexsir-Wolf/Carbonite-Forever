@@ -3506,7 +3506,9 @@ function Nx.Map:MinimapUpdateEnd()
 
     -- Position docked minimap
     if self.MMZoomType == 0 then
-        self:MinimapUpdateMask("DockSquare")
+        -- Small in a corner of a dungeon chart: always round, so its black
+        -- unexplored square does not cover the chart (UnmappedInstance.lua).
+        self:MinimapUpdateMask("DockSquare", self.UInstChartFrm ~= nil and self:IsUnmappedInstance())
 
         local iconScale = Nx.db.profile.MiniMap.DockIScale
 
@@ -3670,10 +3672,10 @@ function Nx.Map:MinimapSetScale (scale, iconScale)
     mm:SetScale (iconScale)
 end
 
-function Nx.Map:MinimapUpdateMask (optName)
+function Nx.Map:MinimapUpdateMask (optName, forceRound)
 
     local roundMask = Nx.isRetail and "Interface\\CharacterFrame\\TempPortraitAlphaMask" or "textures\\MinimapMask"
-    local name = Nx.db.profile.MiniMap[optName] and "Interface\\Buttons\\White8x8" or roundMask
+    local name = not forceRound and Nx.db.profile.MiniMap[optName] and "Interface\\Buttons\\White8x8" or roundMask
 
 --    if IsControlKeyDown() then
 --        self.MMMaskName = nil
