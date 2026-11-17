@@ -1833,6 +1833,9 @@ function Nx.Window:SetBordersFade (fade)
     if self.TitleBar then
         self.TitleBar:SetAlpha (fade)
     end
+    if self.HeaderRule then
+        self.HeaderRule:SetAlpha (fade)
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -2309,6 +2312,7 @@ end
 function Nx.Window:SetTitleXOff (x, yo)
 
     yo = yo or 0
+    self.TitleXOff, self.TitleYOff = x, yo
 
     for n = 1, self.TitleLines do
 
@@ -2377,7 +2381,8 @@ function Nx.Window:StyleTitleBar()
         fstr:SetWordWrap (false)
         Skin:PaintText (fstr, "title")
     end
-    self:SetTitleXOff (0)
+    -- Keep the room a window left for its own header buttons (Guide, Notes).
+    self:SetTitleXOff (self.TitleXOff or 0, self.TitleYOff)
 
     if self.Border then
         local strip = self.TitleBar
@@ -2413,6 +2418,49 @@ function Nx.Window:StyleTitleBar()
     end
 end
 
+---------------------------------------------------------------------------------------
+-- Modern header (#43): the header of the quest watch list for any window. The
+-- title in the "title" font role, the theme's title strip and color, the
+-- window buttons sized to the line (StyleTitleBar) and the rule under the
+-- header. Call after CreateButtons and any SetTitleLineH.
+---------------------------------------------------------------------------------------
+
+function Nx.Window:ApplyModernHeader()
+
+    for _, fstr in ipairs (self.TitleFStr) do
+        Carbonite.UI.Font:SetRole (fstr, "title")
+    end
+
+    self:StyleTitleBar()
+
+    if self.Border and not self.HeaderRule then
+        self.HeaderRule = Carbonite.UI.Skin:AddHeaderRule (self.Frm, 0)
+        self:PlaceTitleBar()
+    end
+end
+
+---------------------------------------------------------------------------------------
+-- A count at the right end of the title line, in the "number" font role
+-- (#43), left of the window buttons.
+---------------------------------------------------------------------------------------
+
+function Nx.Window:SetHeaderCounter (text)
+
+    local cnt = self.HeaderCounter
+    if not cnt then
+        cnt = self.Frm:CreateFontString (nil, "OVERLAY")
+        Carbonite.UI.Font:SetRole (cnt, "number")
+        Carbonite.UI.Skin:PaintText (cnt, "title")
+        cnt:SetJustifyH ("RIGHT")
+        self.HeaderCounter = cnt
+    end
+
+    cnt:ClearAllPoints()
+    cnt:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -self.BorderW - (self.ButW or 0) - 6, -self.BorderH)
+    cnt:SetHeight (self.TitleLineH)
+    cnt:SetText (text and tostring (text) or "")
+end
+
 -- Strip from the inner edge of the border down to the end of the title.
 function Nx.Window:PlaceTitleBar()
 
@@ -2430,6 +2478,14 @@ function Nx.Window:PlaceTitleBar()
     strip:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, -t)
     strip:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, -t)
     strip:SetHeight (self.BorderH - t + self.TitleH)
+
+    local rule = self.HeaderRule
+    if rule then
+        local y = -(self.BorderH + self.TitleH)
+        rule:ClearAllPoints()
+        rule:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, y)
+        rule:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, y)
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -6074,7 +6130,7 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
     frm:SetScript ("OnMouseWheel", self.OnMouseWheel)
     frm:EnableMouseWheel (true)
 
-    frm.texture = frm:CreateTexture()
+    frm.texture = frm:CreateTexture (nil, "BACKGROUND")
     frm.texture:SetAllPoints (frm)
     Carbonite.UI.Skin:Paint (frm.texture, "listBg")
 
@@ -6168,6 +6224,11 @@ function Nx.List:SetFade (fade)
     end
 
     self.SelFrm:SetAlpha (fade)
+
+    self.Fade = fade
+    for _, band in ipairs (self.RowBands or {}) do
+        band:SetAlpha (fade)
+    end
 
     if self.Slider then
         self.Slider.Frm.texture:SetAlpha (fade * .6)
@@ -6798,6 +6859,10 @@ function Nx.List:Update (showLast)
 
     end
 
+    if self.ModernRows then
+        self:UpdateModernRows()
+    end
+
     -- Position selected line
 
     local sfrm = self.SelFrm
@@ -6811,6 +6876,102 @@ function Nx.List:Update (showLast)
         sfrm:SetPoint ("TOPLEFT", 0, -selY * lineH - self.HdrH)
         sfrm:Show()
     end
+end
+
+---------------------------------------------------------------------------------------
+-- Modern rows (#43): the list look of the quest log for any list. A band on
+-- every other row (rowAlt) and a band under the mouse (rowHover); the header
+-- strip and the selected row already follow the theme.
+---------------------------------------------------------------------------------------
+
+function Nx.List:SetModernRows (on)
+
+    self.ModernRows = on ~= false
+
+    local f = self.Frm
+    if self.ModernRows and not self.HoverTex then
+        local t = f:CreateTexture (nil, "BACKGROUND", nil, 2)
+        Carbonite.UI.Skin:Paint (t, "rowHover")
+        t:Hide()
+        self.HoverTex = t
+        f:SetScript ("OnEnter", self.OnModernEnter)
+        f:SetScript ("OnLeave", self.OnModernLeave)
+    end
+
+    self:UpdateModernRows()
+end
+
+-- Place a band texture over visible row `row` (0 = first below the header).
+function Nx.List:PlaceRowBand (t, row)
+
+    local f = self.Frm
+    local lineH = self:GetLineH()
+    local right = self.Slider and self.Slider.Frm:GetWidth() or 0
+    local y = -row * lineH - self.HdrH
+
+    t:ClearAllPoints()
+    t:SetPoint ("TOPLEFT", f, "TOPLEFT", 0, y)
+    t:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -right, y)
+    t:SetHeight (lineH)
+end
+
+function Nx.List:UpdateModernRows()
+
+    local bands = self.RowBands or {}
+    self.RowBands = bands
+
+    local n = 0
+
+    if self.ModernRows then
+        for row = 0, self.Vis - 1 do
+            local line = self.Top + row
+            if line <= self.Num and line % 2 == 0 then
+                n = n + 1
+                local t = bands[n]
+                if not t then
+                    t = self.Frm:CreateTexture (nil, "BACKGROUND", nil, 1)
+                    Carbonite.UI.Skin:Paint (t, "rowAlt")
+                    bands[n] = t
+                end
+                self:PlaceRowBand (t, row)
+                t:SetAlpha (self.Fade or 1)
+                t:Show()
+            end
+        end
+    end
+
+    for i = n + 1, #bands do
+        bands[i]:Hide()
+    end
+end
+
+-- Mouse handlers of the list frame (self = frame).
+function Nx.List:OnModernEnter()
+    self:SetScript ("OnUpdate", Nx.List.OnModernHover)
+end
+
+function Nx.List:OnModernLeave()
+    self:SetScript ("OnUpdate", nil)
+    self.NxInst.HoverTex:Hide()
+end
+
+function Nx.List:OnModernHover()
+
+    local inst = self.NxInst
+    local t = inst.HoverTex
+    local x, y = Nx.Util_IsMouseOver (self)
+
+    if x then
+        y = self:GetHeight() - y - inst.HdrH
+        local row = floor (y / inst:GetLineH())
+        if y >= 0 and row < inst.Vis and inst.Top + row <= inst.Num then
+            inst:PlaceRowBand (t, row)
+            t:Show()
+            return
+        end
+    end
+
+    t:Hide()
 end
 
 ---------------------------------------------------------------------------------------

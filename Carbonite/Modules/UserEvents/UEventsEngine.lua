@@ -262,11 +262,13 @@ function Nx.UEvents.List:Open()
     self.Win = win
 
     win:CreateButtons (true)
+    win:ApplyModernHeader()
 
     win:InitLayoutData (nil, -.75, -.6, -.25, -.1)
 
     local list = Nx.List:Create ("Events", 2, -2, 100, 12 * 3, win.Frm)
     self.List = list
+    list:SetModernRows()
     list:ColumnAdd (L["Time"], 1, 70)
     list:ColumnAdd (L["Event"], 2, 140)
     list:ColumnAdd ("#", 3, 30, "CENTER")

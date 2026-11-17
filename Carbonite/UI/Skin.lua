@@ -286,6 +286,46 @@ function Skin:PaintText(fontString, name)
     fontString:SetTextColor(self:GetToken(name))
 end
 
+--- True when this client has every atlas of the list (C_Texture.GetAtlasInfo).
+--- Else false and the first missing name (nil without the API).
+function Skin:HasAtlases(names)
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    if not info then return false end
+    for _, name in ipairs(names) do
+        local ok, found = pcall(info, name)
+        if not ok or not found then return false, name end
+    end
+    return true
+end
+
+-- Rules under a window header, repainted when the theme changes.
+local rules = setmetatable({}, { __mode = "k" })
+
+-- The rule fades from the token's color on the left to almost nothing on
+-- the right; a client without gradients gets a flat, fainter line.
+local function paintRule(t)
+    local r, g, b, a = Skin:GetToken("headerRule")
+    t:SetColorTexture(1, 1, 1, 1)
+    local ok = false
+    if t.SetGradient and CreateColor then
+        ok = pcall(t.SetGradient, t, "HORIZONTAL", CreateColor(r, g, b, a), CreateColor(r, g, b, a * 0.0625))
+    end
+    if not ok then t:SetColorTexture(r, g, b, a * 0.5625) end
+end
+
+--- A one pixel rule across `frame` at `y` from its top, `inset` from the
+--- sides (#43). Returns the texture, kept in step with the theme.
+function Skin:AddHeaderRule(frame, y, inset)
+    inset = inset or 2
+    local t = frame:CreateTexture(nil, "OVERLAY", nil, -7)
+    t:SetHeight(1)
+    t:SetPoint("TOPLEFT", frame, "TOPLEFT", inset, y)
+    t:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -inset, y)
+    rules[t] = true
+    paintRule(t)
+    return t
+end
+
 -- Apply current theme's backdrop to a frame in one call.
 function Skin:Apply(frame)
     if not frame or not frame.SetBackdrop then return end
@@ -327,6 +367,9 @@ function Skin:Update()
     end
     for fontString, name in pairs(inked) do
         fontString:SetTextColor(self:GetToken(name))
+    end
+    for rule in pairs(rules) do
+        paintRule(rule)
     end
     Carbonite.Core.EventBus:Fire("SKIN_UPDATED", self.activeName)
     -- Push to legacy Window/Menu resets so existing widgets restyle.

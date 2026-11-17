@@ -170,6 +170,7 @@ function Nx.Warehouse:Create()
     win.Frm.NxInst = self
 
     win:CreateButtons (true, true)
+    win:ApplyModernHeader()
 
     win:InitLayoutData (nil, -.25, -.15, -.5, -.6)
     win.Frm:SetToplevel (true)
@@ -194,6 +195,7 @@ function Nx.Warehouse:Create()
     list:SetUser (self, self.OnListEvent)
 
     list:SetLineHeight (4)
+    list:SetModernRows()
 
     list:ColumnAdd ("", 1, 24)
     list:ColumnAdd (L["Name"], 2, 900)
@@ -210,6 +212,7 @@ function Nx.Warehouse:Create()
     self.ItemList = list
 
     list:SetUser (self, self.OnItemListEvent)
+    list:SetModernRows()
 
 --    list:SetLineHeight (3)
 
