@@ -128,7 +128,7 @@ L["Herb Gathering"] = "Colheita de ervas"		-- NXlHERBGATHERING
 L["In Conflict"] = "Em Conflito"			-- NXlINCONFLICT
 L["Everfrost Chip"] = "Chip de Everfrost"		-- NXlEverfrost
 
-L["yds"] = "m"
+L["yds"] = "jd"
 L["secs"] = "s"
 L["mins"] = "min"
 
