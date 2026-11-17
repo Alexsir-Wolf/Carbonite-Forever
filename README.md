@@ -106,6 +106,7 @@ As configurações do Carbonite oficial continuam valendo, porque os nomes inter
 - Hoje o Carbonite é mantido pela comunidade. Esta edição se baseia no trabalho de **IrcDirk** e dos colaboradores do [Carbonite All in One](https://github.com/IrcDirk/Carbonite-All-in-One-Retail-Classic).
 - As mudanças desta edição são de **Alexsir-Wolf**. A lista completa está no histórico de commits deste repositório.
 - Os dados de quests do Forever pertencem à equipe do Questie e são lidos do QuestieDB que você instalou. Esta edição não copia esses dados.
+- As pedras de encontro do Guia (`Carbonite/Data/camelot/Guides/MeetingStone.lua`) vêm da base de objetos do **QuestieDB** (Forever), também sob a GPL v3.
 - A perícia de pesca de cada zona (`Carbonite/Modules/Map/ZoneFishing.lua`), os curandeiros espirituais do Guia (`Carbonite/Data/camelot/Guides/SpiritHealer.lua`) e os livros da biblioteca e convergências (`Carbonite.Notes/Integrations/ForeverPoints.lua`) vêm do **MapUtils**, de D4KiR, também sob a GPL v3.
 - Licença: [GNU GPL v3](LICENSE). O código continua aberto, e as mudanças precisam manter a mesma licença.
 
