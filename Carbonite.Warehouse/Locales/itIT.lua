@@ -68,7 +68,6 @@ L[" Honor: %s%s|r  Conquest: %s%s"] = " Onori: %s%s|r  Conquista: %s%s"
 --L[" %s %s%s"] = true
 L["%s's Items"] = "Oggetti di %s"
 L["|cffff1010No bank data - visit your bank"] = "|cffff1010Nessun Dato dalla Banca - Visita la Tua Banca"
-L["---- Equipped ----"] = "---- Equipaggiato ----"
 L["All Items"] = "Tutti gli Oggetti"
 L["%s |cffcfcfff(%s Bank)"] = "%s |cffcfcfff(%s Banca)"
 L["%s |cffcfffff(%s Mail)"] = "%s |cffcfffff(%s Posta)"

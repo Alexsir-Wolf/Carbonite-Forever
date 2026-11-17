@@ -105,7 +105,6 @@ L["Shift left click toggle minimize"] = "Umschalt + Linksklick zum minimieren/ma
 L["Alt left click toggle Watch List"] = "Alt + Linksklick schaltet Beobachtungsliste ein/aus"
 L["Middle click toggle Guide"] = "Mittelklick schaltet Wegweiser an/aus"
 L["Right click for Menu"] = "Rechtsklick f\195\188r Men\195\188"
-L["Shift drag to move"] = "Umschalt-Ziehen zum Bewegen"
 L["Hide In Combat"] = "Im Kampf verstecken"
 L["Lock"] = "Feststellen"
 L["Layer"] = "Ebene"

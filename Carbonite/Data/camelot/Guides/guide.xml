@@ -19,6 +19,7 @@
 	<Include file="Innkeeper.lua" />
 	<Include file="LeatherworkingTrainer.lua" />	
 	<Include file="MageTrainer.lua" />
+	<Include file="MeetingStone.lua" />
 	<Include file="Mailbox.lua" />	
 	<Include file="MiningTrainer.lua" />		
 	<Include file="PaladinTrainer.lua" />

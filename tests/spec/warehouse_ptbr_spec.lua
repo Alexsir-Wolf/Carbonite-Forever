@@ -17,7 +17,7 @@ describe("Warehouse em pt-BR", function()
 
     it("as chaves novas têm tradução pt-BR", function()
         local pt = loader.read("Carbonite.Warehouse/Locales/ptBR.lua")
-        for _, key in ipairs({ "Storage Summary", "  Bags scan: %s", "Character Storage", "Search items...", "not scanned", "Name" }) do
+        for _, key in ipairs({ "Summary", "  Bags scan: %s", "Professions", "Search items...", "not scanned", "Name" }) do
             expect(pt:find('L["' .. key .. '"]', 1, true) ~= nil).toBe(true)
         end
     end)

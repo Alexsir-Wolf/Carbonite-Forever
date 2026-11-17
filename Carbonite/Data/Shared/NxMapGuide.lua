@@ -537,6 +537,10 @@ for _, folder in ipairs(Nx.GuideInfo) do
         if Nx.GuideData and Nx.GuideData[L["Spirit Healer"]] then
             tinsert(folder, { T = L["Spirit Healer"], Tx = "Spell_Holy_Resurrection" })
         end
+        -- Meeting Stone: same rule (Data/camelot/Guides/MeetingStone.lua)
+        if Nx.GuideData and Nx.GuideData[L["Meeting Stone"]] then
+            tinsert(folder, { T = L["Meeting Stone"], Tx = "Spell_Shadow_Twilight" })
+        end
     end
 
     ---------------------------------------------------------------------------
@@ -1298,6 +1302,21 @@ function Nx.Map.Guide:QuestGiverAvailable (qId, minLevel, playerLevel)
     return true
 end
 
+-- Whether the map shows a quest of this kind at its giver (#80). The kind
+-- comes from QuestieDB (Nx.Quest:QuestieQuestKind): event first, then daily
+-- (also weekly), then repeatable. Carbonite's own Nx.QuestFreq marks a daily
+-- QuestieDB does not know. Each kind has its Map.QuestGivers* option.
+local QUEST_KIND_OPTION = { event = "QuestGiversEvent", daily = "QuestGiversDaily", repeatable = "QuestGiversRepeatable" }
+
+function Nx.Map.Guide:QuestGiverKindShown (qId)
+    local Quest = Nx.Quest
+    local kind = Quest and Quest.QuestieQuestKind and Quest:QuestieQuestKind (qId)
+    if kind ~= "event" and Nx.QuestFreq and Nx.QuestFreq[qId] then kind = "daily" end
+    local option = kind and QUEST_KIND_OPTION[kind]
+    if not option then return true end
+    return Nx.db.profile.Map[option] ~= false
+end
+
 function Nx.Map.Guide:ShowsOwnGather (setting)
     if Nx.Notes and Nx.Notes.GatherLiteActive and Nx.Notes:GatherLiteActive() then
         return false
@@ -1735,7 +1754,8 @@ function Nx.Map.Guide:UpdateMapIcons()
                                 or (playerClassBit ~= 0
                                     and bit.band(req, playerClassBit) ~= 0)
                             if classOK and lvl >= minLvl and lvl <= maxLvl
-                                    and (not onlyAvailable or self:QuestGiverAvailable (qId, minlvl, playerLevel)) then
+                                    and (not onlyAvailable or self:QuestGiverAvailable (qId, minlvl, playerLevel))
+                                    and self:QuestGiverKindShown (qId) then
                                 local col = "|r"
                                 local include = true
                                 local daily = Nx.QuestFreq and Nx.QuestFreq[qId]
@@ -1803,7 +1823,18 @@ function Nx.Map.Guide:UpdateMapIcons()
                             local startName, zone, x, y, level = Quest:GetSEPos (quest["Start"])
                             local wx, wy = Map:GetWorldPos (mapId, x, y)
                             local tx = anyDaily and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimB" or "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaim"
+                            local iconScale = 1
+                            -- Blizzard quest atlases and the quest icon scale (#49)
+                            -- live in Carbonite.Quests, which owns this data.
+                            if Quest.GetMapIconTexture then
+                                tx = Quest.GetMapIconTexture (anyDaily and "daily" or "available")
+                                iconScale = Quest.GetMapIconScale()
+                            end
                             local icon = map:AddIconPt (show and "!GQ" or "!GQC", wx, wy, level, nil, tx)
+                            -- Per-pin size: pooled pins keep the class size
+                            -- they were allocated with, so set it every time.
+                            local iconSize = (show and 16 or 10) * iconScale
+                            icon.w, icon.h = iconSize, iconSize
 --                            local tx = "Interface\\Minimap\\ObjectIconsAtlas"--anyDaily and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimB" or "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaim"
 --                            local tx1, txy1, tx2, ty2 = GetObjectIconTextureCoords(anyDaily and 4713 or 4726)
 --                            local icon = map:AddIconPt (show and "!GQ" or "!GQC", wx, wy, level, nil, tx, tx1, txy1, tx2, ty2)
@@ -2087,6 +2118,11 @@ function Nx.Map.Guide:UpdateTravelIcons (hideFac)
     local map = self.Map
     local mapId = map.MapId
     local folder = self:FindFolder (L["Travel"])
+    -- Piers get the departure time of their vessel on the tip (#78)
+    local Transports = Carbonite.Modules and Carbonite.Modules.Map and Carbonite.Modules.Map.Transports
+    if Transports then
+        Transports:ResetPiers()
+    end
     for showType, folder in ipairs (folder) do
         if folder.MapId == mapId and folder.Fac ~= hideFac then
             local conStr = Nx.ZoneConnections[folder.ConIndex]
@@ -2106,7 +2142,11 @@ function Nx.Map.Guide:UpdateTravelIcons (hideFac)
                 tx = "Interface\\Icons\\INV_Misc_Note_02"
             end
             local icon = map:AddIconPt ("!POI", wx, wy, level1, nil, tx)
-            map:SetIconTip (icon, format ("%s\n%s %.1f %.1f", name1, map:GetMapNameByID(mapId1), x1, y1))
+            local tip = format ("%s\n%s %.1f %.1f", name1, map:GetMapNameByID(mapId1), x1, y1)
+            map:SetIconTip (icon, tip)
+            if Transports then
+                Transports:AddPier (icon, mapId1, x1, y1, tip)
+            end
         end
     end
     local winfo = Map.MapWorldInfo[mapId]

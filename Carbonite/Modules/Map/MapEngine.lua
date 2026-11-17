@@ -1218,12 +1218,30 @@ function Nx.Map:Create(index)
     local item = showMenu:AddItem(0, L["Show Unexplored Areas"], func, m)
     item:SetChecked(m.ShowUnexplored)
 
+    -- Zone level ranges over the continent map (#68)
+    local item = showMenu:AddItem(0, L["Show Zone Levels"], nil, m)
+    item:SetChecked(Nx.db.profile.Map, "ShowZoneLevels")
+
+    -- Ships, zeppelins and the tram moving, with departure times on piers (#78)
+    if Nx.TransportRoutes then
+        local item = showMenu:AddItem(0, L["Show Ships and Zeppelins"], nil, m)
+        item:SetChecked(Nx.db.profile.Map, "ShowTransports")
+    end
+
     -- Quest givers: only the quests the player can take now, or all of them
     local function func(self)
         self.Guide:UpdateGatherFolders()
     end
     local item = showMenu:AddItem(0, L["Quest Givers: Only Available Quests"], func, m)
     item:SetChecked(Nx.db.profile.Map, "QuestGiversAvailable")
+
+    -- Quest givers: which kinds of quest they show (#80)
+    local item = showMenu:AddItem(0, L["Quest Givers: Daily and Weekly Quests"], func, m)
+    item:SetChecked(Nx.db.profile.Map, "QuestGiversDaily")
+    local item = showMenu:AddItem(0, L["Quest Givers: Repeatable Quests"], func, m)
+    item:SetChecked(Nx.db.profile.Map, "QuestGiversRepeatable")
+    local item = showMenu:AddItem(0, L["Quest Givers: Event Quests"], func, m)
+    item:SetChecked(Nx.db.profile.Map, "QuestGiversEvent")
 
     -- World map toggle
     m.MenuIShowWorld = showMenu:AddItem(0, L["Show World"], self.Menu_OnShowWorld, m)
@@ -6468,9 +6486,8 @@ function Nx.Map:Update (elapsed)
         Map.TaxiOn = false
         Map.TaxiX = nil        -- Clear so if we pop on a taxi by a unhooked method we don't track old
 
+        -- The time is recorded by Modules/Travel/FlightTimes.lua (#139)
         local tm = GetTime() - Map.TaxiStartTime
-
-        Nx.Travel:TaxiSaveTime (tm)
 
         if Nx.db.profile.Debug.DebugMap then
             Nx.prt ("Taxi time %.1f seconds", tm)
@@ -7703,6 +7720,7 @@ function Nx.Map:Update (elapsed)
     self:UpdateIcons (self.KillShow)
     if drawDetail then
         self:UpdateAreaLabels()
+        self:UpdateZoneLevelLabels()
 
         -- Battlefield flags
 
@@ -7787,6 +7805,19 @@ function Nx.Map:Update (elapsed)
             -- Override clipping (FIX maybe?)
             f.texture:SetTexCoord (0.56640625, 0.6328125, 0.00390625, 0.0703125)    -- 16x16 grid (.0625 uv size)
 
+            self.Level = self.Level + 2
+        end
+
+        -- Closest spirit healer to the corpse (#77)
+        local corpseMap = C_Map.GetBestMapForUnit("player")
+        local hX, hY = self:NearestSpiritHealer (corpseMap, cX * 100, cY * 100)
+        if hX then
+            local f = self:GetIcon (1)
+            f.NxTip = L["Spirit Healer"]
+            f.texture:SetTexture ("Interface\\Icons\\Spell_Holy_Resurrection")
+            f.texture:SetTexCoord (.08, .92, .08, .92)
+            local x, y = self:GetWorldPos (corpseMap, hX, hY)
+            self:ClipFrameByMapType (f, x, y, 20, 20, 0)
             self.Level = self.Level + 2
         end
 
@@ -10718,6 +10749,43 @@ function Nx.Map:DrawZoneRect (mapId, x, y, w, h, tip)
     end
 end
 --]]
+
+--------
+-- Closest spirit healer of the Guide data (Data/camelot/Guides/SpiritHealer.lua)
+-- to a point of the map (0-100), for the corpse while the player is dead (#77).
+-- The answer is cached per map and point, so the map update pays for the
+-- search only when the corpse moves.
+
+function Nx.Map:NearestSpiritHealer (mapId, x, y)
+
+    local data = Nx.GuideData and Nx.GuideData[L["Spirit Healer"]]
+    local row = data and mapId and data[mapId]
+    if not row then
+        return
+    end
+
+    local cache = self.SpiritHealerNear
+    if cache and cache.MapId == mapId and cache.X == x and cache.Y == y then
+        return cache.HX, cache.HY
+    end
+
+    local wx, wy = self:GetWorldPos (mapId, x, y)
+    if not wx then
+        return
+    end
+    local bestX, bestY, bestD
+    for px, py in string.gmatch (row, "[^,|]+,([%d%.]+),([%d%.]+)") do
+        px, py = tonumber (px), tonumber (py)
+        local hx, hy = self:GetWorldPos (mapId, px, py)
+        local d = hx and (hx - wx) ^ 2 + (hy - wy) ^ 2
+        if d and (not bestD or d < bestD) then
+            bestX, bestY, bestD = px, py, d
+        end
+    end
+
+    self.SpiritHealerNear = { MapId = mapId, X = x, Y = y, HX = bestX, HY = bestY }
+    return bestX, bestY
+end
 
 --------
 -- Zone clip a frame to the map and set position, size and texture coords
@@ -13741,6 +13809,129 @@ function Nx.Map:UpdateAreaLabels()
 
     self.AreaLabelsDrawn = used
     local pool = self.AreaLabelFStrs
+    if pool then
+        for n = used + 1, #pool do
+            pool[n]:Hide()
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- Zone level labels (#68): "Name\n10-20" in the faction color at the center
+-- of each zone while the map shows a continent. The zone list (text, world
+-- center, world width) is built once; the screen layout is redone only when
+-- the view (position, scale, size, alpha) changes.
+-------------------------------------------------------------------------------
+
+function Nx.Map:BuildZoneLevelLabels()
+    local MapIDs = Carbonite.Modules.Map.MapIDs
+    if not Nx.Zones or not MapIDs then
+        return nil
+    end
+    local list = {}
+    for cont = 1, self.ContCnt or 0 do
+        for _, mapId in pairs (self.MapZones and self.MapZones[cont] or {}) do
+            local winfo = self.MapWorldInfo[mapId]
+            if winfo and winfo.Scale and winfo[4] and not winfo.City then
+                local name = self:GetWorldZoneInfo (cont, mapId)
+                local text = MapIDs:GetZoneLevelLabel (mapId, name)
+                if text then
+                    local wx, wy = self:GetWorldPos (mapId, 50, 50)
+                    list[#list + 1] = { Text = text, WX = wx, WY = wy, W = 100 * winfo.Scale }
+                end
+            end
+        end
+    end
+    return list
+end
+
+function Nx.Map:GetZoneLevelFStr (n)
+    local pool = self.ZoneLevelFStrs
+    if not pool then
+        pool = {}
+        self.ZoneLevelFStrs = pool
+    end
+    local fs = pool[n]
+    if not fs then
+        fs = self:GetAreaLabelHost():CreateFontString (nil, "OVERLAY")
+        fs:SetFontObject ("NxFontMap")
+        fs:SetJustifyH ("CENTER")
+        fs:SetShadowColor (0, 0, 0, 1)
+        fs:SetShadowOffset (1, -1)
+        fs:SetNonSpaceWrap (false)
+        fs:SetWordWrap (false)
+        pool[n] = fs
+    end
+    return fs
+end
+
+function Nx.Map:UpdateZoneLevelLabels()
+    local show = Nx.db.profile.Map.ShowZoneLevels and not self.View3DActive
+        and not self:IsInstanceMap (Nx.Map.RMapId)
+        and not self:IsBattleGroundMap (Nx.Map.RMapId)
+    local scale, cw, ch = self.ScaleDraw, self.MapW, self.MapH
+    local px, py, alpha = self.MapPosXDraw, self.MapPosYDraw, self.BackgndAlpha
+
+    if show then
+        self:GetAreaLabelHost():SetFrameLevel (self.Level + 3)
+    end
+
+    -- Same view as the last frame: the labels already on screen are right.
+    local last = self.ZoneLevelView
+    if not last then
+        last = {}
+        self.ZoneLevelView = last
+    end
+    if last.Show == show and last.Scale == scale and last.X == px and last.Y == py
+        and last.W == cw and last.H == ch and last.A == alpha then
+        return
+    end
+    last.Show, last.Scale, last.X, last.Y, last.W, last.H, last.A = show, scale, px, py, cw, ch, alpha
+
+    local used = 0
+    if show then
+        if not self.ZoneLevelList then
+            self.ZoneLevelList = self:BuildZoneLevelLabels()
+        end
+        local list = self.ZoneLevelList
+        local MapIDs = Carbonite.Modules.Map.MapIDs
+        if list then
+            local placed = {}
+            for i = 1, #list do
+                local z = list[i]
+                local a = MapIDs.ZoneLevelLabelAlpha (z.W * scale, cw)
+                if a > 0 then
+                    local sx = (z.WX - px) * scale + cw * .5
+                    local sy = (z.WY - py) * scale + ch * .5
+                    if sx > -100 and sx < cw + 100 and sy > -20 and sy < ch + 20 then
+                        local fs = self:GetZoneLevelFStr (used + 1)
+                        fs:SetText (z.Text)
+                        local hw = fs:GetStringWidth() * .5 + 2
+                        local hh = fs:GetStringHeight() * .5 + 1
+                        -- Skip a label that would cover one already placed.
+                        local free = true
+                        for k = 1, #placed do
+                            local p = placed[k]
+                            if math.abs (p[1] - sx) < p[3] + hw and math.abs (p[2] - sy) < p[4] + hh then
+                                free = false
+                                break
+                            end
+                        end
+                        if free then
+                            used = used + 1
+                            placed[used] = { sx, sy, hw, hh }
+                            fs:ClearAllPoints()
+                            fs:SetPoint ("CENTER", self.AreaLabelHost, "TOPLEFT", sx, -sy - self.TitleH)
+                            fs:SetAlpha (a * alpha)
+                            fs:Show()
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local pool = self.ZoneLevelFStrs
     if pool then
         for n = used + 1, #pool do
             pool[n]:Hide()

@@ -65,6 +65,8 @@
     <Script file="Map\MountHelper.lua" />
     <Script file="Map\FlightPathFinder.lua" />
     <Script file="Map\ZoneConnections.lua" />
+    <!-- Ships, zeppelins and tram on the map, departure times on piers (#78). -->
+    <Script file="Map\Transports.lua" />
     <Script file="Map\Pins\QuestPin.lua" />
     <Script file="Map\Pins\GatherPin.lua" />
     <Script file="Map\Pins\PlayerPin.lua" />
@@ -88,6 +90,8 @@
     <Script file="HUD\HUDEngine.lua" />
     <!-- Travel: same split (shell, then engine relocated from NxTravel.lua). -->
     <Script file="Travel\Travel.lua" />
+    <!-- Measured flight times per pair of nodes, account-wide (#139). -->
+    <Script file="Travel\FlightTimes.lua" />
     <Script file="Travel\TravelEngine.lua" />
 
     <!-- Cross-cutting modules. -->

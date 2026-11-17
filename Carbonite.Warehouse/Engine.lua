@@ -96,6 +96,14 @@ local function AddSectionHeader(list, column, label, count)
     end
 end
 
+-- Item list rows carry these in ItemSetDataEx slots: the section key of a
+-- section header, and the profession (and its character) of a profession row.
+local SectionDataSlot  = 1
+local ProfDataSlot     = 2
+local ProfCharDataSlot = 3
+local SectionIconOpen   = "|TInterface\\Buttons\\UI-MinusButton-Up:12:12|t"
+local SectionIconClosed = "|TInterface\\Buttons\\UI-PlusButton-Up:12:12|t"
+
 local function GetLatestProfessionScan(ch)
     local latest
     local profs = ch and ch["Profs"]
@@ -135,7 +143,7 @@ local function GetCurrencyDisplayRows(ch)
             end
             rows[#rows + 1] = {
                 id = tonumber(currencyID),
-                name = name or format("Currency %s", tostring(currencyID)),
+                name = name or format(L["Currency %s"], tostring(currencyID)),
                 quantity = quantity,
                 accountWide = info and info.AccountWide and true or false,
             }
@@ -492,6 +500,35 @@ function Nx.Warehouse:OnItemListEvent (eventName, sel, val2, click)
 
     local id = list:ItemGetData (sel) or 0
 
+    -- Section header: fold or unfold. Profession row: open its recipes.
+    local section = list:ItemGetDataEx (sel, SectionDataSlot)
+    local prof = list:ItemGetDataEx (sel, ProfDataSlot)
+
+    if section and (eventName == "select" or eventName == "mid") then
+        self:ToggleSection (section)
+        self.ItemOwnersId = nil
+        self:Update()
+        return
+    end
+
+    if prof and (eventName == "select" or eventName == "mid") then
+        self.SelectedChar = list:ItemGetDataEx (sel, ProfCharDataSlot) or self.SelectedChar
+        self.SelectedProf = prof
+        self.ItemOwnersId = nil
+        self:Update()
+        return
+    end
+
+    if prof and eventName == "button" then
+        local rc = Nx.RealmChars[list:ItemGetDataEx (sel, ProfCharDataSlot) or 0]
+        local ch = rc and Nx.wdb.global.Characters[rc]
+        local profT = ch and ch["Profs"] and ch["Profs"][prof]
+        if profT and profT["Link"] and not WarehouseAPI.InsertChatLink (profT["Link"], true) then
+            Nx.prt (L["Unable to open profession link"])
+        end
+        return
+    end
+
     if eventName == "select" or eventName == "mid" or eventName == "menu" then
 
         if eventName == "menu" then
@@ -573,9 +610,59 @@ function Nx.Warehouse:OnItemListEvent (eventName, sel, val2, click)
 end
 
 -------------------------------------------------------------------------------
--- Warehouse presentation helpers
+-- Item list sections (#100)
+-- The right list is split into collapsible sections: Summary, Equipped, Bags,
+-- Bank, Mail, Warband Bank (when the client has one) and Professions. A click
+-- on a section header folds or unfolds it; the state is kept per section in
+-- the profile (Warehouse.CollapsedSections) so it survives a reload.
 -------------------------------------------------------------------------------
 
+local function CollapsedSections(create)
+    local opts = Nx.wdb and Nx.wdb.profile and Nx.wdb.profile.Warehouse
+    if type(opts) ~= "table" then
+        return nil
+    end
+    if create and type(opts.CollapsedSections) ~= "table" then
+        opts.CollapsedSections = {}
+    end
+    return type(opts.CollapsedSections) == "table" and opts.CollapsedSections or nil
+end
+
+function Nx.Warehouse:IsSectionCollapsed(key)
+    local state = CollapsedSections(false)
+    return state and state[key] and true or false
+end
+
+function Nx.Warehouse:ToggleSection(key)
+    local state = CollapsedSections(true)
+    if state then
+        state[key] = not state[key] or nil
+    end
+end
+
+function Nx.Warehouse:IsItemFilterActive()
+    local text = self.EditBox and self.EditBox:GetText() or ""
+    return text ~= ""
+end
+
+-- Adds a section header and tells whether the section's rows should be listed.
+-- A folded section shows only its header, except while the search box filters
+-- items: then every section is open, so no match stays hidden.
+function Nx.Warehouse:AddSection(list, key, label, count)
+    local open = not self:IsSectionCollapsed(key) or self:IsItemFilterActive()
+    local icon = open and SectionIconOpen or SectionIconClosed
+
+    list:ItemAdd(0)
+    list:ItemSetDataEx(nil, key, SectionDataSlot)
+    if count ~= nil then
+        list:ItemSet(3, format("%s |cffffd200%s|r |cff777777(%d)|r", icon, label, tonumber(count) or 0))
+    else
+        list:ItemSet(3, format("%s |cffffd200%s|r", icon, label))
+    end
+    return open
+end
+
+-- Summary section rows: item totals and when each storage was last read.
 function Nx.Warehouse:AddSelectionSummary(list)
     local selected = self.SelectedChar
     if not selected then
@@ -586,9 +673,6 @@ function Nx.Warehouse:AddSelectionSummary(list)
     local account = hasAccountBank and self:GetAccountStorageRecord() or nil
     local _, accountTotal = GetStoredItemStats(account and account.Inv)
     local accountStatus = FormatScanStatus(account and account.ScanTime, account and next(account.Inv or {}) ~= nil)
-
-    list:ItemAdd(selected)
-    list:ItemSet(2, "|cff80bfff" .. L["Storage Summary"] .. "|r")
 
     if selected == 99 then
         local bagTotal, bankTotal, mailTotal = 0, 0, 0
@@ -605,15 +689,15 @@ function Nx.Warehouse:AddSelectionSummary(list)
             end
         end
 
-        list:ItemAdd(selected)
-        list:ItemSet(2, format(L["  Characters: %d"], #Nx.RealmChars))
-        list:ItemAdd(selected)
-        list:ItemSet(2, format(L["  Bags: %d  Bank: %d  Mail: %d"], bagTotal, bankTotal, mailTotal))
+        list:ItemAdd(0)
+        list:ItemSet(3, format(L["  Characters: %d"], #Nx.RealmChars))
+        list:ItemAdd(0)
+        list:ItemSet(3, format(L["  Bags: %d  Bank: %d  Mail: %d"], bagTotal, bankTotal, mailTotal))
         if hasAccountBank then
-            list:ItemAdd(selected)
-            list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
-            list:ItemAdd(selected)
-            list:ItemSet(2, format(L["  Shared scan: %s"], accountStatus))
+            list:ItemAdd(0)
+            list:ItemSet(3, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
+            list:ItemAdd(0)
+            list:ItemSet(3, format(L["  Shared scan: %s"], accountStatus))
         end
         return
     end
@@ -630,85 +714,204 @@ function Nx.Warehouse:AddSelectionSummary(list)
     local _, reagentTotal = GetStoredItemStats(ch["WareRBank"])
     local _, mailTotal = GetStoredItemStats(ch["WareMail"])
 
-    list:ItemAdd(selected)
-    list:ItemSet(2, format(L["  Equipped: %d  Bags: %d"], equipCount, bagTotal))
-    list:ItemAdd(selected)
-    list:ItemSet(2, format(L["  Bank: %d  Mail: %d"], bankTotal + reagentTotal, mailTotal))
+    list:ItemAdd(0)
+    list:ItemSet(3, format(L["  Equipped: %d  Bags: %d"], equipCount, bagTotal))
+    list:ItemAdd(0)
+    list:ItemSet(3, format(L["  Bank: %d  Mail: %d"], bankTotal + reagentTotal, mailTotal))
     if hasAccountBank then
-        list:ItemAdd(selected)
-        list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
+        list:ItemAdd(0)
+        list:ItemSet(3, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
     end
 
-    list:ItemAdd(selected)
-    list:ItemSet(2, format(L["  Bags scan: %s"], FormatScanStatus(ch.WareBagsScanTime, ch["WareBags"] ~= nil)))
-    list:ItemAdd(selected)
-    list:ItemSet(2, format(L["  Bank scan: %s"], FormatScanStatus(ch.WareBankScanTime or ch.WareRBankScanTime, ch["WareBank"] ~= nil or ch["WareRBank"] ~= nil)))
-    list:ItemAdd(selected)
-    list:ItemSet(2, format(L["  Mail scan: %s"], FormatScanStatus(ch.WareMailScanTime, ch["WareMail"] ~= nil)))
-    list:ItemAdd(selected)
-    list:ItemSet(2, format(L["  Professions: %s"], FormatScanStatus(GetLatestProfessionScan(ch), ch["Profs"] and next(ch["Profs"]) ~= nil)))
+    list:ItemAdd(0)
+    list:ItemSet(3, format(L["  Bags scan: %s"], FormatScanStatus(ch.WareBagsScanTime, ch["WareBags"] ~= nil)))
+    list:ItemAdd(0)
+    list:ItemSet(3, format(L["  Bank scan: %s"], FormatScanStatus(ch.WareBankScanTime or ch.WareRBankScanTime, ch["WareBank"] ~= nil or ch["WareRBank"] ~= nil)))
+    list:ItemAdd(0)
+    list:ItemSet(3, format(L["  Mail scan: %s"], FormatScanStatus(ch.WareMailScanTime, ch["WareMail"] ~= nil)))
+    list:ItemAdd(0)
+    list:ItemSet(3, format(L["  Professions: %s"], FormatScanStatus(GetLatestProfessionScan(ch), ch["Profs"] and next(ch["Profs"]) ~= nil)))
+    if hasAccountBank then
+        list:ItemAdd(0)
+        list:ItemSet(3, format(L["  Shared scan: %s"], accountStatus))
+    end
+end
 
-    if type(ch["Profs"]) == "table" then
-        local professionNames = {}
-        for name, prof in pairs(ch["Profs"]) do
-            if type(prof) == "table" then
-                professionNames[#professionNames + 1] = name
+-- Equipped section: the selected character's gear, or, for All Characters,
+-- each character's gear at or above the equipped rarity filter.
+function Nx.Warehouse:AddEquippedSection(list, cn1, cn2, allCharacters)
+    local rows = {}
+
+    for cn = cn1, cn2 do
+        local rc = Nx.RealmChars[cn]
+        local ch = rc and Nx.wdb.global.Characters[rc]
+        local inv = ch and ch["WareInv"]
+        if type(inv) == "table" then
+            local _, cname = Nx.Split(".", rc)
+            local owner = allCharacters and cname or nil
+            for _, data in ipairs(inv) do
+                local slot, link = Nx.Split("^", data)
+                Nx.Item:Load(link)
+                local name, _, iRarity = WarehouseAPI.GetItemInfo(link)
+                if not allCharacters or (iRarity and iRarity >= self.NXEqRarityMin) then
+                    rows[#rows + 1] = { owner = owner, slot = SlotName(slot), name = name, link = link }
+                    owner = nil
+                end
             end
         end
-        sort(professionNames)
-        for _, name in ipairs(professionNames) do
-            local prof = ch["Profs"][name]
-            local rank = tonumber(prof.Rank) or 0
-            local maxRank = tonumber(prof.MaxRank) or 0
-            local rankText = maxRank > 0 and format("%d/%d", rank, maxRank) or tostring(rank)
-            list:ItemAdd(selected)
-            list:ItemSet(2, format("    %s  |cffcfcfcf%s|r", name, rankText))
+    end
+
+    if self:AddSection(list, "Equipped", L["Equipped"], #rows) then
+        for _, row in ipairs(rows) do
+            if row.owner then
+                AddSectionHeader(list, 3, "  " .. row.owner)
+            end
+            self:UpdateItem(format("  %s - ", row.slot), row.name, 1, 0, 0, row.link, true)
         end
     end
 end
 
-function Nx.Warehouse:AddStorageOverview(list, ch, allCharacters)
-    local hasAccountBank = WarehouseAPI and WarehouseAPI.HasAccountBank and WarehouseAPI.HasAccountBank()
-    local account = hasAccountBank and self:GetAccountStorageRecord() or nil
-    local _, accountTotal = GetStoredItemStats(account and account.Inv)
-
-    AddSectionHeader(list, 3, allCharacters and L["Character Storage - All Characters"] or L["Character Storage"])
-
-    if allCharacters then
-        local bagTotal, bankTotal, mailTotal = 0, 0, 0
-        for _, rc in ipairs(Nx.RealmChars) do
-            local saved = Nx.wdb.global.Characters[rc]
-            if saved then
-                local _, bags = GetStoredItemStats(IsCharacterBagDataCurrent(saved) and saved["WareBags"] or nil)
-                local _, bank = GetStoredItemStats(saved["WareBank"])
-                local _, rbank = GetStoredItemStats(saved["WareRBank"])
-                local _, mail = GetStoredItemStats(saved["WareMail"])
-                bagTotal = bagTotal + bags
-                bankTotal = bankTotal + bank + rbank
-                mailTotal = mailTotal + mail
-            end
-        end
-        list:ItemAdd(0)
-        list:ItemSet(3, format(L["  Bags: %d  Bank: %d  Mail: %d"], bagTotal, bankTotal, mailTotal))
-    elseif ch then
-        local _, bags = GetStoredItemStats(IsCharacterBagDataCurrent(ch) and ch["WareBags"] or nil)
-        local _, bank = GetStoredItemStats(ch["WareBank"])
-        local _, rbank = GetStoredItemStats(ch["WareRBank"])
-        local _, mail = GetStoredItemStats(ch["WareMail"])
-        list:ItemAdd(0)
-        list:ItemSet(3, format(L["  Bags: %d  Bank: %d  Mail: %d"], bags, bank + rbank, mail))
-        list:ItemAdd(0)
-        list:ItemSet(3, format(L["  Updated: Bags %s  Bank %s  Mail %s"],
-            FormatScanStatus(ch.WareBagsScanTime, ch["WareBags"] ~= nil),
-            FormatScanStatus(ch.WareBankScanTime or ch.WareRBankScanTime, ch["WareBank"] ~= nil or ch["WareRBank"] ~= nil),
-            FormatScanStatus(ch.WareMailScanTime, ch["WareMail"] ~= nil)))
+-- One storage section (Bags, Bank, Mail, Warband Bank). items is name ->
+-- "count^0^0^0^link" as built by AddItem.
+function Nx.Warehouse:AddItemSection(list, key, label, items, note)
+    local count = 0
+    for _ in pairs(items) do
+        count = count + 1
     end
 
-    if hasAccountBank then
-        AddSectionHeader(list, 3, _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal)
+    if not self:AddSection(list, key, label, count) then
+        return
+    end
+    if note then
         list:ItemAdd(0)
-        list:ItemSet(3, format(L["  Shared account storage - %s"],
-            FormatScanStatus(account and account.ScanTime, account and next(account.Inv or {}) ~= nil)))
+        list:ItemSet(3, note)
+    end
+    self:AddItemRows(list, items)
+end
+
+-- Item rows of one section, sorted, and grouped by item type when the
+-- category view is on.
+function Nx.Warehouse:AddItemRows(list, items)
+    local isorted = {}
+
+    for name, data in pairs(items) do
+
+        local _, _, _, _, link = Nx.Split("^", data)
+        Nx.Item:Load(link)
+
+        if self.SortByRarity or self.SortBySlot then
+
+            local _, _, iRarity, _, _, itype, _, _, equipLoc = WarehouseAPI.GetItemInfo(link)
+
+            local sortStr = ""
+
+            if self.SortByRarity then
+                sortStr = 9 - (iRarity or 0)
+            end
+
+            if self.SortBySlot and itype == ARMOR and equipLoc then
+                local loc = _G[equipLoc] or ""
+                name = format("%s - %s", loc, name)
+                sortStr = format("%s%s", loc, sortStr)
+            end
+
+            tinsert(isorted, format("%s^%s^%s", sortStr, name, data))
+        else
+            tinsert(isorted, format("^%s^%s", name, data))
+        end
+    end
+
+    sort(isorted)
+
+    local function addRow(pre, entry)
+        local _, name, bagCnt, bankCnt, mailCnt, accountCnt, link = Nx.Split("^", entry)
+        local _, _, iRarity = WarehouseAPI.GetItemInfo(link)
+        if (tonumber(iRarity) or 0) >= self.NXRarityMin then
+            local count = (tonumber(bagCnt) or 0) + (tonumber(bankCnt) or 0)
+                + (tonumber(mailCnt) or 0) + (tonumber(accountCnt) or 0)
+            self:UpdateItem(pre, name, count, 0, 0, link)
+        end
+    end
+
+    if not self.ShowItemCategory then
+        for _, entry in ipairs(isorted) do
+            addRow("  ", entry)
+        end
+        return
+    end
+
+    for _, typ in ipairs(self.ItemTypes or {}) do
+        local header
+        for _, entry in ipairs(isorted) do
+            local _, _, _, _, _, _, link = Nx.Split("^", entry)
+            local _, _, _, _, _, itype = WarehouseAPI.GetItemInfo(link)
+            if itype == typ then
+                if not header then
+                    header = true
+                    AddSectionHeader(list, 3, "  " .. typ)
+                end
+                addRow("    ", entry)
+            end
+        end
+    end
+end
+
+-- Professions section: one row per saved profession. A click opens its
+-- recipes; the icon links the profession in chat.
+function Nx.Warehouse:AddProfessionSection(list, cn1, cn2, allCharacters)
+    local rows = {}
+
+    for cn = cn1, cn2 do
+        local rc = Nx.RealmChars[cn]
+        local ch = rc and Nx.wdb.global.Characters[rc]
+        local profs = ch and ch["Profs"]
+        if type(profs) == "table" then
+            local names = {}
+            for name, prof in pairs(profs) do
+                if type(prof) == "table" then
+                    names[#names + 1] = name
+                end
+            end
+            sort(names)
+            local _, cname = Nx.Split(".", rc)
+            local owner = allCharacters and cname or nil
+            for _, name in ipairs(names) do
+                rows[#rows + 1] = { cnum = cn, owner = owner, name = name, prof = profs[name] }
+                owner = nil
+            end
+        end
+    end
+
+    if not self:AddSection(list, "Professions", L["Professions"], #rows) then
+        return
+    end
+
+    for _, row in ipairs(rows) do
+        if row.owner then
+            AddSectionHeader(list, 3, "  " .. row.owner)
+        end
+
+        local p = row.prof
+        local rank = tonumber(p["Rank"]) or 0
+        local maxRank = tonumber(p["MaxRank"]) or 0
+        local rankText = maxRank > 0 and format("%d/%d", rank, maxRank) or tostring(rank)
+        local scopeCount = 0
+        if type(p._SkillLines) == "table" then
+            for _, recipeIDs in pairs(p._SkillLines) do
+                if type(recipeIDs) == "table" and #recipeIDs > 0 then
+                    scopeCount = scopeCount + 1
+                end
+            end
+        end
+        local scopeText = scopeCount > 1 and (" |cff777777" .. format(L["[%d skill lines]"], scopeCount) .. "|r") or ""
+
+        list:ItemAdd(0)
+        list:ItemSetDataEx(nil, row.name, ProfDataSlot)
+        list:ItemSetDataEx(nil, row.cnum, ProfCharDataSlot)
+        list:ItemSet(3, format("  %s |cffcfcfcf%s|r%s", row.name, rankText, scopeText))
+        if p["Link"] then
+            list:ItemSetButton("WarehouseProf", false, nil, "#" .. p["Link"])
+        end
     end
 end
 
@@ -909,17 +1112,17 @@ function Nx.Warehouse:Update()
                 local currencyRows = GetCurrencyDisplayRows(ch)
                 if #currencyRows > 0 then
                     list:ItemAdd(cnum)
-                    list:ItemSet(2, format("|cff80bfffCurrencies|r |cff777777(%d)|r", #currencyRows))
+                    list:ItemSet(2, format("|cff80bfff%s|r |cff777777(%d)|r", L["Currencies"], #currencyRows))
                     local visibleRows = min(#currencyRows, 12)
                     for currencyIndex = 1, visibleRows do
                         local row = currencyRows[currencyIndex]
-                        local accountTag = row.accountWide and " |cff80c0ff[Account]|r" or ""
+                        local accountTag = row.accountWide and (" |cff80c0ff" .. L["[Account]"] .. "|r") or ""
                         list:ItemAdd(cnum)
                         list:ItemSet(2, format("  %s: %s%d|r%s", row.name, hicol, row.quantity, accountTag))
                     end
                     if #currencyRows > visibleRows then
                         list:ItemAdd(cnum)
-                        list:ItemSet(2, "  |cff888888" .. format(L["+ %d more currencies"], #currencyRows - visibleRows) .. "|r")
+                        list:ItemSet(2, format("  |cff888888" .. L["+ %d more currencies"] .. "|r", #currencyRows - visibleRows))
                     end
                 elseif ch["Honor"] or ch["Conquest"] then
                     list:ItemAdd(cnum)
@@ -928,49 +1131,9 @@ function Nx.Warehouse:Update()
                     list:ItemAdd(cnum)
                     list:ItemSet(2, format(" " .. L["No Currency Data Saved"]))
                 end
-                list:ItemAdd(cnum)
-                list:ItemSet (2, "|cff00ffff  ------")
-                if ch["Profs"] then
-
-                    local profs = ch["Profs"]
-
-                    local names = {}
-
-                    for name, data in pairs (profs) do
-                        tinsert (names, name)
-                    end
-
-                    sort (names)
-
-                    for n, name in ipairs (names) do
-
-                        local p = profs[name]
-                        list:ItemAdd (cnum)
-                        list:ItemSetDataEx (nil, name, 1)
-
-                        local rank = tonumber(p["Rank"]) or 0
-                        local maxRank = tonumber(p["MaxRank"]) or 0
-                        local rankText = maxRank > 0 and format("%d/%d", rank, maxRank) or tostring(rank)
-                        local scopeCount = 0
-                        if type(p._SkillLines) == "table" then
-                            for _, recipeIDs in pairs(p._SkillLines) do
-                                if type(recipeIDs) == "table" and #recipeIDs > 0 then
-                                    scopeCount = scopeCount + 1
-                                end
-                            end
-                        end
-                        local scopeText = scopeCount > 1 and " |cff777777[" .. format(L["%d skill lines"], scopeCount) .. "]|r" or ""
-                        list:ItemSet (2, format (" %s %s%s%s", name, hicol, rankText, scopeText))
-
-                        if p["Link"] then
-                            list:ItemSetButton ("WarehouseProf", false, nil, "#" .. p["Link"])
-                        end
-                    end
-                end
             end
         end
     end
-    self:AddSelectionSummary(list)
 
     local money = Nx.Util_GetMoneyStr (totalMoney)
     if Nx.wdb.profile.Warehouse.ShowGold then
@@ -1073,228 +1236,69 @@ function Nx.Warehouse:UpdateItems()
 
     list:Empty()
 
-    local items = {}
+    local allCharacters = self.SelectedChar == 99
+    local cn1, cn2 = 1, #Nx.RealmChars
+    local bankNote
 
-    local cn1 = 1
-    local cn2 = 1
-
-    cn2 = #Nx.RealmChars
-
-    if self.SelectedChar ~= 99 then
-
+    if allCharacters then
+        list:ColumnSetName (3, L["All Items"])
+    else
         cn1 = self.SelectedChar
         cn2 = cn1
 
         local rc = Nx.RealmChars[cn1]
-
         local rname, cname = Nx.Split (".", rc)
         list:ColumnSetName (3, format (L["%s's Items"], cname))
 
         local ch = Nx.wdb.global.Characters[rc]
-
-        self:AddStorageOverview(list, ch, false)
-
-        local bank = ch["WareBank"]
-        if not bank then
-            list:ItemAdd (0)
-            list:ItemSet (3, L["|cffff1010No bank data - visit your bank"])
+        if not ch["WareBank"] then
+            bankNote = L["|cffff1010No bank data - visit your bank"]
         end
-
-        local rbank = ch["WareRBank"]
-        --[[if not rbank then
-            list:ItemAdd (0)
-            list:ItemSet (3, L["|cffff1010No reagent bank data - visit your bank"])
-        end]]--
-
-        local inv = ch["WareInv"]
-
-        if inv then
-            local equippedLabel = strtrim(gsub(L["---- Equipped ----"], "%-", ""))
-            AddSectionHeader(list, 3, equippedLabel, #inv)
-            for _, data in ipairs (inv) do
-                local slot, link = Nx.Split ("^", data)
-                Nx.Item:Load (link)
-                slot = SlotName (slot)
-                local name = WarehouseAPI.GetItemInfo(link)
-                self:UpdateItem (format ("  %s - ", slot), name, 1, 0, 0, link, true)
-            end
-        end
-    else
-
-        self:AddStorageOverview(list, nil, true)
-
-        for cn = cn1, cn2 do
-
-            local rc = Nx.RealmChars[cn]
-            local ch = Nx.wdb.global.Characters[rc]
-
-            local inv = ch["WareInv"]
-
-            if inv then
-
-                local hdr
-
-                for _, data in ipairs (inv) do
-
-                    local slot, link = Nx.Split ("^", data)
-                    Nx.Item:Load (link)
-
-                    slot = SlotName (slot)
-
-                    local name, _, iRarity = WarehouseAPI.GetItemInfo(link)
-                    if iRarity and iRarity >= self.NXEqRarityMin then
-
-                        if not hdr then
-                            hdr = true
-                            local rname, cname = Nx.Split (".", rc)
-                            local equippedLabel = strtrim(gsub(L["---- Equipped ----"], "%-", ""))
-                            AddSectionHeader(list, 3, format("%s - %s", cname, equippedLabel))
-                        end
-
-                        self:UpdateItem (format ("  %s - ", slot), name, 1, 0, 0, link, true)
-                    end
-                end
-            end
-        end
-
-        list:ColumnSetName (3, L["All Items"])
---[[
-        if Nx.Free then
-            list:ItemAdd (0)
-            list:ItemSet (3, "See All Is " .. Nx.FreeMsg)
-            return
-        end
---]]
     end
+
+    -- Summary on top, then each storage in its own section
+
+    if self:AddSection (list, "Summary", L["Summary"]) then
+        self:AddSelectionSummary (list)
+    end
+
+    self:AddEquippedSection (list, cn1, cn2, allCharacters)
+
+    local bags, bank, mail, account = {}, {}, {}, {}
 
     for cn = cn1, cn2 do
 
         local rc = Nx.RealmChars[cn]
-        local ch = Nx.wdb.global.Characters[rc]
+        local ch = Nx.wdb.global.Characters[rc] or {}
 
-        local bags = IsCharacterBagDataCurrent(ch) and ch["WareBags"] or nil
-
-        if bags then
-            for name, data in pairs (bags) do
-                self:AddItem (items, 2, name, data)
-            end
+        for name, data in pairs ((IsCharacterBagDataCurrent (ch) and ch["WareBags"]) or {}) do
+            self:AddItem (bags, 2, name, data)
         end
-
-        local bank = ch["WareBank"]
-
-        if bank then
-            for name, data in pairs (bank) do
-                self:AddItem (items, 3, name, data)
-            end
+        for name, data in pairs (ch["WareBank"] or {}) do
+            self:AddItem (bank, 2, name, data)
         end
-
-        local rbank = ch["WareRBank"]
-        if rbank then
-            for name, data in pairs (rbank) do
-                self:AddItem (items, 3, name, data)
-            end
+        for name, data in pairs (ch["WareRBank"] or {}) do
+            self:AddItem (bank, 2, name, data)
         end
-
-        local mail = ch["WareMail"]
-
-        if mail then
-            for name, data in pairs (mail) do
-                self:AddItem (items, 4, name, data)
-            end
+        for name, data in pairs (ch["WareMail"] or {}) do
+            self:AddItem (mail, 2, name, data)
         end
     end
 
-    local account = self:GetAccountStorageRecord()
-    if account and account.ScanTime and account.Inv then
-        for name, data in pairs(account.Inv) do
-            self:AddItem(items, 5, name, data)
+    self:AddItemSection (list, "Bags", L["Bags"], bags)
+    self:AddItemSection (list, "Bank", L["Bank"], bank, bankNote)
+    self:AddItemSection (list, "Mail", L["Mail"], mail)
+
+    local accountRecord = self:GetAccountStorageRecord()
+    if accountRecord and accountRecord.ScanTime and accountRecord.Inv then
+        for name, data in pairs (accountRecord.Inv) do
+            self:AddItem (account, 2, name, data)
         end
+        self:AddItemSection (list, "WarbandBank", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], account)
     end
 
-    local sortRare = true
+    self:AddProfessionSection (list, cn1, cn2, allCharacters)
 
-    local isorted = {}
-
-    for name, data in pairs (items) do
-
-        local bagCnt, bankCnt, mailCnt, accountCnt, link = Nx.Split ("^", data)
-        Nx.Item:Load (link)
-
-        if self.SortByRarity or self.SortBySlot then
-
-            local _, iLink, iRarity, lvl, minLvl, itype, _, _, equipLoc = WarehouseAPI.GetItemInfo(link)
-
-            local sortStr = ""
-
-            if self.SortByRarity then
-                sortStr = 9 - (iRarity or 0)
-            end
-
-            if self.SortBySlot and itype == ARMOR and equipLoc then
-                local loc = _G[equipLoc] or ""
-                name = format ("%s - %s", loc, name)
-                sortStr = format ("%s%s", loc, sortStr)
-            end
-
-            tinsert (isorted, format ("%s^%s^%s", sortStr, name, data))
-        else
-            tinsert (isorted, format ("^%s^%s", name, data))
-        end
-
-    end
-
-    sort (isorted)
-
-    if not self.ShowItemCategory then
-
-        for _, v in ipairs (isorted) do
-
-            local _, name, bagCnt, bankCnt, mailCnt, accountCnt, link = Nx.Split ("^", v)
-            local _, iLink, iRarity = WarehouseAPI.GetItemInfo(link)
-
-            iRarity = tonumber(iRarity) or 0    -- Happens if item not in cache
-
-            if iRarity >= self.NXRarityMin then
-                self:UpdateItem ("", name, bagCnt, bankCnt, mailCnt, link, nil, accountCnt)
-            end
---[[
-            local name, iLink, iRarity, lvl, minLvl, itype = GetItemInfo (link)
-            Nx.prt ("item %s", itype)
---]]
-        end
-    else
-
-        for _, typ in ipairs (self.ItemTypes) do
-
-            for n = 1, #isorted do
-
-                local _, name, bagCnt, bankCnt, mailCnt, accountCnt, link = Nx.Split ("^", isorted[n])
-                local _, iLink, iRarity, lvl, minLvl, itype = WarehouseAPI.GetItemInfo(link)
-                iRarity = tonumber(iRarity) or 0
-
-                if itype == typ then    -- Found one of type?
-
-                    AddSectionHeader(list, 3, typ)
-
-                    for n2 = n, #isorted do
-
-                        local _, name, bagCnt, bankCnt, mailCnt, accountCnt, link = Nx.Split ("^", isorted[n2])
-                        local _, iLink, iRarity, lvl, minLvl, itype = WarehouseAPI.GetItemInfo(link)
-                        iRarity = tonumber(iRarity) or 0
-
-                        if itype == typ then
-
-                            if iRarity >= self.NXRarityMin then
-                                self:UpdateItem ("  ", name, bagCnt, bankCnt, mailCnt, link, nil, accountCnt)
-                            end
-                        end
-                    end
-
-                    break
-                end
-            end
-        end
-    end
     list:Update()
 end
 
@@ -1932,14 +1936,14 @@ function Nx.Warehouse:UpdateProfessions()
         sort(unscoped)
 
         if #unscoped > 0 then
-            local fallbackLabel = #scopes > 0 and format("%s - Other", pname) or pname
+            local fallbackLabel = #scopes > 0 and format(L["%s - Other"], pname) or pname
             totalRows = totalRows + RenderProfessionScope(
                 list, profT, unscoped, fallbackLabel, filterStr, rendered, self.ShowItemCategory)
         end
 
         if totalRows == 0 and filterStr ~= "" then
             list:ItemAdd(0)
-            list:ItemSet(3, " " .. format(L["No profession recipes match '%s'"], self.EditBox:GetText()))
+            list:ItemSet(3, format(L[" No profession recipes match '%s'"], self.EditBox:GetText()))
         end
     else
         list:ItemAdd(0)

@@ -51,6 +51,8 @@ local ALLOWED = {
         "RareScanner", "GatherLite" },
     -- Profiling (/carb debug), the quest objective editor (/carb debug editmode) and the
     -- vehicle dump (/carb debug vehpos).
+    -- Placeholder name in the route data, replaced by the kind of vessel.
+    ["Carbonite/Modules/Map/Transports.lua"] = { "Unnamed Vessel" },
     ["Carbonite/Modules/Map/MapEngine.lua"] = {
         "^Map:Update ", "^.-Quest Objective", "^.-Ctrl%+Alt%+Click", "^.-Click %[X%]", "Finish",
         "Output all rectangles to chat", "and clear the editor", "Clear", "^.-All rectangles cleared",

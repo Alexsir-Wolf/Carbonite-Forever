@@ -107,7 +107,6 @@ L["Shift left click toggle minimize"] = "Maiuscola + Click Sinistro Dis/Attiva M
 L["Alt left click toggle Watch List"] = "Alt + Click Sinistro Dis/Attiva Lista Visualizzazione"
 L["Middle click toggle Guide"] = "Click Tasto Centrale Mouse Dis/Attiva Guida"
 L["Right click for Menu"] = "Click Destro per il Menu"
-L["Shift drag to move"] = "Maiuscola + Trascinare per Muovere"
 L["Hide In Combat"] = "Nascondi in Combattimento"
 L["Lock"] = "Blocca"
 L["Layer"] = "Strato"

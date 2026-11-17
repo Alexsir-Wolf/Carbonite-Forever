@@ -491,6 +491,51 @@ function Nx.Quest:GetOptionsConfig()
                                 Nx.qdb.profile.Quest.HideLockedQuests = not Nx.qdb.profile.Quest.HideLockedQuests
                             end,
                         },
+                        qblizzicons = {
+                            order = 31.6,
+                            type = "toggle",
+                            name = L["Use Blizzard Icons On The Map"],
+                            width = "full",
+                            desc = L["Draws quest givers, turn-ins and objectives on the map with the game's own quest icons (falls back to the classic Carbonite icons when the client lacks them)"],
+                            get = function()
+                                return Nx.qdb.profile.Quest.MapBlizzardIcons ~= false
+                            end,
+                            set = function()
+                                Nx.qdb.profile.Quest.MapBlizzardIcons = Nx.qdb.profile.Quest.MapBlizzardIcons == false
+                                Nx.Quest:RefreshMapQuestIcons()
+                            end,
+                        },
+                        qobjareas = {
+                            order = 31.65,
+                            type = "toggle",
+                            name = L["Show Objective Areas"],
+                            width = "full",
+                            desc = L["Draws one shaded area around each group of nearby spawns of an objective instead of one icon per spawn"],
+                            get = function()
+                                return Nx.qdb.profile.Quest.MapShowObjectiveAreas ~= false
+                            end,
+                            set = function()
+                                Nx.qdb.profile.Quest.MapShowObjectiveAreas = Nx.qdb.profile.Quest.MapShowObjectiveAreas == false
+                                Nx.Quest:RefreshMapQuestIcons()
+                            end,
+                        },
+                        qiconscale = {
+                            order = 31.7,
+                            type = "range",
+                            name = Nx.Opts.Unit(L["Quest Icon Scale"], "×"),
+                            desc = L["Sets the size of the quest icons on the map"],
+                            min = .5,
+                            max = 2,
+                            step = .05,
+                            bigStep = .05,
+                            get = function()
+                                return Nx.qdb.profile.Quest.MapQuestIconScale or 1
+                            end,
+                            set = function(info,value)
+                                Nx.qdb.profile.Quest.MapQuestIconScale = value
+                                Nx.Quest:RefreshMapQuestIcons()
+                            end,
+                        },
                         qttlcols = {
                             order = 32,
                             type = "range",
