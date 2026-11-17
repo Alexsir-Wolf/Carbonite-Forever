@@ -537,6 +537,10 @@ for _, folder in ipairs(Nx.GuideInfo) do
         if Nx.GuideData and Nx.GuideData[L["Spirit Healer"]] then
             tinsert(folder, { T = L["Spirit Healer"], Tx = "Spell_Holy_Resurrection" })
         end
+        -- Meeting Stone: same rule (Data/camelot/Guides/MeetingStone.lua)
+        if Nx.GuideData and Nx.GuideData[L["Meeting Stone"]] then
+            tinsert(folder, { T = L["Meeting Stone"], Tx = "Spell_Shadow_Twilight" })
+        end
     end
 
     ---------------------------------------------------------------------------
