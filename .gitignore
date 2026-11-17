@@ -52,3 +52,5 @@ blizzard
 tools
 Carbonite.QuestExtractor
 scripts/
+# Worktrees dos agentes do Claude Code
+.claude/worktrees/

@@ -96,6 +96,7 @@ function Nx.Warehouse:GetOptionsConfig()
                             order = 5,
                             type = "select",
                             style = "radio",
+                            desc = L["Removes the chosen item from the don't display list."],
                             name = L["Delete Item"],
                             disabled = function()
                                 return not Nx.wdb.profile.Warehouse.TooltipIgnore
@@ -645,6 +646,7 @@ function Nx.Warehouse:GetOptionsConfig()
                                     order = 3,
                                     type = "select",
                                     style = "radio",
+                                    desc = L["Removes the chosen item from the sell list."],
                                     name = L["Delete Item"],
                                     disabled = function()
                                         return not Nx.wdb.profile.Warehouse.SellList
