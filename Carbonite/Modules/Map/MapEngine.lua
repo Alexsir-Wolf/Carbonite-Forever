@@ -3669,8 +3669,14 @@ function Nx.Map:MinimapUpdateEnd()
         mm:Show()
 
         local lvl
-        if unmappedInstance
-            or (self:IsInstanceMap(Nx.Map.RMapId) or self:IsBattleGroundMap(Nx.Map.RMapId)) and self.CurOpts.NXInstanceMaps then
+        if unmappedInstance then
+            -- The strata above the window already puts the minimap over the
+            -- map and its black cover (UnmappedInstance.lua). A low level
+            -- inside that strata lets other addons' frames there show above
+            -- it, as MinimapButtonButton's panel (MEDIUM); at Level + 50 the
+            -- minimap covered them.
+            lvl = 1
+        elseif (self:IsInstanceMap(Nx.Map.RMapId) or self:IsBattleGroundMap(Nx.Map.RMapId)) and self.CurOpts.NXInstanceMaps then
             lvl = self.Level + 50
         else
             lvl = self.Level
