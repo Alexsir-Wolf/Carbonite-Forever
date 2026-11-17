@@ -65,6 +65,8 @@
     <Script file="Map\MountHelper.lua" />
     <Script file="Map\FlightPathFinder.lua" />
     <Script file="Map\ZoneConnections.lua" />
+    <!-- Ships, zeppelins and tram on the map, departure times on piers (#78). -->
+    <Script file="Map\Transports.lua" />
     <Script file="Map\Pins\QuestPin.lua" />
     <Script file="Map\Pins\GatherPin.lua" />
     <Script file="Map\Pins\PlayerPin.lua" />
@@ -129,6 +131,8 @@
     <Script file="AuctionAssist\AuctionAssistEngine.lua" />
     <!-- The /carb subcommands of the legacy dispatcher. -->
     <Script file="SlashHandler\SlashCommandEngine.lua" />
+    <!-- Character journey diary: milestones per character, /carb jornada (#69). -->
+    <Script file="Journey\Journey.lua" />
     <Script file="EventDispatcher\EventDispatcher.lua" />
     <Script file="ChatHooks\ChatHooks.lua" />
     <Script file="MainUpdater\MainUpdater.lua" />

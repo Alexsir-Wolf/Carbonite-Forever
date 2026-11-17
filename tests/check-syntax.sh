@@ -19,6 +19,6 @@ while IFS= read -r -d '' file; do
         echo "$file: ${out#*:}"
         status=1
     fi
-done < <(find . -name '*.lua' -not -path './.git/*' -print0)
+done < <(find . -name '*.lua' -not -path './.git/*' -not -path './.claude/*' -print0)
 [ "$status" -eq 0 ] && echo "syntax ok ($count files)"
 exit "$status"

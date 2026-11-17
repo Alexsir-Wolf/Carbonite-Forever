@@ -14,6 +14,7 @@ end
 
 local _G = _G
 local Nx = _G.Nx
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite.Quest", true)
 if not Nx then
     return
 end
@@ -735,13 +736,13 @@ end
 
 local function GetTaskCategory(classification)
     if classification == "world-quest" then
-        return "World Quests"
+        return L["World Quests"]
     end
     if classification == "bonus-objective" then
-        return "Bonus Objectives"
+        return L["Bonus Objectives"]
     end
     if classification == "threat" then
-        return "Threats"
+        return L["Threats"]
     end
     return "Tasks"
 end
@@ -2158,7 +2159,7 @@ function QuestCatalog:AddCurrentMapTaskRecords(mapID, generation, now, seen)
             record.questID = questID
             record.displayQuestID = questID
             record.title = GetTaskQuestTitle(questID)
-                or self:GetQuestTitle(questID, "Quest " .. questID)
+                or self:GetQuestTitle(questID, L["Quest"] .. " " .. questID)
             record.questLogIndex = GetCurrentQuestLogIndex(questID)
             record.level = 0
             record.suggestedGroup = 0
