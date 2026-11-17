@@ -633,7 +633,7 @@ function Nx.Quest.List:UpdateMenu()
                     watched = C_QuestLog.GetQuestWatchType (selectedQuest.QId) ~= nil
                 end
                 self.MenuIToggleWatch:SetText (watched and L["Remove Watch"]
-                    or TRACK_QUEST or "Track Quest")
+                    or TRACK_QUEST or L["Track Quest"])
                 self.MenuIToggleWatch:Show()
             else
                 self.MenuIToggleWatch:Show (false)

@@ -283,3 +283,5 @@ L["Profiling is on. This decreases game performance. Disable?"] = "A medição d
 L["Disable and Reload"] = "Desligar e recarregar"
 L["Toggle profiling? Reloads UI"] = "Ligar/desligar a medição de desempenho? A interface será recarregada"
 L["the community."] = "a comunidade."
+L["Forever"] = "Forever"
+L["Quests"] = "Missões"
