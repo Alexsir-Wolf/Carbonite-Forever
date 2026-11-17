@@ -1505,6 +1505,7 @@ function Nx.Info:EditorCreate (index)
 
 	win:CreateButtons (true, true)
 	win:SetTitleLineH (18)
+	win:ApplyModernHeader()
 
 	win:InitLayoutData (nil, -.3, -.2, -.5, -.6)
 	win.Frm:SetToplevel (true)
@@ -1525,6 +1526,7 @@ function Nx.Info:EditorCreate (index)
 
 	list:SetUser (self, self.EditorOnListEvent)
 	list:SetLineHeight (0, 0)
+	list:SetModernRows()
 
 	list:ColumnAdd ("", 1, 900)
 
