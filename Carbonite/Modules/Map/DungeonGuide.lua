@@ -652,6 +652,7 @@ function DG:PanelWidth(mapW)
 end
 
 local ROW_H = 46
+local MM_MARGIN, MM_BORDER = 6, 2   -- live minimap in the panel: side gap, frame
 local PORTRAIT = 34
 local ROUND = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
 local SKULL = "Interface\\TargetingFrame\\UI-TargetingFrame-Skull"
@@ -695,6 +696,12 @@ local function BuildPanel(map)
     text:SetJustifyH("LEFT")
     text:SetJustifyV("TOP")
     f.Text = text
+    -- Thin gold frame behind the live minimap (which draws one strata above).
+    local border = CreateFrame("Frame", nil, f, "BackdropTemplate")
+    border:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = MM_BORDER })
+    border:SetBackdropBorderColor(DG.RING.alive[1] * .7, DG.RING.alive[2] * .7, DG.RING.alive[3] * .7, 1)
+    border:Hide()
+    f.MMBorder = border
     f.Rows = {}
     return f
 end
@@ -778,7 +785,7 @@ function DG:UpdatePanel(map, w, h)
     local x = (map.PadX or 0) + (map.MapW or 0) - w
     -- Over a dungeon chart the live minimap sits in the panel, under the
     -- bosses (map:GetUnmappedInstanceMinimapBox reads PanelMinimap).
-    local mmSize = map.UInstChartFrm and math.floor(math.min(w - 50, 180)) or 0
+    local mmSize = map.UInstChartFrm and math.floor(w - 2 * (MM_MARGIN + MM_BORDER)) or 0
     local sig = format("%d|%d|%d|%d|%d|%d", x, map.TitleH or 0, w, h, self.Version, mmSize)
     if sig ~= self.PanelSig or self.Dirty then
         self.PanelSig = sig
@@ -809,13 +816,19 @@ function DG:UpdatePanel(map, w, h)
         panel.Content:SetPoint("TOP", panel, "TOP", 0, -contentTop)
         panel.Content:SetHeight(contentH)
 
-        -- Minimap slot: map-area offsets of its square, on the panel's own
-        -- dark background.
+        -- Minimap slot: map-area offsets of its square, the column's width,
+        -- framed by a thin border so its black does not sit as a second tone
+        -- on the panel.
         if mmSize > 0 then
             local slotY = contentTop + titleH + bossesH + 12
             self.PanelMinimap = { size = mmSize, x = (map.MapW or 0) - w + (w - mmSize) / 2, y = slotY }
+            panel.MMBorder:ClearAllPoints()
+            panel.MMBorder:SetPoint("TOP", panel, "TOP", 0, -(slotY - MM_BORDER))
+            panel.MMBorder:SetSize(mmSize + MM_BORDER * 2, mmSize + MM_BORDER * 2)
+            panel.MMBorder:Show()
         else
             self.PanelMinimap = nil
+            panel.MMBorder:Hide()
         end
         self.Dirty = nil
     end
