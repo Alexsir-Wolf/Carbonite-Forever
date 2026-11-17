@@ -61,7 +61,10 @@ local ALLOWED = {
         "^.-Hex%-encoded rectangles", "^.-Output complete", "no type", "^View3D=", "^heights=",
         "^MapId=", "^first label area",
     },
-    ["Carbonite/Modules/Options/Options.lua"] = { "Carbonite-Forever" },
+    -- Section ids of the options registry (#64); the shown names come from L.
+    ["Carbonite/Modules/Options/Options.lua"] = {
+        "Carbonite-Forever", "Quest Module", "Notes Module", "Warehouse Module", "Info Module",
+    },
     ["Carbonite/Modules/Options/OptionsEngine.lua"] = {
         "Carbonite-Forever", "EditItem error (%s)",
         -- Expansion names, as the pt-BR client shows them.
