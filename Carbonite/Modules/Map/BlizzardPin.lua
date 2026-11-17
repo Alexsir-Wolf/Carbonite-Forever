@@ -24,6 +24,9 @@ Carbonite.Modules.Map.BlizzardPin = BP
 local SYNC_SECONDS = 0.5
 
 local placed    -- { uiMapID, x, y } of the pin this module put down, nil when none
+local seen      -- the same pin as the client reports it back (moved a little, or on a parent map)
+local placedAt = 0
+local OWN_SECONDS = 2   -- right after placing, the reported waypoint is ours
 
 local function Enabled()
     local profile = Nx.db and Nx.db.profile
@@ -62,13 +65,32 @@ end
 
 -- Whether the user waypoint in place now is the one this module put down.
 -- The client keeps the position as floats, so it is compared loosely.
+local function same(point, ref)
+    local pos = point.position
+    return ref and point.uiMapID == ref[1] and math.abs(pos.x - ref[2]) < 0.001
+        and math.abs(pos.y - ref[3]) < 0.001
+end
+
 local function StillOurs()
     local get = _G.C_Map.GetUserWaypoint
     local point = get and get()
     local pos = point and point.position
     if not (placed and point and pos and pos.x and pos.y) then return false end
-    return point.uiMapID == placed[1] and math.abs(pos.x - placed[2]) < 0.001
-        and math.abs(pos.y - placed[3]) < 0.001
+    if same(point, placed) or same(point, seen) then return true end
+    -- Right after placing it, the client reports the pin as it stored it:
+    -- that is the pin to compare with from now on.
+    local now = GetTime and GetTime() or 0
+    if now - placedAt <= OWN_SECONDS then
+        seen = { point.uiMapID, pos.x, pos.y }
+        return true
+    end
+    return false
+end
+
+-- Whether the user waypoint in place now is the pin this module put down
+-- (SuperTrack.lua then does not take it for one the player dropped).
+function BP:OwnsWaypoint()
+    return Available() and StillOurs() or false
 end
 
 -- Takes the pin away only while it is still ours: one the player put down
@@ -76,7 +98,7 @@ end
 local function Clear()
     if not placed then return end
     local mine = StillOurs()
-    placed = nil
+    placed, seen = nil, nil
     if mine then
         _G.C_Map.ClearUserWaypoint()
         Reseed()
@@ -95,7 +117,8 @@ function BP:Sync()
     local ok = pcall(_G.C_Map.SetUserWaypoint, _G.UiMapPoint.CreateFromCoordinates(mapId, x, y))
     if not ok then return end
     pcall(_G.C_SuperTrack.SetSuperTrackedUserWaypoint, true)
-    placed = { mapId, x, y }
+    placed, seen = { mapId, x, y }, nil
+    placedAt = GetTime and GetTime() or 0
     Reseed()
 end
 
