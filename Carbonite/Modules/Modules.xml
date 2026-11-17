@@ -102,6 +102,8 @@
     <!-- Engine extracted from Carbonite.lua: owns Nx.Whatsnew data
          table + the changelog window's frame-building methods. -->
     <Script file="Whatsnew\WhatsnewEngine.lua" />
+    <!-- First-run setup assistant of the edition, /carb assistente (#63). -->
+    <Script file="Assistant\Assistant.lua" />
     <Script file="CombatStats\CombatStats.lua" />
     <Script file="TitleScreen\TitleScreen.lua" />
     <!-- Splash-frame animation extracted from Carbonite.lua;
