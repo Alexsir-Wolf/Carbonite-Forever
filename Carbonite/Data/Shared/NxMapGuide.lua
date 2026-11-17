@@ -1298,6 +1298,21 @@ function Nx.Map.Guide:QuestGiverAvailable (qId, minLevel, playerLevel)
     return true
 end
 
+-- Whether the map shows a quest of this kind at its giver (#80). The kind
+-- comes from QuestieDB (Nx.Quest:QuestieQuestKind): event first, then daily
+-- (also weekly), then repeatable. Carbonite's own Nx.QuestFreq marks a daily
+-- QuestieDB does not know. Each kind has its Map.QuestGivers* option.
+local QUEST_KIND_OPTION = { event = "QuestGiversEvent", daily = "QuestGiversDaily", repeatable = "QuestGiversRepeatable" }
+
+function Nx.Map.Guide:QuestGiverKindShown (qId)
+    local Quest = Nx.Quest
+    local kind = Quest and Quest.QuestieQuestKind and Quest:QuestieQuestKind (qId)
+    if kind ~= "event" and Nx.QuestFreq and Nx.QuestFreq[qId] then kind = "daily" end
+    local option = kind and QUEST_KIND_OPTION[kind]
+    if not option then return true end
+    return Nx.db.profile.Map[option] ~= false
+end
+
 function Nx.Map.Guide:ShowsOwnGather (setting)
     if Nx.Notes and Nx.Notes.GatherLiteActive and Nx.Notes:GatherLiteActive() then
         return false
@@ -1735,7 +1750,8 @@ function Nx.Map.Guide:UpdateMapIcons()
                                 or (playerClassBit ~= 0
                                     and bit.band(req, playerClassBit) ~= 0)
                             if classOK and lvl >= minLvl and lvl <= maxLvl
-                                    and (not onlyAvailable or self:QuestGiverAvailable (qId, minlvl, playerLevel)) then
+                                    and (not onlyAvailable or self:QuestGiverAvailable (qId, minlvl, playerLevel))
+                                    and self:QuestGiverKindShown (qId) then
                                 local col = "|r"
                                 local include = true
                                 local daily = Nx.QuestFreq and Nx.QuestFreq[qId]
