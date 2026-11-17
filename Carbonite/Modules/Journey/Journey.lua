@@ -130,16 +130,15 @@ local function group(key)
 end
 
 --- Entries of `group` (a GROUPS key, nil for all) whose text or zone holds
---- `search` (case-insensitive, plain), newest first.
+--- `search` (ignoring case and accents, plain), newest first.
 function Journey:Filter(entries, groupKey, search)
     local kinds = group(groupKey).kinds
-    search = (search or ""):lower()
+    local matches = Nx.SearchBox.Matches
     local out = {}
     for i = #(entries or {}), 1, -1 do
         local e = entries[i]
         if not kinds or kinds[e.k] then
-            local hay = (self:Describe(e) .. " " .. (e.z or "")):lower()
-            if search == "" or hay:find(search, 1, true) then
+            if matches(self:Describe(e) .. " " .. (e.z or ""), search) then
                 out[#out + 1] = e
             end
         end
@@ -269,11 +268,9 @@ function Journey:Create()
     win:Attach(groups.Frm, 0, .16, 0, 1)
 
     -- Right: search box over the entries.
-    local box = Nx.EditBox:Create(win.Frm, self, self.OnEditBox, 60)
+    local box = Nx.SearchBox:Create(win.Frm, function() self:Update() end,
+        { placeholder = L["Search the journey..."], maxLetters = 60 })
     self.EditBox = box
-    box.FilterDesc = L["Search the journey..."]
-    box.FilterDescEsc = L["Search the journey..."]:gsub("%p", "%%%0")
-    box.Frm:SetText(box.FilterDesc)
     win:Attach(box.Frm, .16, 1, 0, 18)
 
     local list = Nx.List:Create(false, 0, 0, 1, 1, win.Frm)
@@ -298,10 +295,6 @@ function Journey:OnGroupEvent(eventName, sel)
         self.Group = g.key
         self:Update()
     end
-end
-
-function Journey:OnEditBox(_, message)
-    if message == "Changed" then self:Update() end
 end
 
 function Journey:Update()
