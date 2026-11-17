@@ -362,3 +362,51 @@ describe("DungeonGuide: log de combate restrito", function()
         expect(events.events.COMBAT_LOG_EVENT_UNFILTERED).toBe(true)
     end)
 end)
+
+describe("DungeonGuide: retratos e estado dos chefes", function()
+    local function texture()
+        local t = { calls = {} }
+        function t:SetTexture(path) self.path = path end
+        function t:SetTexCoord() end
+        return t
+    end
+
+    it("vivo, próximo e morto", function()
+        local DG = load()
+        local bosses = { { killed = true }, {}, {} }
+        expect(DG.BossState(bosses, 1)).toBe("killed")
+        expect(DG.BossState(bosses, 2)).toBe("next")
+        expect(DG.BossState(bosses, 3)).toBe("alive")
+    end)
+
+    it("usa o retrato pronto do ForeverDungeonJournal pelo displayID que ele guardou", function()
+        local DG, env = load()
+        env.ForeverDungeonJournalDB = { displayIDs = { [11520] = 7970 } }
+        env.ForeverDungeonJournal_NS = {
+            SetBakedPortrait = function(tex, id) tex:SetTexture("baked:" .. id); return true end,
+        }
+        local tex = texture()
+        expect(DG.SetBossPortrait(tex, 11520)).toBe(true)
+        expect(tex.path).toBe("baked:7970")
+    end)
+
+    it("sem retrato pronto usa o retrato do cliente pelo displayID", function()
+        local DG, env = load()
+        env.ForeverDungeonJournalDB = { displayIDs = { [11518] = 1234 } }
+        local used
+        env.SetPortraitTextureFromCreatureDisplayID = function(_, id) used = id end
+        expect(DG.SetBossPortrait(texture(), 11518)).toBe(true)
+        expect(used).toBe(1234)
+    end)
+
+    it("sem displayID ainda: fica a caveira (false)", function()
+        local DG = load()
+        expect(DG.SetBossPortrait(texture(), 11519)).toBe(false)
+        expect(DG.SetBossPortrait(texture(), nil)).toBe(false)
+    end)
+
+    it("a planta usa o retrato nos chefes e a dica de posição some na masmorra", function()
+        expect(loader.read("Carbonite/Modules/Map/DungeonChart.lua"):find("DG.SetBossPortrait(p.Icon, b.npc)", 1, true) ~= nil).toBe(true)
+        expect(loader.read("Carbonite/Modules/Map/MapEngine.lua"):find("if tipStr and self:IsUnmappedInstance() then", 1, true) ~= nil).toBe(true)
+    end)
+end)
