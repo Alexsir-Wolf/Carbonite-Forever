@@ -5,6 +5,7 @@
 	<Include file="Com.lua" />
 	<Include file="Map.lua" />
 	<Include file="Zones.lua" />
+	<Include file="Dungeons.lua" />
 	<Include file="Guide.lua" />
 	<Include file="FlightMasters.lua" />
 	<Include file="Options.lua" />

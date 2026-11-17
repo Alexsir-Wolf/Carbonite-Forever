@@ -32,6 +32,8 @@
 --   QS.filled            quest ids whose missing fields the last completed run filled
 --   QS.ForeverLoc(f, s)  one location string projected with f(uiMapId, x, y)
 --   QS.ConvertLoadedCoords(lib)  project the Era points of records not yet converted
+--   QS.InDungeon(qId, instanceId)  { items } when QuestieDB places the quest inside that
+--                        instance (no positions there), else nil; for the dungeon panel
 --   QS.XPAt(questLevel, xp, playerLevel)  XP a quest gives at a player level
 --   Nx.Quest:GetXP(qId)  that XP for the player: the client's for a logged quest, else the QuestXP table, or nil
 --   Nx.Quest:XPText(qId) the XP as " 1.650 XP" for lists and tooltips, or ""
@@ -323,6 +325,101 @@ end
 
 --------------------------------------------------------------------------------------------
 -- Era coordinates in Carbonite's own data
+--------------------------------------------------------------------------------------------
+-- Dungeons (#8)
+--------------------------------------------------------------------------------------------
+
+-- QuestieDB files what is inside an instance under the instance's AreaTable ids, with no
+-- position (-1, -1): Carbonite has no map for them, so Convert leaves those points out. The
+-- dungeon panel (Carbonite/Modules/Map/DungeonGuide.lua) lists them instead.
+
+local areaCache, dungeonCache = {}, {}
+
+-- AreaTable ids of an instance (GetInstanceInfo's 8th value): its zone and the other ids
+-- QuestieDB files it under. Nil when QuestieDB does not know the instance.
+local function InstanceAreas(lib, instanceId)
+    local cached = areaCache[instanceId]
+    if cached ~= nil then return cached or nil end
+    local zoneDB = lib.Support and lib.Support.Get and lib.Support.Get("ZoneDB")
+    local byInstance = type(zoneDB) == "table" and DecodeTable(zoneDB.instanceIdToAreaId) or {}
+    local areaId = byInstance[instanceId]
+    local areas = false
+    if type(areaId) == "number" then
+        areas = { [areaId] = true }
+        local dungeons = DecodeTable(type(zoneDB.private) == "table" and zoneDB.private.dungeons)
+        local entry = dungeons[areaId]
+        for _, alt in ipairs(type(entry) == "table" and type(entry[2]) == "table" and entry[2] or {}) do
+            areas[alt] = true
+        end
+    end
+    areaCache[instanceId] = areas
+    return areas or nil
+end
+
+local function SpawnsIn(spawns, areas)
+    for areaId in pairs(type(spawns) == "table" and spawns or {}) do
+        if areas[areaId] or (zoneParents and zoneParents[areaId] and areas[zoneParents[areaId]]) then
+            return true
+        end
+    end
+    return false
+end
+
+local function DropsIn(lib, itemId, areas)
+    for _, npcId in ipairs(Get(lib, "Item", itemId, "npcDrops") or {}) do
+        if SpawnsIn(Spawns(lib, "Npc", npcId), areas) then return true end
+    end
+    for _, objectId in ipairs(Get(lib, "Item", itemId, "objectDrops") or {}) do
+        if SpawnsIn(Spawns(lib, "Object", objectId), areas) then return true end
+    end
+    return false
+end
+
+-- What QuestieDB places of a quest inside an instance: nil when nothing, else
+-- { items = { names of objective items that drop there } }. The quest counts when its zone is
+-- the instance, or an objective creature, object or item drop, or who ends it, is inside.
+function QS.InDungeon(qId, instanceId, lib)
+    lib = lib or Lib()
+    if not lib or type(instanceId) ~= "number" then return nil end
+    local key = instanceId .. ":" .. tostring(qId)
+    local cached = dungeonCache[key]
+    if cached ~= nil then return cached or nil end
+    local areas = InstanceAreas(lib, instanceId)
+    local ok, v = false, nil
+    if areas then ok, v = pcall(lib.Quest.GetAll, qId, { "zoneOrSort", "objectives", "finishedBy" }) end
+    if not ok or type(v) ~= "table" then
+        dungeonCache[key] = false
+        return nil
+    end
+    local zone, objectives, finishedBy = v[1], v[2], v[3]
+    local inside = type(zone) == "number" and areas[zone] or false
+    local items = {}
+    for group, entity in ipairs({ "Npc", "Object", "Item" }) do
+        local list = type(objectives) == "table" and type(objectives[group]) == "table" and objectives[group] or {}
+        for _, entry in ipairs(list) do
+            local id = type(entry) == "table" and entry[1]
+            if type(id) == "number" then
+                if entity == "Item" then
+                    if DropsIn(lib, id, areas) then
+                        items[#items + 1] = Clean(entry[2]) or Clean(Get(lib, "Item", id, "name")) or tostring(id)
+                        inside = true
+                    end
+                elseif SpawnsIn(Spawns(lib, entity, id), areas) then
+                    inside = true
+                end
+            end
+        end
+    end
+    for group, entity in ipairs({ "Npc", "Object" }) do
+        for _, id in ipairs(type(finishedBy) == "table" and type(finishedBy[group]) == "table" and finishedBy[group] or {}) do
+            if not inside and SpawnsIn(Spawns(lib, entity, id), areas) then inside = true end
+        end
+    end
+    local result = inside and { items = items } or false
+    dungeonCache[key] = result
+    return result or nil
+end
+
 --------------------------------------------------------------------------------------------
 
 local POINT, AREA = 32, 35

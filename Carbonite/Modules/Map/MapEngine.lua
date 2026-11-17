@@ -6345,7 +6345,7 @@ function Nx.Map:Update (elapsed)
     end
     -- Cover and title around the live minimap of an unmapped instance
     -- (UnmappedInstance.lua); hides itself everywhere else. Runs before
-    -- DungeonChart:Update, which stays closed while this view is active.
+    -- DungeonChart:Update, which here opens only in the maximized window.
     if self.UpdateUnmappedInstanceView then
         self:UpdateUnmappedInstanceView()
     end
