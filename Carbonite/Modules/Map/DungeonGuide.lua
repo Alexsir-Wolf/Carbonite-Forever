@@ -170,6 +170,87 @@ end
 DG.NpcID = NpcID
 
 --------------------------------------------------------------------------------
+-- Boss portraits
+--
+-- A creature's portrait needs its display id, which the client does not give
+-- for an npc id. ForeverDungeonJournal keeps the ones it found
+-- (ForeverDungeonJournalDB.displayIDs) and ships round portraits for many
+-- (SetBakedPortrait); the rest are found the way it does: an off-screen
+-- PlayerModel shown the creature, then GetDisplayInfo. Read in game only.
+--------------------------------------------------------------------------------
+
+local displayIDs, asked, queue = {}, {}, {}
+local resolver
+
+local function Resolve(npc)
+    if asked[npc] or not CreateFrame then return end
+    asked[npc] = true
+    queue[#queue + 1] = npc
+    if not resolver then
+        local ok, model = pcall(CreateFrame, "PlayerModel", nil, UIParent)
+        if not ok or not model or not model.SetCreature or not model.GetDisplayInfo then return end
+        resolver = model
+        model:SetSize(8, 8)
+        model:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -100, 100)
+        model:SetScript("OnUpdate", function(m)
+            if m.Npc then
+                m.Tries = m.Tries + 1
+                local okInfo, id = pcall(m.GetDisplayInfo, m)
+                if okInfo and type(id) == "number" and id > 0 then
+                    displayIDs[m.Npc] = id
+                    m.Npc = nil
+                    DG.Version = DG.Version + 1
+                    DG.Dirty = true
+                elseif m.Tries > 60 then
+                    m.Npc = nil             -- gave up: the skull stays
+                end
+                return
+            end
+            local nextNpc = table.remove(queue, 1)
+            if not nextNpc then
+                m:Hide()
+                return
+            end
+            m.Npc, m.Tries = nextNpc, 0
+            pcall(m.SetCreature, m, nextNpc)
+        end)
+    end
+    resolver:Show()
+end
+
+-- Display id of a boss npc, or nil while it is being found.
+function DG.DisplayID(npc)
+    if type(npc) ~= "number" then return nil end
+    local id = displayIDs[npc]
+    if id then return id end
+    local fdj = _G.ForeverDungeonJournalDB
+    id = fdj and type(fdj.displayIDs) == "table" and fdj.displayIDs[npc]
+    if type(id) == "number" and id > 0 then
+        displayIDs[npc] = id
+        return id
+    end
+    Resolve(npc)
+    return nil
+end
+
+-- Round portrait of a boss in texture; false when there is none (yet).
+function DG.SetBossPortrait(texture, npc)
+    local id = DG.DisplayID(npc)
+    if not id or not texture then return false end
+    texture:SetTexCoord(0, 1, 0, 1)
+    local ns = _G.ForeverDungeonJournal_NS
+    if ns and ns.SetBakedPortrait then
+        local ok, set = pcall(ns.SetBakedPortrait, texture, id)
+        if ok and set then return true end
+    end
+    local setPortrait = _G.SetPortraitTextureFromCreatureDisplayID
+    if setPortrait then
+        return pcall(setPortrait, texture, id) and true or false
+    end
+    return false
+end
+
+--------------------------------------------------------------------------------
 -- Current instance
 --------------------------------------------------------------------------------
 
@@ -520,6 +601,17 @@ function DG:Lines(here)
             lines[#lines + 1] = format("%d. %s", i, b.name)
         end
     end
+    for _, line in ipairs(self:QuestLines(here)) do
+        lines[#lines + 1] = line
+    end
+    self.LinesFor, self.LinesTime, self.LinesCache = here.id, now, lines
+    return lines
+end
+
+-- The quest part of the panel: the log's quests for this dungeon and the
+-- quest items found here.
+function DG:QuestLines(here)
+    local lines = {}
     local quests = self:LogQuests(here)
     local items = DG.PinItems(here.data)
     if quests[1] or items[1] then
@@ -542,7 +634,6 @@ function DG:Lines(here)
     if items[1] then
         lines[#lines + 1] = "|cff9d9d9d" .. format(L["Quest items here: %s"], table.concat(items, ", ")) .. "|r"
     end
-    self.LinesCache, self.LinesFor, self.LinesTime = lines, here.id, now
     return lines
 end
 
@@ -553,6 +644,22 @@ function DG:PanelWidth(mapW)
     return PANEL_W
 end
 
+local ROW_H = 46
+local PORTRAIT = 34
+local ROUND = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
+local SKULL = "Interface\\TargetingFrame\\UI-TargetingFrame-Skull"
+local DEAD_MARK = "Interface\\RaidFrame\\ReadyCheck-NotReady"
+
+-- Ring colors: alive, the next one, killed.
+DG.RING = { alive = { 1, .82, 0 }, next = { .25, 1, .25 }, killed = { .45, .45, .45 } }
+
+-- State of each boss for the panel and the chart pins.
+function DG.BossState(bosses, i)
+    if bosses[i].killed then return "killed" end
+    if i == DG.NextBoss(bosses) then return "next" end
+    return "alive"
+end
+
 local function BuildPanel(map)
     local f = CreateFrame("Frame", nil, map.Frm)
     f:EnableMouse(true)
@@ -560,19 +667,89 @@ local function BuildPanel(map)
     local bg = f:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     bg:SetColorTexture(.05, .05, .07, .95)
-    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("TOPLEFT", 8, -6)
-    title:SetPoint("TOPRIGHT", -8, -6)
-    title:SetJustifyH("LEFT")
+    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 10, -8)
+    title:SetPoint("TOPRIGHT", -10, -8)
+    title:SetJustifyH("CENTER")
     title:SetWordWrap(false)
     f.Title = title
-    local text = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    text:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
-    text:SetPoint("RIGHT", -8, 0)
+    -- Bosses and quests, centered in the height left under the title.
+    local content = CreateFrame("Frame", nil, f)
+    content:SetPoint("LEFT", 10, 0)
+    content:SetPoint("RIGHT", -10, 0)
+    f.Content = content
+    local heading = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    heading:SetPoint("TOPLEFT")
+    heading:SetPoint("TOPRIGHT")
+    heading:SetJustifyH("LEFT")
+    f.Heading = heading
+    local text = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    text:SetPoint("LEFT")
+    text:SetPoint("RIGHT")
     text:SetJustifyH("LEFT")
     text:SetJustifyV("TOP")
     f.Text = text
+    f.Rows = {}
     return f
+end
+
+local function BossRow(panel, i)
+    local r = panel.Rows[i]
+    if r then return r end
+    r = CreateFrame("Frame", nil, panel.Content)
+    r:SetHeight(ROW_H)
+    r:SetPoint("LEFT")
+    r:SetPoint("RIGHT")
+    r.Ring = r:CreateTexture(nil, "BORDER")
+    r.Ring:SetTexture(ROUND)
+    r.Ring:SetSize(PORTRAIT + 6, PORTRAIT + 6)
+    r.Ring:SetPoint("LEFT", 0, 0)
+    r.Portrait = r:CreateTexture(nil, "ARTWORK")
+    r.Portrait:SetSize(PORTRAIT, PORTRAIT)
+    r.Portrait:SetPoint("CENTER", r.Ring)
+    r.Dead = r:CreateTexture(nil, "OVERLAY")
+    r.Dead:SetTexture(DEAD_MARK)
+    r.Dead:SetSize(18, 18)
+    r.Dead:SetPoint("BOTTOMRIGHT", r.Ring, "BOTTOMRIGHT", 3, -3)
+    r.Name = r:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    r.Name:SetPoint("TOPLEFT", r.Ring, "TOPRIGHT", 8, -3)
+    r.Name:SetPoint("RIGHT")
+    r.Name:SetJustifyH("LEFT")
+    r.Name:SetWordWrap(false)
+    r.State = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    r.State:SetPoint("TOPLEFT", r.Name, "BOTTOMLEFT", 0, -3)
+    r.State:SetJustifyH("LEFT")
+    panel.Rows[i] = r
+    return r
+end
+
+local STATE_TEXT = {
+    alive = function() return "|cffd0d0d0" .. L["Alive"] .. "|r" end,
+    next = function() return "|cff40ff40" .. L["Next boss"] .. "|r" end,
+    killed = function() return "|cff808080" .. L["Killed"] .. "|r" end,
+}
+
+local function FillRows(panel, bosses)
+    for i, b in ipairs(bosses) do
+        local r = BossRow(panel, i)
+        local state = DG.BossState(bosses, i)
+        if not DG.SetBossPortrait(r.Portrait, b.npc) then
+            r.Portrait:SetTexture(SKULL)
+            r.Portrait:SetTexCoord(0, 1, 0, 1)
+        end
+        local ring = DG.RING[state]
+        r.Ring:SetVertexColor(ring[1], ring[2], ring[3])
+        r.Portrait:SetDesaturated(state == "killed")
+        r.Portrait:SetAlpha(state == "killed" and .6 or 1)
+        if state == "killed" then r.Dead:Show() else r.Dead:Hide() end
+        r.Name:SetText(format(state == "killed" and "|cff808080%d. %s|r" or "%d. %s", i, b.name))
+        r.State:SetText(STATE_TEXT[state]())
+        r:ClearAllPoints()
+        r:SetPoint("TOPLEFT", panel.Heading, "BOTTOMLEFT", 0, -6 - (i - 1) * ROW_H)
+        r:SetPoint("RIGHT", panel.Content, "RIGHT")
+        r:Show()
+    end
+    for i = #bosses + 1, #panel.Rows do panel.Rows[i]:Hide() end
 end
 
 -- w: panel width (0 hides it); h: height of the map area it may use.
@@ -592,18 +769,33 @@ function DG:UpdatePanel(map, w, h)
         return
     end
     local x = (map.PadX or 0) + (map.MapW or 0) - w
-    local sig = format("%d|%d|%d|%d", x, map.TitleH or 0, w, h)
-    if sig ~= self.PanelSig then
+    local sig = format("%d|%d|%d|%d|%d", x, map.TitleH or 0, w, h, self.Version)
+    if sig ~= self.PanelSig or self.Dirty then
         self.PanelSig = sig
         panel:ClearAllPoints()
         panel:SetPoint("TOPLEFT", map.Frm, "TOPLEFT", x, -(map.TitleH or 0))
         panel:SetSize(w, h)
-    end
-    local lines = self:Lines(here)
-    if lines ~= self.PanelLines then
-        self.PanelLines = lines
         panel.Title:SetText(here.name)
-        panel.Text:SetText(table.concat(lines, "\n"))
+
+        local bosses = self:Bosses(here)
+        panel.Heading:SetText(bosses[1] and L["Bosses (route order)"] or ("|cff9d9d9d" .. L["No boss data for this dungeon"] .. "|r"))
+        FillRows(panel, bosses)
+        panel.Text:ClearAllPoints()
+        panel.Text:SetPoint("TOPLEFT", panel.Heading, "BOTTOMLEFT", 0, -10 - #bosses * ROW_H)
+        panel.Text:SetPoint("RIGHT", panel.Content, "RIGHT")
+        panel.Text:SetText(table.concat(self:QuestLines(here), "\n"))
+
+        -- Center the block in the height under the title.
+        local contentH = (panel.Heading:GetStringHeight() or 14) + 10 + #bosses * ROW_H
+            + (panel.Text:GetStringHeight() or 0)
+        local top = 34
+        local free = h - top - contentH
+        panel.Content:ClearAllPoints()
+        panel.Content:SetPoint("LEFT", 10, 0)
+        panel.Content:SetPoint("RIGHT", -10, 0)
+        panel.Content:SetPoint("TOP", panel, "TOP", 0, -(top + max(0, free / 2)))
+        panel.Content:SetHeight(contentH)
+        self.Dirty = nil
     end
     if not panel:IsShown() then panel:Show() end
 end

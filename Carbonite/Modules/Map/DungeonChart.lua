@@ -509,15 +509,28 @@ local PIN_ENTRANCE = "Interface\\Buttons\\UI-MicroStream-Green"
 local PIN_LINK = "Interface\\Buttons\\UI-MicroStream-Yellow"
 local PIN_NOTE = "Interface\\GossipFrame\\AvailableQuestIcon"
 local PIN_TURNIN = "Interface\\GossipFrame\\ActiveQuestIcon"
+local PIN_RING = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
+local PIN_DEAD = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
 local function pin(view, i)
     local p = view.Pins[i]
     if not p then
         p = CreateFrame("Button", nil, view.Canvas)
+        -- Boss pins: a round portrait in a colored ring, as in the game's
+        -- dungeon journal; the ring and the mark stay hidden on other pins.
+        p.Ring = p:CreateTexture(nil, "BORDER")
+        p.Ring:SetTexture(PIN_RING)
+        p.Ring:SetPoint("TOPLEFT", -3, 3)
+        p.Ring:SetPoint("BOTTOMRIGHT", 3, -3)
         p.Icon = p:CreateTexture(nil, "ARTWORK")
         p.Icon:SetAllPoints()
+        p.Dead = p:CreateTexture(nil, "OVERLAY")
+        p.Dead:SetTexture(PIN_DEAD)
+        p.Dead:SetPoint("BOTTOMRIGHT", 4, -4)
         p.Num = p:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
         p.Num:SetPoint("BOTTOMRIGHT", 4, -2)
+        p.Label = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        p.Label:SetPoint("RIGHT", p, "LEFT", -4, 0)
         p:SetScript("OnEnter", function(self) showTip(self, self.Tip) end)
         p:SetScript("OnLeave", hideTip)
         p:SetScript("OnClick", function(self) if self.ToFloor then DC:SetFloor(self.ToFloor) end end)
@@ -614,7 +627,11 @@ local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests)
     local function add(tex, x, y, tip, num, toFloor, color, grow)
         n = n + 1
         local p = pin(view, n)
-        p.Icon:SetTexture(tex)
+        -- tex false keeps the boss portrait already drawn on this pin.
+        if tex ~= false then
+            p.Icon:SetTexture(tex)
+            p.PortraitNpc, p.PortraitOK = nil, nil
+        end
         p.Icon:SetDesaturated(color == false)
         if color then p.Icon:SetVertexColor(color[1], color[2], color[3]) else p.Icon:SetVertexColor(1, 1, 1) end
         p:SetAlpha(color == false and .55 or 1)
@@ -624,24 +641,46 @@ local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests)
         p:SetSize(size * (grow or 1), size * (grow or 1))
         p:ClearAllPoints()
         p:SetPoint("CENTER", view.Canvas, "TOPLEFT", x * w, -y * h)
+        p.Ring:Hide()
+        p.Dead:Hide()
+        p.Label:SetText("")
+        p.Icon:SetAlpha(1)
         return p
     end
-    local nextBoss = Nx.DungeonGuide and Nx.DungeonGuide.NextBoss(bosses)
+    local DG = Nx.DungeonGuide
     for i, b in ipairs(bosses) do
         if b.floor == floorN and b.x and b.y then
-            if b.killed then
-                add(PIN_BOSS, b.x, b.y, { b.name, L["Killed"] }, i, nil, false)
-            elseif i == nextBoss then
-                add(PIN_BOSS, b.x, b.y, { b.name, L["Next boss"] }, i, nil, { .4, 1, .4 }, 1.35)
+            local state = DG and DG.BossState(bosses, i) or "alive"
+            local tip = { b.name, state == "killed" and L["Killed"] or state == "next" and L["Next boss"] or nil }
+            local old = view.Pins[n + 1]
+            local keep = old and old.PortraitOK and old.PortraitNpc == b.npc
+            local p = add(keep and false or PIN_BOSS, b.x, b.y, tip, nil, nil, nil, state == "next" and 1.9 or 1.6)
+            if not keep then
+                p.PortraitNpc = b.npc
+                p.PortraitOK = DG and b.npc and DG.SetBossPortrait(p.Icon, b.npc) or false
+            end
+            if p.PortraitOK then
+                local ring = DG.RING[state]
+                p.Ring:SetVertexColor(ring[1], ring[2], ring[3])
+                p.Ring:Show()
             else
-                add(PIN_BOSS, b.x, b.y, { b.name }, i)
+                p.Num:SetText(i)          -- no portrait: numbered skull as before
+            end
+            p.Icon:SetDesaturated(state == "killed")
+            p.Icon:SetAlpha(state == "killed" and .6 or 1)
+            p:SetAlpha(1)
+            if state == "killed" then
+                p.Dead:SetSize(size * .8, size * .8)
+                p.Dead:Show()
             end
         end
     end
     local entrances = data.entrances or (data.entrance and { data.entrance }) or {}
     for _, e in ipairs(entrances) do
         if (e.floor or 1) == floorN and e.x and e.y then
-            add(PIN_ENTRANCE, e.x, e.y, { djText(dj, e.labelKey or "MAP_ENTRANCE") or L["Entrance"] }, nil, nil, e.color)
+            local label = djText(dj, e.labelKey or "MAP_ENTRANCE") or L["Entrance"]
+            local p = add(PIN_ENTRANCE, e.x, e.y, { label }, nil, nil, e.color)
+            p.Label:SetText(label)
         end
     end
     for _, t in ipairs(data.transitions or {}) do
