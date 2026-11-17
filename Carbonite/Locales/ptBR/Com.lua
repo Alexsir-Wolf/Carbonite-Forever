@@ -25,7 +25,6 @@ L["Deathknight"] = "Cavaleiro da Morte"
 L["Monk"] = "Monje"
 
 L["Com options reset (%f, %f)"] = "Opções de com redefinidas (%f, %f)"
-L["ComTest"] = "ComTest"
 L["Disabling com functions!"] = "Desativando funções de com!"
 L["JoinChan Err %s"] = "Erro JoinChan %s"
 L["SendSecG Error: %s"] = "Erro SendSecG: %s"

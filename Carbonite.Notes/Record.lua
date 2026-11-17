@@ -38,7 +38,7 @@ function Nx.Notes:Record(typ, name, id, x, y, level)
             ctx:Update()
         end
 
-        Nx:ShowEditBox("Name", name, self, func)
+        Nx:ShowEditBox(L["Name"], name, self, func)
 
     elseif typ == "TargetS" then  -- Start
 
