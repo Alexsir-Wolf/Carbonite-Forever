@@ -20,6 +20,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - Mostra no título a zona, as coordenadas e a velocidade de movimento. Os tooltips das zonas mostram a faixa de nível e a facção.
 - Integra o minimapa da Blizzard à janela do mapa (modo acoplado) e organiza os botões de minimapa de outros addons.
 - Em battlegrounds, mostra os objetivos com timers e ordens rápidas. Segure **Alt** para ver os nomes dos jogadores.
+- Menu do botão direito enxuto, só com o uso do dia a dia (Goto, limpar destino, Mostrar..., rotas). Escalas, transparências, encaixe do minimapa e raios de rota ficam em Opções > Mapas.
 - Mapas de masmorra estáticos no menu do mapa, a partir do ForeverDungeonJournal ou do FojjiCore, quando instalados.
 - API para outros addons desenharem ícones no mapa do Carbonite ([Map Provider API](Carbonite/Docs/MapProvider.md)).
 
