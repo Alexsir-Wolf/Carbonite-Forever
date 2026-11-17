@@ -456,7 +456,7 @@ function Nx.Quest:GetOptionsConfig()
                                 Nx.Quest:CalcWatchColors()
                             end,
                             values    = function()
-                                return Nx.Opts:CalcChoices("QArea")
+                                return Nx.Opts:CalcChoiceLabels("QArea")
                             end,
                         },
                         spacer4 = {

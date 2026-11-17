@@ -74,7 +74,7 @@ function Nx.NXMiniMapBut:Init()
 
     local ok, var = pcall (GetCVar, "scriptProfile")
     if ok and var ~= "0" then
-        Nx:ShowMessage ("Profiling is on. This decreases game performance. Disable?", "Disable and Reload", self.ToggleProfiling, "Cancel")
+        Nx:ShowMessage (L["Profiling is on. This decreases game performance. Disable?"], L["Disable and Reload"], self.ToggleProfiling, L["Cancel"])
     end
 end
 
@@ -100,7 +100,7 @@ function Nx.NXMiniMapBut:Menu_OnShowCom()
 end
 
 function Nx.NXMiniMapBut:Menu_OnProfiling()
-    Nx:ShowMessage ("Toggle profiling? Reloads UI", "Reload", self.ToggleProfiling, "Cancel")
+    Nx:ShowMessage (L["Toggle profiling? Reloads UI"], L["Reload"], self.ToggleProfiling, L["Cancel"])
 end
 
 function Nx.NXMiniMapBut:ToggleProfiling()

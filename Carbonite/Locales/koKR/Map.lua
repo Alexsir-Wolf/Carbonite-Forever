@@ -106,7 +106,6 @@ L["No edit box open!"] = "편집 박스가 열려있지 않습니다!"
 L["Incoming"] = true
 L["Speed"] = "비행속도"
 L["players"] = "플레이어"
-L["Unknown map name"] = "알수없는 지도 이름"
 L["Show Instance Map"] = "인스턴스 지도 보기"
 L["Instance Scale..."] = "인스턴스 크기..."
 L["Player Arrow"] = "플레이어 화살표"

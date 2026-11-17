@@ -94,8 +94,6 @@ L["LOOT_OPENED %s (%s %s)"] = "ДОБЫЧА %s (%s %s)"
 L["no LootTarget"] = "нет LootTarget"
 L["LOOT_SLOT_CLEARED #%s %s (quest)"] = "LOOT_SLOT_CLEARED #%s %s (задание)"
 L["%s deleted"] = "%s удалено"
-L["enchant:(%d+)"] = true
-L["item:(%d+)"] = true
 L["No Currency Data Saved"] = "Отсутствует информация о валюте у персонажа"
 
 -- Keybinds
