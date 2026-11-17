@@ -1672,7 +1672,7 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
     if not win.Border then
 
         local t = f:CreateTexture()
-        t:SetColorTexture (c2rgba (".125|.125|.125|.75"))
+        Carbonite.UI.Skin:Paint (t, "panelBg")
         t:SetAllPoints (f)
         f.texture = t
     end
@@ -1685,7 +1685,7 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
 
         local fstr = f:CreateFontString()
         win.TitleFStr[n] = fstr
-        fstr:SetFontObject ("NxFontS")
+        Carbonite.UI.Font:SetRole (fstr, "small")
         fstr:SetJustifyH ("LEFT")
         fstr:SetJustifyV ("MIDDLE")
         fstr:SetHeight (win.TitleLineH)
@@ -1832,6 +1832,9 @@ function Nx.Window:SetBordersFade (fade)
     -- The title strip comes and goes with the border.
     if self.TitleBar then
         self.TitleBar:SetAlpha (fade)
+    end
+    if self.HeaderRule then
+        self.HeaderRule:SetAlpha (fade)
     end
 end
 
@@ -2292,12 +2295,12 @@ function Nx.Window:SetTitleLineH (height)
     self.TitleH = self.TitleLines * self.TitleLineH + 2
     self.TopH = self.TitleH + self.BorderH
 
-    local fname = height <= 10 and "NxFontS" or "NxFontM"
+    local role = height <= 10 and "small" or "normal"
 
     for n = 1, self.TitleLines do
 
         local fstr = self.TitleFStr[n]
-        fstr:SetFontObject (fname)
+        Carbonite.UI.Font:SetRole (fstr, role)
         fstr:SetHeight (height)
     end
 end
@@ -2309,6 +2312,7 @@ end
 function Nx.Window:SetTitleXOff (x, yo)
 
     yo = yo or 0
+    self.TitleXOff, self.TitleYOff = x, yo
 
     for n = 1, self.TitleLines do
 
@@ -2377,7 +2381,8 @@ function Nx.Window:StyleTitleBar()
         fstr:SetWordWrap (false)
         Skin:PaintText (fstr, "title")
     end
-    self:SetTitleXOff (0)
+    -- Keep the room a window left for its own header buttons (Guide, Notes).
+    self:SetTitleXOff (self.TitleXOff or 0, self.TitleYOff)
 
     if self.Border then
         local strip = self.TitleBar
@@ -2413,6 +2418,49 @@ function Nx.Window:StyleTitleBar()
     end
 end
 
+---------------------------------------------------------------------------------------
+-- Modern header (#43): the header of the quest watch list for any window. The
+-- title in the "title" font role, the theme's title strip and color, the
+-- window buttons sized to the line (StyleTitleBar) and the rule under the
+-- header. Call after CreateButtons and any SetTitleLineH.
+---------------------------------------------------------------------------------------
+
+function Nx.Window:ApplyModernHeader()
+
+    for _, fstr in ipairs (self.TitleFStr) do
+        Carbonite.UI.Font:SetRole (fstr, "title")
+    end
+
+    self:StyleTitleBar()
+
+    if self.Border and not self.HeaderRule then
+        self.HeaderRule = Carbonite.UI.Skin:AddHeaderRule (self.Frm, 0)
+        self:PlaceTitleBar()
+    end
+end
+
+---------------------------------------------------------------------------------------
+-- A count at the right end of the title line, in the "number" font role
+-- (#43), left of the window buttons.
+---------------------------------------------------------------------------------------
+
+function Nx.Window:SetHeaderCounter (text)
+
+    local cnt = self.HeaderCounter
+    if not cnt then
+        cnt = self.Frm:CreateFontString (nil, "OVERLAY")
+        Carbonite.UI.Font:SetRole (cnt, "number")
+        Carbonite.UI.Skin:PaintText (cnt, "title")
+        cnt:SetJustifyH ("RIGHT")
+        self.HeaderCounter = cnt
+    end
+
+    cnt:ClearAllPoints()
+    cnt:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -self.BorderW - (self.ButW or 0) - 6, -self.BorderH)
+    cnt:SetHeight (self.TitleLineH)
+    cnt:SetText (text and tostring (text) or "")
+end
+
 -- Strip from the inner edge of the border down to the end of the title.
 function Nx.Window:PlaceTitleBar()
 
@@ -2430,6 +2478,14 @@ function Nx.Window:PlaceTitleBar()
     strip:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, -t)
     strip:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, -t)
     strip:SetHeight (self.BorderH - t + self.TitleH)
+
+    local rule = self.HeaderRule
+    if rule then
+        local y = -(self.BorderH + self.TitleH)
+        rule:ClearAllPoints()
+        rule:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, y)
+        rule:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, y)
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -4153,29 +4209,70 @@ for _, name in ipairs ({ "Lock", "CloseLock" }) do
         { AtlasUp = "Forge-Lock", AtlasDn = "Forge-Lock" },
     }
 end
+-- Minimize of a window: the collapse / expand arrows of the quest tracker,
+-- the same pair the quest watch list already uses (QuestWatchMinBlizz).
+Nx.Button.ClientAtlases.Min = {
+    AtlasUp = "ui-questtrackerbutton-collapse-all", AtlasDn = "ui-questtrackerbutton-expand-all", Untinted = true,
+}
+-- Text buttons (Back of the Guide, Record of the Notes, the What's New
+-- buttons): the game's red panel button. Every client has the panel button
+-- files, so a client without the atlas gets them instead of the skin's TGA.
+for _, name in ipairs ({ "Txt64", "Txt64B" }) do
+    Nx.Button.ClientAtlases[name] = {
+        { AtlasUp = "128-RedButton-UP", AtlasDn = "128-RedButton-Pressed", Untinted = true },
+        { FileUp = "Interface\\Buttons\\UI-Panel-Button-Up", FileDn = "Interface\\Buttons\\UI-Panel-Button-Down",
+          UV = { 0, .625, 0, .6875 }, Untinted = true },
+    }
+end
+-- Expand / collapse of a list header (quest log, Notes, Guide), registered
+-- by Carbonite.Quests: minus while open, plus while closed.
+Nx.Button.ClientAtlases.QuestHdr = {
+    { AtlasUp = "QuestLog-icon-shrink", AtlasDn = "QuestLog-icon-expand", Untinted = true },
+    { AtlasUp = "ui-questtrackerbutton-collapse-all", AtlasDn = "ui-questtrackerbutton-expand-all", Untinted = true },
+}
 
 ---
--- Give each button type its Blizzard atlases when the client has all of them.
--- A type may list several looks; the first one the client has is used.
+-- Give each button type its Blizzard look. A type may list several looks; the
+-- first one this client has wins: atlases are checked with
+-- C_Texture.GetAtlasInfo, a look of game files (FileUp/FileDn) always fits.
+-- A type with no fitting look keeps the skin's TGA. With `only`, just that
+-- type (one registered by a module after Init).
 --
-function Nx.Button:UseClientAtlases()
+function Nx.Button:UseClientAtlases (only)
+    self.ClientAtlasesUsed = true
     local info = C_Texture and C_Texture.GetAtlasInfo
-    if not info then return end
     local function has (look)
-        return info (look.AtlasUp) and info (look.AtlasDn) and (not look.IconDn or info (look.IconDn))
+        if look.FileUp then
+            return true
+        end
+        return info and info (look.AtlasUp) and info (look.AtlasDn) and (not look.IconDn or info (look.IconDn))
     end
     for name, looks in pairs (self.ClientAtlases) do
-        local typ = self.TypeData[name]
-        for _, look in ipairs (looks.AtlasUp and { looks } or looks) do
+        local typ = (not only or only == name) and rawget (self.TypeData, name)
+        for _, look in ipairs ((looks.AtlasUp or looks.FileUp) and { looks } or looks) do
             if typ and has (look) then
-                typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
-                typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
-                if look.Untinted then typ.VRGBAUp = nil end
+                if look.FileUp then
+                    typ.Skin = nil
+                    typ.Up, typ.Dn = look.FileUp, look.FileDn
+                    typ.UpUV, typ.DnUV = look.UV, look.UV
+                else
+                    typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
+                    typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
+                end
+                if look.Untinted then typ.VRGBAUp, typ.VRGBADn = nil, nil end
                 break
             end
         end
     end
 end
+
+-- Types that modules register later (QuestHdr, ...) get their look too.
+setmetatable (Nx.Button.TypeData, { __newindex = function (types, name, typ)
+    rawset (types, name, typ)
+    if Nx.Button.ClientAtlasesUsed then
+        Nx.Button:UseClientAtlases (name)
+    end
+end })
 
 function Nx.Button:Init()
 
@@ -4255,7 +4352,7 @@ function Nx.Button:Create (parentFrm, typ, text, tip, bx, by, side, width, heigh
 
         local fstr = f:CreateFontString()
         but.FStr = fstr
-        fstr:SetFontObject ("NxFontS")
+        Carbonite.UI.Font:SetRole (fstr, "small")
         fstr:SetJustifyH ("CENTER")
         fstr:SetHeight (height)
         but:SetText (text, 0, 0)
@@ -4372,7 +4469,7 @@ function Nx.Button:SetText (text, x, y)
     local fstr = self.FStr
 
     if strbyte (text) ~= 124 then        -- |
-        text = "|cffffbfaf" .. text
+        text = Carbonite.UI.Skin:TextCode ("buttonText") .. text
     end
 
     fstr:SetText (text)
@@ -5493,9 +5590,9 @@ function Nx.Menu:Update()
                     end
 
                     if item.ShowState < 0 then
-                        fstr:SetText ("|cff707070" .. item.Text)
+                        fstr:SetText (Carbonite.UI.Skin:TextCode ("menuDisabled") .. item.Text)
                     else
-                        fstr:SetText ("|cfff7f7f7" .. item.Text)
+                        fstr:SetText (Carbonite.UI.Skin:TextCode ("menuText") .. item.Text)
                     end
 
                     fstr:Show()
@@ -5540,7 +5637,7 @@ function Nx.Menu:Update()
 
                         frm.texture = frm:CreateTexture()
                         frm.texture:SetAllPoints (frm)
-                        frm.texture:SetColorTexture (0, 0, 0, .5)
+                        Carbonite.UI.Skin:Paint (frm.texture, "scrollTrack")
                     end
 
                     local tfrm = item.SliderThumbFrm
@@ -5555,7 +5652,7 @@ function Nx.Menu:Update()
 
                         tfrm.texture = tfrm:CreateTexture()
                         tfrm.texture:SetAllPoints (tfrm)
-                        tfrm.texture:SetColorTexture (.5, 1, .5, 1)
+                        Carbonite.UI.Skin:Paint (tfrm.texture, "scrollThumb")
                     end
 
                     frm:SetPoint ("TOPLEFT", 12, -itemH - 1)
@@ -5692,7 +5789,8 @@ function Nx.Menu:Item_OnUpdate (elapsed)
 
     item.Alpha = Nx.Util_StepValue (item.Alpha, item.AlphaTarget, elapsed * 4)
 
-    this.texture:SetVertexColor (.2, .2, .5, item.Alpha)
+    local r, g, b = Carbonite.UI.Skin:GetToken ("menuHover")
+    this.texture:SetVertexColor (r, g, b, item.Alpha)
 
     if item.Slider and item == Nx.Menu.SliderMoving then
         Nx.Menu:Item_HandleSlider (item)
@@ -6032,7 +6130,7 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
     frm:SetScript ("OnMouseWheel", self.OnMouseWheel)
     frm:EnableMouseWheel (true)
 
-    -- Background layer: the row bands (ItemSetBand) sit on top of it.
+    -- Background layer: the row bands (ItemSetBand, SetModernRows) sit on top of it.
     frm.texture = frm:CreateTexture (nil, "BACKGROUND")
     frm.texture:SetAllPoints (frm)
     Carbonite.UI.Skin:Paint (frm.texture, "listBg")
@@ -6127,6 +6225,11 @@ function Nx.List:SetFade (fade)
     end
 
     self.SelFrm:SetAlpha (fade)
+
+    self.Fade = fade
+    for _, band in ipairs (self.RowBands or {}) do
+        band:SetAlpha (fade)
+    end
 
     if self.Slider then
         self.Slider.Frm.texture:SetAlpha (fade * .6)
@@ -6759,6 +6862,10 @@ function Nx.List:Update (showLast)
 
     self:UpdateBands (lineH, hdrH)
 
+    if self.ModernRows then
+        self:UpdateModernRows()
+    end
+
     -- Position selected line
 
     local sfrm = self.SelFrm
@@ -6772,6 +6879,103 @@ function Nx.List:Update (showLast)
         sfrm:SetPoint ("TOPLEFT", 0, -selY * lineH - self.HdrH)
         sfrm:Show()
     end
+end
+
+---------------------------------------------------------------------------------------
+-- Modern rows (#43): the list look of the quest log for any list. A band on
+-- every other row (rowStripe, as in the quest log) and a band under the
+-- mouse (rowHover); the header strip and the selected row already follow
+-- the theme.
+---------------------------------------------------------------------------------------
+
+function Nx.List:SetModernRows (on)
+
+    self.ModernRows = on ~= false
+
+    local f = self.Frm
+    if self.ModernRows and not self.HoverTex then
+        local t = f:CreateTexture (nil, "BACKGROUND", nil, 2)
+        Carbonite.UI.Skin:Paint (t, "rowHover")
+        t:Hide()
+        self.HoverTex = t
+        f:SetScript ("OnEnter", self.OnModernEnter)
+        f:SetScript ("OnLeave", self.OnModernLeave)
+    end
+
+    self:UpdateModernRows()
+end
+
+-- Place a band texture over visible row `row` (0 = first below the header).
+function Nx.List:PlaceRowBand (t, row)
+
+    local f = self.Frm
+    local lineH = self:GetLineH()
+    local right = self.Slider and self.Slider.Frm:GetWidth() or 0
+    local y = -row * lineH - self.HdrH
+
+    t:ClearAllPoints()
+    t:SetPoint ("TOPLEFT", f, "TOPLEFT", 0, y)
+    t:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -right, y)
+    t:SetHeight (lineH)
+end
+
+function Nx.List:UpdateModernRows()
+
+    local bands = self.RowBands or {}
+    self.RowBands = bands
+
+    local n = 0
+
+    if self.ModernRows then
+        for row = 0, self.Vis - 1 do
+            local line = self.Top + row
+            if line <= self.Num and line % 2 == 0 then
+                n = n + 1
+                local t = bands[n]
+                if not t then
+                    t = self.Frm:CreateTexture (nil, "BACKGROUND", nil, 1)
+                    Carbonite.UI.Skin:Paint (t, "rowStripe")
+                    bands[n] = t
+                end
+                self:PlaceRowBand (t, row)
+                t:SetAlpha (self.Fade or 1)
+                t:Show()
+            end
+        end
+    end
+
+    for i = n + 1, #bands do
+        bands[i]:Hide()
+    end
+end
+
+-- Mouse handlers of the list frame (self = frame).
+function Nx.List:OnModernEnter()
+    self:SetScript ("OnUpdate", Nx.List.OnModernHover)
+end
+
+function Nx.List:OnModernLeave()
+    self:SetScript ("OnUpdate", nil)
+    self.NxInst.HoverTex:Hide()
+end
+
+function Nx.List:OnModernHover()
+
+    local inst = self.NxInst
+    local t = inst.HoverTex
+    local x, y = Nx.Util_IsMouseOver (self)
+
+    if x then
+        y = self:GetHeight() - y - inst.HdrH
+        local row = floor (y / inst:GetLineH())
+        if y >= 0 and row < inst.Vis and inst.Top + row <= inst.Num then
+            inst:PlaceRowBand (t, row)
+            t:Show()
+            return
+        end
+    end
+
+    t:Hide()
 end
 
 ---------------------------------------------------------------------------------------
@@ -6874,7 +7078,7 @@ function Nx.List:ColumnAdd (name, columnId, width, justifyH, font)
         fstr:SetHeight (self.HdrH)
 
         fstr:SetText (name)
-        fstr:SetTextColor (.8, .8, 1, 1)
+        Carbonite.UI.Skin:PaintText (fstr, "listHeaderText")
         fstr:Show()
     end
 
@@ -6908,7 +7112,6 @@ function Nx.List:ColumnSetName (columnId, name)
         end
 
         fstr:SetText (name)
-        fstr:SetTextColor (.8, .8, 1, 1)
 
         self.SSW = nil        -- Cause resize
     end
@@ -7751,7 +7954,7 @@ function Nx.TabBar:AddTab (name, index, width, press, template, butId)
 
         but:SetPressed (true)
 
-        local txt = "|cffffffff" .. name
+        local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. name
         but:SetText (txt, 0, 2)
     end
 end
@@ -7788,7 +7991,7 @@ function Nx.TabBar:Select (index, force)
 
     but:SetPressed (true)
 
-    local txt = "|cffffffff" .. selTab.Name
+    local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. selTab.Name
     but:SetText (txt, 0, 2)
 
     if self.UserFunc then
@@ -8688,7 +8891,7 @@ function Nx.Graph:Create(width, height, parentFrm)
     f:SetPoint ("TOPLEFT", 0, 0)
 
     local t = f:CreateTexture()
-    t:SetColorTexture (c2rgba (".125|.125|.125|.625"))
+    Carbonite.UI.Skin:Paint (t, "panelBg")
     t:SetAllPoints (f)
     f.texture = t
 

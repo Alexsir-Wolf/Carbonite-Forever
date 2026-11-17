@@ -1505,6 +1505,7 @@ function Nx.Info:EditorCreate (index)
 
 	win:CreateButtons (true, true)
 	win:SetTitleLineH (18)
+	win:ApplyModernHeader()
 
 	win:InitLayoutData (nil, -.3, -.2, -.5, -.6)
 	win.Frm:SetToplevel (true)
@@ -1525,6 +1526,7 @@ function Nx.Info:EditorCreate (index)
 
 	list:SetUser (self, self.EditorOnListEvent)
 	list:SetLineHeight (0, 0)
+	list:SetModernRows()
 
 	list:ColumnAdd ("", 1, 900)
 
@@ -1699,7 +1701,7 @@ function Nx.Info.Combat:_FirstTimeOpen()
 	f:SetFrameStrata ("MEDIUM")
 
 	local t = f:CreateTexture()
-	t:SetColorTexture (.2, .2, .2, .5)
+	Carbonite.UI.Skin:Paint (t, "panelBg")
 	t:SetAllPoints (f)
 	f.texture = t
 

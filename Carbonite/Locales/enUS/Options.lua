@@ -197,6 +197,8 @@ L["Shows the dungeon finder minimap button in the button panel"] = true
 
 -- Font Options
 L["Font Options"] = true
+L["Font Scale"] = true
+L["Makes every Carbonite font bigger or smaller, keeping the sizes chosen below"] = true
 L["Small Font"] = true
 L["Sets the font to be used for small text"] = true
 L["Small Font Size"] = true

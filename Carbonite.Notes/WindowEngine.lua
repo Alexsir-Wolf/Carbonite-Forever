@@ -31,6 +31,7 @@ function Nx.Notes:Create()
     win:CreateButtons(true, true)
     win:SetTitleLineH(18)
     win:SetTitleXOff(220)
+    win:ApplyModernHeader()
 
     win:InitLayoutData(nil, -.23, -.25, -.54, -.5)
     win.Frm:SetToplevel(true)
@@ -65,6 +66,7 @@ function Nx.Notes:Create()
     self.List = list
     list:SetUser(self, self.OnListEvent)
     list:SetLineHeight(4)
+    list:SetModernRows()
     list:ColumnAdd("", 1, 20)
     list:ColumnAdd(L["Name"], 2, 900)
     win:Attach(list.Frm, 0, .3, 18, 1)
@@ -75,6 +77,7 @@ function Nx.Notes:Create()
     self.ItemList = list
     list:SetUser(self, self.OnItemListEvent)
     list:SetLineHeight(2)
+    list:SetModernRows()
     list:ColumnAdd("", 1, 17)
     list:ColumnAdd(L["Type"], 2, 90)
     list:ColumnAdd(L["Value"], 3, 250)
@@ -427,7 +430,7 @@ function Nx.Notes:Update()
     local list = self.List
     list:Empty()
     list:ItemAdd()
-    list:ItemSet(2, "|cff808080Root")
+    list:ItemSet(2, Carbonite.UI.Skin:TextCode("muted") .. "Root")
 
     self.FavCnt = 0
     self.Search = self.SearchBox and self.SearchBox:GetText() or ""
@@ -436,7 +439,8 @@ function Nx.Notes:Update()
     list:Update()
 
     self:UpdateItems()
-    self.Win:SetTitle(format(L["Notes"] .. ": %s", self.FavCnt))
+    self.Win:SetTitle(L["Notes"])
+    self.Win:SetHeaderCounter(self.FavCnt)
 end
 
 function Nx.Notes:AddonFolders(level)
@@ -533,7 +537,7 @@ function Nx.Notes:UpdateItems(selectI)
                 list:ItemSetButton("Chk", bit.band(strbyte(flags) - 35, 1) > 0)
 
                 if typ == "" then            -- comment
-                    list:ItemSet(3, format("|cffa0a0a0-- %s", name))
+                    list:ItemSet(3, format("%s-- %s", Carbonite.UI.Skin:TextCode("muted"), name))
                 elseif typ == "N" then       -- note
                     local icon, id, x, y, level = self:ParseItemNote(data)
                     icon = self:GetIconInline(icon)
