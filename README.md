@@ -71,7 +71,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 
 - **World of Warcraft: Forever** 1.60.x (interface 16001).
 - Opcionais:
-  - **QuestieDB:** necessário para as quests do Forever que faltam na base do Carbonite. Ative só o QuestieDB; o Questie pode ficar desligado.
+  - **QuestieDB:** necessário para as quests do Forever que faltam na base do Carbonite. Ative só o QuestieDB; o Questie pode ficar desligado. Dentro de masmorras, o painel da tecla **M** também lista as quests do registro que o QuestieDB põe ali e os itens de objetivo que caem lá (o QuestieDB não tem posições dentro de masmorras, então elas não vão para a planta).
   - **Spoken** (com o módulo Spoken_Quests): necessário para o botão de narração na lista de quests.
   - **ForeverDungeonJournal** ou **FojjiCore:** planta da masmorra (arte, chefes e a ordem da rota; o FojjiCore também sabe os chefes mortos). Lidos durante o jogo; o Carbonite não copia esses dados.
   - **[MapUtils](https://www.curseforge.com/projects/1463967):** arte das masmorras quando nem o ForeverDungeonJournal nem o FojjiCore têm a masmorra. Sem nenhum dos três, a tecla **M** mostra o minimapa ao vivo e o painel com os chefes (os dados de chefes do Carbonite vêm do MapUtils e não dependem dele instalado).
