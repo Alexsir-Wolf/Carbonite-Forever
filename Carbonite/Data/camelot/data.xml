@@ -4,6 +4,7 @@
 	<Include file="Zones.lua" />
 	<Include file="Guides\Guide.xml" />
 	<Include file="ZoneConnections.lua" />
+	<Include file="Transports.lua" />
 	<Include file="MapData\MinimapTiles.lua" />
 	<Include file="MapData\MapHeights.lua" />
 	<Include file="MapData\AreaLabels.lua" />
