@@ -51,4 +51,7 @@
 	<Binding name="NxTOGGLEINFO" category="Carbonite">
 		Nx.NXKeyToggleInfo();
 	</Binding>
+	<Binding name="NxTOGGLETARGETS" category="Carbonite">
+		Nx.NXKeyToggleTargets();
+	</Binding>
 </Bindings>
