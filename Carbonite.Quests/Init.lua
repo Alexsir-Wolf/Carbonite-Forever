@@ -66,6 +66,20 @@ function CarboniteQuest:OnInitialize()
         VRGBAUp = ".56|.56|.56|1",
         VRGBADn = ".56|.56|.56|1",
     }
+    -- The +/- of a zone bar in the quest log (#48): the game's own collapse
+    -- buttons, in the client's atlas when it has one.
+    Nx.Button.TypeData["QuestLogHdr"] = {
+        Bool = true,
+        Up = "Interface\\Buttons\\UI-MinusButton-Up",
+        Dn = "Interface\\Buttons\\UI-PlusButton-Up",
+        SizeUp = 12,
+        SizeDn = 12,
+    }
+    Nx.Button.ClientAtlases = Nx.Button.ClientAtlases or {}
+    Nx.Button.ClientAtlases["QuestLogHdr"] = { AtlasUp = "QuestLog-icon-shrink", AtlasDn = "QuestLog-icon-expand" }
+    if Nx.Button.UseClientAtlases then
+        Nx.Button:UseClientAtlases()
+    end
     Nx.Button.TypeData["QuestWatching"] = {
         Bool = true,
         Up = "Interface\\Addons\\Carbonite\\Gfx\\Buttons\\DotOn",
