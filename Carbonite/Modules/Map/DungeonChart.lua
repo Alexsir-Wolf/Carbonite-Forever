@@ -595,7 +595,13 @@ local function drawRoute(view, legs, w, h)
     end
 end
 
-local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses)
+local PIN_QUEST = {
+    turnin = PIN_TURNIN,
+    start = PIN_NOTE,
+    item = "Interface\\Icons\\INV_Misc_Bag_08",
+}
+
+local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests)
     for _, p in ipairs(view.Pins) do p:Hide() end
     local n = 0
     local size = max(14, min(26, 18 * scale))
@@ -643,6 +649,24 @@ local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses)
             add(PIN_TURNIN, t.x, t.y, { t.npc or "" })
         end
     end
+    for _, q in ipairs(quests or {}) do
+        add(PIN_QUEST[q.kind], q.x, q.y, { q.tip })
+    end
+end
+
+-- The MapUtils floor (DungeonPins.lua) drawn by this chart floor: its own
+-- for MapUtils' art; for ForeverDungeonJournal's, the one of the same game
+-- map, else of the same position when the current dungeon has as many
+-- floors in both. Its quest pins are placed on the art as they are: both
+-- draw the game's map layout.
+function DC.PinKey(data, floorN, here)
+    local fl = data.floors and data.floors[floorN]
+    if not fl then return nil end
+    if fl.key then return fl.key end
+    local P = Nx.DungeonPins
+    if fl.uiMapID and P and P.pins[tostring(fl.uiMapID)] then return tostring(fl.uiMapID) end
+    local floors = here and here.data and here.data.floors
+    if floors and #floors == #data.floors and floors[floorN] then return floors[floorN].key end
 end
 
 function DC:UpdateDJ(f, dj, name, W, H)
@@ -674,7 +698,11 @@ function DC:UpdateDJ(f, dj, name, W, H)
     drawDJArt(view, dj, fl, cw, ch)
     local bosses = DC.BossList(dj, data)
     drawRoute(view, DC.RouteLegs(data, bosses, floorN), cw, ch)
-    drawDJPins(view, dj, data, floorN, cw, ch, fit * zoom, bosses)
+    local DG = Nx.DungeonGuide
+    local here = DG and not self.Browse and DG:Here()
+    -- Not browsing: the chart shows the dungeon the player is in.
+    local quests = DG and DG:FloorPins(DC.PinKey(data, floorN, here or nil))
+    drawDJPins(view, dj, data, floorN, cw, ch, fit * zoom, bosses, quests)
     self:ShareBosses(bosses)
 
     local title = djName(dj, name)

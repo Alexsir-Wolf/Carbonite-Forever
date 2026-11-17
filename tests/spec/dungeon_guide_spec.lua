@@ -12,6 +12,10 @@ local PINS = {
             { "boss", 0.2, 0.2, 1 },
             { "boss", 0.5, 0.5, 2 },
             { "boss", 0.52, 0.52, 22 },
+            { "questend", 0.3, 0.3, 100 },
+            { "queststart", 0.3, 0.3, 101 },
+            { "item", 0.4, 0.4, 900, "Crest" },
+            { "item", 0.45, 0.45, 900, "Crest" },
         },
         ["292"] = {
             { "level", 0.1, 0.9, "291", true },
@@ -21,7 +25,7 @@ local PINS = {
     },
     bosses = { [1] = "Rhahk'Zor <The Foreman>", [2] = "Sneed's Shredder / Sneed", [22] = "Sneed's Shredder / Sneed",
         [3] = "Gilnid", [4] = "Mr. Smite", [5] = "Edwin VanCleef" },
-    quests = {},
+    quests = { [100] = "Old Quest", [101] = "Next Quest" },
     heights = { ["292"] = 700 },
 }
 
@@ -35,7 +39,9 @@ local function load(opts)
         EJ_SelectInstance = opts.ej and function() end,
         EJ_GetEncounterInfoByIndex = opts.ej and function(i) return opts.ej[i] end,
     })
-    env.Nx = { DungeonPins = PINS, db = { char = opts.char or {} }, Map = { Maps = {} } }
+    env.Nx = { DungeonPins = PINS, db = { char = opts.char or {} }, Map = { Maps = {} }, Quest = opts.quest }
+    env.GetNumQuestLeaderBoards = opts.boards and function(qi) return #opts.boards[qi] end
+    env.GetQuestLogLeaderBoard = opts.boards and function(i, qi) return opts.boards[qi][i][1], "monster", opts.boards[qi][i][2] end
     loader.run(env, "Carbonite/Modules/Map/DungeonGuide.lua")
     return env.Nx.DungeonGuide, env
 end
@@ -181,5 +187,70 @@ describe("DungeonChart: planta do MapUtils e rota", function()
         expect(DC:Current("mu")).toBe("The Deadmines")
         DC:Close()
         expect(DC:Current("mu")).toBeNil()
+    end)
+end)
+
+local function quests()
+    local cur = {
+        { QId = 100, QI = 1, Title = "Velha Quest", Header = "Elwynn" },
+        { QId = 200, QI = 2, Title = "Na Masmorra", Header = "Minas Mortas", Complete = 1 },
+        { QId = 300, QI = 3, Title = "Objetivo Dentro", Header = "Westfall", Q = { Objectives = { { "Gilnid|291|32|50|50" } } } },
+        { QId = 400, QI = 4, Title = "Fora", Header = "Westfall", Q = { Objectives = { "Bandido|1436|32|50|50" } } },
+    }
+    local ids = {}
+    for _, c in ipairs(cur) do ids[c.QId] = c end
+    return { CurQ = cur, IdToCurQ = ids }
+end
+
+describe("DungeonGuide: quests e itens da masmorra (#83)", function()
+    it("acha as quests do registro pelo cabeçalho, pelos pinos do MapUtils e pelos objetivos", function()
+        local DG = load({ quest = quests(), boards = { [1] = { { "Satchel: 0/1", false } }, [2] = {}, [3] = { { "Gilnid morto", true } } } })
+        local list = DG:LogQuests()
+        local titles = {}
+        for i, q in ipairs(list) do titles[i] = q.title end
+        expect(table.concat(titles, ", ")).toBe("Velha Quest, Na Masmorra, Objetivo Dentro")
+        expect(list[1].objectives[1].text).toBe("Satchel: 0/1")
+        expect(list[2].complete).toBe(true)
+        expect(list[3].objectives[1].done).toBe(true)
+    end)
+
+    it("na planta: entrega de quest do registro, início de quest não pega e itens", function()
+        local DG = load({ quest = quests() })
+        local pins = DG:FloorPins("291")
+        expect(#pins).toBe(4)
+        expect(pins[1].kind).toBe("turnin")
+        expect(pins[1].tip).toBe("Turn in: Velha Quest")
+        expect(pins[2].kind).toBe("start")
+        expect(pins[2].tip).toBe("Starts quest: Next Quest")
+        expect(pins[3].tip).toBe("Quest item: Crest")
+    end)
+
+    it("não marca a entrega de quest fora do registro nem o início de quest feita", function()
+        local q = quests()
+        q.IdToCurQ[100] = nil
+        q.CurCharacter = { Q = {} }
+        q.GetQuest = function(_, id) if id == 101 then return "C" end end
+        local DG = load({ quest = q })
+        local pins = DG:FloorPins("291")
+        expect(#pins).toBe(2)
+        expect(pins[1].kind).toBe("item")
+    end)
+
+    it("o painel lista as quests, os objetivos e os itens de quest", function()
+        local DG = load({ quest = quests(), boards = { [1] = { { "Satchel: 0/1", false } }, [2] = {}, [3] = {} } })
+        local text = table.concat(DG:Lines(), "\n")
+        expect(text:find("Quests in this dungeon", 1, true) ~= nil).toBe(true)
+        expect(text:find("\nVelha Quest\n  - Satchel: 0/1", 1, true) ~= nil).toBe(true)
+        expect(text:find("|cff40ff40Na Masmorra (complete)|r", 1, true) ~= nil).toBe(true)
+        expect(text:find("Quest items here: Crest (2)", 1, true) ~= nil).toBe(true)
+    end)
+
+    it("a planta do DungeonJournal usa os pinos do mesmo mapa do jogo", function()
+        local DC = loadChart({})
+        expect(DC.PinKey({ floors = { { uiMapID = 291 } } }, 1)).toBe("291")
+        expect(DC.PinKey({ floors = { { key = "292" } } }, 1)).toBe("292")
+        local here = { data = PINS.instances[36] }
+        expect(DC.PinKey({ floors = { { texture = "a" }, { texture = "b" } } }, 2, here)).toBe("292")
+        expect(DC.PinKey({ floors = { { texture = "a" } } }, 1, here)).toBeNil()
     end)
 end)

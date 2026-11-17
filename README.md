@@ -21,7 +21,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - Integra o minimapa da Blizzard à janela do mapa (modo acoplado) e organiza os botões de minimapa de outros addons.
 - Em battlegrounds, mostra os objetivos com timers e ordens rápidas. Segure **Alt** para ver os nomes dos jogadores.
 - Mapas de masmorra estáticos no menu do mapa, a partir do ForeverDungeonJournal, do FojjiCore ou do MapUtils, quando instalados.
-- Dentro de masmorras (o cliente não dá mapa nem posição lá), a tecla **M** abre a planta da masmorra com a rota até os chefes: linha da entrada passando pelos chefes, os mortos apagados e o próximo destacado. O minimapa ao vivo fica num canto, mostrando onde você está, e um painel ao lado lista os chefes na ordem. Na janela acoplada, o minimapa ao vivo continua como antes.
+- Dentro de masmorras (o cliente não dá mapa nem posição lá), a tecla **M** abre a planta da masmorra com a rota até os chefes: linha da entrada passando pelos chefes, os mortos apagados e o próximo destacado. O minimapa ao vivo fica num canto, mostrando onde você está, e um painel ao lado lista os chefes na ordem e as quests do seu registro para aquela masmorra, com os objetivos. Na planta aparecem também onde entregar essas quests, onde começam outras e os itens de quest que ficam ali. Na janela acoplada, o minimapa ao vivo continua como antes.
 - API para outros addons desenharem ícones no mapa do Carbonite ([Map Provider API](Carbonite/Docs/MapProvider.md)).
 
 ### Navegação

@@ -1,11 +1,17 @@
 -- Carbonite | Modules / Map / DungeonGuide
--- Boss route for the dungeon the player is in (#103).
+-- Boss route and quests for the dungeon the player is in (#103, #83).
 --
 -- Classic Era based clients (Forever) give no map and no player position
 -- inside dungeons (UnmappedInstance.lua). With the map maximized (M) inside
 -- such an instance, a panel at the right of the map window lists the bosses
--- in route order: the killed ones dimmed, the next one highlighted.
+-- in route order (the killed ones dimmed, the next one highlighted), then
+-- the quests of the player's log for this dungeon with their objectives,
+-- and the quest items MapUtils places in it. The dungeon chart shows the
+-- same quests where MapUtils has a position (DG:FloorPins).
 --
+-- * Quests: under the dungeon's name in the quest log, given or turned in
+--   inside it (MapUtils' pins), or with an objective or turn-in on its
+--   floors in Carbonite's quest data.
 -- * Order: the dungeon chart's when it shows this dungeon (DungeonChart.lua:
 --   ForeverDungeonJournal or FojjiCore, in their run order), else the
 --   client's Encounter Journal when it has one, else MapUtils' boss pins
@@ -22,6 +28,9 @@
 --   DG.RouteOrder(points, x, y) indexes of points, nearest first from x, y
 --   DG:SetChartBosses(id, list) the chart's own boss list for instance id
 --   DG:NoteKill(name, npc) / DG:IsKilled(name, npc) / DG:ResetKills(id)
+--   DG:LogQuests(here)          { { qId, title, complete, objectives }, ... }
+--   DG:FloorPins(key)           quest and item pins of one MapUtils floor
+--   DG.PinItems(data)           names of the quest items placed in a dungeon
 --   DG:Lines(here)              the panel's text lines
 --   DG:PanelWidth(mapW)         panel width for a map area; 0 = no panel
 --   DG:UpdatePanel(map, w, h)   lay out the panel (w = 0 hides it)
@@ -238,6 +247,141 @@ function DG:IsBoss(name, npc)
 end
 
 --------------------------------------------------------------------------------
+-- Quests and quest items (#83)
+--------------------------------------------------------------------------------
+
+-- uiMapIDs of the dungeon's floors, as a set.
+local function MapSet(data)
+    local maps = {}
+    for _, fl in ipairs(data and data.floors or {}) do
+        if fl.map then maps[fl.map] = true end
+    end
+    return maps
+end
+
+-- A Carbonite location string ("desc|uiMapID|...") on one of `maps`.
+local function LocIn(loc, maps)
+    local id = type(loc) == "string" and tonumber(loc:match("^[^|]*|(%d+)|"))
+    return id and maps[id] or false
+end
+
+local function RecordIn(record, maps)
+    if type(record) ~= "table" or not next(maps) then return false end
+    if LocIn(record.End, maps) then return true end
+    for _, obj in pairs(type(record.Objectives) == "table" and record.Objectives or {}) do
+        for _, loc in ipairs(type(obj) == "table" and obj or { obj }) do
+            if LocIn(loc, maps) then return true end
+        end
+    end
+    return false
+end
+
+-- MapUtils' quest pins of the dungeon: questID -> true.
+local function PinQuests(data)
+    local P, ids = Pins(), {}
+    for _, fl in ipairs(data and data.floors or {}) do
+        for _, row in ipairs(P.pins[fl.key] or {}) do
+            if row[1] == "queststart" or row[1] == "questend" then ids[row[4]] = true end
+        end
+    end
+    return ids
+end
+
+local function Objectives(cur)
+    local count, board = _G.GetNumQuestLeaderBoards, _G.GetQuestLogLeaderBoard
+    local out = {}
+    if not (count and board and cur.QI) then return out end
+    local ok, n = pcall(count, cur.QI)
+    for i = 1, ok and tonumber(n) or 0 do
+        local okText, text, _, done = pcall(board, i, cur.QI)
+        if okText and type(text) == "string" and text ~= "" then
+            out[#out + 1] = { text = text, done = done and true or false }
+        end
+    end
+    return out
+end
+
+-- Quests of the player's log for this dungeon: under its name in the log,
+-- given or turned in inside it (MapUtils), or with an objective or turn-in
+-- on its floors (Carbonite's quest data).
+function DG:LogQuests(here)
+    here = here or self:Here()
+    local cur = Nx.Quest and Nx.Quest.CurQ
+    if not here or type(cur) ~= "table" then return {} end
+    local maps, pinned = MapSet(here.data), PinQuests(here.data)
+    local list, seen = {}, {}
+    for _, c in ipairs(cur) do
+        local qId = c.QId
+        if qId and not seen[qId] and (c.Header == here.name or pinned[qId] or RecordIn(c.Q, maps)) then
+            seen[qId] = true
+            list[#list + 1] = { qId = qId, title = c.Title or Pins().quests[qId] or tostring(qId),
+                complete = c.Complete == 1 or c.Complete == true, objectives = Objectives(c) }
+        end
+    end
+    return list
+end
+
+local function InLog(qId)
+    local ids = Nx.Quest and Nx.Quest.IdToCurQ
+    return type(ids) == "table" and ids[qId] or nil
+end
+
+local function QuestDone(qId)
+    local Q = Nx.Quest
+    if not (Q and Q.GetQuest and Q.CurCharacter) then return false end
+    local ok, status = pcall(Q.GetQuest, Q, qId)
+    return ok and status == "C" or false
+end
+
+local function QuestTitle(qId)
+    local cur = InLog(qId)
+    if cur and cur.Title then return cur.Title end
+    local api = _G.C_QuestLog
+    if api and api.GetQuestInfo then
+        local ok, title = pcall(api.GetQuestInfo, qId)
+        if ok and type(title) == "string" and title ~= "" then return title end
+    end
+    return Pins().quests[qId] or tostring(qId)
+end
+
+-- Quest pins of one MapUtils floor for the chart: turn-ins of quests in the
+-- log, givers of quests not taken nor done, and quest items.
+-- { { kind = "turnin" | "start" | "item", x, y, tip }, ... }
+function DG:FloorPins(key)
+    local out = {}
+    for _, row in ipairs(key and Pins().pins[key] or {}) do
+        local kind, x, y, arg = row[1], row[2], row[3], row[4]
+        if kind == "questend" and InLog(arg) then
+            out[#out + 1] = { kind = "turnin", x = x, y = y, tip = format(L["Turn in: %s"], QuestTitle(arg)) }
+        elseif kind == "queststart" and not InLog(arg) and not QuestDone(arg) then
+            out[#out + 1] = { kind = "start", x = x, y = y, tip = format(L["Starts quest: %s"], QuestTitle(arg)) }
+        elseif kind == "item" then
+            out[#out + 1] = { kind = "item", x = x, y = y, tip = format(L["Quest item: %s"], row[5] or "") }
+        end
+    end
+    return out
+end
+
+-- Quest items MapUtils places in the dungeon: { "Name (count)", ... }
+function DG.PinItems(data)
+    local P, counts, order = Pins(), {}, {}
+    for _, fl in ipairs(data and data.floors or {}) do
+        for _, row in ipairs(P.pins[fl.key] or {}) do
+            local name = row[1] == "item" and row[5]
+            if name and name ~= "" then
+                if not counts[name] then order[#order + 1] = name end
+                counts[name] = (counts[name] or 0) + 1
+            end
+        end
+    end
+    local out = {}
+    for i, name in ipairs(order) do
+        out[i] = counts[name] > 1 and format("%s (%d)", name, counts[name]) or name
+    end
+    return out
+end
+
+--------------------------------------------------------------------------------
 -- Panel
 --------------------------------------------------------------------------------
 
@@ -264,6 +408,25 @@ function DG:Lines(here)
         else
             lines[#lines + 1] = format("%d. %s", i, b.name)
         end
+    end
+    local quests = self:LogQuests(here)
+    local items = DG.PinItems(here.data)
+    if quests[1] or items[1] then
+        lines[#lines + 1] = " "
+        lines[#lines + 1] = "|cffffd100" .. L["Quests in this dungeon"] .. "|r"
+    end
+    for _, q in ipairs(quests) do
+        if q.complete then
+            lines[#lines + 1] = format("|cff40ff40%s %s|r", q.title, L["(complete)"])
+        else
+            lines[#lines + 1] = q.title
+        end
+        for _, o in ipairs(q.objectives) do
+            lines[#lines + 1] = format(o.done and "  |cff808080- %s|r" or "  - %s", o.text)
+        end
+    end
+    if items[1] then
+        lines[#lines + 1] = "|cff9d9d9d" .. format(L["Quest items here: %s"], table.concat(items, ", ")) .. "|r"
     end
     self.LinesCache, self.LinesFor, self.LinesTime = lines, here.id, now
     return lines
@@ -358,6 +521,7 @@ end
 local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("ENCOUNTER_END")
+events:RegisterEvent("QUEST_LOG_UPDATE")
 events:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_ENTERING_WORLD" then
         if DG:OnEnterWorld(...) then
@@ -369,6 +533,11 @@ events:SetScript("OnEvent", function(self, event, ...)
         if CombatLogGetCurrentEventInfo then
             local _, sub, _, _, _, _, _, guid, name = CombatLogGetCurrentEventInfo()
             DG:OnCombatLog(sub, guid, name)
+        end
+    elseif event == "QUEST_LOG_UPDATE" then
+        if DG:Here() then
+            DG.Version = DG.Version + 1
+            DG.Dirty = true
         end
     elseif event == "ENCOUNTER_END" then
         local _, name, _, _, success = ...
