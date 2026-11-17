@@ -50,16 +50,42 @@
 	</ScrollChild>
 </ScrollFrame>
 
+<!-- Minimap launcher in the LibDBIcon look: round icon, gold tracking border,
+     zoom-button highlight. Behaviour lives in Modules/Map/MinimapButtonEngine.lua. -->
 <Button name="NXMiniMapBut" parent="Minimap" toplevel="true" hidden="false" frameStrata="LOW" enableMouse="true" movable="true">
-	<NormalTexture file="Interface\AddOns\Carbonite\Gfx\MMBut" />
-	<PushedTexture alphaMode="ADD" file="Interface\AddOns\Carbonite\Gfx\MMBut" />
 	<HighlightTexture alphaMode="ADD" file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight" />
 	<Size>
-		<AbsDimension x="32" y="32" />
+		<AbsDimension x="31" y="31" />
 	</Size>
 	<Anchors>
 		<Anchor point="TOPLEFT" />
 	</Anchors>
+	<Layers>
+		<Layer level="BACKGROUND">
+			<Texture parentKey="background" file="Interface\Minimap\UI-Minimap-Background">
+				<Size x="24" y="24" />
+				<Anchors>
+					<Anchor point="CENTER" />
+				</Anchors>
+			</Texture>
+		</Layer>
+		<Layer level="ARTWORK">
+			<Texture parentKey="icon" file="Interface\AddOns\Carbonite\Gfx\MMBut">
+				<Size x="18" y="18" />
+				<Anchors>
+					<Anchor point="CENTER" />
+				</Anchors>
+			</Texture>
+		</Layer>
+		<Layer level="OVERLAY">
+			<Texture parentKey="border" file="Interface\Minimap\MiniMap-TrackingBorder">
+				<Size x="50" y="50" />
+				<Anchors>
+					<Anchor point="TOPLEFT" />
+				</Anchors>
+			</Texture>
+		</Layer>
+	</Layers>
 	<Scripts>
 		<OnEnter>
 			Nx.NXMiniMapBut:NXOnEnter (self)
@@ -73,19 +99,17 @@
 		<OnClick>
 			Nx.NXMiniMapBut:NXOnClick (button, down)
 		</OnClick>
+		<OnMouseDown>
+			Nx.NXMiniMapBut:NXOnMouseDown (self, button)
+		</OnMouseDown>
 		<OnMouseUp>
-			self:StopMovingOrSizing()
-			self.NXDrag = false
+			Nx.NXMiniMapBut:NXOnMouseUp (self, button)
 		</OnMouseUp>
 		<OnDragStart>
-			if button == "LeftButton" and IsShiftKeyDown() then
-				self:StartMoving()
-				self.NXDrag = true
-			end
+			Nx.NXMiniMapBut:NXOnDragStart (self, button)
 		</OnDragStart>
 		<OnDragStop>
-			self:StopMovingOrSizing()
-			self.NXDrag = false
+			Nx.NXMiniMapBut:NXOnDragStop (self)
 		</OnDragStop>
 		<OnUpdate>
 			if Nx then

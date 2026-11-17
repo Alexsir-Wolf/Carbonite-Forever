@@ -105,7 +105,6 @@ L["Shift left click toggle minimize"] = "Mayús + clic izquierdo: alternar minim
 L["Alt left click toggle Watch List"] = "Alt + clic izquierdo: alternar lista de seguimiento"
 L["Middle click toggle Guide"] = "Clic central: alternar guía"
 L["Right click for Menu"] = "Clic derecho: menú"
-L["Shift drag to move"] = "Mayús + arrastrar para mover"
 L["Hide In Combat"] = "Ocultar en combate"
 L["Lock"] = "Bloquear"
 L["Layer"] = "Capa"
