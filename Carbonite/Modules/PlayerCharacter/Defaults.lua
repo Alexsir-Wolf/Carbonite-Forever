@@ -390,6 +390,7 @@ Nx.Defaults = {
             PlyrArrowSize = 32,
             RestoreScaleAfterTrack = true,
             RouteUse = true,
+            RouteGround = true,         -- walking legs around the terrain (#79)
             TopTooltip = false,
             IconScaleMin = 1,
             ShowOthersInCities = true,
