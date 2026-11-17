@@ -47,6 +47,7 @@ Skin.themes = {
             hover       = "0.22|0.17|0.04|1",
             pressed     = "0.45|0.36|0.12|1",
             rowHover    = "1|0.82|0|0.12",
+            rowStripe   = "1|0.90|0.70|0.05",
             listBg      = "0|0|0|0.35",
             tabBarBg    = "0|0|0|0.45",
             separator   = "0.45|0.36|0.20|1",
@@ -111,6 +112,7 @@ Skin.themes = {
             hover       = "0.18|0.16|0.04|1",
             pressed     = "0.55|0.62|0.80|1",
             rowHover    = "0.20|0.30|0.60|0.18",
+            rowStripe   = "0|0|0.20|0.06",
             listBg      = "1|1|1|0.25",
             tabBarBg    = "0.80|0.80|0.85|0.6",
             separator   = "0.60|0.60|0.65|1",
@@ -158,6 +160,7 @@ Skin.activeName = "Blizzard"
 --   hover       mouse-over glow of a button (added on top, ADD blend)
 --   pressed     button held down
 --   rowHover    mouse-over band of a list row
+--   rowStripe   every other row of a long list, so the eye follows the line
 --   listBg      list body
 --   tabBarBg    tab bar strip
 --   separator   tab bar border lines
@@ -172,6 +175,7 @@ Skin.tokens = {
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
     rowHover    = "0.5|0.5|0.7|0.18",
+    rowStripe   = "1|1|1|0.04",
     listBg      = "0|0|0|0.3",
     tabBarBg    = "0|0|0|0.5",
     separator   = "0.313|0.313|0.313|1",

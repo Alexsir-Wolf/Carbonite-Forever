@@ -6032,7 +6032,8 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
     frm:SetScript ("OnMouseWheel", self.OnMouseWheel)
     frm:EnableMouseWheel (true)
 
-    frm.texture = frm:CreateTexture()
+    -- Background layer: the row bands (ItemSetBand) sit on top of it.
+    frm.texture = frm:CreateTexture (nil, "BACKGROUND")
     frm.texture:SetAllPoints (frm)
     Carbonite.UI.Skin:Paint (frm.texture, "listBg")
 
@@ -6756,6 +6757,8 @@ function Nx.List:Update (showLast)
 
     end
 
+    self:UpdateBands (lineH, hdrH)
+
     -- Position selected line
 
     local sfrm = self.SelFrm
@@ -6768,6 +6771,55 @@ function Nx.List:Update (showLast)
         sfrm:SetHeight (lineH + 1)
         sfrm:SetPoint ("TOPLEFT", 0, -selY * lineH - self.HdrH)
         sfrm:Show()
+    end
+end
+
+---------------------------------------------------------------------------------------
+-- Paint the row bands (ItemSetBand) of the visible lines: a strip the width of
+-- the list behind the text, colored with a Skin token.
+-- self = instance
+---------------------------------------------------------------------------------------
+
+function Nx.List:UpdateBands (lineH, hdrH)
+
+    local data = self.BandData
+    local bands = self.Bands
+
+    if not data and not bands then
+        return
+    end
+
+    bands = bands or {}
+    self.Bands = bands
+
+    local right = self.Slider and self.Slider.Frm:GetWidth() or 0
+
+    for n = 1, self.Vis do
+
+        local token = data and data[self.Top + n - 1]
+        local t = bands[n]
+
+        if token then
+
+            if not t then
+                t = self.Frm:CreateTexture (nil, "BORDER")
+                bands[n] = t
+            end
+
+            Carbonite.UI.Skin:Paint (t, token)
+            t:ClearAllPoints()
+            t:SetPoint ("TOPLEFT", 0, -(n - 1) * lineH - hdrH)
+            t:SetPoint ("TOPRIGHT", -right, -(n - 1) * lineH - hdrH)
+            t:SetHeight (lineH)
+            t:Show()
+
+        elseif t then
+            t:Hide()
+        end
+    end
+
+    for n = self.Vis + 1, #bands do
+        bands[n]:Hide()
     end
 end
 
@@ -6901,6 +6953,10 @@ function Nx.List:Empty()
         wipe (self.FrmData)
     end
 
+    if self.BandData then
+        wipe (self.BandData)
+    end
+
 --    if self.FrmDataFrm then
 --        wipe (self.FrmDataFrm)
 --    end
@@ -7006,6 +7062,16 @@ function Nx.List:Sort()
         end
 
         self.Offsets = data
+    end
+
+    if self.BandData then
+        local data = {}
+
+        for n = 1, #t do
+            data[n] = self.BandData[t[n]]
+        end
+
+        self.BandData = data
     end
 end
 
@@ -7149,6 +7215,20 @@ function Nx.List:GetWatchItemRightPads (lineH)
         end
     end
     return pads
+end
+
+---------------------------------------------------------------------------------------
+-- Give a line a band behind its text, painted with a Skin token (the bar of a
+-- header, the stripe of every other row). index defaults to the last line.
+---------------------------------------------------------------------------------------
+
+function Nx.List:ItemSetBand (token, index)
+
+    if not self.BandData then
+        self.BandData = {}
+    end
+
+    self.BandData[index or self.Num] = token
 end
 
 function Nx.List:ItemSetOffset (offX, offY)
