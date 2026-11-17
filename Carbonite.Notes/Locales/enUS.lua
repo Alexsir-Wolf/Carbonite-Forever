@@ -77,3 +77,6 @@ L["Convergence"] = true
 L["Show library books still to find"] = true
 L["Show convergences (Skyborne)"] = true
 L["Show convergences for every character"] = true
+L["Map Pin"] = true
+L["NPC ID: %s"] = true
+L["Note:"] = true
