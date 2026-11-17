@@ -1225,6 +1225,14 @@ function Nx.Map:Create(index)
     local item = showMenu:AddItem(0, L["Quest Givers: Only Available Quests"], func, m)
     item:SetChecked(Nx.db.profile.Map, "QuestGiversAvailable")
 
+    -- Quest givers: which kinds of quest they show (#80)
+    local item = showMenu:AddItem(0, L["Quest Givers: Daily and Weekly Quests"], func, m)
+    item:SetChecked(Nx.db.profile.Map, "QuestGiversDaily")
+    local item = showMenu:AddItem(0, L["Quest Givers: Repeatable Quests"], func, m)
+    item:SetChecked(Nx.db.profile.Map, "QuestGiversRepeatable")
+    local item = showMenu:AddItem(0, L["Quest Givers: Event Quests"], func, m)
+    item:SetChecked(Nx.db.profile.Map, "QuestGiversEvent")
+
     -- World map toggle
     m.MenuIShowWorld = showMenu:AddItem(0, L["Show World"], self.Menu_OnShowWorld, m)
 
