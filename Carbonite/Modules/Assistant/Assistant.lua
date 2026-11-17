@@ -468,6 +468,12 @@ function Assistant:Render()
     shown(self.nextBut, not last)
     shown(self.doneBut, last)
     shown(self.optionsBut, last)
+    -- On the last page "Back" sits left of "Open options" (it was anchored to
+    -- the hidden "Next" and landed on top of it); "Skip" makes room, "Done"
+    -- ends the assistant the same way.
+    shown(self.skipBut, not last)
+    self.backBut:ClearAllPoints()
+    self.backBut:SetPoint("RIGHT", last and self.optionsBut or self.nextBut, "LEFT", -8, 0)
 end
 
 -------------------------------------------------------------------------------

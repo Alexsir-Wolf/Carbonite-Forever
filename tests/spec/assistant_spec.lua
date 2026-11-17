@@ -185,3 +185,12 @@ describe("assistente: páginas e integrações", function()
         expect(byName.Spoken.active).toBe(false)
     end)
 end)
+
+describe("assistente: botões da última página", function()
+    local src = loader.read("Carbonite/Modules/Assistant/Assistant.lua")
+
+    it("Voltar fica à esquerda de Abrir opções, não por cima dele", function()
+        expect(src:find('self.backBut:SetPoint("RIGHT", last and self.optionsBut or self.nextBut, "LEFT", -8, 0)', 1, true) ~= nil).toBe(true)
+        expect(src:find("shown(self.skipBut, not last)", 1, true) ~= nil).toBe(true)
+    end)
+end)
