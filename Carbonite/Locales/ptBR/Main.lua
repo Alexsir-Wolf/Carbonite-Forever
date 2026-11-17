@@ -157,6 +157,8 @@ L["Reset old tool bar data"] = "Dados antigos da barra de ferramentas redefinido
 -- NxTravel.lua
 L["Connection: %s to %s"] = "Conexão: %s para %s"
 L["Fly: %s to %s"] = "Voo: %s para %s"
+L["Use Hearthstone (%s)"] = "Usar Pedra de Regresso (%s)"
+L["Teleport"] = "Teleporte"
 
 -- NxHud.lua
 L[" %.1f deg"] = " %.1f graus"
