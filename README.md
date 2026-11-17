@@ -132,6 +132,7 @@ Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai 
 - Os dados de quests do Forever pertencem à equipe do Questie e são lidos do QuestieDB que você instalou. Esta edição não copia esses dados.
 - As pedras de encontro do Guia (`Carbonite/Data/camelot/Guides/MeetingStone.lua`) vêm da base de objetos do **QuestieDB** (Forever), também sob a GPL v3.
 - A perícia de pesca de cada zona (`Carbonite/Modules/Map/ZoneFishing.lua`), os curandeiros espirituais do Guia (`Carbonite/Data/camelot/Guides/SpiritHealer.lua`) e os livros da biblioteca e convergências (`Carbonite.Notes/Integrations/ForeverPoints.lua`) vêm do **MapUtils**, de D4KiR, também sob a GPL v3.
+- As rotas e períodos dos navios, zepelins e bonde (`Carbonite/Data/camelot/Transports.lua`), os ícones deles (`Carbonite/Gfx/Map/Transports/`) e o cálculo de posição e horário (`Carbonite/Modules/Map/Transports.lua`) também vêm do **MapUtils**, de D4KiR, sob a GPL v3.
 - Licença: [GNU GPL v3](LICENSE). O código continua aberto, e as mudanças precisam manter a mesma licença.
 
 ### Apoie o Carbonite
