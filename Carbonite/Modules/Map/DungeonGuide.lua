@@ -133,10 +133,18 @@ function DG.ObjectName(id)
     return Text("object:" .. tostring(id)) or tostring(id)
 end
 
+-- The Forever client hands some unit and combat log values as secret values:
+-- type() says "string", but reading them (match, gsub, compare) raises an
+-- error. Only plain values are read.
+local function Readable(value)
+    return not (issecretvalue and issecretvalue(value))
+end
+DG.Readable = Readable
+
 -- Keeps the client's name of a boss seen in the game.
 function DG:LearnName(guid, name)
     local npc = DG.NpcID(guid)
-    if npc and type(name) == "string" and name ~= "" and BossNpcs()[npc] and ClientNames()[npc] ~= name then
+    if npc and type(name) == "string" and Readable(name) and name ~= "" and BossNpcs()[npc] and ClientNames()[npc] ~= name then
         ClientNames()[npc] = name
         self.Dirty = true
         self.Version = self.Version + 1
@@ -146,7 +154,7 @@ end
 -- Boss names as the combat log gives them: no "<title>"; "A / B" is either.
 local function Names(name)
     local out = {}
-    if type(name) ~= "string" then return out end
+    if type(name) ~= "string" or not Readable(name) then return out end
     name = name:gsub("%s*<.->", "")
     for part in (name .. " / "):gmatch("(.-)%s*/%s+") do
         if part ~= "" then out[#out + 1] = part:lower() end
@@ -155,7 +163,7 @@ local function Names(name)
 end
 
 local function NpcID(guid)
-    if type(guid) ~= "string" then return nil end
+    if type(guid) ~= "string" or not Readable(guid) then return nil end
     local kind, id = guid:match("^(%a+)%-%d+%-%d+%-%d+%-%d+%-(%d+)")
     if kind == "Creature" or kind == "Vehicle" then return tonumber(id) end
 end
@@ -618,7 +626,8 @@ function DG:OnEnterWorld(isLogin, isReload)
 end
 
 function DG:OnCombatLog(sub, guid, name)
-    if sub ~= "UNIT_DIED" then return end
+    if not Readable(sub) or sub ~= "UNIT_DIED" then return end
+    if not Readable(name) then name = nil end
     local npc = NpcID(guid)
     self:LearnName(guid, name)
     if not self.Known then self:Bosses() end

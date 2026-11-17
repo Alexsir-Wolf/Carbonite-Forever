@@ -301,3 +301,28 @@ describe("DungeonGuide: nomes do cliente, com o AceLocale como reserva", functio
         expect(DG.FloorName({ key = "292", map = 292, named = true })).toBe("Enseada do Cliente")
     end)
 end)
+
+describe("DungeonGuide: valores secretos do cliente", function()
+    -- The Forever client hands some GUIDs and names as secret values: reading them raises an error.
+    local SECRET_GUID = "Creature-0-1-36-1-1-0000ABCD"
+
+    local function loadSecret()
+        local DG, env = load()
+        env.issecretvalue = function(v) return v == SECRET_GUID or v == "Segredo" end
+        return DG
+    end
+
+    it("GUID secreto não é lido nem marca chefe", function()
+        local DG = loadSecret()
+        expect(DG.NpcID(SECRET_GUID)).toBeNil()
+        expect(function() DG:LearnName(SECRET_GUID, "Rhahk'Zor") end).toNotThrow()
+        DG:OnCombatLog("UNIT_DIED", SECRET_GUID, "Segredo")
+        expect(DG:Bosses()[1].killed).toBeFalsy()
+    end)
+
+    it("nome secreto é ignorado e o id do NPC ainda vale", function()
+        local DG = loadSecret()
+        DG:OnCombatLog("UNIT_DIED", "Creature-0-1-36-1-1-0000ABCE", "Segredo")
+        expect(DG:Bosses()[1].killed).toBe(true)
+    end)
+end)
