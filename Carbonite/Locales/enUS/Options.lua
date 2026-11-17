@@ -380,3 +380,4 @@ L["Classic"] = true
 L["Import %s character data and reload?"] = true
 L["Import"] = true
 L["Delete %s character data?"] = true
+L["Diagnostics"] = true
