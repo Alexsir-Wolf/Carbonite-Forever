@@ -1,53 +1,38 @@
-# description of this workflow, can be anything you want
-name: Package and release
+name: Release
 
-# we need to let GitHub know _when_ we want to release, typically only when we create a new tag.
-# this will target only tags, and not all pushes to the master branch.
-# this part can be heavily customized to your liking, like targeting only tags that match a certain word,
-# other branches or even pullrequests.
+# Gera o zip com todas as pastas Carbonite* e publica a release no GitHub,
+# de onde o WowUp e outros gerenciadores instalam e atualizam o addon.
+#
+# So tags da edicao Forever (ex.: v12.1.0-00023-forever.2) disparam a release.
+# Tags do upstream que chegam num merge nao podem publicar nada aqui.
 on:
   push:
     tags:
-      # Forever edition releases only (e.g. v12.1.0-00023-forever.1). Upstream tags that
-      # come along with a merge must not publish a release here.
       - 'v*-forever*'
 
-# a workflow is built up as jobs, and within these jobs are steps
 jobs:
-
-  # "release" is a job, you can name it anything you want
   release:
-
-    # we can run our steps on pretty much anything, but the "ubuntu-latest" image is a safe bet
     runs-on: ubuntu-latest
 
-    # The fork's GITHUB_TOKEN is read-only by default; creating the release needs write access.
+    # Criar a release e anexar o zip exige escrita no repositorio.
     permissions:
       contents: write
 
-    # specify the environment variables used by the packager, matching the secrets from the project on GitHub
     env:
+      # Sempre disponivel: publica a release no GitHub (zip + release.json).
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+      # Opcionais. Sem o secret (ou sem o id do projeto no .toc), o packager
+      # pula o envio para o site e a release no GitHub sai normalmente.
       CF_API_KEY: ${{ secrets.CF_API_KEY }}
-      WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
       WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
-      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}  # "GITHUB_TOKEN" is a secret always provided to the workflow
-                                                 # for your own token, the name cannot start with "GITHUB_"
 
-    # "steps" holds a list of all the steps needed to package and release our AddOn
     steps:
-
-      # we first have to clone the AddOn project, this is a required step
-      - name: Clone project
-        uses: actions/checkout@v3
+      - name: Clonar o projeto
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # gets git history for changelogs
+          fetch-depth: 0  # historico e tags para a versao e o changelog
 
-      # once cloned, we just run the GitHub Action for the packager project
-      - name: Package and release
-        run: curl -s https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh | sed 's/### Deploy the zipfile./zip -d \$archive CarboniteAllinOneRetailClassic\/\* CarboniteAllinOneRetailClassic/g' | bash -s -- -n "Carbonite-Forever-{project-version}"
-        shell: bash
-        
-        #uses: BigWigsMods/packager@v2
-        #with:
-        #  args: -n "{package-name}-{project-version}"
-       
+      - name: Empacotar e publicar
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -n "Carbonite-Forever-{project-version}"

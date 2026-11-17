@@ -1,13 +1,28 @@
+# Pacote do Carbonite-Forever (BigWigsMods/packager).
+# O repositorio inteiro vira a pasta "Carbonite" e cada modulo e movido para a
+# raiz do zip. "Carbonite/Carbonite" fica por ultimo: os outros modulos precisam
+# sair da pasta antes que o conteudo do nucleo seja movido para ela.
+package-as: Carbonite
+
+enable-nolib-creation: no
+
 move-folders:
-  CarboniteAllinOneRetailClassic/Carbonite: Carbonite
-  CarboniteAllinOneRetailClassic/Carbonite.Quests: Carbonite.Quests
-  CarboniteAllinOneRetailClassic/Carbonite.Info: Carbonite.Info
-  CarboniteAllinOneRetailClassic/Carbonite.Notes: Carbonite.Notes
-  CarboniteAllinOneRetailClassic/Carbonite.Warehouse: Carbonite.Warehouse
+  Carbonite/Carbonite.Quests: Carbonite.Quests
+  Carbonite/Carbonite.Info: Carbonite.Info
+  Carbonite/Carbonite.Notes: Carbonite.Notes
+  Carbonite/Carbonite.Warehouse: Carbonite.Warehouse
+  Carbonite/Carbonite: Carbonite
+
 manual-changelog:
   filename: CHANGELOG-FOREVER.md
   markup-type: markdown
+
 ignore:
   - tests
-  - .luacheckrc
+  - docs
   - .github
+  - .claude
+  - .luacheckrc
+  - .gitattributes
+  - .gitignore
+  - README.md
