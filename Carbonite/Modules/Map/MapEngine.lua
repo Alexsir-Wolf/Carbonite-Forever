@@ -2902,15 +2902,21 @@ local function screenRect(f)
     return l * s, b * s, (l + w) * s, (b + h) * s
 end
 
--- True when f draws above the map window: higher strata, or the same one
--- at a higher level (a window raised over the map).
-local function aboveMapWindow(f, host)
+-- True when win draws above the map window: higher strata, a higher level
+-- in the same one, or the same level and raised after it (the quest log
+-- opened over the map). Measured on Forever: both at level 1.
+local function aboveMapWindow(win, mapWin)
+    local f, host = win.Frm, mapWin.Frm
     local rank = MINIMAP_STRATA_RANK[f:GetFrameStrata()] or -1
     local hostRank = MINIMAP_STRATA_RANK[host:GetFrameStrata()] or -1
     if rank ~= hostRank then
         return rank > hostRank
     end
-    return f:GetFrameLevel() > host:GetFrameLevel()
+    local level, hostLevel = f:GetFrameLevel(), host:GetFrameLevel()
+    if level ~= hostLevel then
+        return level > hostLevel
+    end
+    return (win.RaisedSeq or 0) > (mapWin.RaisedSeq or 0)
 end
 
 ---
@@ -2931,7 +2937,7 @@ function Nx.Map:MinimapCoveredByWindow()
     end
     for win in pairs(Nx.Window.Wins or {}) do
         local f = win.Frm
-        if win ~= self.Win and f and f:IsVisible() and aboveMapWindow(f, host) then
+        if win ~= self.Win and f and f:IsVisible() and aboveMapWindow(win, self.Win) then
             local wl, wb, wr, wt = screenRect(f)
             if wl and wl < r and wr > l and wb < t and wt > b then
                 return true
