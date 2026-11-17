@@ -406,6 +406,7 @@ Nx.Defaults = {
             ShowAreaNames = true,
             ShowAreaNames2D = false,
             ShowZoneLevels = true,          -- Zone level ranges over the continent map (#68)
+            ShowTransports = true,          -- Moving vessels and pier departure times (#78)
             Hide3DOccluded = true,
             View3D = false,
             View3DTilt = 55,
