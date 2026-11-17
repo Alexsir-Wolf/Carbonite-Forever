@@ -42,13 +42,13 @@ end
 -- top of a 1024x1024 file.
 local MU_MEDIA = "Interface\\AddOns\\MapUtils\\media\\"
 
-function DC.PinMap(inst, pins, heights)
-    local data = { name = inst.name, floors = {}, entrances = {}, transitions = {} }
+function DC.PinMap(inst, pins, heights, id)
+    local data = { id = id, floors = {}, entrances = {}, transitions = {} }
     local index = {}
     for f, fl in ipairs(inst.floors or {}) do
         index[fl.key] = f
         data.floors[f] = { texture = MU_MEDIA .. fl.key, texBottom = (heights and heights[fl.key] or 683) / 1024,
-            uiMapID = fl.map, key = fl.key, label = fl.label }
+            uiMapID = fl.map, key = fl.key, named = fl.named, map = fl.map }
     end
     for f, fl in ipairs(inst.floors or {}) do
         for _, row in ipairs(pins and pins[fl.key] or {}) do
@@ -68,26 +68,30 @@ local function MU()
     local P = Nx.DungeonPins
     if not (P and addonLoaded("MapUtils")) then return end
     if not muApi then
+        -- Keyed by instance id; the names shown come from DungeonGuide.
         local maps = {}
-        for _, inst in pairs(P.instances) do
+        for id, inst in pairs(P.instances) do
             if inst.floors and inst.floors[1] then
-                maps[inst.name] = DC.PinMap(inst, P.pins, P.heights)
+                maps[id] = DC.PinMap(inst, P.pins, P.heights, id)
             end
         end
-        local function here()
+        local function name(id)
             local DG = Nx.DungeonGuide
-            local h = DG and DG:Here()
-            return h and h.data and maps[h.data.name] and h or nil
+            return DG and DG.InstanceName(id) or tostring(id)
         end
         muApi = {
             DUNGEON_MAPS = maps,
             CurrentDungeon = function()
-                local h = here()
-                return h and h.data.name
+                local DG = Nx.DungeonGuide
+                local h = DG and DG:Here()
+                return h and maps[h.id] and h.id or nil
             end,
-            LocalizeDungeonName = function(name)
-                local h = here()
-                return h and h.data.name == name and h.name or name
+            LocalizeDungeonName = name,
+            DungeonNavList = function()
+                local ids = {}
+                for id in pairs(maps) do ids[#ids + 1] = id end
+                table.sort(ids, function(a, b) return name(a) < name(b) end)
+                return ids
             end,
         }
     end
@@ -525,7 +529,8 @@ end
 
 local function floorLabel(dj, data, n)
     local fl = data.floors and data.floors[n]
-    return fl and fl.label or djFloorLabel(dj, n)
+    local DG = Nx.DungeonGuide
+    return fl and (fl.label or DG and DG.FloorName(fl)) or djFloorLabel(dj, n)
 end
 
 -- The chart's bosses in its order (the run order), with the kills seen.
@@ -533,9 +538,10 @@ function DC.BossList(dj, data)
     local DG = Nx.DungeonGuide
     local list = {}
     for i, b in ipairs(data.bosses or {}) do
-        local name = djBoss(dj, b.name)
-        list[i] = { name = name, npc = b.npc, floor = b.floor or 1, x = b.x, y = b.y,
-            killed = DG and DG:IsKilled(name, b.npc) or false }
+        local name = b.npc and DG and DG.BossName(b.npc) or djBoss(dj, b.name)
+        local killed = DG and DG:IsKilled(name, b.npc) or false
+        for _, alt in ipairs(b.alts or {}) do killed = killed or DG and DG:IsKilled(nil, alt) or false end
+        list[i] = { name = name, npc = b.npc, alts = b.alts, floor = b.floor or 1, x = b.x, y = b.y, killed = killed }
     end
     return list
 end

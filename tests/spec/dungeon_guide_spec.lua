@@ -2,7 +2,7 @@
 
 local PINS = {
     instances = {
-        [36] = { name = "The Deadmines", floors = { { key = "291", map = 291 }, { key = "292", map = 292, label = "Ironclad Cove" } } },
+        [36] = { floors = { { key = "291", map = 291 }, { key = "292", map = 292, named = true } } },
     },
     pins = {
         ["291"] = {
@@ -10,12 +10,11 @@ local PINS = {
             { "level", 0.9, 0.9, "292" },
             { "boss", 0.8, 0.8, 3 },
             { "boss", 0.2, 0.2, 1 },
-            { "boss", 0.5, 0.5, 2 },
-            { "boss", 0.52, 0.52, 22 },
+            { "boss", 0.5, 0.5, 2, 22 },
             { "questend", 0.3, 0.3, 100 },
             { "queststart", 0.3, 0.3, 101 },
-            { "item", 0.4, 0.4, 900, "Crest" },
-            { "item", 0.45, 0.45, 900, "Crest" },
+            { "item", 0.4, 0.4, 900 },
+            { "item", 0.45, 0.45, 900 },
         },
         ["292"] = {
             { "level", 0.1, 0.9, "291", true },
@@ -23,11 +22,24 @@ local PINS = {
             { "boss", 0.2, 0.8, 4 },
         },
     },
-    bosses = { [1] = "Rhahk'Zor <The Foreman>", [2] = "Sneed's Shredder / Sneed", [22] = "Sneed's Shredder / Sneed",
-        [3] = "Gilnid", [4] = "Mr. Smite", [5] = "Edwin VanCleef" },
-    quests = { [100] = "Old Quest", [101] = "Next Quest" },
     heights = { ["292"] = 700 },
 }
+
+-- Carbonite/Locales/<locale>/Dungeons.lua: names the client does not give.
+local NAMES = {
+    ["boss:1"] = "Rhahk'Zor <The Foreman>", ["boss:2"] = "Sneed's Shredder / Sneed", ["boss:3"] = "Gilnid",
+    ["boss:4"] = "Mr. Smite", ["boss:5"] = "Edwin VanCleef", ["quest:100"] = "Old Quest",
+    ["quest:101"] = "Next Quest", ["object:900"] = "Crest", ["floor:292"] = "Enseada Couraçada",
+    ["dungeon:36"] = "Minas Mortas (reserva)",
+}
+
+local function withNames(env)
+    local locale = setmetatable({}, { __index = function(_, k) return NAMES[k] or k end })
+    env.LibStub = function()
+        return setmetatable({ GetLocale = function() return locale end }, { __index = function() return wow.anything() end })
+    end
+    return env
+end
 
 local function load(opts)
     opts = opts or {}
@@ -39,6 +51,7 @@ local function load(opts)
         EJ_SelectInstance = opts.ej and function() end,
         EJ_GetEncounterInfoByIndex = opts.ej and function(i) return opts.ej[i] end,
     })
+    withNames(env)
     env.Nx = { DungeonPins = PINS, db = { char = opts.char or {} }, Map = { Maps = {} }, Quest = opts.quest }
     env.GetNumQuestLeaderBoards = opts.boards and function(qi) return #opts.boards[qi] end
     env.GetQuestLogLeaderBoard = opts.boards and function(i, qi) return opts.boards[qi][i][1], "monster", opts.boards[qi][i][2] end
@@ -139,6 +152,7 @@ local function loadChart(map, pins)
         IsInInstance = function() return true end,
         GetInstanceInfo = function() return "Minas Mortas", "party", 1, "", 5, 0, false, 36 end,
     })
+    withNames(env)
     env.Nx = { DungeonPins = pins or PINS, db = { char = {}, profile = { Map = {} } }, Map = { Maps = { map } } }
     loader.run(env, "Carbonite/Modules/Map/DungeonGuide.lua")
     loader.run(env, "Carbonite/Modules/Map/DungeonChart.lua")
@@ -148,12 +162,13 @@ end
 describe("DungeonChart: planta do MapUtils e rota", function()
     it("monta andares, entradas, ligações e chefes no formato do DungeonJournal", function()
         local DC = loadChart({})
-        local data = DC.PinMap(PINS.instances[36], PINS.pins, PINS.heights)
+        local data = DC.PinMap(PINS.instances[36], PINS.pins, PINS.heights, 36)
         expect(#data.floors).toBe(2)
         expect(data.floors[1].texture).toBe("Interface\\AddOns\\MapUtils\\media\\291")
         expect(data.floors[1].texBottom).toBe(683 / 1024)
         expect(data.floors[2].texBottom).toBe(700 / 1024)
-        expect(data.floors[2].label).toBe("Ironclad Cove")
+        expect(data.id).toBe(36)
+        expect(data.floors[2].named).toBe(true)
         expect(#data.entrances).toBe(1)
         expect(data.transitions[1].to).toBe(2)
         expect(data.transitions[2].to).toBe(1)
@@ -180,11 +195,11 @@ describe("DungeonChart: planta do MapUtils e rota", function()
     it("na instância sem mapa abre sozinha só com a janela maximizada", function()
         local map = { UInstViewActive = true, IsWindowMaximized = function(self) return self.max end }
         local DC = loadChart(map)
-        DC.Here = { mu = "The Deadmines" }
+        DC.Here = { mu = 36 }
         map.max = false
         expect(DC:Current("mu")).toBeNil()
         map.max = true
-        expect(DC:Current("mu")).toBe("The Deadmines")
+        expect(DC:Current("mu")).toBe(36)
         DC:Close()
         expect(DC:Current("mu")).toBeNil()
     end)
@@ -252,5 +267,37 @@ describe("DungeonGuide: quests e itens da masmorra (#83)", function()
         local here = { data = PINS.instances[36] }
         expect(DC.PinKey({ floors = { { texture = "a" }, { texture = "b" } } }, 2, here)).toBe("292")
         expect(DC.PinKey({ floors = { { texture = "a" } } }, 1, here)).toBeNil()
+    end)
+end)
+
+describe("DungeonGuide: nomes do cliente, com o AceLocale como reserva", function()
+    it("usa o nome do chefe que o cliente mostrou e o guarda no personagem", function()
+        local char = {}
+        local DG = load({ char = char })
+        expect(DG.BossName(1)).toBe("Rhahk'Zor <The Foreman>")
+        DG:LearnName("Creature-0-1-36-1-1-0000ABCD", "Rhahk'Zor, o Capataz")
+        DG:LearnName("Creature-0-1-36-1-999-0000ABCD", "Lacaio")
+        expect(DG.BossName(1)).toBe("Rhahk'Zor, o Capataz")
+        expect(char.DungeonNames[999]).toBeNil()
+        expect(DG:Bosses()[1].name).toBe("Rhahk'Zor, o Capataz")
+    end)
+
+    it("nome da masmorra: o do cliente, senão o da tradução", function()
+        local DG, env = load()
+        expect(DG.InstanceName(36)).toBe("Minas Mortas")
+        env.GetRealZoneText = function(id) return id == 48 and "Profundezas Negras" or "" end
+        expect(DG.InstanceName(48)).toBe("Profundezas Negras")
+        expect(DG.InstanceName(999)).toBe("999")
+    end)
+
+    it("nome do andar: o grupo de mapas do cliente, senão a tradução; andar sem nome fica numerado", function()
+        local DG, env = load()
+        expect(DG.FloorName({ key = "292", map = 292, named = true })).toBe("Enseada Couraçada")
+        expect(DG.FloorName({ key = "291", map = 291 })).toBeNil()
+        env.C_Map = {
+            GetMapGroupID = function() return 7 end,
+            GetMapGroupMembersInfo = function() return { { mapID = 291, name = "Minas" }, { mapID = 292, name = "Enseada do Cliente" } } end,
+        }
+        expect(DG.FloorName({ key = "292", map = 292, named = true })).toBe("Enseada do Cliente")
     end)
 end)
