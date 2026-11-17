@@ -83,6 +83,29 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 
 As configurações do Carbonite oficial continuam valendo, porque os nomes internos são os mesmos.
 
+## Atualização automática
+
+Cada release no GitHub traz o zip `Carbonite-Forever-<versão>.zip`, com todas as pastas `Carbonite*`, e o `release.json` que os gerenciadores leem. Assim, o gerenciador instala e atualiza a edição Forever direto do GitHub.
+
+- **WowUp:** em *Get Addons*, clique em *Install from URL*, cole `https://github.com/Alexsir-Wolf/Carbonite-Forever` e instale. Novas releases aparecem como atualização.
+- **Outros gerenciadores** que aceitam repositórios do GitHub (CurseBreaker, Ajour e afins): adicione a mesma URL.
+
+Antes, apague as pastas do Carbonite oficial (passo 2 da instalação) e tire o Carbonite oficial da lista do gerenciador, para que um não sobrescreva o outro.
+
+### Publicar uma release (mantenedores)
+
+1. Atualize o `CHANGELOG-FOREVER.md`; ele vira o texto da release.
+2. Crie e envie uma tag no formato `v<versão>-forever.<n>`, por exemplo `git tag v12.1.0-00023-forever.2 && git push origin v12.1.0-00023-forever.2`.
+3. O workflow `Release` roda o [BigWigsMods/packager](https://github.com/BigWigsMods/packager), troca `@project-version@` nos `.toc` pela tag e publica a release com o zip. Tags sem `-forever` (as do upstream) não publicam nada.
+
+O envio para a CurseForge e a Wago é opcional e só acontece se o projeto existir lá. Para ligar:
+
+1. Crie o projeto da edição Forever no site. Nunca use o id do Carbonite oficial: o gerenciador trocaria uma edição pela outra.
+2. Adicione o id no `Carbonite/Carbonite.toc` e nas variantes (`Carbonite-Camelot.toc` etc.): `## X-Curse-Project-ID: <id>` para a CurseForge e `## X-Wago-ID: <id>` para a Wago.
+3. Em *Settings > Secrets and variables > Actions* do repositório, crie o secret `CF_API_KEY` (token da CurseForge) ou `WAGO_API_TOKEN` (token da Wago).
+
+Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai normalmente.
+
 ## Comandos
 
 | Comando | O que faz |
