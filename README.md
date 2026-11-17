@@ -30,6 +30,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - **Seta HUD:** aponta para o destino e mostra nome, distância e tempo estimado de chegada.
 - **Fila de destinos:** Shift+clique em Goto adiciona o destino sem apagar os outros; ao chegar, a seta passa ao próximo. A janela Destinos (`/carb destinos`, Rota... > Destinos... no menu do mapa ou um atalho de teclado) lista a fila com zona e distância e permite subir, descer, ir agora, remover, inverter e limpar.
 - **Rotas:** caminho entre zonas por estradas, conexões e pontos de voo.
+- **Rota a pé que contorna o terreno:** com o GatherLite instalado, a linha da rota e a seta do HUD desviam de montanhas, penhascos e água funda, em vez de seguir em linha reta. A distância mostrada é a do caminho. Desliga em Opções > Mapas.
 - Compatível com os comandos do TomTom: `/way`, `/cway`, `/wayback`.
 
 ### Guia
@@ -77,6 +78,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
   - **QuestieDB:** necessário para as quests do Forever que faltam na base do Carbonite. Ative só o QuestieDB; o Questie pode ficar desligado. Dentro de masmorras, o painel da tecla **M** também lista as quests do registro que o QuestieDB põe ali e os itens de objetivo que caem lá (o QuestieDB não tem posições dentro de masmorras, então elas não vão para a planta).
   - **Spoken** (com o módulo Spoken_Quests): necessário para o botão de narração na lista de quests.
   - **ForeverDungeonJournal** ou **FojjiCore:** planta da masmorra (arte, chefes e a ordem da rota; o FojjiCore também sabe os chefes mortos). Lidos durante o jogo; o Carbonite não copia esses dados.
+  - **[GatherLite](https://www.curseforge.com/wow/addons/gatherlite):** traz os dados de terreno usados pela rota a pé que contorna o terreno. Sem ele, a rota segue em linha reta.
   - **[MapUtils](https://www.curseforge.com/projects/1463967):** arte das masmorras quando nem o ForeverDungeonJournal nem o FojjiCore têm a masmorra. Sem nenhum dos três, a tecla **M** mostra o minimapa ao vivo e o painel com os chefes (os dados de chefes do Carbonite vêm do MapUtils e não dependem dele instalado).
 
 ## Instalação
@@ -139,6 +141,7 @@ Sem o id ou sem o secret, o packager pula aquele site e a release no GitHub sai 
 - As pedras de encontro do Guia (`Carbonite/Data/camelot/Guides/MeetingStone.lua`) vêm da base de objetos do **QuestieDB** (Forever), também sob a GPL v3.
 - A perícia de pesca de cada zona (`Carbonite/Modules/Map/ZoneFishing.lua`), os curandeiros espirituais do Guia (`Carbonite/Data/camelot/Guides/SpiritHealer.lua`) e os livros da biblioteca e convergências (`Carbonite.Notes/Integrations/ForeverPoints.lua`) vêm do **MapUtils**, de D4KiR, também sob a GPL v3. Também vêm dele os andares, entradas, chefes, quests e itens de quest das masmorras (`Carbonite/Modules/Map/DungeonPins.lua`, de `shared/InstancePins` e `data/*/instances.lua`), com os nomes em inglês em `Carbonite/Locales/*/Dungeons.lua`, usados só quando o cliente não dá o nome dele.
 - As rotas e períodos dos navios, zepelins e bonde (`Carbonite/Data/camelot/Transports.lua`), os ícones deles (`Carbonite/Gfx/Map/Transports/`) e o cálculo de posição e horário (`Carbonite/Modules/Map/Transports.lua`) também vêm do **MapUtils**, de D4KiR, sob a GPL v3.
+- A busca de caminho a pé (`Carbonite/Libs/GroundNav/`) vem do **[Shortest Path Forever](https://github.com/cjber/shortest-path-forever)**, de Cillian Berragan e colaboradores, sob a GPL v3 ou posterior, na cópia adaptada que o GatherLite distribui. Os dados de terreno não vêm com o Carbonite: são lidos do GatherLite durante o jogo.
 - Licença: [GNU GPL v3](LICENSE). O código continua aberto, e as mudanças precisam manter a mesma licença.
 
 ### Apoie o Carbonite

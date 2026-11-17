@@ -96,7 +96,7 @@ local LAYOUT = {
 local BASIC = {
     General = { "loginMsg", "versionCheck", "maxCamera", "hideGriff" },
     Maps = {
-        "mainMap.maxMap", "mainMap.hidecombat", "mainMap.useRoute", "mainMap.showTrail",
+        "mainMap.maxMap", "mainMap.hidecombat", "mainMap.useRoute", "mainMap.groundRoute", "mainMap.showTrail",
         "mainMap.showToolBar", "mainMap.showTitleXY", "mainMap.showPOI",
         "miniMap.MMOwn", "miniMap.MMDockAlways", "miniMap.MMIconScale",
         "buttonFrame.MMButOwn", "buttonFrame.MMButShowCarb", "view3d.View3D",
