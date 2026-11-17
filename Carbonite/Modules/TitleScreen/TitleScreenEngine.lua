@@ -59,7 +59,7 @@ function Nx.Title:Init()
     local versionLine = format(NXTITLEFULL .. " |cffe0e0ff" .. L["Version"] .. " %d.%d Build %s",
         Nx.VERMAJOR, Nx.VERMINOR * 10, Nx.BUILD)
     self.NXFStr1:SetText(versionLine)
-    self.NXFStr2:SetText("|cffe0e0ff" .. L["Maintained by"] .. " The community.")
+    self.NXFStr2:SetText("|cffe0e0ff" .. L["Maintained by"] .. " " .. L["the community."])
 
     -- Start the animation pipeline.
     Nx.Proc:New(self, self.TickWait, 40)

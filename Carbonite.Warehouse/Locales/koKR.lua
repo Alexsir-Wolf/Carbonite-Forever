@@ -65,14 +65,9 @@ L[" Location: %s%s (%d, %d)"] = " 위치: %s%s (%d, %d)"
 L[" Start XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = " 시작 경험치: %s%s/%s (%.0f%%)|r 휴식: %s%.0f%%"
 L[" XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = " 경험치: %s%s/%s (%.0f%%)|r 휴식: %s%.0f%%"
 L[" Honor: %s%s|r  Conquest: %s%s"] = " 명예: %s%s|r  정복: %s%s"
-L[" Valor: %s%s|r  Justice: %s%s"] = " 용맹: %s%s|r  정의: %s%s"
 --L[" %s %s%s"] = true
-L["|cffafdfafAll: %s. |cffafdfafPlayed: %s%s"] = "|cffafdfaf전체: %s. |cffafdfaf플레이 시간: %s%s"
 L["%s's Items"] = "%s의 아이템"
 L["|cffff1010No bank data - visit your bank"] = "|cffff1010은행 데이터 없음 - 은행을 방문하세요"
-L["|cffff1010No reagent bank data - visit your bank"] = "|cffff1010재료 은행 데이터 없음 - 은행을 방문하세요"
-L["---- Equipped ----"] = "---- 착용 중 ----"
-L["---- %s Equipped ----"] = "---- %s 착용 중 ----"
 L["All Items"] = "모든 아이템"
 L["%s |cffcfcfff(%s Bank)"] = "%s |cffcfcfff(%s 은행)"
 L["%s |cffcfffff(%s Mail)"] = "%s |cffcfffff(%s 우편)"
@@ -94,14 +89,11 @@ L["LOOT_OPENED %s (%s %s)"] = "LOOT_OPENED %s (%s %s)"
 L["no LootTarget"] = "LootTarget 없음"
 L["LOOT_SLOT_CLEARED #%s %s (quest)"] = "LOOT_SLOT_CLEARED #%s %s (퀘스트)"
 L["%s deleted"] = "%s 삭제됨"
-L["enchant:(%d+)"] = true
-L["item:(%d+)"] = true
 
 -- Keybinds
 L["Carbonite Warehouse"] = "Carbonite Warehouse"
 L["NxTOGGLEWAREHOUSE"] = "show/hide Warehouse"
 
-L["Guilds"] = "길드"
 L["Characters"] = "캐릭터"
 L["Guild Bank"] = "길드 은행"
 L["Current Funds"] = "현재 자금"
@@ -140,7 +132,6 @@ L["When you open a merchant, will auto sell your blue items."] = "상인 창을 
 L["When you open a merchant, will auto sell your purple items."] = "상인 창을 열면 보라색 아이템을 자동으로 판매합니다."
 L["iLevel"] = "아이템 레벨"
 L["Enable iLevel Limit"] = "아이템 레벨 제한 사용"
-L["Only sells items that are under the ilvl specified"] = "지정한 아이템 레벨 미만의 아이템만 판매합니다"
 L["Sets the maximum item level which will be auto sold"] = "자동 판매할 최대 아이템 레벨을 설정합니다"
 L["Sell BOP Items"] = "획득 시 귀속 아이템 판매"
 L["When enabled will sell items that are BOP"] = "사용할 경우, 획득 시 귀속 아이템을 판매합니다"

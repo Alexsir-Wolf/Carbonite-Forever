@@ -65,14 +65,9 @@ L[" Location: %s%s (%d, %d)"] = " 位置：%s%s (%d, %d)"
 L[" Start XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = " 起始經驗：%s%s/%s (%.0f%%)|r 休息：%s%.0f%%"
 L[" XP: %s%s/%s (%.0f%%)|r Rest: %s%.0f%%"] = " 經驗：%s%s/%s (%.0f%%)|r 休息：%s%.0f%%"
 L[" Honor: %s%s|r  Conquest: %s%s"] = " 榮譽：%s%s|r  征服：%s%s"
-L[" Valor: %s%s|r  Justice: %s%s"] = " 勇氣：%s%s|r  正義：%s%s"
 --L[" %s %s%s"] = true
-L["|cffafdfafAll: %s. |cffafdfafPlayed: %s%s"] = "|cffafdfaf全部：%s。|cffafdfaf遊戲時間：%s%s"
 L["%s's Items"] = "%s 的物品"
 L["|cffff1010No bank data - visit your bank"] = "|cffff1010沒有銀行資料 - 請造訪你的銀行"
-L["|cffff1010No reagent bank data - visit your bank"] = "|cffff1010沒有材料銀行資料 - 請造訪你的銀行"
-L["---- Equipped ----"] = "---- 已裝備 ----"
-L["---- %s Equipped ----"] = "---- %s 已裝備 ----"
 L["All Items"] = "所有物品"
 L["%s |cffcfcfff(%s Bank)"] = "%s |cffcfcfff(%s 銀行)"
 L["%s |cffcfffff(%s Mail)"] = "%s |cffcfffff(%s 郵件)"
@@ -94,14 +89,11 @@ L["LOOT_OPENED %s (%s %s)"] = "LOOT_OPENED %s (%s %s)"
 L["no LootTarget"] = "無 LootTarget"
 L["LOOT_SLOT_CLEARED #%s %s (quest)"] = "LOOT_SLOT_CLEARED #%s %s (任務)"
 L["%s deleted"] = "%s 已刪除"
-L["enchant:(%d+)"] = true
-L["item:(%d+)"] = true
 
 -- Keybinds
 L["Carbonite Warehouse"] = "Carbonite Warehouse"
 L["NxTOGGLEWAREHOUSE"] = "show/hide Warehouse"
 
-L["Guilds"] = "公會"
 L["Characters"] = "角色"
 L["Guild Bank"] = "公會銀行"
 L["Current Funds"] = "目前資金"
@@ -140,7 +132,6 @@ L["When you open a merchant, will auto sell your blue items."] = "開啟商人�
 L["When you open a merchant, will auto sell your purple items."] = "開啟商人視窗時，會自動賣出你的紫色物品。"
 L["iLevel"] = "物品等級"
 L["Enable iLevel Limit"] = "啟用物品等級限制"
-L["Only sells items that are under the ilvl specified"] = "只賣出低於指定物品等級的物品"
 L["Sets the maximum item level which will be auto sold"] = "設定會被自動賣出的最高物品等級"
 L["Sell BOP Items"] = "賣出拾取綁定物品"
 L["When enabled will sell items that are BOP"] = "啟用後會賣出拾取後綁定的物品"

@@ -66,3 +66,15 @@ L["hit"] = true
 L["honor"] = true
 -- Options: basic mode, sections and help (#64)
 L["Background color of the info windows."] = true
+L["HP"] = true
+L["MP"] = true
+L["Durability"] = true
+L["Lvl"] = true
+L["hours"] = true
+L["BG start"] = true
+L["BG duration"] = true
+L["Wing"] = true
+L["Honor"] = true
+L["Stats"] = true
+L["%a %m/%d %I:%M %p"] = true
+L["Rest"] = true
