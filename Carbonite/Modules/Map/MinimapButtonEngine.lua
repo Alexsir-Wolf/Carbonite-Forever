@@ -37,6 +37,7 @@ function Nx.NXMiniMapBut:Init()
     menu:AddItem (0, L["Options"], self.Menu_OnOptions, self)
     menu:AddItem (0, L["Show Map"], self.Menu_OnShowMap, self)
     menu:AddItem (0, L["Show Events"], self.Menu_OnShowEvents, self)
+    menu:AddItem (0, L["Show Journey"], self.Menu_OnShowJourney, self)
 
     if Nx.db.profile.Debug.DebugCom then
         menu:AddItem (0, "", nil, self)
@@ -90,6 +91,10 @@ end
 
 function Nx.NXMiniMapBut:Menu_OnShowEvents()
     Nx.UEvents.List:Open()
+end
+
+function Nx.NXMiniMapBut:Menu_OnShowJourney()
+    Carbonite.Modules.Journey:ToggleShow()
 end
 
 function Nx.NXMiniMapBut:Menu_OnHideWatch (item)
