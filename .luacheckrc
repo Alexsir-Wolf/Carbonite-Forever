@@ -11,7 +11,7 @@ read_globals = {
     "CreateFrame", "GetInstanceInfo", "GetQuestLogTitle", "GetNumQuestLogEntries",
     "GetQuestLogIndexByID", "GetTime", "UnitGUID", "UnitName", "GetRealZoneText", "UnitIsFriend", "UnitRace", "InCombatLockdown", "IsInInstance", "UnitFactionGroup", "UnitLevel", "GetMaxPlayerLevel", "BreakUpLargeNumbers",
     "Minimap", "MinimapCluster", "UIParent", "WorldFrame", "GameTooltip",
-    "debugprofilestop", "CombatLogGetCurrentEventInfo", "hooksecurefunc", "issecretvalue", "securecall", "strsplit",
+    "debugprofilestop", "UnitPosition", "UnitOnTaxi", "CombatLogGetCurrentEventInfo", "hooksecurefunc", "issecretvalue", "securecall", "strsplit",
     "format", "max", "min", "floor", "ceil", "abs", "tinsert", "tremove", "wipe",
 }
 
@@ -45,4 +45,5 @@ include_files = {
     "Carbonite/Modules/Map/TargetsWindow.lua",
     "Carbonite/Modules/Assistant/Assistant.lua",
     "Carbonite/UI/SearchBox.lua",
+    "Carbonite/Modules/Map/GroundRoute.lua",
 }
