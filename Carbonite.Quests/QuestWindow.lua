@@ -101,8 +101,9 @@ Nx.Quest.List.StateIcons = STATE_ICONS
 
 local STATE_ICON_SIZE = 14
 
--- Width of the right column (tag and XP) and of the button column.
-local TAG_COLUMN_W = 140
+-- Width of the right column (tag and XP) and of the button column. It fits
+-- the longest tag with its XP, "Masmorra 5.350 XP".
+local TAG_COLUMN_W = 185
 local BUTTON_COLUMN_W = 20
 
 ---
