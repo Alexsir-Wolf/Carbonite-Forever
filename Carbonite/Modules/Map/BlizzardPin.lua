@@ -65,10 +65,31 @@ end
 
 -- Whether the user waypoint in place now is the one this module put down.
 -- The client keeps the position as floats, so it is compared loosely.
+-- World position (instance, x, y in yards) of a point on a map, or nil.
+local function worldOf(mapId, x, y)
+    local get, vec = _G.C_Map.GetWorldPosFromMapPos, _G.CreateVector2D
+    if not (get and vec) then return nil end
+    local ok, inst, pos = pcall(get, mapId, vec(x, y))
+    if not ok or not inst or not pos then return nil end
+    local wx, wy = pos:GetXY()
+    return inst, wx, wy
+end
+
+local SAME_YARDS = 3
+
+-- Same pin: same map and position, or the same spot in the world. The
+-- Forever client gives the pin back rounded or on a parent map, and not
+-- always soon after it was put down.
 local function same(point, ref)
+    if not ref then return false end
     local pos = point.position
-    return ref and point.uiMapID == ref[1] and math.abs(pos.x - ref[2]) < 0.001
-        and math.abs(pos.y - ref[3]) < 0.001
+    if point.uiMapID == ref[1] and math.abs(pos.x - ref[2]) < 0.001
+            and math.abs(pos.y - ref[3]) < 0.001 then
+        return true
+    end
+    local i1, x1, y1 = worldOf(point.uiMapID, pos.x, pos.y)
+    local i2, x2, y2 = worldOf(ref[1], ref[2], ref[3])
+    return i1 ~= nil and i1 == i2 and ((x1 - x2) ^ 2 + (y1 - y2) ^ 2) <= SAME_YARDS ^ 2
 end
 
 local function StillOurs()
@@ -119,6 +140,12 @@ function BP:Sync()
     pcall(_G.C_SuperTrack.SetSuperTrackedUserWaypoint, true)
     placed, seen = { mapId, x, y }, nil
     placedAt = GetTime and GetTime() or 0
+    -- What the client stored, when it already says: the pin to recognise.
+    local get = _G.C_Map.GetUserWaypoint
+    local point = get and get()
+    if point and point.position and point.position.x then
+        seen = { point.uiMapID, point.position.x, point.position.y }
+    end
     Reseed()
 end
 
