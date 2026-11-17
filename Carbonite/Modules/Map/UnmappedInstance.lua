@@ -149,6 +149,12 @@ end
 function Map:GetUnmappedInstanceMinimapBox()
     local w = math.max((self.MapW or 0) - (self.UInstPanelW or 0), 0)
     local availH = math.max((self.MapH or 0) - Band(self), 0)
+    -- Over a chart with the boss panel: in the panel, under the bosses.
+    local slot = self.UInstChartFrm and (self.UInstPanelW or 0) > 0
+        and Nx.DungeonGuide and Nx.DungeonGuide.PanelMinimap
+    if slot then
+        return slot.size, slot.x, slot.y
+    end
     if self.UInstChartFrm then
         local size = math.floor(math.min(w, availH) * CORNER_PART)
         size = math.max(math.min(size, CORNER_MAX), math.min(CORNER_MIN, w, availH))

@@ -424,3 +424,28 @@ describe("DungeonGuide: minimapa no canto da planta", function()
         expect(engine:find("local name = not forceRound and Nx.db.profile.MiniMap[optName]", 1, true) ~= nil).toBe(true)
     end)
 end)
+
+describe("DungeonChart: id do chefe pelo nome no ForeverDungeonJournal", function()
+    it("acha o npcID pelo nome ou apelido, sem diferenciar maiúsculas", function()
+        local env = wow.lenientEnv()
+        env.Nx = { DungeonGuide = nil }
+        loader.run(env, "Carbonite/Modules/Map/DungeonChart.lua")
+        local DC = env.Nx.DungeonChart
+        local dj = { DB = { ["Ragefire Chasm"] = { bosses = {
+            { name = "Oggleflint", npcID = 11517, aliases = { "Pederneiro" } },
+            { name = "Bazzalan", npcID = 11519 },
+        } } } }
+        expect(DC.NpcByName(dj, "oggleflint")).toBe(11517)
+        expect(DC.NpcByName(dj, "Pederneiro")).toBe(11517)
+        expect(DC.NpcByName(dj, "Bazzalan")).toBe(11519)
+        expect(DC.NpcByName(dj, "Ninguém")).toBeNil()
+    end)
+end)
+
+describe("UnmappedInstance: minimapa sob os chefes", function()
+    it("usa a vaga do painel quando a planta e o painel estão abertos", function()
+        local src = loader.read("Carbonite/Modules/Map/UnmappedInstance.lua")
+        expect(src:find("Nx.DungeonGuide.PanelMinimap", 1, true) ~= nil).toBe(true)
+        expect(src:find("return slot.size, slot.x, slot.y", 1, true) ~= nil).toBe(true)
+    end)
+end)

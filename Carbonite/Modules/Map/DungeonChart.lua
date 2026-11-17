@@ -551,12 +551,37 @@ function DC.BossList(dj, data)
     local DG = Nx.DungeonGuide
     local list = {}
     for i, b in ipairs(data.bosses or {}) do
+        local npc = b.npc or DC.NpcByName(dj, b.name)
         local name = b.npc and DG and DG.BossName(b.npc) or djBoss(dj, b.name)
-        local killed = DG and DG:IsKilled(name, b.npc) or false
+        local killed = DG and DG:IsKilled(name, npc) or false
         for _, alt in ipairs(b.alts or {}) do killed = killed or DG and DG:IsKilled(nil, alt) or false end
-        list[i] = { name = name, npc = b.npc, alts = b.alts, floor = b.floor or 1, x = b.x, y = b.y, killed = killed }
+        list[i] = { name = name, npc = npc, alts = b.alts, floor = b.floor or 1, x = b.x, y = b.y, killed = killed }
     end
     return list
+end
+
+-- ForeverDungeonJournal's chart names its bosses only; its journal data
+-- (DB[dungeon].bosses: name, npcID, aliases) gives the npc id, which the
+-- portraits and the kill check need. Built once, by lower-case name.
+local npcByName
+function DC.NpcByName(dj, name)
+    if type(name) ~= "string" then return nil end
+    if not npcByName then
+        local db = dj and type(dj.DB) == "table" and dj.DB
+        if not db then return nil end
+        npcByName = {}
+        for _, dungeon in pairs(db) do
+            for _, boss in ipairs(type(dungeon) == "table" and dungeon.bosses or {}) do
+                if type(boss.npcID) == "number" then
+                    if type(boss.name) == "string" then npcByName[boss.name:lower()] = boss.npcID end
+                    for _, alias in ipairs(boss.aliases or {}) do
+                        if type(alias) == "string" then npcByName[alias:lower()] = boss.npcID end
+                    end
+                end
+            end
+        end
+    end
+    return npcByName[name:lower()]
 end
 
 -- Lines from the entrance through the bosses of this floor, in order. The
