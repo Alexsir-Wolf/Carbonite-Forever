@@ -1828,6 +1828,11 @@ function Nx.Window:SetBordersFade (fade)
         local col = Nx.Skin:GetBorderCol()
         self.Frm:SetBackdropBorderColor (col[1], col[2], col[3], col[4] * fade)
     end
+
+    -- The title strip comes and goes with the border.
+    if self.TitleBar then
+        self.TitleBar:SetAlpha (fade)
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -1892,6 +1897,7 @@ function Nx.Window:ResetBackdrops()
                     end
                 end
 
+                win:PlaceTitleBar()        -- The new border may be thicker
                 win.BackgndFade = win.BackgndFadeTarget + .0001        -- Cause refresh
             end
         end
@@ -2346,6 +2352,84 @@ function Nx.Window:SetTitleJustify (mode, line)
 
     line = line or 1
     self.TitleFStr[line]:SetJustifyH (mode)
+end
+
+---------------------------------------------------------------------------------------
+-- Title bar in the theme (#47): a strip behind the title, the title in the
+-- theme's title color, lines as tall as the title font (a 10 px line clipped
+-- the glyphs of the small font) and the window buttons sized to the line.
+---------------------------------------------------------------------------------------
+
+function Nx.Window:StyleTitleBar()
+
+    local Skin = Carbonite.UI.Skin
+    local f = self.Frm
+
+    local _, size = self.TitleFStr[1]:GetFont()
+    local lineH = max (self.TitleLineH, math.floor ((size or 10) + 4))
+
+    self.TitleLineH = lineH
+    self.TitleH = self.TitleLines * lineH + 2
+    self.TopH = self.TitleH + self.BorderH
+
+    for _, fstr in ipairs (self.TitleFStr) do
+        fstr:SetHeight (lineH)
+        fstr:SetWordWrap (false)
+        Skin:PaintText (fstr, "title")
+    end
+    self:SetTitleXOff (0)
+
+    if self.Border then
+        local strip = self.TitleBar
+        if not strip then
+            strip = f:CreateTexture (nil, "BACKGROUND", nil, 7)
+            self.TitleBar = strip
+            Skin:Paint (strip, "titleBar")
+        end
+        self:PlaceTitleBar()
+    end
+
+    -- Window buttons as tall as one title line, right to left.
+    local butSize = lineH
+    local y = self.Sizeable and -self.BorderH or -3
+    local x = -self.BorderW
+    local function place (but)
+        but:SetSize (butSize, butSize)
+        but.Frm:ClearAllPoints()
+        but:SetPos ("TOPRIGHT", x, y)
+    end
+    if self.ButClose then
+        place (self.ButClose)
+        x = x - butSize - 2
+    end
+    -- Maximize and minimize share the slot, as in CreateButtons.
+    if self.ButMaxer or self.ButMiner then
+        if self.ButMaxer then place (self.ButMaxer) end
+        if self.ButMiner then place (self.ButMiner) end
+        x = x - butSize - 2
+    end
+    if x ~= -self.BorderW then
+        self.ButW = -x - self.BorderW
+    end
+end
+
+-- Strip from the inner edge of the border down to the end of the title.
+function Nx.Window:PlaceTitleBar()
+
+    local strip = self.TitleBar
+    if not strip then
+        return
+    end
+    local bk = Nx.Skin:GetBackdrop()
+    local ins = bk and bk.insets
+    local l = ins and ins.left or 0
+    local r = ins and ins.right or 0
+    local t = ins and ins.top or 0
+
+    strip:ClearAllPoints()
+    strip:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, -t)
+    strip:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, -t)
+    strip:SetHeight (self.BorderH - t + self.TitleH)
 end
 
 ---------------------------------------------------------------------------------------
@@ -3968,13 +4052,9 @@ Nx.Button.TypeData = {
         SizeUp = 22,
         SizeDn = 22,
     },
+    -- Drawn by the tool bar: its slot, a "3D" caption and the checked glow.
     ["Map3D"] = {
-        Tip = "3D",
         Bool = true,
-        RGBUp = ".12|.12|.16",
-        RGBDn = ".16|.32|.6",
-        VRGBAUp = "1|1|1|.75",
-        VRGBADn = "1|1|1|1",
         SizeUp = 22,
         SizeDn = 22,
     },
@@ -4065,19 +4145,34 @@ for _, name in ipairs ({ "Chk", "Toggle", "Opts", "MapAutoScale" }) do
     Nx.Button.ClientAtlases[name] = { AtlasUp = "checkbox-minimal", AtlasDn = "checkbox-minimal",
                                       IconDn = "checkmark-minimal", IconScale = 1 }
 end
+-- The padlock of a locked window (#47). Not every client has the same lock
+-- art, so the first one this client has wins.
+for _, name in ipairs ({ "Lock", "CloseLock" }) do
+    Nx.Button.ClientAtlases[name] = {
+        { AtlasUp = "AdventureMapIcon-Lock", AtlasDn = "AdventureMapIcon-Lock" },
+        { AtlasUp = "Forge-Lock", AtlasDn = "Forge-Lock" },
+    }
+end
 
 ---
 -- Give each button type its Blizzard atlases when the client has all of them.
+-- A type may list several looks; the first one the client has is used.
 --
 function Nx.Button:UseClientAtlases()
     local info = C_Texture and C_Texture.GetAtlasInfo
     if not info then return end
-    for name, look in pairs (self.ClientAtlases) do
+    local function has (look)
+        return info (look.AtlasUp) and info (look.AtlasDn) and (not look.IconDn or info (look.IconDn))
+    end
+    for name, looks in pairs (self.ClientAtlases) do
         local typ = self.TypeData[name]
-        if typ and info (look.AtlasUp) and info (look.AtlasDn) and (not look.IconDn or info (look.IconDn)) then
-            typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
-            typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
-            if look.Untinted then typ.VRGBAUp = nil end
+        for _, look in ipairs (looks.AtlasUp and { looks } or looks) do
+            if typ and has (look) then
+                typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
+                typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
+                if look.Untinted then typ.VRGBAUp = nil end
+                break
+            end
         end
     end
 end
@@ -4733,6 +4828,16 @@ function Nx.Button:Update()
     end
 
     self:UpdateAtlasLook (typ, f, tx)
+
+    -- Tool bar toggles show their "on" state with a glow (Nx.ToolBar:StyleTool).
+    local checked = f.NxChecked
+    if checked then
+        if typ.Bool and self.Pressed then
+            checked:Show()
+        else
+            checked:Hide()
+        end
+    end
 
     local of = Nx.Button.OverFrm
 
@@ -7929,7 +8034,7 @@ function Nx.ToolBar:Create (name, parentFrm, size, alignR, alignB)
         data[name] = svdata
 
         svdata["Size"] = size
-        svdata["Space"] = 1
+        svdata["Space"] = 2        -- Room between the framed slots
         svdata["AlignR"] = alignR
         svdata["AlignB"] = alignB
 --        svdata["Vert"] = nil
@@ -8039,7 +8144,59 @@ function Nx.ToolBar:AddButton (typ, name, index, func, press)
 
     but:SetId (func)
 
+    self:StyleTool (but)
+
     but:SetPressed (press)
+end
+
+---------------------------------------------------------------------------------------
+-- Every tool in the same frame (#47): an edge and a slot in the theme's colors
+-- behind the icon, the icon inset and trimmed of its baked-in border so all of
+-- them line up, and a glow on toggles that are on. The mouse-over glow and the
+-- tooltip (the tool's name) come from Nx.Button.
+---------------------------------------------------------------------------------------
+
+Nx.ToolBar.TOOL_INSET = 2
+
+function Nx.ToolBar:StyleTool (but)
+
+    local Skin = Carbonite.UI.Skin
+    local f = but.Frm
+
+    if not f.NxSlot then
+
+        local edge = f:CreateTexture (nil, "BACKGROUND", nil, -8)
+        edge:SetAllPoints (f)
+        Skin:Paint (edge, "separator")
+
+        local slot = f:CreateTexture (nil, "BACKGROUND", nil, -7)
+        slot:SetPoint ("TOPLEFT", f, "TOPLEFT", 1, -1)
+        slot:SetPoint ("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+        Skin:Paint (slot, "toolSlot")
+        f.NxSlot = slot
+
+        local checked = f:CreateTexture (nil, "OVERLAY")
+        checked:SetPoint ("TOPLEFT", f, "TOPLEFT", 1, -1)
+        checked:SetPoint ("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+        Skin:Paint (checked, "selection")
+        checked:SetBlendMode ("ADD")
+        checked:Hide()
+        f.NxChecked = checked
+    end
+
+    local inset = self.TOOL_INSET
+    local tx = f.texture
+    tx:ClearAllPoints()
+    tx:SetPoint ("TOPLEFT", f, "TOPLEFT", inset, -inset)
+    tx:SetPoint ("BOTTOMRIGHT", f, "BOTTOMRIGHT", -inset, inset)
+
+    -- Spell and item icons carry a dark rim of their own.
+    local up = but.Type and but.Type.Up
+    if type (up) == "string" and (up:sub (1, 1) == "$" or up:find ("Interface\\Icons\\", 1, true)) then
+        tx:SetTexCoord (.08, .92, .08, .92)
+    end
+
+    but:Update()
 end
 
 ---------------------------------------------------------------------------------------
