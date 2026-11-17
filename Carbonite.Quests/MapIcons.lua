@@ -1114,6 +1114,7 @@ function Nx.Quest:UpdateIcons (map)
             .. "|" .. (qprof.ShowAllMapPOIs and 1 or 0)
             .. "|" .. (qprof.MapBlizzardIcons ~= false and 1 or 0)
             .. "|" .. (qprof.MapQuestIconScale or 1)
+            .. "|" .. (qprof.MapShowObjectiveAreas ~= false and 1 or 0)
     -- The dirty-check now guards only the heavy per-quest walk
     -- (Pin/Layer-backed POIs). The BONUS TASKS / WORLD QUESTS block
     -- below uses the legacy direct-stamp pool (IconWQFrms), which the
@@ -1140,6 +1141,9 @@ function Nx.Quest:UpdateIcons (map)
 
     local opts = self.GOpts
     local showWatchAreas = Nx.qdb.profile.Quest.MapShowWatchAreas
+    -- #65: nearby spawns of one objective drawn as one area.
+    local objectiveAreas = Nx.qdb.profile.Quest.MapShowObjectiveAreas ~= false
+        and Nx.Quest.AddArea and Quest.ObjectiveAreas
     local trkR, trkG, trkB, trkA =  Nx.Quest.Cols["trkR"], Nx.Quest.Cols["trkG"], Nx.Quest.Cols["trkB"], Nx.Quest.Cols["trkA"]
     local hovR, hovG, hovB, hovA =  Nx.Quest.Cols["hovR"], Nx.Quest.Cols["hovG"], Nx.Quest.Cols["hovB"], Nx.Quest.Cols["hovA"]
 
@@ -1570,6 +1574,22 @@ function Nx.Quest:UpdateIcons (map)
                             -- override the *color* via existing branches.
                             local drawSpans = true
                             local areaVC
+                            if hover then
+                                areaVC = { hovR, hovG, hovB, tonumber(hovA) or 1 }
+                            elseif tracking then
+                                areaVC = { trkR, trkG, trkB, tonumber(trkA) or 1 }
+                            else
+                                areaVC = { r, g, b, tonumber(col[4]) or 1 }
+                            end
+
+                            -- Spawn groups (#65), computed once per
+                            -- objective table. Their points are replaced by
+                            -- one area wherever that area can be drawn on
+                            -- the open map; elsewhere they stay points.
+                            local spawnGroups = objectiveAreas
+                                and objectiveAreas:Get(obj)
+                            local groupedPts = spawnGroups
+                                and spawnGroups.grouped or EMPTY
 
                             for _, loc1 in pairs(obj) do
                                 if loc1 ~= "" and type(loc1) == "string" then
@@ -1598,7 +1618,9 @@ function Nx.Quest:UpdateIcons (map)
                                         -- live quest pin suppresses these so a
                                         -- multi-location objective still shows
                                         -- exactly one Blizzard-style marker.
-                                        if not hasLiveQuestPin then
+                                        if not hasLiveQuestPin
+                                            and not (groupedPts[loc1]
+                                                and poiRenderMapID == pmap) then
                                             local px, py = Nx.Quest:UnpackLocPtOff (loc1)
                                             if px and py then
                                                 local projectedMapID, wx, wy =
@@ -1663,15 +1685,6 @@ function Nx.Quest:UpdateIcons (map)
                                                 -- applies via onStamp (vertexColor path) or
                                                 -- via SetColorTexture (pin.color path when
                                                 -- areaTex is nil).
-                                                if not areaVC then
-                                                    if hover then
-                                                        areaVC = { hovR, hovG, hovB, tonumber(hovA) or 1 }
-                                                    elseif tracking then
-                                                        areaVC = { trkR, trkG, trkB, tonumber(trkA) or 1 }
-                                                    else
-                                                        areaVC = { r, g, b, tonumber(col[4]) or 1 }
-                                                    end
-                                                end
                                                 local ao = AREA_OPTS
                                                 ao.tip         = tip
                                                 ao.tex         = areaTex
@@ -1717,6 +1730,45 @@ function Nx.Quest:UpdateIcons (map)
                                     end -- elseif drawSpans
                                 end -- if loc1 ~= ""
                             end -- for _, loc1 in pairs(obj)
+
+                            -- Spawn group areas (#65): one shaded rectangle
+                            -- per group in the quest color, plus one numbered
+                            -- marker at its center unless Blizzard's live pin
+                            -- already marks the quest.
+                            if spawnGroups then
+                                for _, area in ipairs(spawnGroups.areas) do
+                                    local amap = area.mapID
+                                    if GetQuestRenderMapID(amap, viewMapID) == amap then
+                                        local wx1, wy1 = map:GetWorldPos(amap, area.x1, area.y1)
+                                        local wx2, wy2 = map:GetWorldPos(amap, area.x2, area.y2)
+                                        local ao = AREA_OPTS
+                                        ao.tip         = tip
+                                        ao.tex         = areaTex
+                                        ao.color       = (not areaTex) and areaVC or nil
+                                        ao.NXType      = 9000 + n
+                                        ao.NXData      = cur
+                                        ao.mapID       = amap
+                                        ao.w           = wx2 - wx1
+                                        ao.h           = wy2 - wy1
+                                        ao.vertexColor = areaTex and areaVC or nil
+                                        Nx.Quest:AddArea(wx1, wy1, ao)
+                                        if not hasLiveQuestPin then
+                                            local cx, cy = map:GetWorldPos(amap, area.cx, area.cy)
+                                            Nx.Quest:AddPOI(cx, cy, Quest.StyleMapIcon("objective", {
+                                                tip         = tip,
+                                                NXType      = 9000 + n,
+                                                NXData      = cur,
+                                                mapID       = amap,
+                                                vertexColor = isSuperTracked
+                                                    and {1, 0.85, 0, 1}
+                                                    or  {r, g, b, .9},
+                                                showGlow    = isSuperTracked,
+                                                label       = tostring(objectiveIndex),
+                                            }))
+                                        end
+                                    end
+                                end
+                            end
 
                             -- Area-only objectives use one stable numbered
                             -- center marker on both the Carbonite map and

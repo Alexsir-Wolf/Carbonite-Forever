@@ -445,3 +445,5 @@ L["Use Blizzard Icons On The Map"] = true
 L["Draws quest givers, turn-ins and objectives on the map with the game's own quest icons (falls back to the classic Carbonite icons when the client lacks them)"] = true
 L["Quest Icon Scale"] = true
 L["Sets the size of the quest icons on the map"] = true
+L["Show Objective Areas"] = true
+L["Draws one shaded area around each group of nearby spawns of an objective instead of one icon per spawn"] = true
