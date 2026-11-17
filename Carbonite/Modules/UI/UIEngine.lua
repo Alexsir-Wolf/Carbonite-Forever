@@ -4153,29 +4153,70 @@ for _, name in ipairs ({ "Lock", "CloseLock" }) do
         { AtlasUp = "Forge-Lock", AtlasDn = "Forge-Lock" },
     }
 end
+-- Minimize of a window: the collapse / expand arrows of the quest tracker,
+-- the same pair the quest watch list already uses (QuestWatchMinBlizz).
+Nx.Button.ClientAtlases.Min = {
+    AtlasUp = "ui-questtrackerbutton-collapse-all", AtlasDn = "ui-questtrackerbutton-expand-all", Untinted = true,
+}
+-- Text buttons (Back of the Guide, Record of the Notes, the What's New
+-- buttons): the game's red panel button. Every client has the panel button
+-- files, so a client without the atlas gets them instead of the skin's TGA.
+for _, name in ipairs ({ "Txt64", "Txt64B" }) do
+    Nx.Button.ClientAtlases[name] = {
+        { AtlasUp = "128-RedButton-UP", AtlasDn = "128-RedButton-Pressed", Untinted = true },
+        { FileUp = "Interface\\Buttons\\UI-Panel-Button-Up", FileDn = "Interface\\Buttons\\UI-Panel-Button-Down",
+          UV = { 0, .625, 0, .6875 }, Untinted = true },
+    }
+end
+-- Expand / collapse of a list header (quest log, Notes, Guide), registered
+-- by Carbonite.Quests: minus while open, plus while closed.
+Nx.Button.ClientAtlases.QuestHdr = {
+    { AtlasUp = "QuestLog-icon-shrink", AtlasDn = "QuestLog-icon-expand", Untinted = true },
+    { AtlasUp = "ui-questtrackerbutton-collapse-all", AtlasDn = "ui-questtrackerbutton-expand-all", Untinted = true },
+}
 
 ---
--- Give each button type its Blizzard atlases when the client has all of them.
--- A type may list several looks; the first one the client has is used.
+-- Give each button type its Blizzard look. A type may list several looks; the
+-- first one this client has wins: atlases are checked with
+-- C_Texture.GetAtlasInfo, a look of game files (FileUp/FileDn) always fits.
+-- A type with no fitting look keeps the skin's TGA. With `only`, just that
+-- type (one registered by a module after Init).
 --
-function Nx.Button:UseClientAtlases()
+function Nx.Button:UseClientAtlases (only)
+    self.ClientAtlasesUsed = true
     local info = C_Texture and C_Texture.GetAtlasInfo
-    if not info then return end
     local function has (look)
-        return info (look.AtlasUp) and info (look.AtlasDn) and (not look.IconDn or info (look.IconDn))
+        if look.FileUp then
+            return true
+        end
+        return info and info (look.AtlasUp) and info (look.AtlasDn) and (not look.IconDn or info (look.IconDn))
     end
     for name, looks in pairs (self.ClientAtlases) do
-        local typ = self.TypeData[name]
-        for _, look in ipairs (looks.AtlasUp and { looks } or looks) do
+        local typ = (not only or only == name) and rawget (self.TypeData, name)
+        for _, look in ipairs ((looks.AtlasUp or looks.FileUp) and { looks } or looks) do
             if typ and has (look) then
-                typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
-                typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
-                if look.Untinted then typ.VRGBAUp = nil end
+                if look.FileUp then
+                    typ.Skin = nil
+                    typ.Up, typ.Dn = look.FileUp, look.FileDn
+                    typ.UpUV, typ.DnUV = look.UV, look.UV
+                else
+                    typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
+                    typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
+                end
+                if look.Untinted then typ.VRGBAUp, typ.VRGBADn = nil, nil end
                 break
             end
         end
     end
 end
+
+-- Types that modules register later (QuestHdr, ...) get their look too.
+setmetatable (Nx.Button.TypeData, { __newindex = function (types, name, typ)
+    rawset (types, name, typ)
+    if Nx.Button.ClientAtlasesUsed then
+        Nx.Button:UseClientAtlases (name)
+    end
+end })
 
 function Nx.Button:Init()
 
