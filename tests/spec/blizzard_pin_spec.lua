@@ -109,3 +109,24 @@ describe("pino 3D: o marcador devolvido pelo cliente continua sendo nosso", func
         expect(src:find("if pin and pin.OwnsWaypoint and pin:OwnsWaypoint() then", 1, true) ~= nil).toBe(true)
     end)
 end)
+
+describe("pino 3D: mesmo ponto no mundo", function()
+    it("reconhece o pino devolvido em outro mapa bem depois, pela posição no mundo", function()
+        local BP, map, state, env = load()
+        -- Map 1454 is a 1000 x 1000 yard square inside 1411 at (2000, 3000).
+        env.CreateVector2D = function(x, y) return { x = x, y = y } end
+        env.C_Map.GetWorldPosFromMapPos = function(mapId, v)
+            local wx, wy
+            if mapId == 1454 then wx, wy = 2000 + v.x * 1000, 3000 + v.y * 1000
+            else wx, wy = v.x * 10000, v.y * 10000 end
+            return 1, { GetXY = function() return wx, wy end }
+        end
+        map.Targets[1] = target(1454, 42, 65)
+        BP:Sync()
+        state.now = 60                                         -- the event comes late
+        state.waypoint = { uiMapID = 1411, position = { x = 0.242, y = 0.365 } }
+        expect(BP:OwnsWaypoint()).toBe(true)
+        state.waypoint = { uiMapID = 1411, position = { x = 0.5, y = 0.5 } }
+        expect(BP:OwnsWaypoint()).toBe(false)
+    end)
+end)
