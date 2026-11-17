@@ -1222,6 +1222,12 @@ function Nx.Map:Create(index)
     local item = showMenu:AddItem(0, L["Show Zone Levels"], nil, m)
     item:SetChecked(Nx.db.profile.Map, "ShowZoneLevels")
 
+    -- Ships, zeppelins and the tram moving, with departure times on piers (#78)
+    if Nx.TransportRoutes then
+        local item = showMenu:AddItem(0, L["Show Ships and Zeppelins"], nil, m)
+        item:SetChecked(Nx.db.profile.Map, "ShowTransports")
+    end
+
     -- Quest givers: only the quests the player can take now, or all of them
     local function func(self)
         self.Guide:UpdateGatherFolders()
