@@ -78,6 +78,8 @@
          Loads last in this Map block so the small shells above are
          registered before the engine's methods overwrite. -->
     <Script file="Map\MapEngine.lua" />
+    <Script file="Map\DungeonPins.lua" />
+    <Script file="Map\DungeonGuide.lua" />
     <Script file="Map\DungeonChart.lua" />
     <!-- Live-minimap view for instances without a client UI map. -->
     <Script file="Map\UnmappedInstance.lua" />

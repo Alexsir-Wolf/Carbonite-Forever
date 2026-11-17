@@ -915,6 +915,7 @@ function Nx.Map:Create(index)
 
     win:SetBGAlpha(0, 1)
     win:CreateButtons(true)
+    win:StyleTitleBar()        -- Theme's title strip, color and line height (#47)
 
     -- Default layout position
     win:InitLayoutData(nil, -.0001, -.4, -.19, -.3, 1)
@@ -1545,14 +1546,16 @@ function Nx.Map:CreateToolBar()
     bar:Update()
     self:UpdateToolBar()
 
-    -- The 3D toggle is a plain coloured square; draw its caption on top.
+    -- The 3D toggle has no icon; its caption sits in the tool slot, in the
+    -- theme's title color, and the slot glows while the 3D view is on.
     for _, tool in ipairs(bar.Tools) do
         local but = tool.But
         if but and but.Type == Nx.Button.TypeData["Map3D"] then
             local fs = but.Frm:CreateFontString(nil, "OVERLAY")
             fs:SetFontObject("NxFontS")
             fs:SetPoint("CENTER", but.Frm, "CENTER", 0, 0)
-            fs:SetText("|cffffffff3D")
+            fs:SetText(L["3D"])
+            Carbonite.UI.Skin:PaintText(fs, "title")
             but.FStr = fs
             but:SetPressed(self.View3D)
             self.But3D = but
@@ -6345,7 +6348,7 @@ function Nx.Map:Update (elapsed)
     end
     -- Cover and title around the live minimap of an unmapped instance
     -- (UnmappedInstance.lua); hides itself everywhere else. Runs before
-    -- DungeonChart:Update, which stays closed while this view is active.
+    -- DungeonChart:Update, which here opens only in the maximized window.
     if self.UpdateUnmappedInstanceView then
         self:UpdateUnmappedInstanceView()
     end
