@@ -55,6 +55,10 @@ function Nx.Notes:Create()
     Nx.Button:Create(dnBut.Frm, "Txt64", L["Delete Item"], nil,
                      54, 0, "TOPLEFT", 72, 20, self.But_OnItemDel, self)
 
+    -- Search over the folder list: shows only the notes whose name matches.
+    self.SearchBox = Nx.SearchBox:Create(win.Frm, function() self:Update() end, { maxLetters = 60 })
+    win:Attach(self.SearchBox.Frm, 0, .3, 0, 18)
+
     -- Folder list (left side).
     Nx.List:SetCreateFont("Font.Medium", 16)
     local list = Nx.List:Create("FavF", 0, 0, 1, 1, win.Frm)
@@ -63,7 +67,7 @@ function Nx.Notes:Create()
     list:SetLineHeight(4)
     list:ColumnAdd("", 1, 20)
     list:ColumnAdd(L["Name"], 2, 900)
-    win:Attach(list.Frm, 0, .3, 0, 1)
+    win:Attach(list.Frm, 0, .3, 18, 1)
 
     -- Item list (right side).
     Nx.List:SetCreateFont("Font.Medium", 16)
@@ -341,10 +345,6 @@ function Nx.Notes:ToggleShow()
     if self.Win:IsShown() then self:Update() end
 end
 
-function Nx.Notes:OnEditBox(editbox, message)
-    if message == "Changed" then self:Update() end
-end
-
 -- -------------------------------------------------------------------
 -- List-row event handlers
 -- -------------------------------------------------------------------
@@ -430,6 +430,7 @@ function Nx.Notes:Update()
     list:ItemSet(2, "|cff808080Root")
 
     self.FavCnt = 0
+    self.Search = self.SearchBox and self.SearchBox:GetText() or ""
     self:UpdateFolder(self.Folders, 1)
     self:AddonFolders(1)
     list:Update()
@@ -456,9 +457,25 @@ function Nx.Notes:AddonFolders(level)
     end
 end
 
+-- True when the folder holds, at any depth, a note whose name matches the search.
+function Nx.Notes:FolderMatches(folder, search)
+    for _, item in ipairs(folder) do
+        if item["T"] == "F" then
+            if self:FolderMatches(item, search) then return true end
+        elseif Nx.SearchBox.Matches(item["Name"], search) then
+            return true
+        end
+    end
+    return false
+end
+
 function Nx.Notes:UpdateFolder(folder, level)
     local list = self.List
-    local hide = folder["Hide"]
+    local search = self.Search or ""
+    -- While searching, folders open and only the ones with a match show.
+    local hide = search == "" and folder["Hide"]
+
+    if search ~= "" and not self:FolderMatches(folder, search) then return end
 
     if level > 1 then
         list:ItemAdd(folder)
@@ -475,7 +492,7 @@ function Nx.Notes:UpdateFolder(folder, level)
         local name = item["Name"]
         if typ == "F" then
             self:UpdateFolder(item, level + 1)
-        else
+        elseif Nx.SearchBox.Matches(name, search) then
             self.FavCnt = self.FavCnt + 1
             list:ItemAdd(item)
             list:ItemSet(2, format("%s|cffdfdfdf%s", space, name))
