@@ -1734,6 +1734,24 @@ local function fontConfig()
             type = "group",
             name = L["Font Options"],
             args = {
+                -- One scale for every Carbonite font (#44): titles, lists, menus and the map.
+                FontScale = {
+                    order = 0,
+                    type = "range",
+                    name = L["Font Scale"],
+                    desc = L["Makes every Carbonite font bigger or smaller, keeping the sizes chosen below"],
+                    min = .7,                    -- Font.SCALE_MIN
+                    max = 1.6,                   -- Font.SCALE_MAX
+                    step = .05,
+                    isPercent = true,
+                    get = function()
+                        return Nx.db.profile.Font.Scale or 1
+                    end,
+                    set = function(info,value)
+                        Nx.db.profile.Font.Scale = value
+                        Nx.Opts:NXCmdFontChange()
+                    end,
+                },
                 SmallFont = {
                     order = 1,
                     type = "select",

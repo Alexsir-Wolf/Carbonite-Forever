@@ -1699,7 +1699,7 @@ function Nx.Info.Combat:_FirstTimeOpen()
 	f:SetFrameStrata ("MEDIUM")
 
 	local t = f:CreateTexture()
-	t:SetColorTexture (.2, .2, .2, .5)
+	Carbonite.UI.Skin:Paint (t, "panelBg")
 	t:SetAllPoints (f)
 	f.texture = t
 
