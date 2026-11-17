@@ -120,4 +120,13 @@ function W.namespace(fields)
     })
 end
 
+-- The shared search field (Carbonite/UI/SearchBox.lua), loaded in its own environment.
+-- Files that filter lists read it as Nx.SearchBox.
+function W.searchBox(overrides)
+    local env = W.env(overrides)
+    env.Carbonite.UI = {}
+    require("loader").run(env, "Carbonite/UI/SearchBox.lua")
+    return env.Carbonite.UI.SearchBox, env
+end
+
 return W

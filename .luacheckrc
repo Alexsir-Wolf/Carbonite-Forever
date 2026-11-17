@@ -41,4 +41,5 @@ include_files = {
     "Carbonite/Modules/Travel/FlightTimes.lua",
     "Carbonite/Modules/Map/Transports.lua",
     "Carbonite/Modules/Journey/Journey.lua",
+    "Carbonite/UI/SearchBox.lua",
 }

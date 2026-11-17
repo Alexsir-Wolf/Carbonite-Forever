@@ -645,7 +645,7 @@ function Nx.Map.Guide:Create (map)
     list:ColumnAdd ("", 5, 230)
     win:Attach (list.Frm, .33, 1, 18, 1)
 
-    g.EditBox = Nx.EditBox:Create (win.Frm, g, g.OnEditBox, 30)
+    g.EditBox = Nx.SearchBox:Create (win.Frm, function() g:Update() end, { maxLetters = 30 })
     win:Attach (g.EditBox.Frm, .33, 1, 0, 18)
 
     g:ClearShowFolders()
@@ -947,12 +947,6 @@ function Nx.Map.Guide:SelectLists()
     end
     self.List2:Update()
 end
-function Nx.Map.Guide:OnEditBox (editbox, message)
-    if message == "Changed" then
-        self:Update()
-    end
-end
-
 function Nx.Map.Guide:PatchFolder (folder, parent)
     local trainer
     if folder.Name == L["Trainer"] and folder.Pre then
@@ -1476,7 +1470,8 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
     local headers, searched
     local curFolder = self.PathHistory[pathI]
     if curFolder then
-        local filterStr = strlower (self.EditBox:GetText())
+        local normalize = Nx.SearchBox.Normalize
+        local filterStr = normalize (self.EditBox:GetText())
         if listSide == 1 then
             filterStr = ""
         end
@@ -1490,7 +1485,7 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
                 local name, iLink, iRarity, lvl, minLvl, type, subType, stackCount, equipLoc, tx = GetItemInfoCompat (id)
                 local show = true
                 if filterStr ~= "" then
-                    local lstr = strlower (format ("%s", name))
+                    local lstr = normalize (format ("%s", name))
                     show = strfind (lstr, filterStr, 1, true)
                 end
                 if show then
@@ -1519,7 +1514,7 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
                     local column4
                     if filterStr ~= "" then
                         local ft = folder.FilterText
-                        local lstr = strlower (ft or name)
+                        local lstr = normalize (ft or name)
                         show = strfind (lstr, filterStr, 1, true)
                         if show and ft then
                             for n = show, 10, -1 do
