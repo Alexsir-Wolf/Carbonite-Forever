@@ -93,7 +93,7 @@ L["%s deleted"] = "%s excluído"
 
 -- Keybinds
 L["Carbonite Warehouse"] = "Carbonite-Forever Warehouse"
-L["NxTOGGLEWAREHOUSE"] = "show/hide Warehouse"
+L["NxTOGGLEWAREHOUSE"] = "Mostrar/ocultar o Armazém"
 
 L["Characters"] = "Personagens"
 L["Guild Bank"] = "Banco da Guilda"
