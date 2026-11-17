@@ -129,6 +129,8 @@
     <Script file="AuctionAssist\AuctionAssistEngine.lua" />
     <!-- The /carb subcommands of the legacy dispatcher. -->
     <Script file="SlashHandler\SlashCommandEngine.lua" />
+    <!-- Character journey diary: milestones per character, /carb jornada (#69). -->
+    <Script file="Journey\Journey.lua" />
     <Script file="EventDispatcher\EventDispatcher.lua" />
     <Script file="ChatHooks\ChatHooks.lua" />
     <Script file="MainUpdater\MainUpdater.lua" />
