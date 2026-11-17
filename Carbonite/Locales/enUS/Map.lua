@@ -176,6 +176,7 @@ L["Bosses (route order)"] = true
 L["No boss data for this dungeon"] = true
 L["(next)"] = true
 L["Next boss"] = true
+L["Alive"] = true
 L["Quests in this dungeon"] = true
 L["(complete)"] = true
 L["Quest items here: %s"] = true

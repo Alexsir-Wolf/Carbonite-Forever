@@ -52,6 +52,15 @@ local function load(opts)
         EJ_GetEncounterInfoByIndex = opts.ej and function(i) return opts.ej[i] end,
     })
     withNames(env)
+    env.C_CombatLog = opts.combatLog
+    if opts.frames then
+        local create = env.CreateFrame
+        env.CreateFrame = function(...)
+            local f = create(...)
+            opts.frames[#opts.frames + 1] = f
+            return f
+        end
+    end
     env.Nx = { DungeonPins = PINS, db = { char = opts.char or {} }, Map = { Maps = {} }, Quest = opts.quest }
     env.GetNumQuestLeaderBoards = opts.boards and function(qi) return #opts.boards[qi] end
     env.GetQuestLogLeaderBoard = opts.boards and function(i, qi) return opts.boards[qi][i][1], "monster", opts.boards[qi][i][2] end
@@ -299,5 +308,147 @@ describe("DungeonGuide: nomes do cliente, com o AceLocale como reserva", functio
             GetMapGroupMembersInfo = function() return { { mapID = 291, name = "Minas" }, { mapID = 292, name = "Enseada do Cliente" } } end,
         }
         expect(DG.FloorName({ key = "292", map = 292, named = true })).toBe("Enseada do Cliente")
+    end)
+end)
+
+describe("DungeonGuide: valores secretos do cliente", function()
+    -- The Forever client hands some GUIDs and names as secret values: reading them raises an error.
+    local SECRET_GUID = "Creature-0-1-36-1-1-0000ABCD"
+
+    local function loadSecret()
+        local DG, env = load()
+        env.issecretvalue = function(v) return v == SECRET_GUID or v == "Segredo" end
+        return DG
+    end
+
+    it("GUID secreto não é lido nem marca chefe", function()
+        local DG = loadSecret()
+        expect(DG.NpcID(SECRET_GUID)).toBeNil()
+        expect(function() DG:LearnName(SECRET_GUID, "Rhahk'Zor") end).toNotThrow()
+        DG:OnCombatLog("UNIT_DIED", SECRET_GUID, "Segredo")
+        expect(DG:Bosses()[1].killed).toBeFalsy()
+    end)
+
+    it("nome secreto é ignorado e o id do NPC ainda vale", function()
+        local DG = loadSecret()
+        DG:OnCombatLog("UNIT_DIED", "Creature-0-1-36-1-1-0000ABCE", "Segredo")
+        expect(DG:Bosses()[1].killed).toBe(true)
+    end)
+end)
+
+describe("DungeonGuide: log de combate restrito", function()
+    local function enter(combatLog)
+        local frames = {}
+        local DG = load({ frames = frames, combatLog = combatLog })
+        local events = frames[#frames]
+        events.scripts.OnEvent(events, "PLAYER_ENTERING_WORLD", true, false)
+        return DG, events
+    end
+
+    it("com o log restrito não se inscreve nele, mas segue com alvo e mouseover", function()
+        local DG, events = enter({ IsCombatLogRestricted = function() return true end })
+        expect(DG.CombatLogAllowed()).toBe(false)
+        expect(events.events.COMBAT_LOG_EVENT_UNFILTERED).toBeNil()
+        expect(events.events.PLAYER_TARGET_CHANGED).toBe(true)
+    end)
+
+    it("sem restrição se inscreve como antes", function()
+        local _, events = enter({ IsCombatLogRestricted = function() return false end })
+        expect(events.events.COMBAT_LOG_EVENT_UNFILTERED).toBe(true)
+    end)
+
+    it("cliente antigo, sem C_CombatLog, se inscreve como antes", function()
+        local _, events = enter(nil)
+        expect(events.events.COMBAT_LOG_EVENT_UNFILTERED).toBe(true)
+    end)
+end)
+
+describe("DungeonGuide: retratos e estado dos chefes", function()
+    local function texture()
+        local t = { calls = {} }
+        function t:SetTexture(path) self.path = path end
+        function t:SetTexCoord() end
+        return t
+    end
+
+    it("vivo, próximo e morto", function()
+        local DG = load()
+        local bosses = { { killed = true }, {}, {} }
+        expect(DG.BossState(bosses, 1)).toBe("killed")
+        expect(DG.BossState(bosses, 2)).toBe("next")
+        expect(DG.BossState(bosses, 3)).toBe("alive")
+    end)
+
+    it("usa o retrato pronto do ForeverDungeonJournal pelo displayID que ele guardou", function()
+        local DG, env = load()
+        env.ForeverDungeonJournalDB = { displayIDs = { [11520] = 7970 } }
+        env.ForeverDungeonJournal_NS = {
+            SetBakedPortrait = function(tex, id) tex:SetTexture("baked:" .. id); return true end,
+        }
+        local tex = texture()
+        expect(DG.SetBossPortrait(tex, 11520)).toBe(true)
+        expect(tex.path).toBe("baked:7970")
+    end)
+
+    it("acha o displayID na tabela fixa de chefes do ForeverDungeonJournal", function()
+        local DG, env = load()
+        env.ForeverDungeonJournal_NS = { STATIC_DISPLAY_IDS = { [11517] = 11611 } }
+        expect(DG.DisplayID(11517)).toBe(11611)
+    end)
+
+    it("sem retrato pronto usa o retrato do cliente pelo displayID", function()
+        local DG, env = load()
+        env.ForeverDungeonJournalDB = { displayIDs = { [11518] = 1234 } }
+        local used
+        env.SetPortraitTextureFromCreatureDisplayID = function(_, id) used = id end
+        expect(DG.SetBossPortrait(texture(), 11518)).toBe(true)
+        expect(used).toBe(1234)
+    end)
+
+    it("sem displayID ainda: fica a caveira (false)", function()
+        local DG = load()
+        expect(DG.SetBossPortrait(texture(), 11519)).toBe(false)
+        expect(DG.SetBossPortrait(texture(), nil)).toBe(false)
+    end)
+
+    it("a planta usa o retrato nos chefes e a dica de posição some na masmorra", function()
+        expect(loader.read("Carbonite/Modules/Map/DungeonChart.lua"):find("DG.SetBossPortrait(p.Icon, b.npc)", 1, true) ~= nil).toBe(true)
+        local tip = loader.read("Carbonite/Modules/Map/MapTooltip.lua")
+        expect(tip:find("or (chart and chart.IsActive and chart:IsActive()) then", 1, true) ~= nil).toBe(true)
+        -- The redraw keeps the portrait: no "keep and false or" idiom, which is always the skull.
+        expect(loader.read("Carbonite/Modules/Map/DungeonChart.lua"):find("keep and false or", 1, true)).toBeNil()
+    end)
+end)
+
+describe("DungeonGuide: minimapa no canto da planta", function()
+    it("fica quadrado no painel, mesmo com a opção de acoplado redondo", function()
+        local engine = loader.read("Carbonite/Modules/Map/MapEngine.lua")
+        expect(engine:find('self:MinimapUpdateMask("DockSquare", self.UInstChartFrm ~= nil and self:IsUnmappedInstance())', 1, true) ~= nil).toBe(true)
+        expect(engine:find("(forceSquare or Nx.db.profile.MiniMap[optName])", 1, true) ~= nil).toBe(true)
+    end)
+end)
+
+describe("DungeonChart: id do chefe pelo nome no ForeverDungeonJournal", function()
+    it("acha o npcID pelo nome ou apelido, sem diferenciar maiúsculas", function()
+        local env = wow.lenientEnv()
+        env.Nx = { DungeonGuide = nil }
+        loader.run(env, "Carbonite/Modules/Map/DungeonChart.lua")
+        local DC = env.Nx.DungeonChart
+        local dj = { DB = { ["Ragefire Chasm"] = { bosses = {
+            { name = "Oggleflint", npcID = 11517, aliases = { "Pederneiro" } },
+            { name = "Bazzalan", npcID = 11519 },
+        } } } }
+        expect(DC.NpcByName(dj, "oggleflint")).toBe(11517)
+        expect(DC.NpcByName(dj, "Pederneiro")).toBe(11517)
+        expect(DC.NpcByName(dj, "Bazzalan")).toBe(11519)
+        expect(DC.NpcByName(dj, "Ninguém")).toBeNil()
+    end)
+end)
+
+describe("UnmappedInstance: minimapa sob os chefes", function()
+    it("usa a vaga do painel quando a planta e o painel estão abertos", function()
+        local src = loader.read("Carbonite/Modules/Map/UnmappedInstance.lua")
+        expect(src:find("Nx.DungeonGuide.PanelMinimap", 1, true) ~= nil).toBe(true)
+        expect(src:find("return slot.size, slot.x, slot.y", 1, true) ~= nil).toBe(true)
     end)
 end)
