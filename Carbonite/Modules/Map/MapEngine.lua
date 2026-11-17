@@ -3498,7 +3498,9 @@ function Nx.Map:MinimapUpdateEnd()
 
     -- Position docked minimap
     if self.MMZoomType == 0 then
-        self:MinimapUpdateMask("DockSquare")
+        -- In the boss panel of a dungeon chart: square, on the panel's dark
+        -- background (UnmappedInstance.lua, DungeonGuide.lua).
+        self:MinimapUpdateMask("DockSquare", self.UInstChartFrm ~= nil and self:IsUnmappedInstance())
 
         local iconScale = Nx.db.profile.MiniMap.DockIScale
 
@@ -3662,10 +3664,10 @@ function Nx.Map:MinimapSetScale (scale, iconScale)
     mm:SetScale (iconScale)
 end
 
-function Nx.Map:MinimapUpdateMask (optName)
+function Nx.Map:MinimapUpdateMask (optName, forceSquare)
 
     local roundMask = Nx.isRetail and "Interface\\CharacterFrame\\TempPortraitAlphaMask" or "textures\\MinimapMask"
-    local name = Nx.db.profile.MiniMap[optName] and "Interface\\Buttons\\White8x8" or roundMask
+    local name = (forceSquare or Nx.db.profile.MiniMap[optName]) and "Interface\\Buttons\\White8x8" or roundMask
 
 --    if IsControlKeyDown() then
 --        self.MMMaskName = nil

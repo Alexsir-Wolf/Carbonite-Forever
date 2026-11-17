@@ -87,6 +87,16 @@ function MapTooltip:Set(tipStr)
     local mapFrame = map and map.Frm
     if not mapFrame then return end
 
+    -- Inside a dungeon (no map, or its chart shown) the cursor's zone, skill
+    -- and distance come from the outdoor map under it, and the tip covered
+    -- the boss panel: no tip there.
+    local chart = _G.Nx and _G.Nx.DungeonChart
+    if (map.IsUnmappedInstance and map:IsUnmappedInstance())
+            or (chart and chart.IsActive and chart:IsActive()) then
+        self:Hide()
+        return
+    end
+
     local db = _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.Map or {}
     local anchor    = (self._override and self._override.point)    or db.LocTipAnchor
     local relAnchor = (self._override and self._override.relPoint) or db.LocTipAnchorRel
