@@ -107,7 +107,6 @@ L["Shift left click toggle minimize"] = "Шифт Левый клик чтобы
 L["Alt left click toggle Watch List"] = "Альт Левый клик чтобы Вкл/Выкл Журнал Отслеживания"
 L["Middle click toggle Guide"] = "Шифт Левый клик чтобы Вкл/Выкл Слежение"
 L["Right click for Menu"] = "Правый клик для Меню"
-L["Shift drag to move"] = "Перемещение с зажатым шифтом"
 L["Hide In Combat"] = "Скрыть в бою"
 L["Lock"] = "Закрепить"
 L["Layer"] = "Слой"
