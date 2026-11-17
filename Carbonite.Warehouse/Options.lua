@@ -96,6 +96,7 @@ function Nx.Warehouse:GetOptionsConfig()
                             order = 5,
                             type = "select",
                             style = "radio",
+                            desc = L["Removes the chosen item from the don't display list."],
                             name = L["Delete Item"],
                             disabled = function()
                                 return not Nx.wdb.profile.Warehouse.TooltipIgnore
@@ -291,7 +292,7 @@ function Nx.Warehouse:GetOptionsConfig()
                                     type = "toggle",
                                     width = "full",
                                     name = L["Enable iLevel Limit"],
-                                    desc = L["Only sells items that are under the item level specified"],
+                                    desc = L["Only sells items that are under the ilvl specified"],
                                     disabled = function()
                                         return not Nx.wdb.profile.Warehouse.SellWhites
                                     end,
@@ -381,7 +382,7 @@ function Nx.Warehouse:GetOptionsConfig()
                                     type = "toggle",
                                     width = "full",
                                     name = L["Enable iLevel Limit"],
-                                    desc = L["Only sells items that are under the item level specified"],
+                                    desc = L["Only sells items that are under the ilvl specified"],
                                     disabled = function()
                                         return not Nx.wdb.profile.Warehouse.SellGreens
                                     end,
@@ -471,7 +472,7 @@ function Nx.Warehouse:GetOptionsConfig()
                                     type = "toggle",
                                     width = "full",
                                     name = L["Enable iLevel Limit"],
-                                    desc = L["Only sells items that are under the item level specified"],
+                                    desc = L["Only sells items that are under the ilvl specified"],
                                     disabled = function()
                                         return not Nx.wdb.profile.Warehouse.SellBlues
                                     end,
@@ -561,7 +562,7 @@ function Nx.Warehouse:GetOptionsConfig()
                                     type = "toggle",
                                     width = "full",
                                     name = L["Enable iLevel Limit"],
-                                    desc = L["Only sells items that are under the item level specified"],
+                                    desc = L["Only sells items that are under the ilvl specified"],
                                     disabled = function()
                                         return not Nx.wdb.profile.Warehouse.SellPurps
                                     end,
@@ -645,6 +646,7 @@ function Nx.Warehouse:GetOptionsConfig()
                                     order = 3,
                                     type = "select",
                                     style = "radio",
+                                    desc = L["Removes the chosen item from the sell list."],
                                     name = L["Delete Item"],
                                     disabled = function()
                                         return not Nx.wdb.profile.Warehouse.SellList

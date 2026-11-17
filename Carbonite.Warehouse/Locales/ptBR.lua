@@ -206,3 +206,6 @@ L["[Account]"] = "[Conta]"
 L["+ %d more currencies"] = "+ %d moedas"
 L["%s - Other"] = "%s - Outras"
 L[" No profession recipes match '%s'"] = " Nenhuma receita corresponde a '%s'"
+-- Options: basic mode, sections and help (#64)
+L["Removes the chosen item from the don't display list."] = "Remove o item escolhido da lista de itens ocultos."
+L["Removes the chosen item from the sell list."] = "Remove o item escolhido da lista de venda."

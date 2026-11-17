@@ -143,6 +143,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 9,
                             type = "color",
                             width = "full",
+                            desc = L["Background color of the quest details panel."],
                             name = L["Quest Details Background Color"],
                             hasAlpha = true,
                             get = function()
@@ -161,6 +162,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 10,
                             type = "color",
                             width = "full",
+                            desc = L["Text color of the quest details panel."],
                             name = L["Quest Details Text Color"],
                             hasAlpha = true,
                             get = function()
@@ -384,6 +386,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 26,
                             type = "color",
                             width = "full",
+                            desc = L["Color of the objective areas of tracked quests."],
                             name = L["Color of Watched Areas When Tracked"],
                             hasAlpha = true,
                             get = function()
@@ -403,6 +406,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 27,
                             type = "color",
                             width = "full",
+                            desc = L["Color of an objective area under the mouse."],
                             name = L["Color of Watched Areas on Mouse Over"],
                             hasAlpha = true,
                             get = function()
@@ -422,6 +426,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 28,
                             type = "color",
                             width = "full",
+                            desc = L["Opacity of the objective areas."],
                             name = L["Alpha of Watched Areas"],
                             hasAlpha = true,
                             get = function()
@@ -557,6 +562,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 33,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 1"],
                             hasAlpha = true,
                             get = function()
@@ -576,6 +582,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 34,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 2"],
                             hasAlpha = true,
                             get = function()
@@ -595,6 +602,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 35,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 3"],
                             hasAlpha = true,
                             get = function()
@@ -614,6 +622,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 36,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 4"],
                             hasAlpha = true,
                             get = function()
@@ -633,6 +642,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 37,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 5"],
                             hasAlpha = true,
                             get = function()
@@ -652,6 +662,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 38,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 6"],
                             hasAlpha = true,
                             get = function()
@@ -671,6 +682,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 39,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 7"],
                             hasAlpha = true,
                             get = function()
@@ -690,6 +702,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 40,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 8"],
                             hasAlpha = true,
                             get = function()
@@ -709,6 +722,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 41,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 9"],
                             hasAlpha = true,
                             get = function()
@@ -728,6 +742,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 42,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 10"],
                             hasAlpha = true,
                             get = function()
@@ -747,6 +762,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 43,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 11"],
                             hasAlpha = true,
                             get = function()
@@ -766,6 +782,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 44,
                             type = "color",
                             width = "full",
+                            desc = L["One of the colors that tell tracked quests apart on the map."],
                             name = L["Watch Color 12"],
                             hasAlpha = true,
                             get = function()
@@ -1279,6 +1296,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 29,
                             type = "color",
                             width = "full",
+                            desc = L["Background color of the quest watch window."],
                             name = L["Quest Watch Background Color"],
                             hasAlpha = true,
                             get = function()
@@ -1299,6 +1317,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 30,
                             type = "color",
                             width = "full",
+                            desc = L["Color of finished quests in the watch window."],
                             name = L["Quest Complete Color"],
                             hasAlpha = true,
                             get = function()
@@ -1319,6 +1338,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 31,
                             type = "color",
                             width = "full",
+                            desc = L["Color of unfinished quests in the watch window."],
                             name = L["Quest Incomplete Color"],
                             hasAlpha = true,
                             get = function()
@@ -1339,6 +1359,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 32,
                             type = "color",
                             width = "full",
+                            desc = L["Color of finished objectives in the watch window."],
                             name = L["Objective Complete Color"],
                             hasAlpha = true,
                             get = function()
@@ -1359,6 +1380,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 33,
                             type = "color",
                             width = "full",
+                            desc = L["Color of unfinished objectives in the watch window."],
                             name = L["Objective Incomplete Color"],
                             hasAlpha = true,
                             get = function()
@@ -1562,6 +1584,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 3,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Carbonite Quest Complete"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd1
@@ -1577,6 +1600,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 4,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Peon Work Complete"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd2
@@ -1592,6 +1616,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 5,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Undead Well Done"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd3
@@ -1607,6 +1632,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 6,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Female Congratulations"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd4
@@ -1622,6 +1648,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 7,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Dwarven Well Done"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd5
@@ -1637,6 +1664,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 8,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Gnome Good Job"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd6
@@ -1652,6 +1680,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 9,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Tauren Well Done"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd7
@@ -1667,6 +1696,7 @@ function Nx.Quest:GetOptionsConfig()
                             order = 10,
                             type = "toggle",
                             width = "full",
+                            desc = L["Plays this sound when you complete a quest."],
                             name = L["Undead What Now"],
                             get = function()
                                 return Nx.qdb.profile.Quest.Snd8
@@ -1908,6 +1938,7 @@ function Nx.Quest:GetOptionsConfig()
                             func = function()
                                 Nx.Opts.NXCmdReload()
                             end,
+                            desc = L["Reloads the interface to apply the database changes."],
                             name = L["Reload UI"]
                         },
                     },
