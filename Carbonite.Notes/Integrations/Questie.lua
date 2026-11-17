@@ -9,6 +9,7 @@
 -- once the user has enabled the Questie integration in the options.
 
 local Nx = _G.Nx
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite.Notes", true)
 if not Nx then return end
 Nx.Notes = Nx.Notes or {}
 
@@ -307,7 +308,7 @@ function Nx.Notes:Questie(mapId)
                         if pin then
                             pin.npcId = npcId
                             pin.tip   = tipText
-                                or (npcId and ("NPC ID: " .. tostring(npcId)))
+                                or (npcId and format(L["NPC ID: %s"], tostring(npcId)))
                                 or nil
                         end
                     end
