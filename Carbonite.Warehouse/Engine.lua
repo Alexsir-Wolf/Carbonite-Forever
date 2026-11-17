@@ -611,7 +611,7 @@ function Nx.Warehouse:AddSelectionSummary(list)
         list:ItemSet(2, format(L["  Bags: %d  Bank: %d  Mail: %d"], bagTotal, bankTotal, mailTotal))
         if hasAccountBank then
             list:ItemAdd(selected)
-            list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal))
+            list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
             list:ItemAdd(selected)
             list:ItemSet(2, format(L["  Shared scan: %s"], accountStatus))
         end
@@ -636,7 +636,7 @@ function Nx.Warehouse:AddSelectionSummary(list)
     list:ItemSet(2, format(L["  Bank: %d  Mail: %d"], bankTotal + reagentTotal, mailTotal))
     if hasAccountBank then
         list:ItemAdd(selected)
-        list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal))
+        list:ItemSet(2, format("  %s: %d", _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal))
     end
 
     list:ItemAdd(selected)
@@ -705,7 +705,7 @@ function Nx.Warehouse:AddStorageOverview(list, ch, allCharacters)
     end
 
     if hasAccountBank then
-        AddSectionHeader(list, 3, _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank", accountTotal)
+        AddSectionHeader(list, 3, _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"], accountTotal)
         list:ItemAdd(0)
         list:ItemSet(3, format(L["  Shared account storage - %s"],
             FormatScanStatus(account and account.ScanTime, account and next(account.Inv or {}) ~= nil)))
@@ -919,11 +919,11 @@ function Nx.Warehouse:Update()
                     end
                     if #currencyRows > visibleRows then
                         list:ItemAdd(cnum)
-                        list:ItemSet(2, format("  |cff888888+ %d more currencies|r", #currencyRows - visibleRows))
+                        list:ItemSet(2, "  |cff888888" .. format(L["+ %d more currencies"], #currencyRows - visibleRows) .. "|r")
                     end
                 elseif ch["Honor"] or ch["Conquest"] then
                     list:ItemAdd(cnum)
-                    list:ItemSet(2, format(" Honor: %s%s|r  Conquest: %s%s", hicol, ch["Honor"] or 0, hicol, ch["Conquest"] or 0))
+                    list:ItemSet(2, format(L[" Honor: %s%s|r  Conquest: %s%s"], hicol, ch["Honor"] or 0, hicol, ch["Conquest"] or 0))
                 else
                     list:ItemAdd(cnum)
                     list:ItemSet(2, format(" " .. L["No Currency Data Saved"]))
@@ -959,7 +959,7 @@ function Nx.Warehouse:Update()
                                 end
                             end
                         end
-                        local scopeText = scopeCount > 1 and format(" |cff777777[%d skill lines]|r", scopeCount) or ""
+                        local scopeText = scopeCount > 1 and " |cff777777[" .. format(L["%d skill lines"], scopeCount) .. "]|r" or ""
                         list:ItemSet (2, format (" %s %s%s%s", name, hicol, rankText, scopeText))
 
                         if p["Link"] then
@@ -1374,7 +1374,7 @@ function Nx.Warehouse:UpdateItem (pre, name, bagCnt, bankCnt, mailCnt, link, sho
         istr = format (L["%s |cffcfffff(%s Mail)"], istr, mailCnt)
     end
     if accountCnt > 0 then
-        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank"
+        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"]
         istr = format("%s |cffcfffaf(%s %s)", istr, accountCnt, accountLabel)
     end
 
@@ -1614,7 +1614,7 @@ function Nx.Warehouse:FindCharsWithItem (link, specific)
 
     if accountCnt > 0 then
         local s
-        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or "Warband Bank"
+        local accountLabel = _G.ACCOUNT_BANK_PANEL_TITLE or L["Warband Bank"]
         if specific == "tooltip" then
             s = format("|cFFFFFF00%s#|cFFFF0000[|cFF00FF00%s:%d|cFFFF0000]", accountLabel, accountLabel, accountCnt)
         else
@@ -1796,13 +1796,13 @@ local function GetProfessionRecipeRow(profT, recipeID, scopeLabel, filterStr)
         local lines = {
             recipeName,
             scopeLabel,
-            format("Quality outputs: %d", #qualityOutputs),
+            format(L["Quality outputs: %d"], #qualityOutputs),
         }
         for index, output in ipairs(qualityOutputs) do
-            local outputText = output.link or output.name or format("Item %d", output.id)
+            local outputText = output.link or output.name or format(L["Item %d"], output.id)
             lines[#lines + 1] = format("  Q%d  %s", index, outputText)
         end
-        lines[#lines + 1] = "|cff888888Alt: item tooltip|r"
+        lines[#lines + 1] = "|cff888888" .. L["Alt: item tooltip"] .. "|r"
         if itemLink then
             tooltip = "!" .. itemLink .. "^" .. table.concat(lines, "\n")
         else
@@ -1939,7 +1939,7 @@ function Nx.Warehouse:UpdateProfessions()
 
         if totalRows == 0 and filterStr ~= "" then
             list:ItemAdd(0)
-            list:ItemSet(3, format(" No profession recipes match '%s'", self.EditBox:GetText()))
+            list:ItemSet(3, " " .. format(L["No profession recipes match '%s'"], self.EditBox:GetText()))
         end
     else
         list:ItemAdd(0)
