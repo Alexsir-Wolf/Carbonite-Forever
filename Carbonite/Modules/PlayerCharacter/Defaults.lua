@@ -51,6 +51,7 @@ Nx.Defaults = {
             CaptureShare = true,
             ChatMsgFrm = "",
             GryphonsHide = false,
+            JourneyRecord = true,           -- Character journey diary (#69)
             LoginMessage = false,
             TitleShow = false,
             TitleSoundOn = false,
