@@ -25,7 +25,6 @@ L["Deathknight"] = "Todesritter"
 L["Monk"] = "M\195\182nch"
 
 L["Com options reset (%f, %f)"] = "Com Einstellungen zur\195\188cksetzen (%f, %f)"
-L["ComTest"] = "ComTest"
 L["Disabling com functions!"] = "Com Funktionen ausgeschaltet!"
 L["JoinChan Err %s"] = "JoinChan-Fehler %s"
 L["SendSecG Error: %s"] = "SendeSekG Fehler: %s"

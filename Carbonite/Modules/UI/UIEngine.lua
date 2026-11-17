@@ -6755,7 +6755,7 @@ function Nx.List:Update (showLast)
                         if #Nx.qdb.profile.QuestWatch.KeyUseItem > 0 and not InCombatLockdown() then
 
                             local s = GetBindingAction (Nx.qdb.profile.QuestWatch.KeyUseItem)
-                            s = strmatch (s, L["CLICK (.+):"])
+                            s = strmatch (s, "CLICK (.+):")
 --                            Nx.prt ("Key's frm %s", s or "nil")
                             if s ~= f:GetName() then
                                 local ok = SetBindingClick (Nx.qdb.profile.QuestWatch.KeyUseItem, f:GetName())

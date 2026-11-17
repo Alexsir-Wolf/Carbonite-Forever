@@ -47,7 +47,7 @@ local function FormatWatchObjectiveText(desc)
         return desc
     end
 
-    local quality = _G.QUALITY or "Quality"
+    local quality = _G.QUALITY or L["Quality"]
     return gsub(desc,
         "|A:professions%-icon%-quality[^:|]-tier(%d+)%-questobjective:[^|]*|a",
         function(tier)
@@ -1713,12 +1713,12 @@ local function WatchList_AddScenario(list)
             if bonusInfo then
                 local bonusTitle = bonusInfo.title
                 if not bonusTitle or bonusTitle == "" then
-                    bonusTitle = BONUS_OBJECTIVE or "Bonus Objective"
+                    bonusTitle = BONUS_OBJECTIVE or L["Bonus Objective"]
                 end
 
                 list:ItemAdd(0)
                 list:ItemSet(2, format(" |cffff0000%s: |cff00ff00%s",
-                    BONUS_OBJECTIVE or "Bonus Objective", bonusTitle))
+                    BONUS_OBJECTIVE or L["Bonus Objective"], bonusTitle))
 
                 for criteriaIndex = 1, bonusInfo.numCriteria or 0 do
                     local criteriaInfo = WatchList_GetScenarioCriteriaInfo(criteriaIndex, stepID)
@@ -2095,7 +2095,7 @@ function Nx.Quest.Watch:UpdateList()
         -- BfA
         if not hideBfAEmmissaries and #Nx.Quest.emmBfA > 0 then
             list:ItemAdd(0)
-            list:ItemSet(2,"|cff00ff00----[ |cffffff00" .. "BfA Emissaries" .. " |cff00ff00]----")
+            list:ItemSet(2,"|cff00ff00----[ |cffffff00" .. L["BfA Emissaries"] .. " |cff00ff00]----")
 
             for bountyIndex, bounty in ipairs(Nx.Quest.emmBfA) do
                 local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(bounty.questID, 1, false)
@@ -2118,7 +2118,7 @@ function Nx.Quest.Watch:UpdateList()
         -- Legion
         if not hideLegionEmmissaries and #Nx.Quest.emmLegion > 0 then
             list:ItemAdd(0)
-            list:ItemSet(2,"|cff00ff00----[ |cffffff00" .. "Legion Emissaries" .. " |cff00ff00]----")
+            list:ItemSet(2,"|cff00ff00----[ |cffffff00" .. L["Legion Emissaries"] .. " |cff00ff00]----")
 
             for bountyIndex, bounty in ipairs(Nx.Quest.emmLegion) do
                 local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(bounty.questID, 1, false)

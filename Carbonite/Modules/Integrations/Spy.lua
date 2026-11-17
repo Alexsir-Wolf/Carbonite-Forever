@@ -28,6 +28,7 @@ local Nx = _G.Nx
 if not Nx then return end
 
 local Carbonite = _G.Carbonite
+local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 
 Nx.Spy = Nx.Spy or {}
 
@@ -297,7 +298,7 @@ function Nx.Spy:AugmentTooltip(this)
 
     if hits then
         this.NxTip = this.NxTip
-            .. "\n|cffff00ff[KOS nearby]|r |cffff8080"
+            .. "\n|cffff00ff[" .. L["KOS nearby"] .. "]|r |cffff8080"
             .. table.concat(hits, ", ") .. "|r"
     end
 end
