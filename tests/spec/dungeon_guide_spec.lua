@@ -52,6 +52,15 @@ local function load(opts)
         EJ_GetEncounterInfoByIndex = opts.ej and function(i) return opts.ej[i] end,
     })
     withNames(env)
+    env.C_CombatLog = opts.combatLog
+    if opts.frames then
+        local create = env.CreateFrame
+        env.CreateFrame = function(...)
+            local f = create(...)
+            opts.frames[#opts.frames + 1] = f
+            return f
+        end
+    end
     env.Nx = { DungeonPins = PINS, db = { char = opts.char or {} }, Map = { Maps = {} }, Quest = opts.quest }
     env.GetNumQuestLeaderBoards = opts.boards and function(qi) return #opts.boards[qi] end
     env.GetQuestLogLeaderBoard = opts.boards and function(i, qi) return opts.boards[qi][i][1], "monster", opts.boards[qi][i][2] end
@@ -324,5 +333,32 @@ describe("DungeonGuide: valores secretos do cliente", function()
         local DG = loadSecret()
         DG:OnCombatLog("UNIT_DIED", "Creature-0-1-36-1-1-0000ABCE", "Segredo")
         expect(DG:Bosses()[1].killed).toBe(true)
+    end)
+end)
+
+describe("DungeonGuide: log de combate restrito", function()
+    local function enter(combatLog)
+        local frames = {}
+        local DG = load({ frames = frames, combatLog = combatLog })
+        local events = frames[#frames]
+        events.scripts.OnEvent(events, "PLAYER_ENTERING_WORLD", true, false)
+        return DG, events
+    end
+
+    it("com o log restrito não se inscreve nele, mas segue com alvo e mouseover", function()
+        local DG, events = enter({ IsCombatLogRestricted = function() return true end })
+        expect(DG.CombatLogAllowed()).toBe(false)
+        expect(events.events.COMBAT_LOG_EVENT_UNFILTERED).toBeNil()
+        expect(events.events.PLAYER_TARGET_CHANGED).toBe(true)
+    end)
+
+    it("sem restrição se inscreve como antes", function()
+        local _, events = enter({ IsCombatLogRestricted = function() return false end })
+        expect(events.events.COMBAT_LOG_EVENT_UNFILTERED).toBe(true)
+    end)
+
+    it("cliente antigo, sem C_CombatLog, se inscreve como antes", function()
+        local _, events = enter(nil)
+        expect(events.events.COMBAT_LOG_EVENT_UNFILTERED).toBe(true)
     end)
 end)

@@ -638,6 +638,23 @@ end
 local INSIDE_EVENTS = { "COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT",
     "NAME_PLATE_UNIT_ADDED" }
 
+-- The combat log is restricted on the Forever client inside instances:
+-- registering it there raises "action blocked" (ADDON_ACTION_BLOCKED), which
+-- pcall cannot stop. Ask the client first, as ObjectiveCapture and NxInfo do;
+-- without it, kills still come from ENCOUNTER_END.
+local function CombatLogAllowed()
+    local log = _G.C_CombatLog
+    if not log then
+        return true                 -- older clients: no restriction
+    end
+    if not log.IsCombatLogRestricted then
+        return false
+    end
+    local ok, restricted = pcall(log.IsCombatLogRestricted)
+    return ok and restricted == false
+end
+DG.CombatLogAllowed = CombatLogAllowed
+
 local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("ENCOUNTER_END")
@@ -646,7 +663,11 @@ events:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_ENTERING_WORLD" then
         local inside = DG:OnEnterWorld(...)
         for _, name in ipairs(INSIDE_EVENTS) do
-            if inside then self:RegisterEvent(name) else self:UnregisterEvent(name) end
+            if inside and (name ~= "COMBAT_LOG_EVENT_UNFILTERED" or CombatLogAllowed()) then
+                self:RegisterEvent(name)
+            elseif self:IsEventRegistered(name) then
+                self:UnregisterEvent(name)
+            end
         end
     elseif event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT" or event == "NAME_PLATE_UNIT_ADDED" then
         local unit = event == "PLAYER_TARGET_CHANGED" and "target" or event == "UPDATE_MOUSEOVER_UNIT" and "mouseover" or ...
