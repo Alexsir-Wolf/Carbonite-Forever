@@ -117,11 +117,14 @@ describe("GroundRoute: sem dados ou desligado", function()
         expect(#searches).toBe(0)
     end)
 
-    it("voo não vira caminho a pé", function()
+    it("voo e teleporte não viram caminho a pé", function()
         local ground, map, searches = setup()
-        local flight = target(60, 10)
-        flight.Mode = "F"
-        ground:Expand(map, { flight })
+        for _, mode in ipairs({ "F", "T" }) do
+            local leg = target(60, 10)
+            leg.Mode = mode
+            ground:Expand(map, { leg })
+            ground._pump(); ground._pump()
+        end
         expect(#searches).toBe(0)
     end)
 end)
