@@ -387,10 +387,11 @@ function GroundRoute:Leg(srcMap, sx, sy, dstMap, dx, dy, fromPlayer)
     return nil
 end
 
--- A walking leg: not a flight, not a boat or portal hop (those change instance
--- and HasMap/ToTerrain reject them), and not a step this module added.
+-- A walking leg: not a flight, not a hearthstone or teleport ("T", #37), not a
+-- boat or portal hop (those change instance and HasMap/ToTerrain reject them),
+-- and not a step this module added.
 local function walking(entry)
-    return entry.Mode ~= "F" and not entry.GroundStep
+    return entry.Mode ~= "F" and entry.Mode ~= "T" and not entry.GroundStep
 end
 
 ---
