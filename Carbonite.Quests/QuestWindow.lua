@@ -2575,9 +2575,10 @@ function Nx.Quest.List:Update()
                         keepLine = list:ItemGetNum()
                     end
 
-                    -- Objectives with their progress: under the selected quest,
-                    -- or under every quest with the "Show Objectives" option
-                    if self.QOpts.NXShowObj or selected then
+                    -- Objectives with their progress, under every quest, only
+                    -- with the "Show Objectives" option: the details pane next
+                    -- to the list already shows the selected quest's ones.
+                    if self.QOpts.NXShowObj then
 
                         local num = GetNumQuestLeaderBoards (qn)
                         local oCompColor = Nx.Quest.Cols["oCompColor"]
@@ -3381,8 +3382,11 @@ function Nx.Quest:FitDetailsScrollChild()
         end
     end
 
-    local minH = scroll:GetHeight() / child:GetScale()
-    child:SetHeight (max (top - low + 16, minH))
+    -- The scroll range is the child's raw height minus the scroll frame's,
+    -- with no regard for the child's scale (measured: child 598 at scale 1.45
+    -- in a 688 frame gave range 0). So the height goes in on-screen units.
+    local scale = child:GetScale()
+    child:SetHeight (max ((top - low + 16) * scale, scroll:GetHeight()))
     scroll:UpdateScrollChildRect()
 end
 

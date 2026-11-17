@@ -105,9 +105,10 @@ describe("diário de quests: cabeçalho e linhas", function()
         expect(init:find('["QuestLogHdr"] = { AtlasUp = "QuestLog-icon-shrink", AtlasDn = "QuestLog-icon-expand" }', 1, true) ~= nil).toBe(true)
     end)
 
-    it("linhas alternadas e objetivos sob a quest selecionada", function()
+    it("linhas alternadas; objetivos na lista só com a opção (a descrição já os mostra)", function()
         expect(src:find('list:ItemSetBand ("rowStripe")', 1, true) ~= nil).toBe(true)
-        expect(src:find("if self.QOpts.NXShowObj or selected then", 1, true) ~= nil).toBe(true)
+        expect(src:find("if self.QOpts.NXShowObj then", 1, true) ~= nil).toBe(true)
+        expect(src:find("if self.QOpts.NXShowObj or selected then", 1, true)).toBeNil()
         expect(src:find("list:Select (keepLine)", 1, true) ~= nil).toBe(true)
     end)
 
