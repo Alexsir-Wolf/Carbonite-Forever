@@ -61,6 +61,8 @@ local ALLOWED = {
         "^.-Hex%-encoded rectangles", "^.-Output complete", "no type", "^View3D=", "^heights=",
         "^MapId=", "^first label area",
     },
+    -- Theme id the dark choice saves (Skin.Name); the shown name comes from L.
+    ["Carbonite/Modules/Assistant/Assistant.lua"] = { "Modern Dark" },
     -- Section ids of the options registry (#64); the shown names come from L.
     ["Carbonite/Modules/Options/Options.lua"] = {
         "Carbonite-Forever", "Quest Module", "Notes Module", "Warehouse Module", "Info Module",
