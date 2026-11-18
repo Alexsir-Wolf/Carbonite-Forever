@@ -131,8 +131,8 @@ Before that, delete the official Carbonite folders (installation step 2) and rem
 ### Publishing a release (maintainers)
 
 1. Update `CHANGELOG-FOREVER.md`; it becomes the release text.
-2. Create and push a tag in the `v<version>-forever.<n>` format, for example `git tag v12.1.0-00023-forever.2 && git push origin v12.1.0-00023-forever.2`.
-3. The `Release` workflow runs [BigWigsMods/packager](https://github.com/BigWigsMods/packager), replaces `@project-version@` in the `.toc` files with the tag and publishes the release with the zip. Tags without `-forever` (upstream ones) publish nothing.
+2. Create and push a tag in the edition's own numbering, `v<major>.<minor>.<patch>`, for example `git tag -a v1.0.1 -m v1.0.1 && git push origin v1.0.1`.
+3. The `Release` workflow runs [BigWigsMods/packager](https://github.com/BigWigsMods/packager), replaces `@project-version@` in the `.toc` files with the tag and publishes the release with the zip. Upstream tags (such as `v12.1.0-00023`) publish nothing.
 
 Uploading to CurseForge and Wago is optional and only happens if the project exists there. To turn it on:
 
