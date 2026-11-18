@@ -145,6 +145,18 @@ end)
 describe("Teleports: escolha", function()
     local saved = { Travel = { Bind = { Name = "Thelsamar", MapId = 1432, X = 990, Y = 0 } } }
 
+    it("avisa no chat uma vez por destino e marca o passo de usar para o ícone grande", function()
+        local tp, env = setup({ char = saved })
+        local said = {}
+        env.Nx.prt = function(fmt, ...) said[#said + 1] = string.format(fmt, ...) end
+        local plan = tp:Plan(straightPath({}), 1432, 0, 0, 1432, 1000, 0, "Goto")
+        tp:Plan(straightPath({}), 1432, 0, 0, 1432, 1000, 0, "Goto")
+        expect(#said).toBe(1)
+        expect(said[1]).toBe("Route: Use Hearthstone (Thelsamar) first")
+        expect(plan[1].TeleportUse).toBe(true)
+        expect(plan[2].TeleportUse).toBeNil()
+    end)
+
     it("começa pela pedra quando ela chega bem antes", function()
         local calls = {}
         local tp = setup({ char = saved })
