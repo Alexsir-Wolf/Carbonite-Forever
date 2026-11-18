@@ -3570,10 +3570,13 @@ end
 -- The parchment of the game's own quest frames, in the client's art. The old
 -- QuestBG is a 512 px 1.x texture: stretched over the details panel it blurs.
 local PARCHMENT_ATLASES = { "QuestBG-Parchment", "QuestDetailsBackgrounds" }
+-- Without the atlas: a parchment that repeats at its own size instead of a
+-- picture stretched over the panel (#42: the stretched QuestBG looked poor).
+local PARCHMENT_TILES = { "Interface\\AchievementFrame\\UI-Achievement-Parchment-Horizontal" }
 
 ---
 -- Paint a texture with the quest parchment: the first atlas this client has,
--- else the old QuestBG.
+-- else a tiled parchment file, else the old QuestBG.
 --
 function Nx.Quest.SetParchment (t)
     local info = C_Texture and C_Texture.GetAtlasInfo
@@ -3581,6 +3584,14 @@ function Nx.Quest.SetParchment (t)
         if info and info (name) then
             t:SetAtlas (name)
             return name
+        end
+    end
+    for _, file in ipairs (PARCHMENT_TILES) do
+        -- SetTexture is false when the client has no such file.
+        if t:SetTexture (file, "REPEAT", "REPEAT") then
+            t:SetHorizTile (true)
+            t:SetVertTile (true)
+            return file
         end
     end
     t:SetTexture ("Interface\\QuestFrame\\QuestBG", true, true)

@@ -197,6 +197,9 @@ local WATCH_CONTROL_GAP = 4
 -- art keeps its size, the hit rect grows to `size` around it.
 local WATCH_TARGET = 22
 local MODERN_LINE_H_GAME = WATCH_TARGET + 2
+-- The four color toggles sit close together, like one group (#42): their
+-- targets shrink to the step so the hit rects do not overlap.
+local WATCH_TOGGLE_STEP = 16
 local WATCH_CONTROL_GAP_GAME = 8    -- 22 px targets side by side
 
 local function WidenHitRect (but, size)
@@ -347,6 +350,12 @@ function Nx.Quest.Watch:SetupModernChrome (win)
 
     local cnt = f:CreateFontString (nil, "OVERLAY")
     cnt:SetFontObject ("NxFontS")
+    -- Theme "Blizzard" (#42): the header reads in the font of the quests,
+    -- like the game's tracker, not in a bigger window title.
+    if big then
+        fs1:SetFontObject ("NxFontW")
+        cnt:SetFontObject ("NxFontW")
+    end
     cnt:SetJustifyH ("RIGHT")
     cnt:SetHeight (barH)
     cnt:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -bw - ControlW() - ControlGap(), barTop)
@@ -382,15 +391,18 @@ function Nx.Quest.Watch:SetupModernChrome (win)
     for i, but in ipairs (toggles) do
         but.Frm:ClearAllPoints()
         if big then
-            but.Frm:SetPoint ("CENTER", f, "TOPRIGHT", -bw - WATCH_TARGET / 2 - (#toggles - i) * slot, cy)
+            but.Frm:SetPoint ("CENTER", f, "TOPRIGHT", -bw - WATCH_TARGET / 2 - (#toggles - i) * WATCH_TOGGLE_STEP, cy)
         else
             but.Frm:SetPoint ("CENTER", f, "TOPRIGHT", -bw - 8 - (#toggles - i) * 12, cy)
         end
     end
 
     if big then
-        for _, but in ipairs ({ self.ButMenu, self.ButPri, unpack (toggles) }) do
+        for _, but in ipairs ({ self.ButMenu, self.ButPri }) do
             WidenHitRect (but, WATCH_TARGET)
+        end
+        for _, but in ipairs (toggles) do
+            WidenHitRect (but, WATCH_TOGGLE_STEP)
         end
     end
 end
