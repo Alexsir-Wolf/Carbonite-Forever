@@ -8,42 +8,30 @@ local function load(atlases)
     return env.Nx.Quest
 end
 
--- `missing`: files this fake client does not have (SetTexture gives false).
-local function texture(missing)
+local function texture()
     local t = {}
     function t:SetAtlas(name) self.atlas = name end
-    function t:SetTexture(path, h)
-        if missing and missing[path] then return false end
-        self.file, self.wrap = path, h
-        return true
-    end
-    function t:SetHorizTile(on) self.htile = on end
-    function t:SetVertTile(on) self.vtile = on end
+    function t:SetTexture(path) self.file = path end
     function t:SetTexCoord() end
     return t
 end
 
-local TILE = "Interface\\AchievementFrame\\UI-Achievement-Parchment-Horizontal"
-
 describe("pergaminho dos detalhes da quest", function()
-    it("usa o pergaminho do próprio cliente quando existe", function()
+    it("prefere o pergaminho limpo dos detalhes ao antigo rasgado", function()
         local t = texture()
-        load({ ["QuestBG-Parchment"] = true }).SetParchment(t)
-        expect(t.atlas).toBe("QuestBG-Parchment")
+        load({ ["QuestBG-Parchment"] = true, ["QuestDetailsBackgrounds"] = true }).SetParchment(t)
+        expect(t.atlas).toBe("QuestDetailsBackgrounds")
         expect(t.file).toBeNil()
     end)
 
-    it("sem o atlas, repete um pergaminho no tamanho dele, sem esticar", function()
+    it("sem ele, usa o atlas QuestBG-Parchment", function()
         local t = texture()
-        load({}).SetParchment(t)
-        expect(t.atlas).toBeNil()
-        expect(t.file).toBe(TILE)
-        expect(t.wrap).toBe("REPEAT")
-        expect(t.htile and t.vtile).toBe(true)
+        load({ ["QuestBG-Parchment"] = true }).SetParchment(t)
+        expect(t.atlas).toBe("QuestBG-Parchment")
     end)
 
-    it("sem atlas nem o arquivo repetível, fica no QuestBG antigo", function()
-        local t = texture({ [TILE] = true })
+    it("sem atlas, fica no QuestBG antigo", function()
+        local t = texture()
         load({}).SetParchment(t)
         expect(t.atlas).toBeNil()
         expect(t.file:find("QuestBG", 1, true) ~= nil).toBe(true)

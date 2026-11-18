@@ -5594,12 +5594,12 @@ end
 
 ---
 -- Font of the menu texts and the height of an item line: the tooltip's
--- 12 px "menu" role in the Blizzard theme, the "Menu Font" slot otherwise.
+-- 13 px "menu" role in the Blizzard theme, with the tooltip's line gap, the "Menu Font" slot otherwise.
 --
 function Nx.Menu:GetFont()
     if Carbonite.UI.Skin:GetActive().menu then
         local Font = Carbonite.UI.Font
-        return Font:GetRole ("menu"), max (12, Font:GetHeight ("Role.menu"))
+        return Font:GetRole ("menu"), max (12, Font:GetHeight ("Role.menu")) + 3
     end
     return "NxFontMenu", 12
 end

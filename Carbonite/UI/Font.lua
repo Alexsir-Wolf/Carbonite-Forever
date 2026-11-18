@@ -45,7 +45,7 @@ Font.roles = {
     small  = { slot = "Font.Small" },
     number = { object = "NxFontNumber", slot = "Font.Small", add = 1, face = "Fonts\\ARIALN.TTF", shadow = true },
     -- Menus in the Blizzard theme read like the game's tooltip (#42, R11).
-    menu   = { object = "NxFontMenuGame", slot = "Font.Menu", min = 12, shadow = true },
+    menu   = { object = "NxFontMenuGame", slot = "Font.Menu", min = 13, shadow = true },
 }
 
 -- Sizes of a slot before the player's profile is read (Defaults.lua).
