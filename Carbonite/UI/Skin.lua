@@ -44,9 +44,14 @@ Skin.themes = {
                 tileSize = 256,
                 insets   = { left = 3, right = 3, top = 3, bottom = 3 },
             },
-            band     = 24,    -- title band of the frame
+            -- The game's own windows wear the metal about 1.5x thicker than the
+            -- layout at scale 1 (measured beside the character sheet), the top
+            -- band most of all; the band follows the scaled metal.
+            edgeScale = 1.5,
+            band     = 36,    -- title band of the frame
+            side     = 8,     -- metal of the sides and bottom: content inset
             gap      = 2,     -- band (or tool strip) to content
-            toolBarH = 24,    -- tool strip under the band
+            toolBarH = 28,    -- tool strip under the band (22 px buttons + room)
             butSize  = 24,    -- close / maximize, RedButton atlases
         },
         backdrop = {

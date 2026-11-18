@@ -1908,6 +1908,8 @@ function Nx.Window:ApplyGameFrame()
             gf:SetFrameLevel (f:GetFrameLevel())
         end
         gf:EnableMouse (false)
+        -- Thicker metal, as on the game's windows; anchors still cover the window.
+        gf:SetScale (spec.edgeScale or 1)
         if pcall (NineSliceUtil.ApplyLayoutByName, gf, layout) then
             self.GameFrame = gf
         else
@@ -1924,6 +1926,14 @@ function Nx.Window:ApplyGameFrame()
 
     if on ~= self.GameFrameOn then
         self.GameFrameOn = on
+        -- Keep the content inside the thicker metal sides and bottom.
+        if on then
+            self.PlainBorderW, self.PlainBorderH = self.BorderW, self.BorderH
+            local side = spec.side or 0
+            self.BorderW, self.BorderH = max (self.BorderW, side), max (self.BorderH, side)
+        elseif self.PlainBorderW then
+            self:SetBorderSize (self.PlainBorderW, self.PlainBorderH)
+        end
         -- The title moves above the metal band, the buttons too.
         local titleFrm = self.TitleFrm
         if on and not titleFrm then
@@ -1935,7 +1945,7 @@ function Nx.Window:ApplyGameFrame()
         for _, fstr in ipairs (self.TitleFStr) do
             pcall (fstr.SetParent, fstr, on and titleFrm or f)
             if on then
-                fstr:SetFontObject (GameFontNormal and "GameFontNormal" or Carbonite.UI.Font:GetRole ("title"))
+                Carbonite.UI.Font:SetRole (fstr, "title")
                 fstr:SetJustifyH ("CENTER")
                 Skin:PaintText (fstr, "frameTitle")
             else
@@ -1988,7 +1998,7 @@ function Nx.Window:PlaceToolBar()
         return
     end
     local spec = self.GameFrameOn and self.GameFrameSpec
-    local y = spec and -(spec.band + 1) or -self.BorderH
+    local y = spec and -(spec.band + 2) or -self.BorderH
     tb:ClearAllPoints()
     tb:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", self.BorderW, y)
 end
@@ -2499,9 +2509,10 @@ function Nx.Window:StyleTitleBar()
     -- Window buttons as tall as one title line, right to left. On the game's
     -- frame they take the size of its close button, in the band's corner.
     local butSize = game and game.butSize or lineH
-    local y = game and 0 or self.Sizeable and -self.BorderH or -3
-    local x0 = game and 1 or -self.BorderW
-    local step = game and butSize or butSize + 2
+    -- On the game's frame: inside the band, centered on it, clear of the metal.
+    local y = game and -math.floor ((game.band - butSize) / 2) or self.Sizeable and -self.BorderH or -3
+    local x0 = game and -(game.side or 0) or -self.BorderW
+    local step = butSize + 2
     local x = x0
     local function place (but)
         but:SetSize (butSize, butSize)

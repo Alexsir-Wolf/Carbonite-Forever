@@ -43,18 +43,18 @@ function Nx.Notes:Create()
     -- game's frame, on the title line in the other themes (#42).
     local bar = win:GetToolBar()
     local recBut = Nx.Button:Create(bar, "TxtGreyB", L["Record"], nil,
-                                    1, 0, "TOPLEFT", 44, 20,
+                                    2, 0, "TOPLEFT", 72, 22,
                                     self.But_OnRecord, self)
     self.RecBut = recBut
 
     local upBut = Nx.Button:Create(bar, "TxtGrey", L["Up"], nil,
-                                   48, 0, "TOPLEFT", 40, 20,
+                                   78, 0, "TOPLEFT", 64, 22,
                                    self.But_OnUp, self)
     local dnBut = Nx.Button:Create(upBut.Frm, "TxtGrey", L["Down"], nil,
-                                   42, 0, "TOPLEFT", 40, 20,
+                                   68, 0, "TOPLEFT", 64, 22,
                                    self.But_OnDown, self)
     Nx.Button:Create(dnBut.Frm, "Txt64", L["Delete Item"], nil,
-                     54, 0, "TOPLEFT", 72, 20, self.But_OnItemDel, self)
+                     76, 0, "TOPLEFT", 96, 22, self.But_OnItemDel, self)
 
     -- Search over the folder list: shows only the notes whose name matches.
     self.SearchBox = Nx.SearchBox:Create(win.Frm, function() self:Update() end, { maxLetters = 60 })
