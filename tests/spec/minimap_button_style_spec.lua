@@ -109,3 +109,52 @@ describe("botão do minimapa no padrão LibDBIcon", function()
         expect(loader.read("Carbonite/Locales/ptBR/Main.lua"):find("Shift drag to move", 1, true)).toBeNil()
     end)
 end)
+
+describe("botão de addon no padrão LibDBIcon (#42)", function()
+    local function loadIcon(opts)
+        local env = wow.lenientEnv()
+        local hidden = false
+        env.NXMiniMapBut = { Hide = function() hidden = true end }
+        local reg = {}
+        local icon = {
+            IsRegistered = function(_, name) return reg[name] ~= nil end,
+            Register = function(_, name, obj, db) reg[name] = { obj = obj, db = db } end,
+        }
+        env.LibStub = function(name, silent)
+            if name == "LibDBIcon-1.0" then return opts.lib and icon or nil end
+            return wow.namespace({})
+        end
+        local mm = { ButOwn = opts.own or false }
+        env.Nx = wow.namespace({ db = { profile = { MiniMap = mm } }, Broker = opts.broker,
+            Map = { Dock = { OtherCollector = function() return opts.other or false end } } })
+        loader.run(env, "Carbonite/Modules/Map/MinimapButtonEngine.lua")
+        return env.Nx.NXMiniMapBut, reg, mm, function() return hidden end
+    end
+
+    it("registra o broker no LibDBIcon e esconde o botão próprio", function()
+        local broker = {}
+        local but, reg, mm, hidden = loadIcon({ lib = true, broker = broker })
+        expect(but:RegisterDBIcon()).toBe(true)
+        expect(reg.Carbonite.obj).toBe(broker)
+        expect(reg.Carbonite.db).toBe(mm.DBIcon)
+        expect(hidden()).toBe(true)
+    end)
+
+    it("sem LibDBIcon, fica o botão próprio", function()
+        local but, _, _, hidden = loadIcon({ lib = false, broker = {} })
+        expect(but:RegisterDBIcon()).toBe(false)
+        expect(hidden()).toBe(false)
+    end)
+
+    it("com o botão na doca do mapa (ButOwn), não registra", function()
+        local but, reg = loadIcon({ lib = true, broker = {}, own = true })
+        expect(but:RegisterDBIcon()).toBe(false)
+        expect(reg.Carbonite).toBeNil()
+    end)
+
+    it("com ButOwn mas outro coletor (MinimapButtonButton), registra", function()
+        local but, reg = loadIcon({ lib = true, broker = {}, own = true, other = true })
+        expect(but:RegisterDBIcon()).toBe(true)
+        expect(reg.Carbonite ~= nil).toBe(true)
+    end)
+end)
