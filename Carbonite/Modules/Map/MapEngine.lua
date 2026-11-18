@@ -1618,6 +1618,45 @@ function Nx.Map:SyncGameFrame()
 end
 
 ---
+-- The metal of the game's frame above the map's drawing (#42). The frame
+-- shares the window's level while every map layer (tiles, art, icons) sits
+-- above it, so the art covered the metal sides and bottom. Called after the
+-- update set its levels: the metal goes above the top one, the title and
+-- its buttons above the metal, and the tools on the strip with them.
+-- @param level  First level free above the map's drawing
+--
+function Nx.Map:RaiseGameFrame(level)
+    local win = self.Win
+    local gf = win and win.GameFrameOn and win.GameFrame
+    if not gf then
+        return
+    end
+
+    local close = win.ButClose and win.ButClose.Frm
+    if gf:GetFrameLevel() ~= level
+            or (close and close:GetFrameLevel() ~= level + 2) then
+        if gf.SetUsingParentLevel then
+            gf:SetUsingParentLevel(false)
+        end
+        gf:SetFrameLevel(level)
+        if win.TitleFrm then
+            win.TitleFrm:SetFrameLevel(level + 1)
+        end
+        for _, key in ipairs(Nx.Window.TitleButtonOrder) do
+            local but = win[key]
+            if but and but.Frm then
+                but.Frm:SetFrameLevel(level + 2)
+            end
+        end
+    end
+    -- The update set the tools under the metal: lift them back each time.
+    if self.ToolBarInStrip and self.ToolBar then
+        win:GetToolBar():SetFrameLevel(level + 1)
+        self.ToolBar:SetLevels(level + 2)
+    end
+end
+
+---
 -- Where the map tools go. With the full frame they leave the map's corner
 -- for the window's tool strip, toggle icons of one size from the right
 -- (R9, old #204), with the auto scale toggle at the right end. Otherwise
@@ -7938,6 +7977,8 @@ function Nx.Map:Update (elapsed)
     self:MinimapSyncPlayerArrowLayer()
 
     self.LocTipFrm:SetFrameLevel (self.Level + 2)
+
+    self:RaiseGameFrame (self.Level + 3)
 
     -- Hide leftovers
 
