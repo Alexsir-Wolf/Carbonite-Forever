@@ -50,6 +50,11 @@ end
 local V3D_UL, V3D_LL, V3D_UR, V3D_LR = 1, 2, 3, 4
 local m_sin, m_cos, m_rad = math.sin, math.cos, math.rad
 
+-- Round mask of the live minimap. The old textures\MinimapMask does not exist on
+-- WoW Forever: with it the minimap drew nothing in the integrated mode, so
+-- the gathering nodes (Find Herbs) and every other blip were gone.
+local MINIMAP_ROUND_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+
 -- Extended tooltip library for enhanced tooltips
 local ExtToolTip = LibStub('LibQTip-1.0RS')
 
@@ -2554,7 +2559,7 @@ function Nx.Map:MinimapOwnInit()
         Nx.Map:MinimapButtonShowUpdate()
         return
     end
-    mm:SetMaskTexture (Nx.isRetail and "Interface\\CharacterFrame\\TempPortraitAlphaMask" or "textures\\MinimapMask")
+    mm:SetMaskTexture (MINIMAP_ROUND_MASK)
     self:MinimapNodeGlowInit()
     Nx.Map:MinimapButtonShowUpdate (true)
 
@@ -3909,7 +3914,7 @@ end
 
 function Nx.Map:MinimapUpdateMask (optName, forceSquare)
 
-    local roundMask = Nx.isRetail and "Interface\\CharacterFrame\\TempPortraitAlphaMask" or "textures\\MinimapMask"
+    local roundMask = MINIMAP_ROUND_MASK
     local name = (forceSquare or Nx.db.profile.MiniMap[optName]) and "Interface\\Buttons\\White8x8" or roundMask
 
 --    if IsControlKeyDown() then
