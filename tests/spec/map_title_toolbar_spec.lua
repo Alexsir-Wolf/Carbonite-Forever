@@ -83,6 +83,7 @@ describe("barra de título do mapa", function()
             TitleLineH = 10, TitleLines = 2, BorderW = 7, BorderH = 7,
             Border = true, Sizeable = true, ButClose = close,
             ButMaxer = false, ButMiner = false, TitleBar = false,
+            GameFrameOn = false, ToolBar = false,
             SetTitleXOff = function() end,
         }, { __index = Nx.Window })
         return win, close

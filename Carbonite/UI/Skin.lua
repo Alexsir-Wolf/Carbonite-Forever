@@ -29,10 +29,26 @@ end
 Skin.themes = {
     -- The game's own window look: the dialog border and dark rock background of
     -- Blizzard's frames, bronze separators and the gold highlight of its lists.
-    -- The NineSlice frame of the character sheet was tried and does not fit
-    -- Carbonite's windows (its title bar covers their first lines, and on the
-    -- map its edges break into stray marks), so the border is a backdrop.
+    -- Windows with a header (Nx.Window:ApplyModernHeader) wear the metal
+    -- NineSlice frame of the game (#42): the title centered in its own band,
+    -- the content pushed below it (the band used to cover the first lines) and
+    -- action buttons on a tool strip under the band. The map keeps the
+    -- backdrop: on it the NineSlice edges break into stray marks.
     ["Blizzard"] = {
+        nineSlice = "ButtonFrameTemplateNoPortrait",
+        frame = {
+            -- Background under the metal edges; no edge of its own.
+            backdrop = {
+                bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
+                tile     = true,
+                tileSize = 256,
+                insets   = { left = 3, right = 3, top = 3, bottom = 3 },
+            },
+            band     = 24,    -- title band of the frame
+            gap      = 2,     -- band (or tool strip) to content
+            toolBarH = 24,    -- tool strip under the band
+            butSize  = 24,    -- close / maximize, RedButton atlases
+        },
         backdrop = {
             bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
             edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -189,7 +205,9 @@ Skin.activeName = "Blizzard"
 --   menuText    menu item; menuDisabled a greyed menu item
 --   menuHover   mouse-over band of a menu item (alpha comes from the fade)
 --   panelBg     plain panel behind a graph or a borderless window
+--   frameTitle  title centered on the band of the game's frame (#42)
 Skin.tokens = {
+    frameTitle  = "1|1|1|1",
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
     rowHover    = "0.5|0.5|0.7|0.18",
@@ -228,6 +246,21 @@ end
 
 function Skin:GetBackdrop()
     return self:GetActive().backdrop
+end
+
+--- The game's NineSlice frame of the active theme: its layout name and the
+--- metrics of `frame`. Nil when the theme has none or this client lacks the
+--- layout (the window then keeps the theme's backdrop).
+function Skin:GetGameFrame()
+    local t = self:GetActive()
+    local name = t.nineSlice
+    if not (name and t.frame) then return nil end
+    local util, layouts = _G.NineSliceUtil, _G.NineSliceLayouts
+    if type(util) ~= "table" or not util.ApplyLayoutByName
+       or type(layouts) ~= "table" or not layouts[name] then
+        return nil
+    end
+    return name, t.frame
 end
 
 -- The color the player picked in the options, saved in the profile. Picking a

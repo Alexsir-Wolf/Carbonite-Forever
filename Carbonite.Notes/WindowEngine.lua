@@ -54,17 +54,17 @@ function Nx.Notes:Create()
 
     tinsert(UISpecialFrames, win.Frm:GetName())
 
-    local bw, bh = win:GetBorderSize()
-
-    -- Header buttons.
+    -- Action buttons on the window's tool strip: under the title band of the
+    -- game's frame, on the title line in the other themes (#42).
     self:AddButtonTypes()
-    local recBut = Nx.Button:Create(win.Frm, "NotesTxtB", L["Record"], nil,
-                                    bw + 1, -bh, "TOPLEFT", 44, 20,
+    local bar = win:GetToolBar()
+    local recBut = Nx.Button:Create(bar, "NotesTxtB", L["Record"], nil,
+                                    1, 0, "TOPLEFT", 44, 20,
                                     self.But_OnRecord, self)
     self.RecBut = recBut
 
-    local upBut = Nx.Button:Create(win.Frm, "NotesTxt", L["Up"], nil,
-                                   bw + 48, -bh, "TOPLEFT", 40, 20,
+    local upBut = Nx.Button:Create(bar, "NotesTxt", L["Up"], nil,
+                                   48, 0, "TOPLEFT", 40, 20,
                                    self.But_OnUp, self)
     local dnBut = Nx.Button:Create(upBut.Frm, "NotesTxt", L["Down"], nil,
                                    42, 0, "TOPLEFT", 40, 20,

@@ -1837,7 +1837,10 @@ function Nx.Window:SetBordersFade (fade)
         self.Frm:SetBackdropBorderColor (col[1], col[2], col[3], col[4] * fade)
     end
 
-    -- The title strip comes and goes with the border.
+    -- The title strip comes and goes with the border, as the game's frame.
+    if self.GameFrame then
+        self.GameFrame:SetAlpha (fade)
+    end
     if self.TitleBar then
         self.TitleBar:SetAlpha (fade)
     end
@@ -1850,69 +1853,155 @@ end
 -- Set backdrops of all created windows
 ---------------------------------------------------------------------------------------
 
--- Region names NineSliceUtil creates on the container.
-local NX_NINESLICE_PIECES = {
-    "TopLeftCorner", "TopRightCorner",
-    "BottomLeftCorner", "BottomRightCorner",
-    "TopEdge", "BottomEdge", "LeftEdge", "RightEdge",
-    "Center",
-}
-
-local function NxClearNineSlice(frm)
-    for i = 1, #NX_NINESLICE_PIECES do
-        local p = frm[NX_NINESLICE_PIECES[i]]
-        if p and p.Hide then
-            p:Hide()
-        end
-    end
-end
-
 function Nx.Window:ResetBackdrops()
 
     if self.Wins then
 
         local bk = Nx.Skin:GetBackdrop()
-        local nsLayout = Nx.Skin:GetNineSliceLayout()
-        -- Verify the named layout actually exists in this flavor's
-        -- NineSliceLayouts registry before calling ApplyLayoutByName.
-        -- The function exists on Cata Classic / TBC Classic but many
-        -- layouts (PortraitFrameTemplate, Dialog, etc.) aren't shipped
-        -- there and Blizzard crashes with "attempt to index nil
-        -- userLayout" if we pass an unknown name.
-        local canNineSlice = false
-        if nsLayout and NineSliceUtil and NineSliceUtil.ApplyLayoutByName
-           and _G.NineSliceLayouts and _G.NineSliceLayouts[nsLayout] then
-            canNineSlice = true
-        end
 
         for win, v in pairs (self.Wins) do
 
             if win.Border then
-                -- Strategy: always apply the legacy backdrop first as a
-                -- guaranteed-visible base layer. When the theme also
-                -- wants nine-slice atlas chrome we layer it on top —
-                -- if atlas resolves it visually replaces the backdrop,
-                -- if atlas fails (textureKit missing, layout
-                -- incompatible with the frame, regions not rendering)
-                -- the legacy backdrop is still there and the window
-                -- is never transparent.
-                if win.Frm._NxNineSliceApplied and not canNineSlice then
-                    NxClearNineSlice(win.Frm)
-                    win.Frm._NxNineSliceApplied = false
+                if win.WantGameFrame then
+                    win:ApplyGameFrame()        -- Its own backdrop and header
+                else
+                    win.Frm:SetBackdrop (bk)
+                    win:PlaceTitleBar()        -- The new border may be thicker
                 end
-                win.Frm:SetBackdrop (bk)
-                if canNineSlice then
-                    local ok = pcall(NineSliceUtil.ApplyLayoutByName, win.Frm, nsLayout)
-                    if ok then
-                        win.Frm._NxNineSliceApplied = true
-                    end
-                end
-
-                win:PlaceTitleBar()        -- The new border may be thicker
                 win.BackgndFade = win.BackgndFadeTarget + .0001        -- Cause refresh
             end
         end
     end
+end
+
+---------------------------------------------------------------------------------------
+-- The game's window frame (#42). A window with a header wears the NineSlice
+-- frame of its theme (Skin:GetGameFrame): metal edges drawn by a child frame
+-- at the window's own level (the backdrop of the window frame shares piece
+-- names with NineSlice, so they cannot live on the same frame), the title
+-- centered on the band, the window buttons in the band's right corner and
+-- the content below the band and the tool strip. Without the layout, or in
+-- another theme, the window keeps the theme's backdrop and header.
+---------------------------------------------------------------------------------------
+
+function Nx.Window:UseGameFrame()
+    self.WantGameFrame = true
+    self:ApplyGameFrame()
+end
+
+function Nx.Window:ApplyGameFrame()
+
+    local Skin = Carbonite.UI.Skin
+    local f = self.Frm
+    local layout, spec = Skin:GetGameFrame()
+    if not self.Border then
+        layout = nil
+    end
+
+    local gf = self.GameFrame
+    if layout and not gf and not self.GameFrameFailed then
+        gf = CreateFrame ("Frame", nil, f)
+        gf:SetAllPoints (f)
+        if gf.SetUsingParentLevel then
+            gf:SetUsingParentLevel (true)
+        else
+            gf:SetFrameLevel (f:GetFrameLevel())
+        end
+        gf:EnableMouse (false)
+        if pcall (NineSliceUtil.ApplyLayoutByName, gf, layout) then
+            self.GameFrame = gf
+        else
+            gf:Hide()
+            gf = nil
+            self.GameFrameFailed = true
+        end
+    end
+
+    local on = layout and gf and true or false
+    if gf then
+        gf:SetShown (on)
+    end
+
+    if on ~= self.GameFrameOn then
+        self.GameFrameOn = on
+        -- The title moves above the metal band, the buttons too.
+        local titleFrm = self.TitleFrm
+        if on and not titleFrm then
+            titleFrm = CreateFrame ("Frame", nil, f)
+            titleFrm:SetAllPoints (f)
+            titleFrm:EnableMouse (false)
+            self.TitleFrm = titleFrm
+        end
+        for _, fstr in ipairs (self.TitleFStr) do
+            pcall (fstr.SetParent, fstr, on and titleFrm or f)
+            if on then
+                fstr:SetFontObject (GameFontNormal and "GameFontNormal" or Carbonite.UI.Font:GetRole ("title"))
+                fstr:SetJustifyH ("CENTER")
+                Skin:PaintText (fstr, "frameTitle")
+            else
+                Carbonite.UI.Font:SetRole (fstr, "title")
+                fstr:SetJustifyH ("LEFT")
+                Skin:PaintText (fstr, "title")
+            end
+        end
+        for _, but in ipairs ({ self.ButClose, self.ButMaxer, self.ButMiner }) do
+            if but and but.Frm then
+                but.Frm:SetFrameLevel (f:GetFrameLevel() + (on and 2 or 1))
+            end
+        end
+    end
+
+    f:SetBackdrop (on and spec.backdrop or Nx.Skin:GetBackdrop())
+    self.GameFrameSpec = on and spec or nil
+
+    self:StyleTitleBar()
+    if self.HeaderCounter then
+        self:SetHeaderCounter (false)        -- Same text, new place
+    end
+    self:Adjust()
+end
+
+-- Strip under the title for a window's action buttons (Back, Record, ...).
+-- With the game's frame it sits below the band and the content moves down
+-- to make room; otherwise it is the title line, as before (#42). Create the
+-- buttons on the returned frame, anchored to its TOPLEFT.
+function Nx.Window:GetToolBar()
+
+    local tb = self.ToolBar
+    if not tb then
+        tb = CreateFrame ("Frame", nil, self.Frm)
+        tb:SetSize (1, 1)
+        self.ToolBar = tb
+        self:PlaceToolBar()
+        if self.GameFrameOn then        -- Make room under the band
+            self:StyleTitleBar()
+            self:Adjust()
+        end
+    end
+    return tb
+end
+
+function Nx.Window:PlaceToolBar()
+
+    local tb = self.ToolBar
+    if not tb then
+        return
+    end
+    local spec = self.GameFrameOn and self.GameFrameSpec
+    local y = spec and -(spec.band + 1) or -self.BorderH
+    tb:ClearAllPoints()
+    tb:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", self.BorderW, y)
+end
+
+-- Height a window with the game's frame keeps above its content.
+function Nx.Window:GetGameFrameTop()
+
+    local spec = self.GameFrameSpec
+    local top = spec.band + spec.gap
+    if self.ToolBar then
+        top = top + spec.toolBarH
+    end
+    return top
 end
 
 ---------------------------------------------------------------------------------------
@@ -2376,18 +2465,23 @@ function Nx.Window:StyleTitleBar()
 
     local Skin = Carbonite.UI.Skin
     local f = self.Frm
+    -- The game's frame (#42): title centered on its band, content below it.
+    local game = self.GameFrameOn and self.GameFrameSpec
 
     local _, size = self.TitleFStr[1]:GetFont()
     local lineH = max (self.TitleLineH, math.floor ((size or 10) + 4))
 
     self.TitleLineH = lineH
     self.TitleH = self.TitleLines * lineH + 2
+    if game then
+        self.TitleH = self:GetGameFrameTop() - self.BorderH
+    end
     self.TopH = self.TitleH + self.BorderH
 
     for _, fstr in ipairs (self.TitleFStr) do
-        fstr:SetHeight (lineH)
+        fstr:SetHeight (game and game.band - 4 or lineH)
         fstr:SetWordWrap (false)
-        Skin:PaintText (fstr, "title")
+        Skin:PaintText (fstr, game and "frameTitle" or "title")
     end
     -- Keep the room a window left for its own header buttons (Guide, Notes).
     self:SetTitleXOff (self.TitleXOff or 0, self.TitleYOff)
@@ -2402,10 +2496,13 @@ function Nx.Window:StyleTitleBar()
         self:PlaceTitleBar()
     end
 
-    -- Window buttons as tall as one title line, right to left.
-    local butSize = lineH
-    local y = self.Sizeable and -self.BorderH or -3
-    local x = -self.BorderW
+    -- Window buttons as tall as one title line, right to left. On the game's
+    -- frame they take the size of its close button, in the band's corner.
+    local butSize = game and game.butSize or lineH
+    local y = game and 0 or self.Sizeable and -self.BorderH or -3
+    local x0 = game and 1 or -self.BorderW
+    local step = game and butSize or butSize + 2
+    local x = x0
     local function place (but)
         but:SetSize (butSize, butSize)
         but.Frm:ClearAllPoints()
@@ -2413,17 +2510,29 @@ function Nx.Window:StyleTitleBar()
     end
     if self.ButClose then
         place (self.ButClose)
-        x = x - butSize - 2
+        x = x - step
     end
     -- Maximize and minimize share the slot, as in CreateButtons.
     if self.ButMaxer or self.ButMiner then
         if self.ButMaxer then place (self.ButMaxer) end
         if self.ButMiner then place (self.ButMiner) end
-        x = x - butSize - 2
+        x = x - step
     end
-    if x ~= -self.BorderW then
+    if x ~= x0 then
         self.ButW = -x - self.BorderW
     end
+
+    if game then
+        -- Centered between the buttons, the same margin on both sides.
+        local m = self.BorderW + max (self.ButW or 0, 0)
+        for n, fstr in ipairs (self.TitleFStr) do
+            local ty = -2 - (n - 1) * (game.band - 4)
+            fstr:ClearAllPoints()
+            fstr:SetPoint ("TOPLEFT", f, "TOPLEFT", m, ty)
+            fstr:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -m, ty)
+        end
+    end
+    self:PlaceToolBar()
 end
 
 ---------------------------------------------------------------------------------------
@@ -2445,6 +2554,10 @@ function Nx.Window:ApplyModernHeader()
         self.HeaderRule = Carbonite.UI.Skin:AddHeaderRule (self.Frm, 0)
         self:PlaceTitleBar()
     end
+
+    -- The game's frame where the theme has one (#42). Not on the map: it
+    -- styles its title with StyleTitleBar only.
+    self:UseGameFrame()
 end
 
 ---------------------------------------------------------------------------------------
@@ -2463,10 +2576,17 @@ function Nx.Window:SetHeaderCounter (text)
         self.HeaderCounter = cnt
     end
 
+    -- On the game's frame it sits on the band, above the metal.
+    local game = self.GameFrameOn and self.GameFrameSpec
+    if self.TitleFrm then
+        pcall (cnt.SetParent, cnt, game and self.TitleFrm or self.Frm)
+    end
     cnt:ClearAllPoints()
-    cnt:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -self.BorderW - (self.ButW or 0) - 6, -self.BorderH)
-    cnt:SetHeight (self.TitleLineH)
-    cnt:SetText (text and tostring (text) or "")
+    cnt:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -self.BorderW - (self.ButW or 0) - 6, game and -2 or -self.BorderH)
+    cnt:SetHeight (game and game.band - 4 or self.TitleLineH)
+    if text ~= false then
+        cnt:SetText (text and tostring (text) or "")
+    end
 end
 
 -- Strip from the inner edge of the border down to the end of the title.
@@ -2476,7 +2596,8 @@ function Nx.Window:PlaceTitleBar()
     if not strip then
         return
     end
-    local bk = Nx.Skin:GetBackdrop()
+    local game = self.GameFrameOn and self.GameFrameSpec
+    local bk = game and game.backdrop or Nx.Skin:GetBackdrop()
     local ins = bk and bk.insets
     local l = ins and ins.left or 0
     local r = ins and ins.right or 0
@@ -2485,11 +2606,19 @@ function Nx.Window:PlaceTitleBar()
     strip:ClearAllPoints()
     strip:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, -t)
     strip:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, -t)
-    strip:SetHeight (self.BorderH - t + self.TitleH)
+    -- On the game's frame only the band is darker, not the tool strip.
+    strip:SetHeight (game and game.band - t or self.BorderH - t + self.TitleH)
 
     local rule = self.HeaderRule
     if rule then
         local y = -(self.BorderH + self.TitleH)
+        if game then
+            y = y + 1
+            -- The band has its own edge; the rule closes a tool strip only.
+            rule:SetShown (self.ToolBar and true or false)
+        else
+            rule:Show()
+        end
         rule:ClearAllPoints()
         rule:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, y)
         rule:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, y)
