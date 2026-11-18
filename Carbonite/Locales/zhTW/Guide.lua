@@ -70,7 +70,6 @@ L["Mana Loom"] = "魔法織布機"
 L["Moonwell"] = "月亮井"
 L["Name"] = "名稱"
 L["Info"] = "資訊"
-L["Back "] = "返回 "
 
 -- Menus
 L["Delete"] = "刪除"

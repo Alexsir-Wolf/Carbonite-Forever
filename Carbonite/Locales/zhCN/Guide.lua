@@ -68,7 +68,6 @@ L["Altar Of Shadows"] = "黑暗祭坛"
 L["Lightforged Beacon"] = "光铸道标"
 L["Mana Loom"] = "魔法织布机"
 L["Moonwell"] = "月亮井"
-L["Back "] = "返回 "
 
 -- Menus
 L["Delete"] = "删除"

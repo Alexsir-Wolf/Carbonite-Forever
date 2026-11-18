@@ -96,6 +96,7 @@ Nx.GuideHeaders = {
     VendorItem = { L["Level"], L["Price"], L["Type"] },
     Item       = { L["Level"], L["Source"] },
     Area       = { L["Level"], L["Group"] },
+    Nearest    = { L["Distance"], L["Zone"] },
 }
 
 Nx.GuideInfo = {
@@ -588,6 +589,11 @@ end
 
 Nx.Map.Guide.FindType = nil
 
+-- Default client width: the category list plus icon, name, distance and zone
+-- (#200). The old default was 63% of the screen width.
+Nx.Map.Guide.DefaultW = 860
+Nx.Map.Guide.OldDefaultW = -.63
+
 function Nx.Map.Guide:Create (map)
     self:PatchData()
     local g = {}
@@ -614,15 +620,23 @@ function Nx.Map.Guide:Create (map)
     win:RegisterHide()
     win:CreateButtons (true)
     win:SetTitleLineH (18)
-    win:SetTitleXOff (50)
+    win:SetTitleXOff (76)
     win:ApplyModernHeader()
-    win:InitLayoutData (nil, -.15, -.2, -.63, -.5)
+    -- Sized to the content, not 63% of the screen (#200). Layouts saved with
+    -- the old default move to the new one; resized ones are kept.
+    if win.SaveData["W"] == Nx.Map.Guide.OldDefaultW then
+        win.SaveData["W"] = Nx.Map.Guide.DefaultW + win.BorderW
+    end
+    win:InitLayoutData (nil, -.15, -.2, Nx.Map.Guide.DefaultW, -.5)
     win.Frm:SetToplevel (true)
     win:Show (false)
     tinsert (UISpecialFrames, win.Frm:GetName())
 
-    local but = Nx.Button:Create (win.Frm, "Txt64", L["Back "], nil, 0, 0, "TOPLEFT", 100, 24, self.But_OnBack, g)
-    win:Attach (but.Frm, 1.01, 1.01+44, -10020, -10001)
+    local but = CreateFrame ("Button", nil, win.Frm, "UIPanelButtonTemplate")
+    but:SetText (L["Back"])
+    but:SetScript ("OnClick", function() g:Back() end)
+    g.BackBut = but
+    win:Attach (but, 1.01, 1.01+70, -10020, -10001)
 
     Nx.List:SetCreateFont ("Font.Medium", 28)
     local list = Nx.List:Create (false, 0, 0, 1, 1, win.Frm)
@@ -769,9 +783,6 @@ function Nx.Map.Guide:Menu_OnShowEnemy (item)
 end
 function Nx.Map.Guide:Menu_OnClearSel()
     self:ClearAll()
-end
-function Nx.Map.Guide:But_OnBack()
-    self:Back()
 end
 function Nx:NXGuideKeyToggleShow()
     local map = Nx.Map:GetMap (1)
@@ -950,21 +961,26 @@ function Nx.Map.Guide:SelectLists()
     end
     self.List2:Update()
 end
+-- Splits CamelCase keys ("StableMaster" -> "Stable Master") without doubling
+-- the spaces that locale names already carry ("Mestre de  Estábulo", #200).
+function Nx.Map.Guide.SplitCaps (name)
+    local spaced = gsub (gsub (name, "%u", " %1"), "  +", " ")
+    return strtrim (spaced, " ")
+end
 function Nx.Map.Guide:PatchFolder (folder, parent)
     local trainer
     if folder.Name == L["Trainer"] and folder.Pre then
         trainer = true
     end
     if folder.Pre and folder.Name then
-        folder.Name = folder.Pre --.. folder.Name
-        folder.Name = strtrim (gsub (folder.Name, "%u", " %1"), " ")
+        folder.Name = self.SplitCaps (folder.Pre)
     end
     if parent and parent.Pre and folder.T then
         folder.T = parent.Pre .. folder.T
     end
     if not folder.Name and folder.T then
         local name = Nx.Split ("^", folder.T)
-        folder.Name = strtrim (gsub (name, "%u", " %1"), " ")
+        folder.Name = self.SplitCaps (name)
     end
     if folder.Name then
         folder.Name = gsub (folder.Name, " " .. L["Trainer"], "")
@@ -1551,6 +1567,14 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
                             end
                             if folder.Column4 then
                                 list:ItemSet (5, folder.Column4)
+                            end
+                            if not folder.Headers and not folder[1] and folder.T then
+                                local yd, mapId = self:NearestOf (add)
+                                if yd then
+                                    headers = headers or Nx.GuideHeaders.Nearest
+                                    list:ItemSet (3, format ("%d %s", floor (yd + .5), L["yds"]))
+                                    list:ItemSet (4, Nx.Map:IdToName (mapId))
+                                end
                             end
                         end
                         local pressed = self:IsShowFolders (folder)
@@ -2184,6 +2208,43 @@ function Nx.Map.Guide:OnMapUpdate()
                 end
             end
         end
+    end
+end
+-- Nearest point of a guide type on the player's continent, for the Distance
+-- and Zone columns (#200). Unlike FindClosest it keeps no state, so the list
+-- can ask for every row. Returns yards and the map id, or nil.
+function Nx.Map.Guide:NearestOf (showType)
+    local data = Nx.GuideData and Nx.GuideData[showType]
+    local map = self.Map
+    if not (data and data.Mode and map) then
+        return
+    end
+    local px, py = map.PlyrX, map.PlyrY
+    if not (px and py) or (px == 0 and py == 0) then
+        return
+    end
+    local cont = not self.ShowAllCont and map.UpdateMapID and map:IdToContZone (map.UpdateMapID)
+    local hideFac = self:GetHideFaction()
+    local best, bestId
+    for mapId, str in pairs (data) do
+        if mapId ~= "Mode" and (not cont or map:IdToContZone (mapId) == cont) then
+            for pt in gmatch (str, "[^|]+") do
+                local fac, x, y = Nx.Split (",", pt)
+                fac, x, y = tonumber (fac), tonumber (x), tonumber (y)
+                if fac ~= hideFac and x and y then
+                    local wx, wy = map:GetWorldPos (mapId, x, y)
+                    if wx and wy then
+                        local d = (wx - px) ^ 2 + (wy - py) ^ 2
+                        if not best or d < best then
+                            best, bestId = d, mapId
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if best then
+        return best ^ .5 * 4.575, bestId
     end
 end
 function Nx.Map.Guide:FindClosest (findType)

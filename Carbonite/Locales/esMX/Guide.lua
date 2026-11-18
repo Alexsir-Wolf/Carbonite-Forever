@@ -70,7 +70,6 @@ L["Mana Loom"] = "Telar de maná"
 L["Moonwell"] = "Pozo de la Luna"
 L["Name"] = "Nombre"
 L["Info"] = true
-L["Back "] = "Atrás "
 
 -- Menus
 L["Delete"] = true
