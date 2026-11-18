@@ -74,26 +74,44 @@ function Map:GetPlayerMapID()
     return MapApi:GetPlayerMapID()
 end
 
+-- Main legacy map (window + art frame), once the engine has created it.
+local function mainMap()
+    local legacy = Carbonite.Map
+    if not (legacy and legacy.Created and legacy.GetMap) then return end
+    local m = legacy:GetMap(1)
+    if m and m.Win and m.Frm then return m end
+end
+
+local function isOpen(m)
+    return m.Win:IsShown() and m.Frm:IsShown() and true or false
+end
+
 function Map:Open()
     local legacy = Carbonite.Map
-    if legacy and legacy.Open then legacy:Open() end
+    -- Legacy Open only creates once; afterwards it toggles the art frame
+    -- inside a visible window, leaving it gray (#197).
+    if legacy and not legacy.Created and legacy.Open then legacy:Open() end
+    local m = mainMap()
+    if m then
+        if not m.Frm:IsShown() then m.Frm:Show() end
+        if not m.Win:IsShown() then m.Win:Show() end
+    end
     Carbonite.Core.EventBus:Fire("MAP_OPENED")
 end
 
 function Map:Close()
-    local legacy = Carbonite.Map
-    if legacy and legacy.Close then legacy:Close()
-    elseif legacy and legacy.Win and legacy.Win.Hide then legacy.Win:Hide() end
+    local m = mainMap()
+    if m and m.Win:IsShown() then
+        -- Leave max size first so a later show is not stuck maximized
+        if m.Win:IsSizeMax() then m:RestoreSize() end
+        m.Win:Show(false)
+    end
     Carbonite.Core.EventBus:Fire("MAP_CLOSED")
 end
 
 function Map:Toggle()
-    -- Defer to legacy code if available, otherwise toggle our open state.
-    local legacy = Carbonite.Map
-    if legacy and legacy.Toggle then legacy:Toggle()
-    elseif legacy and legacy.Win then
-        if legacy.Win:IsShown() then self:Close() else self:Open() end
-    end
+    local m = mainMap()
+    if m and isOpen(m) then self:Close() else self:Open() end
 end
 
 function Map:Refresh()
