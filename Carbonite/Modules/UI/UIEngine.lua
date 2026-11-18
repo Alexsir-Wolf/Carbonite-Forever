@@ -9343,13 +9343,12 @@ end
 -- a rounded thumb and arrows at both ends that move one line. Kept when the
 -- client lacks the thumb atlases.
 --
-local SCROLL_ARROW_H = 10
-
 function Nx.Slider:UseGameLook()
-    local info = C_Texture and C_Texture.GetAtlasInfo
-    if not (info and info ("minimal-scrollbar-thumb-top") and info ("minimal-scrollbar-small-arrow-top")) then
+    if not Carbonite.UI.Skin:HasMinimalScroll() then
         return
     end
+    local info = C_Texture.GetAtlasInfo
+    local SCROLL_ARROW_H = Carbonite.UI.Skin.SCROLL.arrowH   -- the shared sizes
     self.Game = true
     self.Inset = SCROLL_ARROW_H
 

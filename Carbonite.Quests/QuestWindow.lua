@@ -814,6 +814,7 @@ function Nx.Quest.List:Open()
     -- Quest details
 
     local f = CreateFrame ("ScrollFrame", "NxQuestD", win.Frm, "NxQuestDetails")
+    Carbonite.UI.Skin:StyleScrollBar (f)     -- the same bar as the list (#42)
 
     self.DetailsFrm = f
     f.NxSetSize = self.OnDetailsSetSize

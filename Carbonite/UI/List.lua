@@ -171,6 +171,7 @@ function List:New(spec)
     -- offset change.
     local sf = CreateFrame("ScrollFrame", (spec.name or "CarbList") .. "Scroll", frame, "FauxScrollFrameTemplate")
     sf:SetAllPoints(frame)
+    Carbonite.UI.Skin:StyleScrollBar(sf)
     sf:SetScript("OnVerticalScroll", function(self_, delta)
         if _G.FauxScrollFrame_OnVerticalScroll then
             _G.FauxScrollFrame_OnVerticalScroll(self_, delta, frame._rowHeight, function() redraw(frame) end)

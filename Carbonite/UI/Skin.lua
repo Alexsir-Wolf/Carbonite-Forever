@@ -380,6 +380,76 @@ end
 local painted = setmetatable({}, { __mode = "k" })
 
 --- Color a texture with a token and keep it in step with the theme.
+-- The game's minimal scroll bar (#42), shared by every Carbonite scroll bar
+-- in the theme "Blizzard": a thin dark track, a rounded thumb and small
+-- arrows. Nx.Slider draws its own with these sizes (Nx.Slider:UseGameLook).
+Skin.SCROLL = { width = 10, arrowH = 10, trackW = 4, capH = 4, trackColor = { 0, 0, 0, .55 } }
+
+-- Whether this client has the minimal scroll bar art.
+function Skin:HasMinimalScroll()
+    local info = _G.C_Texture and _G.C_Texture.GetAtlasInfo
+    return info and info("minimal-scrollbar-thumb-top") and info("minimal-scrollbar-small-arrow-top") and true or false
+end
+
+--- Dress a Blizzard template scroll bar (UIPanelScrollFrameTemplate,
+--- FauxScrollFrameTemplate) as the game's minimal one, like Carbonite's lists.
+--- Takes the ScrollFrame or its ScrollBar; does nothing outside the theme.
+function Skin:StyleScrollBar(frame)
+    if not (frame and self:GameStyle() and self:HasMinimalScroll()) then return end
+    local name = frame.GetName and frame:GetName()
+    local bar = frame.ScrollBar or (name and _G[name .. "ScrollBar"]) or frame
+    if not (bar and bar.GetThumbTexture) or bar.NxMinimal then return end
+    bar.NxMinimal = true
+    local S = self.SCROLL
+    local barName = bar.GetName and bar:GetName()
+    local thumb = bar:GetThumbTexture()
+
+    -- The template's track art goes; a thin groove takes its place.
+    for _, region in ipairs({ bar:GetRegions() }) do
+        if region ~= thumb and region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:SetAlpha(0)
+        end
+    end
+    bar:SetWidth(S.width)
+    local track = bar:CreateTexture(nil, "BACKGROUND")
+    track:SetPoint("TOP")
+    track:SetPoint("BOTTOM")
+    track:SetWidth(S.trackW)
+    track:SetColorTexture(S.trackColor[1], S.trackColor[2], S.trackColor[3], S.trackColor[4])
+
+    -- Thumb: the stretched middle, with caps above and below.
+    if thumb then
+        thumb:SetAtlas("minimal-scrollbar-thumb-middle")
+        thumb:SetWidth(S.width - 2)
+        local top = bar:CreateTexture(nil, "OVERLAY")
+        top:SetAtlas("minimal-scrollbar-thumb-top")
+        top:SetPoint("BOTTOMLEFT", thumb, "TOPLEFT")
+        top:SetPoint("BOTTOMRIGHT", thumb, "TOPRIGHT")
+        top:SetHeight(S.capH)
+        local bottom = bar:CreateTexture(nil, "OVERLAY")
+        bottom:SetAtlas("minimal-scrollbar-thumb-bottom")
+        bottom:SetPoint("TOPLEFT", thumb, "BOTTOMLEFT")
+        bottom:SetPoint("TOPRIGHT", thumb, "BOTTOMRIGHT")
+        bottom:SetHeight(S.capH)
+    end
+
+    -- Arrows: the small ones, dimmed at the ends.
+    local info = _G.C_Texture.GetAtlasInfo
+    local function arrow(button, dir)
+        if not button then return end
+        local atlas = "minimal-scrollbar-small-arrow-" .. dir
+        button:SetSize(S.width, S.arrowH)
+        button:SetNormalAtlas(atlas)
+        button:SetPushedAtlas(info(atlas .. "-down") and atlas .. "-down" or atlas)
+        button:SetHighlightAtlas(info(atlas .. "-over") and atlas .. "-over" or atlas)
+        button:SetDisabledAtlas(atlas)
+        local off = button:GetDisabledTexture()
+        if off then off:SetDesaturated(true); off:SetAlpha(.4) end
+    end
+    arrow(bar.ScrollUpButton or (barName and _G[barName .. "ScrollUpButton"]), "top")
+    arrow(bar.ScrollDownButton or (barName and _G[barName .. "ScrollDownButton"]), "bottom")
+end
+
 function Skin:Paint(texture, name)
     painted[texture] = name
     texture:SetColorTexture(self:GetToken(name))
