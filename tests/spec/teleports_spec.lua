@@ -10,7 +10,8 @@ local function setup(opts)
         C_Item = { GetItemCount = function(id) return items[id] or 0 end },
         GetItemCooldown = function() return opts.cooldown or 0, opts.cooldown and 3600 or 0 end,
         IsSpellKnown = function(id) return opts.spells and opts.spells[id] or false end,
-        UnitFactionGroup = function() return "Alliance" end,
+        UnitFactionGroup = function() return opts.faction or "Alliance" end,
+        C_Map = { GetAreaInfo = function(id) return opts.areaNames and opts.areaNames[id] end },
     })
     env.CreateFrame = function(_, name)
         local f = wow.frame(name)
@@ -28,6 +29,7 @@ local function setup(opts)
         GuideData = { Innkeeper = opts.guide or {} },
         Map = {
             MapWorldInfo = opts.worldInfo or { [1432] = { Name = "Loch Modan" } },
+            AreaLabels = opts.areaLabels,
             GetWorldPos = function(_, mapId, x, y) return mapId + x, y end,
             IdToContZone = function(_, mapId) return mapId >= 1900 and 2 or 1 end,
             GetMap = function() return m1 end,
@@ -64,6 +66,32 @@ describe("Teleports: lugar da pedra", function()
         local tp = setup({
             worldInfo = { [1432] = { Name = "Thelsamar" } },
             guide = { [1432] = "1,35.5,48.4|0,10,10" },
+        })
+        expect(tp:BindLocation()).toBeNil()
+    end)
+
+    it("pedra numa subzona: o estalajadeiro da facção mais perto do nome no mapa", function()
+        local tp = setup({
+            bind = "Acampamento Taurajo",
+            faction = "Horde",
+            worldInfo = { [1413] = { Name = "Sertões" } },
+            -- Crossroads (51.99, 29.9) and Camp Taurajo (45.58, 59.04); Ratchet is neutral.
+            guide = { [1413] = "0,62.05,39.41|2,45.58,59.04|2,51.99,29.9" },
+            areaLabels = { [1413] = { { 380, 51.9, 30.0, 6, 6 }, { 378, 45.7, 61.0, 6.5, 8.2 } } },
+            areaNames = { [380] = "A Encruzilhada", [378] = "Acampamento Taurajo" },
+        })
+        local bind = tp:BindLocation()
+        expect(bind.Name).toBe("Acampamento Taurajo")
+        expect(bind.MapId).toBe(1413)
+        expect(bind.X).toBe(1413 + 45.58)
+    end)
+
+    it("subzona sem estalajadeiro perto: lugar desconhecido", function()
+        local tp = setup({
+            bind = "Lugar Nenhum",
+            guide = { [1413] = "1,10,10" },
+            areaLabels = { [1413] = { { 900, 80, 80, 4, 4 } } },
+            areaNames = { [900] = "Lugar Nenhum" },
         })
         expect(tp:BindLocation()).toBeNil()
     end)
