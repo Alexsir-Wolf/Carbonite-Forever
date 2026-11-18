@@ -391,6 +391,7 @@ Nx.Defaults = {
             RestoreScaleAfterTrack = true,
             RouteUse = true,
             RouteGround = true,         -- walking legs around the terrain (#79)
+            RouteTeleports = false,     -- hearthstone and mage teleports in the route (#37); off until reworked
             TopTooltip = false,
             IconScaleMin = 1,
             ShowOthersInCities = true,

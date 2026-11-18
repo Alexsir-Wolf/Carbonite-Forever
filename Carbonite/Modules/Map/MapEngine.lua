@@ -8986,8 +8986,22 @@ function Nx.Map:CalcTracking()
     -- Build path through all targets. Scalar-arg BuildPath signature
     -- because this is a hot path - wrapping the src/dst pairs in
     -- tables here was a measurable per-frame leak.
+    -- From the player, the route may start with the hearthstone or a mage
+    -- teleport when that arrives sooner (#37).
+    local Teleports = Carbonite.Modules.Travel and Carbonite.Modules.Travel.Teleports
+    local canTeleport = Teleports and Travel and Travel.MakePath
+        and Nx.db.profile.Map.RouteUse and not UnitOnTaxi("player")
+        and not IsInInstance()
+
     for n, tar in ipairs(self.Targets) do
-        if Pathing then
+        local plan = n == 1 and canTeleport and Teleports:Plan(
+            function(...) return Travel:MakePath(...) end,
+            srcMapId, srcX, srcY, tar.MapId, tar.TargetMX, tar.TargetMY, tar.TargetType)
+        if plan then
+            for _, entry in ipairs(plan) do
+                tinsert(tr, entry)
+            end
+        elseif Pathing then
             Pathing:BuildPath(tr, srcMapId, srcX, srcY,
                 tar.MapId, tar.TargetMX, tar.TargetMY, tar.TargetType)
         elseif Travel and Travel.MakePath then
@@ -9092,7 +9106,9 @@ function Nx.Map:DrawTracking(srcX, srcY, dstX, dstY, mode, target)
         -- click again to toggle the quest off.
         f:EnableMouse(false)
 
-        local size = 16 * self.IconNavScale
+        -- The hearthstone or teleport to use now (#37) is the step to act
+        -- on: drawn twice as large so it is not lost among the map icons.
+        local size = (target.TeleportUse and 32 or 16) * self.IconNavScale
         self:ClipFrameByMapType (f, dstX, dstY, size, size, 0)
 
         if target.TargetDisplayID then
@@ -9147,6 +9163,11 @@ function Nx.Map:DrawTracking(srcX, srcY, dstX, dstY, mode, target)
         end
 
         if reachedQuestDestination then
+            return
+        end
+
+        -- The hearthstone or teleport jump (#37) is not travelled: no trail.
+        if mode == "T" then
             return
         end
 

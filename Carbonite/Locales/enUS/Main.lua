@@ -145,6 +145,9 @@ L["Reset old tool bar data"] = true
 -- NxTravel.lua
 L["Connection: %s to %s"] = true
 L["Fly: %s to %s"] = true
+L["Use Hearthstone (%s)"] = true
+L["Route: %s first"] = true
+L["Teleport"] = true
 
 -- NxHud.lua
 L[" %.1f deg"] = true
