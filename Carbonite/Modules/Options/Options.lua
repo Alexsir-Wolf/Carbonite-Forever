@@ -455,9 +455,12 @@ function Options:OnEnable()
     AceConfig:RegisterOptionsTable("Carbonite", buildRootGroup)
     self._rootRegistered = true
     self.frame, self.panelID = AceConfigDialog:AddToBlizOptions("Carbonite", "Carbonite-Forever")
-    -- Sections next frame: the plugins register theirs on this same login.
-    if _G.C_Timer and _G.C_Timer.After then
-        _G.C_Timer.After(0, function() self:RegisterSubcategories() end)
+    -- Sections when the game's Settings first open: by then every module
+    -- (Quests, Notes, Warehouse, Info load after Carbonite) registered its
+    -- page, so the list keeps the window's order. Open also registers them.
+    local panel = _G.SettingsPanel
+    if panel and panel.HookScript then
+        panel:HookScript("OnShow", function() self:RegisterSubcategories() end)
     end
 
     -- The AceConfigDialog default (700 wide) is too narrow for the
