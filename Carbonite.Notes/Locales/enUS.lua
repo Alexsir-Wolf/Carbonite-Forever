@@ -34,6 +34,8 @@ L["Note"] = true
 L["Notes"] = true
 L["Note Addons"] = true
 L["My Notes"] = true
+L["All notes"] = true
+L["No notes yet. Right-click the map and choose \"%s\" to create one."] = true
 
 L["Reset old notes data"] = true
 L["Display Handynotes On Map"] = true

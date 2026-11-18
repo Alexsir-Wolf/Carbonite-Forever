@@ -38,6 +38,8 @@ L["Note"] = "Nota"
 L["Notes"] = "Notas"
 L["Note Addons"] = "Addons de notas"
 L["My Notes"] = "Minhas notas"
+L["All notes"] = "Todas as notas"
+L["No notes yet. Right-click the map and choose \"%s\" to create one."] = "Nenhuma nota ainda. Clique com o botão direito no mapa e escolha \"%s\" para criar uma."
 
 L["Reset old notes data"] = "Dados antigos de notas redefinidos"
 L["Display Handynotes On Map"] = "Mostrar HandyNotes no mapa"
