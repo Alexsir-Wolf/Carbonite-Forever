@@ -5073,6 +5073,7 @@ function Nx.Map:OnEvent (event, ...)
         -- while the map is following, zooming, or scrolling, because those
         -- paths intentionally retain the previous POI snapshot.
         map.GossipPOIDirty = true
+        map:TargetGossipPOI()
     elseif event == "PLAYER_REGEN_DISABLED" then
         local win = map.Win
         if (Nx.db.profile.Map.HideCombat and win:IsSizeMax()) then
@@ -15621,6 +15622,29 @@ if Nx.Quest and Nx.Quest.Watch then
 end
     local wx, wy = self:GetWorldPos (mid, zx, zy)
     return self:SetTarget ("Goto", wx, wy, wx, wy, tex, nil, name or "", keep, mid)
+end
+
+---
+-- Directions asked to a city guard (trainer, bank, auction house...): the
+-- spot the game marks becomes the target, with the arrow and the route, as
+-- a click on the map would. Nothing happens without a spot on the player's map.
+--
+function Nx.Map:TargetGossipPOI()
+    local gi = _G.C_GossipInfo
+    if not (gi and gi.GetPoiForUiMapID and gi.GetPoiInfo) then
+        return false
+    end
+    local mid = Nx.Map.RMapId
+        or (_G.C_Map and _G.C_Map.GetBestMapForUnit and _G.C_Map.GetBestMapForUnit ("player"))
+    local id = mid and gi.GetPoiForUiMapID (mid)
+    local info = id and gi.GetPoiInfo (mid, id)
+    local pos = info and info.position
+    if not pos then
+        return false
+    end
+    local x, y = pos:GetXY()
+    self:SetTargetXY (mid, x * 100, y * 100, info.name)
+    return true
 end
 
 --------
