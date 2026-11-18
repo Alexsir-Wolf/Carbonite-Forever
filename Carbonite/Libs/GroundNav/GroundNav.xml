@@ -1,0 +1,6 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<!-- Ground search from Shortest Path Forever (GPL-3.0-or-later), see README.md (#79). -->
+	<Script file="bootstrap.lua"/>
+	<Script file="PathGrid.lua"/>
+	<Script file="Path.lua"/>
+</Ui>
