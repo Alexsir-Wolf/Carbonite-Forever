@@ -333,6 +333,10 @@ function Options:Register(id, provider, opts)
     if self._rootRegistered then
         AceConfigReg:NotifyChange("Carbonite")
     end
+    -- A plugin loaded late still gets its page in the game's Settings.
+    if self._subcategoriesDone then
+        self:RegisterSubcategories()
+    end
 end
 
 -- AceConfigDialog shows each side-menu item's name in a tooltip to its right,
@@ -357,9 +361,76 @@ local function QuietTree(appName)
 end
 Options._QuietTree = QuietTree
 
+-------------------------------------------------------------------------------
+-- THE GAME'S SETTINGS PANEL (#42, R12)
+-- Each section is a subcategory of "Carbonite-Forever" in the AddOns tab of
+-- the game's Settings, listed on its left like the game's own pages; the root
+-- page keeps only the About text. In the theme "Blizzard" Open goes there; the
+-- other themes keep the Carbonite window.
+-------------------------------------------------------------------------------
+
+-- Old page names the windows pass to Open, by section.
+local PAGE_ALIAS = {
+    Map = "Maps", Guide = "Guide & Gather", Quest = "Quest Module",
+    ["Quest Watch"] = "Quest Module", ["Info Windows"] = "Info Module",
+    Favorites = "Notes Module",
+}
+
+local ROOT_NAME = "Carbonite-Forever"
+
+local function gameSettings()
+    local Skin = Carbonite.UI and Carbonite.UI.Skin
+    return _G.Settings and _G.Settings.OpenToCategory and Skin and Skin:GameStyle()
+end
+
+--- Add the sections not yet in the game's Settings, in the window's order.
+function Options:RegisterSubcategories()
+    local Settings = _G.Settings
+    if not (self._rootRegistered and Settings and Settings.GetCategory) then return end
+    local blizz = AceConfigDialog.BlizOptions and AceConfigDialog.BlizOptions.Carbonite
+    local rootGroup = blizz and blizz.Carbonite
+    if not rootGroup then return end
+    self.subcategories = self.subcategories or {}
+
+    -- From the registry, not buildRootGroup: building runs the providers and
+    -- the basic-mode wrapping, which only the panel itself should do.
+    local about = registry.Main and "Main" or "about"
+    local pages = {}
+    for id, entry in pairs(registry) do
+        if id ~= about and not self.subcategories[id] then
+            local layout = LAYOUT[id] or {}
+            pages[#pages + 1] = { id = id, name = layout.name or entry.displayName or id,
+                order = layout.order or entry.order or 100 }
+        end
+    end
+    if Carbonite.db and not self.subcategories.profiles then
+        pages[#pages + 1] = { id = "profiles", name = L["Profiles"], order = 1000 }
+    end
+    table.sort(pages, function(a, b)
+        if a.order ~= b.order then return a.order < b.order end
+        return a.name < b.name
+    end)
+    for _, page in ipairs(pages) do
+        local ok, _, id = pcall(AceConfigDialog.AddToBlizOptions, AceConfigDialog,
+            "Carbonite", page.name, ROOT_NAME, page.id)
+        if ok then self.subcategories[page.id] = id end
+    end
+    rootGroup:SetUserData("path", { about })
+    self._subcategoriesDone = true
+end
+
 function Options:Open(panelId)
     if self._rootRegistered then
         self:Refresh()
+    end
+    if gameSettings() then
+        self:RegisterSubcategories()
+        local page = panelId and (PAGE_ALIAS[panelId] or panelId)
+        local id = page and self.subcategories and self.subcategories[page]
+            or AceConfigDialog.BlizOptionsIDMap[ROOT_NAME]
+        if id and pcall(_G.Settings.OpenToCategory, id) then
+            return
+        end
     end
     AceConfigDialog:Open("Carbonite")
     if panelId then
@@ -384,6 +455,10 @@ function Options:OnEnable()
     AceConfig:RegisterOptionsTable("Carbonite", buildRootGroup)
     self._rootRegistered = true
     self.frame, self.panelID = AceConfigDialog:AddToBlizOptions("Carbonite", "Carbonite-Forever")
+    -- Sections next frame: the plugins register theirs on this same login.
+    if _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(0, function() self:RegisterSubcategories() end)
+    end
 
     -- The AceConfigDialog default (700 wide) is too narrow for the
     -- multi-control rows on the font pages. Widen the default ONCE here;

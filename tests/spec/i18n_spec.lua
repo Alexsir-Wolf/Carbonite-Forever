@@ -66,6 +66,8 @@ local ALLOWED = {
     -- Section ids of the options registry (#64); the shown names come from L.
     ["Carbonite/Modules/Options/Options.lua"] = {
         "Carbonite-Forever", "Quest Module", "Notes Module", "Warehouse Module", "Info Module",
+        -- Page names the windows pass to Open (PAGE_ALIAS), not shown.
+        "Quest Watch", "Info Windows", "Guide & Gather",
     },
     ["Carbonite/Modules/Options/OptionsEngine.lua"] = {
         "Carbonite-Forever", "EditItem error (%s)",

@@ -202,3 +202,22 @@ describe("Jornada, Novidades e missões mundiais", function()
         expect(has(s, 'win:ArrangeToolBar({ { self.ButMenu, "action" } })')).toBe(true)
     end)
 end)
+
+describe("Opções no painel de Configurações do jogo (R12)", function()
+    local s = src("Carbonite/Modules/Options/Options.lua")
+
+    it("no tema Blizzard, Open vai para o painel do jogo", function()
+        local open = fn(s, "function Options:Open%(panelId%).-\nend\n")
+        expect(has(open, "if gameSettings() then")).toBe(true)
+        expect(has(open, "pcall(_G.Settings.OpenToCategory, id)")).toBe(true)
+        -- Outros temas, ou sem a API: a janela do Carbonite.
+        expect(has(open, 'AceConfigDialog:Open("Carbonite")')).toBe(true)
+    end)
+
+    it("cada seção vira subcategoria, e a raiz mostra só o Sobre", function()
+        local reg = fn(s, "function Options:RegisterSubcategories%(%).-\nend\n")
+        expect(has(reg, '"Carbonite", page.name, ROOT_NAME, page.id')).toBe(true)
+        expect(has(reg, 'rootGroup:SetUserData("path", { about })')).toBe(true)
+        expect(has(s, '["Quest Watch"] = "Quest Module"')).toBe(true)
+    end)
+end)
