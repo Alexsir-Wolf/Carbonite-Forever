@@ -916,10 +916,9 @@ function Nx.Map:Create(index)
     win:SetBGAlpha(0, 1)
     win:CreateButtons(true)
     win:StyleTitleBar()        -- Theme's title strip, color and line height (#47)
-    -- No game frame yet (#42): the map and its minimap mode need their own
-    -- layout first. Turn it on here: UseGameFrame() for the big map and
-    -- UseGameFrame({ compact = true }) while it is the minimap.
-    win:UseGameFrame(false)
+    -- The game's frame (#42): full on the big map, compact while it is the
+    -- minimap; SyncGameFrame follows the size toggles.
+    m:SyncGameFrame()
 
     -- Default layout position
     win:InitLayoutData(nil, -.0001, -.4, -.19, -.3, 1)
@@ -1043,6 +1042,9 @@ function Nx.Map:Create(index)
 
     m.ButAutoScaleOn = Nx.Button:Create(win.Frm, "MapAutoScale", nil, nil, -20, -bh, "TOPRIGHT", 12, 12, func, m)
     m.ButAutoScaleOn:SetPressed(opts.NXAutoScaleOn)
+
+    -- Tools and the auto scale toggle now exist: place them for the frame.
+    m:SyncGameFrame()
 
     ---------------------------------------------------------------------------
     -- MAIN CONTEXT MENU
@@ -1529,10 +1531,25 @@ end
 -- Create the map toolbar with zoom and feature buttons
 --
 function Nx.Map:CreateToolBar()
+    -- Back in the map first, so Nx.ToolBar:Create finds and reuses its frame.
+    if self.ToolBar and self.ToolBarInStrip then
+        self:PlaceMapToolBar(true)
+    end
+
     local bar = Nx.ToolBar:Create(self:GetWinName() .. "TB", self.Frm, 22, true, true)
     self.ToolBar = bar
 
     bar:SetUser(self)
+
+    -- A relayout (settings menu, addon buttons) puts the tools back on the
+    -- tool strip when the frame has one.
+    local map = self
+    function bar:Update()
+        Nx.ToolBar.Update(self)
+        if map.ToolBar == self and map.ToolBarInStrip then
+            map:PlaceMapToolBar()
+        end
+    end
 
     -- Define toolbar button data (shared across instances)
     if not Nx.BarData then
@@ -1570,6 +1587,108 @@ function Nx.Map:CreateToolBar()
             but:SetPressed(self.View3D)
             self.But3D = but
         end
+    end
+
+    self:PlaceMapToolBar()
+end
+
+---
+-- The game's frame on the map window (#42): full while maximized, compact
+-- while it is the minimap. Called on creation, on size toggles and every
+-- update (theme or option changes), cheap when nothing changed.
+--
+function Nx.Map:SyncGameFrame()
+    local win = self.Win
+    if not win then
+        return
+    end
+
+    local max = win:IsSizeMax() and true or false
+    if win.WantGameFrame ~= true or (win.GameFrameVariant == "compact") == max then
+        win:UseGameFrame(not max and { compact = true } or nil)
+    end
+
+    local on = win.GameFrameOn and (win.GameFrameVariant or "full") or false
+    local tools = Nx.db.profile.Map.ShowToolBar and true or false
+    if (on ~= self.GameFramePlaced or tools ~= self.GameFrameTools)
+            and self.ToolBar and self.ButAutoScaleOn then
+        self.GameFramePlaced, self.GameFrameTools = on, tools
+        self:PlaceMapToolBar()
+    end
+end
+
+---
+-- Where the map tools go. With the full frame they leave the map's corner
+-- for the window's tool strip, toggle icons of one size from the right
+-- (R9, old #204), with the auto scale toggle at the right end. Otherwise
+-- they stay in the map (the minimap keeps its area: no strip) and auto
+-- scale returns to the title line.
+-- @param inMap  Force the tools back into the map
+--
+function Nx.Map:PlaceMapToolBar(inMap)
+    local win, bar, auto = self.Win, self.ToolBar, self.ButAutoScaleOn
+    if not (win and bar and auto) then
+        return
+    end
+
+    local strip = not inMap and win.GameFrameOn and not win.GameFrameVariant
+        and Nx.db.profile.Map.ShowToolBar and true or false
+    local f = bar.Frm
+    self.ToolBarInStrip = strip
+
+    if strip then
+        win:ShowToolBar(true)
+        local tb = win:GetToolBar()
+        f:SetParent(tb)
+        f:SetScale(1)
+        f:ClearAllPoints()
+        f:SetAllPoints(tb)
+        -- Right to left: auto scale, then the tools from the last one, so
+        -- they read in the bar's order.
+        local items = { { auto, "toggle" } }
+        for n = #bar.Tools, 1, -1 do
+            local but = bar.Tools[n].But
+            if but then
+                items[#items + 1] = { but, "toggle" }
+            end
+        end
+        win:ArrangeToolBar(items)
+    else
+        if win.ToolBar then
+            win:ShowToolBar(false)
+        end
+        if f:GetParent() ~= self.Frm then
+            f:SetParent(self.Frm)
+            for _, tool in ipairs(bar.Tools) do
+                if tool.But then
+                    tool.But.Frm:ClearAllPoints()
+                end
+            end
+            Nx.ToolBar.Update(bar)
+        end
+        local _, bh = win:GetBorderSize()
+        auto:SetSize(12, 12)
+        auto.Frm:ClearAllPoints()
+        auto:SetPos("TOPRIGHT", -20, -bh)
+    end
+
+    self:UpdateAutoScaleBut()
+end
+
+---
+-- The compact band holds the title only (R8): no auto scale toggle there.
+-- Its option is shared with the big map, where the toggle sits on the strip.
+--
+function Nx.Map:UpdateAutoScaleBut()
+    local but, win = self.ButAutoScaleOn, self.Win
+    if not (but and win) then
+        return
+    end
+    local compact = win.GameFrameOn and win.GameFrameVariant == "compact"
+    if self.MouseEnabled ~= false and not compact then
+        but.Frm:Show()
+    else
+        but.Frm:Hide()
     end
 end
 
@@ -1817,6 +1936,11 @@ end
 -- @param typ  Event type: "SizeNorm", "SizeMax", or "Close"
 --
 function Nx.Map:OnWin(typ)
+    if typ == "SizeNorm" or typ == "SizeMax" then
+        -- Full frame on the big map, compact on the minimap (#42)
+        self:SyncGameFrame()
+    end
+
     if typ == "SizeNorm" then
         -- Restored to normal size
         self:RestoreSize()
@@ -4860,11 +4984,10 @@ function Nx.Map:MouseEnable (max)
 
         self.Win:EnableMouse (on)
 
+        self:UpdateAutoScaleBut()
         if on then
-            self.ButAutoScaleOn.Frm:Show()
             self:UpdateToolBar()        -- Will show or hide
         else
-            self.ButAutoScaleOn.Frm:Hide()
             self.ToolBar.Frm:Hide()
         end
 
@@ -6192,6 +6315,7 @@ function Nx.Map:Update (elapsed)
     end
 
     self:MouseEnable (self.Win:IsSizeMax())
+    self:SyncGameFrame()
 
     -- Resolve the visible map once so texture loading and zone geometry use
     -- the same map throughout this render pass.
@@ -16070,7 +16194,10 @@ function Nx.Map.Dock:Create()
 
     local win = Nx.Window:Create ("NxMapDock", nil, nil, nil, 1, 1, nil, true)
     self.Win = win
-    win:UseGameFrame (false)        -- Minimap button dock: set with the minimap (#42)
+    -- No game frame (#42): a cluster of minimap buttons, see-through when
+    -- locked and without a title, like the game's own minimap buttons. A
+    -- frame would add an empty band and metal around loose icons.
+    win:UseGameFrame (false)
 
     win:SetBGAlpha (0, 1)
 

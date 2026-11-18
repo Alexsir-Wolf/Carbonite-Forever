@@ -1898,6 +1898,7 @@ end
 Nx.Window.GameFrameVariant = false    -- false (full) or "compact"
 Nx.Window.GameFrameAuto = false       -- true when the frame is the default one
 Nx.Window.ButLock = false             -- optional lock button, last title slot
+Nx.Window.ToolBarHidden = false       -- tool strip hidden (ShowToolBar)
 
 -- Title band buttons, right to left, each in its own slot of the same size.
 Nx.Window.TitleButtonOrder = { "ButClose", "ButMaxer", "ButMiner", "ButLock" }
@@ -2117,10 +2118,24 @@ function Nx.Window:GetGameFrameTop()
 
     local spec = self.GameFrameSpec
     local top = spec.band + spec.gap
-    if self.ToolBar then
+    if self.ToolBar and not self.ToolBarHidden then
         top = top + spec.toolBarH
     end
     return top
+end
+
+-- Show or hide the tool strip; a hidden one gives its room back to the
+-- content (the map keeps its tools on the strip only when maximized).
+function Nx.Window:ShowToolBar (on)
+
+    on = on and true or false
+    local tb = self:GetToolBar()
+    self.ToolBarHidden = not on
+    tb:SetShown (on)
+    if self.GameFrameOn then
+        self:StyleTitleBar()
+        self:Adjust()
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -2603,8 +2618,22 @@ function Nx.Window:StyleTitleBar()
     end
     self.TopH = self.TitleH + self.BorderH
 
-    for _, fstr in ipairs (self.TitleFStr) do
-        fstr:SetHeight (game and game.band - 4 or lineH)
+    -- On the band: as many title lines as fit (two on the full band, one on
+    -- the compact one), sharing its height; the rest stay hidden.
+    local bandFit, bandLineH = 1, 0
+    if game then
+        local room = game.band - 4
+        bandFit = max (1, min (#self.TitleFStr, math.floor (room / ((size or 10) + 2))))
+        bandLineH = math.floor (room / bandFit)
+    end
+
+    for n, fstr in ipairs (self.TitleFStr) do
+        fstr:SetHeight (game and bandLineH or lineH)
+        if game and n > bandFit then
+            fstr:Hide()
+        else
+            fstr:Show()
+        end
         fstr:SetWordWrap (false)
         Skin:PaintText (fstr, game and "frameTitle" or "title")
     end
@@ -2664,7 +2693,7 @@ function Nx.Window:StyleTitleBar()
         -- Centered between the buttons, the same margin on both sides.
         local m = self.BorderW + max (self.ButW or 0, 0)
         for n, fstr in ipairs (self.TitleFStr) do
-            local ty = -2 - (n - 1) * (game.band - 4)
+            local ty = -2 - (n - 1) * bandLineH
             fstr:ClearAllPoints()
             fstr:SetPoint ("TOPLEFT", f, "TOPLEFT", m, ty)
             fstr:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -m, ty)
@@ -2753,7 +2782,7 @@ function Nx.Window:PlaceTitleBar()
         if game then
             y = y + 1
             -- The band has its own edge; the rule closes a tool strip only.
-            rule:SetShown (self.ToolBar and true or false)
+            rule:SetShown (self.ToolBar and not self.ToolBarHidden and true or false)
         else
             rule:Show()
         end
