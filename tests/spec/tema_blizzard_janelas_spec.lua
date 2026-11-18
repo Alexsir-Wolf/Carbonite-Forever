@@ -47,7 +47,7 @@ describe("Monitor de missões", function()
 
     it("o Monitor é a única janela transparente: sem moldura, como o rastreador do jogo", function()
         local open = fn(watch, "function Nx%.Quest%.Watch:Open%(%).-\nend\n")
-        expect(has(open, "if border ~= false then\n        win:UseGameFrame()")).toBe(true)
+        expect(has(open, "win:UseGameFrame (false)")).toBe(true)
         expect(has(open, "self.GameChrome = win.GameFrameOn and true or false")).toBe(true)
         expect(has(open, "self:SetupGameChrome (win)")).toBe(true)
     end)
