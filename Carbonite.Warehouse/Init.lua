@@ -68,7 +68,8 @@ function CarboniteWarehouse:OnInitialize()
     }
     Nx.Warehouse:ConvertData()
     Nx.Warehouse:InitWarehouseCharacter()
-    Nx.Font:ModuleAdd("Warehouse.WarehouseFont",{ "NxFontWHI", "GameFontNormal","wdb" })
+    -- Item rows read at least 12 like the other lists (#203).
+    Nx.Font:ModuleAdd("Warehouse.WarehouseFont",{ "NxFontWHI", "GameFontNormal","wdb", 12 })
     Nx.Warehouse:Init()
     Nx.Warehouse:Login()
     Nx.Warehouse:CaptureItems()

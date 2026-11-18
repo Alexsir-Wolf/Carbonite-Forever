@@ -638,7 +638,7 @@ function Nx.Map.Guide:Create (map)
     g.BackBut = but
     win:Attach (but, 1.01, 1.01+70, -10020, -10001)
 
-    Nx.List:SetCreateFont ("Font.Medium", 28)
+    Nx.List:SetCreateFont ("Role.list", 28)
     local list = Nx.List:Create (false, 0, 0, 1, 1, win.Frm)
     g.List = list
     list:SetUser (g, g.OnListEvent)
@@ -649,11 +649,11 @@ function Nx.Map.Guide:Create (map)
     win:Attach (list.Frm, 0, .33, 0, 1)
     g:CreateMenu()
 
-    Nx.List:SetCreateFont ("Font.Medium", 28)
+    Nx.List:SetCreateFont ("Role.list", 28)
     local list = Nx.List:Create (false, 0, 0, 1, 1, win.Frm)
     g.List2 = list
     list:SetUser (g, g.OnList2Event)
-    list:SetLineHeight (16, 11)
+    list:SetLineHeight (16)
     list:SetModernRows()
     list:ColumnAdd ("", 1, 35)
     list:ColumnAdd (L["Name"], 2, 220)

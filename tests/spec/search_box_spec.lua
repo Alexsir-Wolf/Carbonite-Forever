@@ -164,6 +164,7 @@ describe("busca: janelas", function()
         local Notes = Nx.Notes
         Notes.List = {
             ItemAdd = function() end, ItemSetButton = function() end, Select = function() end,
+            ItemSetSection = function() end,
             ItemGetNum = function() return #rows end,
             ItemSet = function(_, _, text) rows[#rows + 1] = text end,
         }

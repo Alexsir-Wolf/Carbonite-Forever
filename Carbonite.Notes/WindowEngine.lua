@@ -21,21 +21,6 @@ local addonNotes = Nx.Notes.addonNotes
 -- Window creation
 -- -------------------------------------------------------------------
 
--- The game's grey panel button: the red one (Txt64) stays for delete only,
--- so Record / Up / Down do not read as errors (#201).
-local GREY_BUTTON = "Interface\\Buttons\\UI-Panel-Button-Disabled"
-local GREY_UV = { 0, .625, 0, .6875 }
-
-function Nx.Notes:AddButtonTypes()
-    local types = Nx.Button.TypeData
-    if rawget(types, "NotesTxt") then return end
-    types.NotesTxt = { Up = GREY_BUTTON, Dn = GREY_BUTTON, UpUV = GREY_UV, DnUV = GREY_UV,
-                       VRGBAUp = "1|1|1|1", VRGBADn = ".7|.7|.7|1" }
-    -- Record is a toggle: pressed (recording) lights up gold.
-    types.NotesTxtB = { Bool = true, Up = GREY_BUTTON, Dn = GREY_BUTTON, UpUV = GREY_UV, DnUV = GREY_UV,
-                        VRGBAUp = "1|1|1|1", VRGBADn = "1|.82|.3|1" }
-end
-
 function Nx.Notes:Create()
     self.Side = 1
 
@@ -56,17 +41,16 @@ function Nx.Notes:Create()
 
     local bw, bh = win:GetBorderSize()
 
-    -- Header buttons.
-    self:AddButtonTypes()
-    local recBut = Nx.Button:Create(win.Frm, "NotesTxtB", L["Record"], nil,
+    -- Header buttons: grey for Record / Up / Down, red only for delete (#201).
+    local recBut = Nx.Button:Create(win.Frm, "TxtGreyB", L["Record"], nil,
                                     bw + 1, -bh, "TOPLEFT", 44, 20,
                                     self.But_OnRecord, self)
     self.RecBut = recBut
 
-    local upBut = Nx.Button:Create(win.Frm, "NotesTxt", L["Up"], nil,
+    local upBut = Nx.Button:Create(win.Frm, "TxtGrey", L["Up"], nil,
                                    bw + 48, -bh, "TOPLEFT", 40, 20,
                                    self.But_OnUp, self)
-    local dnBut = Nx.Button:Create(upBut.Frm, "NotesTxt", L["Down"], nil,
+    local dnBut = Nx.Button:Create(upBut.Frm, "TxtGrey", L["Down"], nil,
                                    42, 0, "TOPLEFT", 40, 20,
                                    self.But_OnDown, self)
     Nx.Button:Create(dnBut.Frm, "Txt64", L["Delete Item"], nil,
@@ -77,7 +61,7 @@ function Nx.Notes:Create()
     win:Attach(self.SearchBox.Frm, 0, .3, 0, 18)
 
     -- Folder list (left side).
-    Nx.List:SetCreateFont("Font.Medium", 16)
+    Nx.List:SetCreateFont("Role.list", 16)
     local list = Nx.List:Create("FavF", 0, 0, 1, 1, win.Frm)
     self.List = list
     list:SetUser(self, self.OnListEvent)
@@ -88,7 +72,7 @@ function Nx.Notes:Create()
     win:Attach(list.Frm, 0, .3, 18, 1)
 
     -- Item list (right side).
-    Nx.List:SetCreateFont("Font.Medium", 16)
+    Nx.List:SetCreateFont("Role.list", 16)
     list = Nx.List:Create("FavI", 0, 0, 1, 1, win.Frm)
     self.ItemList = list
     list:SetUser(self, self.OnItemListEvent)
@@ -500,6 +484,7 @@ function Nx.Notes:AddonFolders(level)
     list:ItemAdd("addons")
     list:ItemSet(2, "  " .. L["Note Addons"])
     list:ItemSetButton("QuestHdr", hide)
+    list:ItemSetSection(not hide)
 
     if hide then return end
 
@@ -537,6 +522,7 @@ function Nx.Notes:UpdateFolder(folder, level)
         local space = strrep("  ", level - 1)
         list:ItemSet(2, format("%s%s", space, folder["Name"]))
         list:ItemSetButton("QuestHdr", hide)
+        list:ItemSetSection(not hide)
     end
 
     if hide then return end

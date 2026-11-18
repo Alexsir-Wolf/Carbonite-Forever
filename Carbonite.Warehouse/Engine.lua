@@ -215,7 +215,7 @@ function Nx.Warehouse:Create()
 
     -- Character List
 
-    Nx.List:SetCreateFont ("Font.Medium", 16)
+    Nx.List:SetCreateFont ("Role.list", 16)
 
     local list = Nx.List:Create (false, 0, 0, 1, 1, win.Frm)
     self.List = list
@@ -523,7 +523,7 @@ function Nx.Warehouse:OnItemListEvent (eventName, sel, val2, click)
     local section = list:ItemGetDataEx (sel, SectionDataSlot)
     local prof = list:ItemGetDataEx (sel, ProfDataSlot)
 
-    if section and (eventName == "select" or eventName == "mid") then
+    if section and (eventName == "select" or eventName == "mid" or eventName == "button") then
         self:ToggleSection (section)
         self.ItemOwnersId = nil
         self:Update()
@@ -678,14 +678,19 @@ end
 -- items: then every section is open, so no match stays hidden.
 function Nx.Warehouse:AddSection(list, key, label, count)
     local open = not self:IsSectionCollapsed(key) or self:IsItemFilterActive()
-    local icon = open and SectionIconOpen or SectionIconClosed
+    -- In the game's style the strip draws the +/- on the right (#42).
+    local icon = ""
+    if not list:UsesSectionBars() then
+        icon = (open and SectionIconOpen or SectionIconClosed) .. " "
+    end
 
     list:ItemAdd(0)
     list:ItemSetDataEx(nil, key, SectionDataSlot)
+    list:ItemSetSection(open)
     if count ~= nil then
-        list:ItemSet(3, format("%s |cffffd200%s|r |cff777777(%d)|r", icon, label, tonumber(count) or 0))
+        list:ItemSet(3, format("%s|cffffd200%s|r |cff999999(%d)|r", icon, label, tonumber(count) or 0))
     else
-        list:ItemSet(3, format("%s |cffffd200%s|r", icon, label))
+        list:ItemSet(3, format("%s|cffffd200%s|r", icon, label))
     end
     return open
 end
