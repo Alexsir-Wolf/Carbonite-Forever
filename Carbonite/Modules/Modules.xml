@@ -35,6 +35,8 @@
     <Script file="Map\MapProvider.lua" />
     <Script file="Map\Pathing.lua" />
     <Script file="Map\Coords.lua" />
+    <!-- Walking legs around the terrain, with Libs\GroundNav (#79). -->
+    <Script file="Map\GroundRoute.lua" />
     <Script file="Map\MapIDs.lua" />
     <Script file="Map\ZoneFishing.lua" />
     <Script file="Map\Hotspots.lua" />

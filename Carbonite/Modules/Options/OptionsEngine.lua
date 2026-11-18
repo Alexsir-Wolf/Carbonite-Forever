@@ -824,6 +824,28 @@ local function mapConfig()
                                 Nx.db.profile.Map.RouteUse = not Nx.db.profile.Map.RouteUse
                             end,
                         },
+                        -- Walking legs around the terrain (#79)
+                        groundRoute = {
+                            order = 14.5,
+                            type = "toggle",
+                            name = L["Walking route around the terrain"],
+                            width = "full",
+                            desc = L["When enabled, the route line and the HUD arrow follow a walking path around mountains, cliffs and deep water. Needs GatherLite, which carries the terrain data."],
+                            hidden = function()
+                                local ground = _G.Carbonite.Modules.Map.GroundRoute
+                                return not (ground and ground:Supported())
+                            end,
+                            get = function()
+                                return Nx.db.profile.Map.RouteGround ~= false
+                            end,
+                            set = function()
+                                Nx.db.profile.Map.RouteGround = Nx.db.profile.Map.RouteGround == false
+                                local map = Nx.Map:GetMap(1)
+                                if map then
+                                    map.UpdateTrackingDelay = 0
+                                end
+                            end,
+                        },
                         spacer3 = {
                             order = 15,
                             type = "description",
