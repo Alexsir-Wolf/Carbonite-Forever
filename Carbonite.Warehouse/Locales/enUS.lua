@@ -199,6 +199,8 @@ L["Currency %s"] = true
 L["[Account]"] = true
 L["+ %d more currencies"] = true
 L["%s - Other"] = true
+-- Equipped bag slots (#202)
+L["Bag"] = true
 L[" No profession recipes match '%s'"] = true
 -- Options: basic mode, sections and help (#64)
 L["Removes the chosen item from the don't display list."] = true

@@ -681,7 +681,7 @@ Nx.Warehouse.defaults = {
             TooltipIgnore = true,               -- Use ignore list for tooltips
             IgnoreList = {},                    -- Items to ignore in tooltips
             ShowGold = false,                   -- Show gold in character list
-            CollapsedSections = {},             -- Item list sections folded by the user (key = true)
+            CollapsedSections = {},             -- Item list sections the user folded (true) or opened (false)
             -- Auto sell settings
             SellTesting = false,                -- Test mode (don't actually sell)
             SellVerbose = false,                -- Show what was sold

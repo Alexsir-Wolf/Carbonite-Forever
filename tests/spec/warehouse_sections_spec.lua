@@ -54,7 +54,9 @@ local function setup()
         RealmChars = { "Reino.Alice" },
         wdb = {
             global = { Characters = { ["Reino.Alice"] = character } },
-            profile = { Warehouse = { ShowGold = false } },
+            -- Sections open, as the #100 cases below expect; #202 folds some by default.
+            profile = { Warehouse = { ShowGold = false,
+                CollapsedSections = { Equipped = false, Bags = false, Bank = false } } },
         },
         Split = split,
         Item = { Load = function() end },
@@ -155,7 +157,7 @@ describe("Warehouse em seções", function()
         expect(count(W.ItemList, "Carta do Banco")).toBe(1)
 
         W:OnItemListEvent("select", headerIndex(W.ItemList, "Bags"), 0)
-        expect(Nx.wdb.profile.Warehouse.CollapsedSections.Bags).toBeNil()
+        expect(Nx.wdb.profile.Warehouse.CollapsedSections.Bags).toBe(false)
         expect(count(W.ItemList, "Minério de Cobre")).toBe(1)
     end)
 

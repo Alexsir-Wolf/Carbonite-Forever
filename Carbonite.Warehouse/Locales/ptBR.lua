@@ -203,6 +203,8 @@ L["Currency %s"] = "Moeda %s"
 L["[Account]"] = "[Conta]"
 L["+ %d more currencies"] = "+ %d moedas"
 L["%s - Other"] = "%s - Outras"
+-- Equipped bag slots (#202)
+L["Bag"] = "Bolsa"
 L[" No profession recipes match '%s'"] = " Nenhuma receita corresponde a '%s'"
 -- Options: basic mode, sections and help (#64)
 L["Removes the chosen item from the don't display list."] = "Remove o item escolhido da lista de itens ocultos."
