@@ -2,9 +2,9 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
-## v12.1.0-00023-forever.2
+## v1.0.0
 
-Base: Carbonite All in One v12.1.0-00023, de IrcDirk.
+Primeira versão com a numeração própria da edição. Base: Carbonite All in One v12.1.0-00023, de IrcDirk.
 
 ### Tema Blizzard (agora o padrão)
 - Janelas com a moldura metálica do jogo, faixa de título e faixa de ferramentas; o minimapa integrado usa a versão compacta.

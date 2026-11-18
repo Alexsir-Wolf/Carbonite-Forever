@@ -56,17 +56,24 @@ end
 -- Versions
 -------------------------------------------------------------------------------
 
--- Splits a release version into its numbers. "v12.1.0-00023-forever.3" gives
--- { nums = { 12, 1, 0, 23 }, forever = 3 }. Anything else (a development
--- copy, a build between tags such as "...-forever.3-2-gabc123") gives nil.
+-- Splits a release version into its numbers. The edition's own numbering,
+-- "v1.0.0", gives { era = 2, nums = { 1, 0, 0 }, forever = 0 }. The old
+-- upstream-based one, "v12.1.0-00023-forever.3", gives
+-- { era = 1, nums = { 12, 1, 0, 23 }, forever = 3 }: every own version is
+-- newer than every old one. Anything else (a development copy, a build
+-- between tags such as "v1.0.0-2-gabc123") gives nil.
 function VersionCheck.Parse(version)
     if type(version) ~= "string" then return nil end
+    local major, minor, patch = version:match("^%s*v?(%d+)%.(%d+)%.(%d+)%s*$")
+    if major then
+        return { era = 2, nums = { tonumber(major), tonumber(minor), tonumber(patch) }, forever = 0 }
+    end
     local base, forever = version:match("^%s*v?([%d%.%-]+)%-forever%.(%d+)%s*$")
     if not base then return nil end
     local nums = {}
     for n in base:gmatch("%d+") do nums[#nums + 1] = tonumber(n) end
     if #nums == 0 then return nil end
-    return { nums = nums, forever = tonumber(forever) }
+    return { era = 1, nums = nums, forever = tonumber(forever) }
 end
 
 -- -1 when a is older than b, 1 when newer, 0 when the same; nil when either
@@ -74,6 +81,7 @@ end
 function VersionCheck.Compare(a, b)
     local pa, pb = VersionCheck.Parse(a), VersionCheck.Parse(b)
     if not pa or not pb then return nil end
+    if pa.era ~= pb.era then return pa.era < pb.era and -1 or 1 end
     for i = 1, math.max(#pa.nums, #pb.nums) do
         local x, y = pa.nums[i] or 0, pb.nums[i] or 0
         if x ~= y then return x < y and -1 or 1 end

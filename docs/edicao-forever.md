@@ -23,7 +23,7 @@ Estes são os pontos de conflito mais prováveis num merge do upstream:
 | Botão do Spoken na lista de quests | `Carbonite.Quests/SpokenPlay.lua` e uma linha em cada `Carbonite.Quests*.toc` |
 | Quests do Forever a partir do QuestieDB | `Carbonite.Quests/QuestieSource.lua` e `Carbonite.Quests-Camelot.toc` (`OptionalDeps` e a linha do arquivo) |
 | Sem ids de sites de addons | todos os `.toc`: sem `X-Curse-Project-ID`, `X-WoWI-ID` nem `X-Wago-ID` |
-| Releases só da edição | `.github/workflows/release.yml` (tags `v*-forever*`) |
+| Releases só da edição | `.github/workflows/release.yml` (tags `vX.Y.Z` da numeração própria) |
 | Documentação | `README.md`, este guia |
 
 ## Trazer uma versão nova do upstream
@@ -56,11 +56,11 @@ Estes são os pontos de conflito mais prováveis num merge do upstream:
 
 ## Publicar uma release
 
-A versão segue o formato `<versão do upstream>-forever.<n>`. O `n` recomeça em 1 a cada versão nova do upstream.
+A edição tem numeração própria, `v<maior>.<menor>.<correção>`, a partir da v1.0.0: correções sobem o último número, recursos novos o do meio e mudanças que quebram o primeiro. As releases antigas (`v12.1.0-00023-forever.<n>`) seguiam a versão do upstream; o aviso de versão nova trata qualquer `vX.Y.Z` como mais nova que elas.
 
 ```bash
-git tag -a v12.1.0-00024-forever.1 -m "Edição Forever sobre o Carbonite v12.1.0-00024"
-git push fork v12.1.0-00024-forever.1
+git tag -a v1.0.1 -m "v1.0.1"
+git push fork v1.0.1
 ```
 
 A tag dispara o workflow `Package and release`. Ele monta o zip com as 6 pastas, preenche a versão nos `.toc` e cria a Release no fork.

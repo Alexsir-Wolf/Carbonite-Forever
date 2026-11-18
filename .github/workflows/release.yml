@@ -3,12 +3,12 @@ name: Release
 # Gera o zip com todas as pastas Carbonite* e publica a release no GitHub,
 # de onde o WowUp e outros gerenciadores instalam e atualizam o addon.
 #
-# So tags da edicao Forever (ex.: v12.1.0-00023-forever.2) disparam a release.
-# Tags do upstream que chegam num merge nao podem publicar nada aqui.
+# So tags da numeracao propria da edicao (ex.: v1.0.0) disparam a release.
+# Tags do upstream (ex.: v12.1.0-00023) tem sufixo e nao casam com o filtro.
 on:
   push:
     tags:
-      - 'v*-forever*'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   release:
