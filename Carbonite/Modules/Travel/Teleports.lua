@@ -42,6 +42,7 @@ Teleports.MAGE = {
 }
 
 local plans = {}             -- destination key -> { at, choice }
+local announced = {}         -- destination key -> name of the choice told in the chat
 
 local function now()
     return (GetTime and GetTime()) or 0
@@ -317,12 +318,22 @@ function Teleports:Plan(makePath, srcMapId, srcX, srcY, dstMapId, dstX, dstY, ta
         plans[key] = { at = now(), choice = choice or false }
     end
     if not choice then
+        announced[key] = nil
         return nil
+    end
+    -- Once per destination and choice: the icon alone was easy to miss.
+    if announced[key] ~= choice.Name then
+        announced[key] = choice.Name
+        local nx = _G.Nx
+        if nx and nx.prt then
+            nx.prt(L["Route: %s first"], choice.Name)
+        end
     end
 
     local out = {
         {
             TargetType = targetType, TargetName = choice.Name, TargetTex = choice.Tex,
+            TeleportUse = true,     -- drawn large over the player (MapEngine)
             MapId = srcMapId, TargetMX = srcX, TargetMY = srcY,
             TargetX1 = srcX, TargetY1 = srcY, TargetX2 = srcX, TargetY2 = srcY,
         },

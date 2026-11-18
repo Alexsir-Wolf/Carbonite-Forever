@@ -9032,7 +9032,9 @@ function Nx.Map:DrawTracking(srcX, srcY, dstX, dstY, mode, target)
         -- click again to toggle the quest off.
         f:EnableMouse(false)
 
-        local size = 16 * self.IconNavScale
+        -- The hearthstone or teleport to use now (#37) is the step to act
+        -- on: drawn twice as large so it is not lost among the map icons.
+        local size = (target.TeleportUse and 32 or 16) * self.IconNavScale
         self:ClipFrameByMapType (f, dstX, dstY, size, size, 0)
 
         if target.TargetDisplayID then
