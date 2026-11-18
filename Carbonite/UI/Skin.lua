@@ -29,11 +29,11 @@ end
 Skin.themes = {
     -- The game's own window look: the dialog border and dark rock background of
     -- Blizzard's frames, bronze separators and the gold highlight of its lists.
-    -- Windows with a header (Nx.Window:ApplyModernHeader) wear the metal
-    -- NineSlice frame of the game (#42): the title centered in its own band,
-    -- the content pushed below it (the band used to cover the first lines) and
-    -- action buttons on a tool strip under the band. The map keeps the
-    -- backdrop: on it the NineSlice edges break into stray marks.
+    -- Every window with a border wears the metal NineSlice frame of the game
+    -- (#42, Nx.Window:UseGameFrame): the title centered in its own band, the
+    -- content pushed below it (the band used to cover the first lines) and
+    -- action buttons on a tool strip under the band. Small windows wear the
+    -- compact variant; a window may opt out (UseGameFrame (false)).
     ["Blizzard"] = {
         nineSlice = "ButtonFrameTemplateNoPortrait",
         frame = {
@@ -53,6 +53,17 @@ Skin.themes = {
             gap      = 2,     -- band (or tool strip) to content
             toolBarH = 28,    -- tool strip under the band (22 px buttons + room)
             butSize  = 24,    -- close / maximize, RedButton atlases
+            -- Compact variant (UseGameFrame ({ compact = true })): the metal at
+            -- scale 1 and a low band for the title only, for the integrated
+            -- minimap and small windows. Missing fields come from the full one.
+            compact = {
+                edgeScale = 1,
+                band     = 24,
+                side     = 5,
+                gap      = 1,
+                toolBarH = 24,
+                butSize  = 18,
+            },
         },
         backdrop = {
             bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
@@ -268,10 +279,34 @@ function Skin:GetBackdrop()
     return self:GetActive().backdrop
 end
 
+-- Metrics of a variant: its own fields over the full frame's.
+local variants = setmetatable({}, { __mode = "k" })
+
+local function variantSpec(frame, variant)
+    local own = variant and frame[variant]
+    if type(own) ~= "table" then return frame end
+    local cache = variants[frame]
+    if not cache then
+        cache = {}
+        variants[frame] = cache
+    end
+    local spec = cache[variant]
+    if not spec then
+        spec = setmetatable({ variant = variant }, { __index = function(_, k)
+            local v = own[k]
+            if v == nil then v = frame[k] end
+            return v
+        end })
+        cache[variant] = spec
+    end
+    return spec
+end
+
 --- The game's NineSlice frame of the active theme: its layout name and the
---- metrics of `frame`. Nil when the theme has none or this client lacks the
---- layout (the window then keeps the theme's backdrop).
-function Skin:GetGameFrame()
+--- metrics of `frame` (or of its `variant`, e.g. "compact"). Nil when the
+--- theme has none or this client lacks the layout (the window then keeps the
+--- theme's backdrop).
+function Skin:GetGameFrame(variant)
     local t = self:GetActive()
     local name = t.nineSlice
     if not (name and t.frame) then return nil end
@@ -280,7 +315,7 @@ function Skin:GetGameFrame()
        or type(layouts) ~= "table" or not layouts[name] then
         return nil
     end
-    return name, t.frame
+    return name, variantSpec(t.frame, variant)
 end
 
 -- The color the player picked in the options, saved in the profile. Picking a

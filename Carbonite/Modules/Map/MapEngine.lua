@@ -916,6 +916,10 @@ function Nx.Map:Create(index)
     win:SetBGAlpha(0, 1)
     win:CreateButtons(true)
     win:StyleTitleBar()        -- Theme's title strip, color and line height (#47)
+    -- No game frame yet (#42): the map and its minimap mode need their own
+    -- layout first. Turn it on here: UseGameFrame() for the big map and
+    -- UseGameFrame({ compact = true }) while it is the minimap.
+    win:UseGameFrame(false)
 
     -- Default layout position
     win:InitLayoutData(nil, -.0001, -.4, -.19, -.3, 1)
@@ -16066,6 +16070,7 @@ function Nx.Map.Dock:Create()
 
     local win = Nx.Window:Create ("NxMapDock", nil, nil, nil, 1, 1, nil, true)
     self.Win = win
+    win:UseGameFrame (false)        -- Minimap button dock: set with the minimap (#42)
 
     win:SetBGAlpha (0, 1)
 

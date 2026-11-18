@@ -1705,6 +1705,9 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
 
     if win.Border then
         win:CreateBorders()
+        -- The game's frame by default (#42), once the window is set up and
+        -- shown (OnUpdate): UseGameFrame before that chooses another one.
+        win.GameFramePending = true
     end
 
     if not noButs then
@@ -1862,7 +1865,8 @@ function Nx.Window:ResetBackdrops()
         for win, v in pairs (self.Wins) do
 
             if win.Border then
-                if win.WantGameFrame then
+                if win.WantGameFrame and (win.GameFrameOn or not win.GameFrameAuto
+                                          or Carbonite.UI.Skin:GetGameFrame (win.GameFrameVariant or nil)) then
                     win:ApplyGameFrame()        -- Its own backdrop and header
                 else
                     win.Frm:SetBackdrop (bk)
@@ -1875,26 +1879,71 @@ function Nx.Window:ResetBackdrops()
 end
 
 ---------------------------------------------------------------------------------------
--- The game's window frame (#42). A window with a header wears the NineSlice
+-- The game's window frame (#42). Every window with a border wears the NineSlice
 -- frame of its theme (Skin:GetGameFrame): metal edges drawn by a child frame
 -- at the window's own level (the backdrop of the window frame shares piece
 -- names with NineSlice, so they cannot live on the same frame), the title
 -- centered on the band, the window buttons in the band's right corner and
 -- the content below the band and the tool strip. Without the layout, or in
 -- another theme, the window keeps the theme's backdrop and header.
+--
+--   win:UseGameFrame()                     full frame (also UseGameFrame (true))
+--   win:UseGameFrame ({ compact = true })  compact: metal at scale 1, low band
+--   win:UseGameFrame (false)               no frame for this window (opt-out)
+--
+-- A window that calls none of them gets the default on its first update:
+-- compact when small (IsCompactWindow), full otherwise.
 ---------------------------------------------------------------------------------------
 
-function Nx.Window:UseGameFrame()
+Nx.Window.GameFrameVariant = false    -- false (full) or "compact"
+Nx.Window.GameFrameAuto = false       -- true when the frame is the default one
+Nx.Window.ButLock = false             -- optional lock button, last title slot
+
+-- Title band buttons, right to left, each in its own slot of the same size.
+Nx.Window.TitleButtonOrder = { "ButClose", "ButMaxer", "ButMiner", "ButLock" }
+
+function Nx.Window:UseGameFrame (opts)
+
+    self.GameFramePending = nil
+    if opts == false then
+        self.WantGameFrame = false
+        if self.GameFrameOn then
+            self:ApplyGameFrame()
+        end
+        return
+    end
     self.WantGameFrame = true
+    self.GameFrameAuto = false
+    self.GameFrameVariant = type (opts) == "table" and opts.compact and "compact" or false
     self:ApplyGameFrame()
+end
+
+-- Small windows: no title line, fixed size or no window buttons.
+function Nx.Window:IsCompactWindow()
+    return (self.TitleLines == 0 or not self.Sizeable or self.NoButs) and true or false
+end
+
+-- The frame a window gets when it did not choose one.
+function Nx.Window:UseDefaultGameFrame()
+
+    if self.WantGameFrame ~= nil or not self.Border then
+        return
+    end
+    self.WantGameFrame = true
+    self.GameFrameAuto = true
+    self.GameFrameVariant = self:IsCompactWindow() and "compact" or false
+    -- In another theme the window stays as it is, until one with a frame.
+    if Carbonite.UI.Skin:GetGameFrame (self.GameFrameVariant or nil) then
+        self:ApplyGameFrame()
+    end
 end
 
 function Nx.Window:ApplyGameFrame()
 
     local Skin = Carbonite.UI.Skin
     local f = self.Frm
-    local layout, spec = Skin:GetGameFrame()
-    if not self.Border then
+    local layout, spec = Skin:GetGameFrame (self.GameFrameVariant or nil)
+    if not self.Border or self.WantGameFrame == false then
         layout = nil
     end
 
@@ -1908,8 +1957,6 @@ function Nx.Window:ApplyGameFrame()
             gf:SetFrameLevel (f:GetFrameLevel())
         end
         gf:EnableMouse (false)
-        -- Thicker metal, as on the game's windows; anchors still cover the window.
-        gf:SetScale (spec.edgeScale or 1)
         if pcall (NineSliceUtil.ApplyLayoutByName, gf, layout) then
             self.GameFrame = gf
         else
@@ -1922,16 +1969,25 @@ function Nx.Window:ApplyGameFrame()
     local on = layout and gf and true or false
     if gf then
         gf:SetShown (on)
+        if on then
+            -- Thicker metal, as on the game's windows; anchors still cover the window.
+            gf:SetScale (spec.edgeScale or 1)
+        end
     end
 
-    if on ~= self.GameFrameOn then
-        self.GameFrameOn = on
-        -- Keep the content inside the thicker metal sides and bottom.
-        if on then
+    local was = self.GameFrameOn and true or false
+    -- Keep the content inside the metal sides and bottom (any variant).
+    if on then
+        if not was then
             self.PlainBorderW, self.PlainBorderH = self.BorderW, self.BorderH
-            local side = spec.side or 0
-            self.BorderW, self.BorderH = max (self.BorderW, side), max (self.BorderH, side)
-        elseif self.PlainBorderW then
+        end
+        local side = spec.side or 0
+        self.BorderW, self.BorderH = max (self.PlainBorderW, side), max (self.PlainBorderH, side)
+    end
+
+    if on ~= was then
+        self.GameFrameOn = on
+        if not on and self.PlainBorderW then
             self:SetBorderSize (self.PlainBorderW, self.PlainBorderH)
         end
         -- The title moves above the metal band, the buttons too.
@@ -1944,17 +2000,17 @@ function Nx.Window:ApplyGameFrame()
         end
         for _, fstr in ipairs (self.TitleFStr) do
             pcall (fstr.SetParent, fstr, on and titleFrm or f)
+            Carbonite.UI.Font:SetRole (fstr, "title")
             if on then
-                Carbonite.UI.Font:SetRole (fstr, "title")
                 fstr:SetJustifyH ("CENTER")
                 Skin:PaintText (fstr, "frameTitle")
             else
-                Carbonite.UI.Font:SetRole (fstr, "title")
                 fstr:SetJustifyH ("LEFT")
                 Skin:PaintText (fstr, "title")
             end
         end
-        for _, but in ipairs ({ self.ButClose, self.ButMaxer, self.ButMiner }) do
+        for _, key in ipairs (self.TitleButtonOrder) do
+            local but = self[key]
             if but and but.Frm then
                 but.Frm:SetFrameLevel (f:GetFrameLevel() + (on and 2 or 1))
             end
@@ -2001,6 +2057,59 @@ function Nx.Window:PlaceToolBar()
     local y = spec and -(spec.band + 2) or -self.BorderH
     tb:ClearAllPoints()
     tb:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", self.BorderW, y)
+    -- As wide as the content; on the title line, clear of the window buttons.
+    local r = self.BorderW + (spec and 0 or max (self.ButW or 0, 0))
+    tb:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, y)
+    tb:SetHeight (spec and spec.toolBarH or self.TitleLineH)
+end
+
+-- Tool strip order (#42): navigation, common actions (grey), then the
+-- destructive action (red) set apart, left to right; toggle icons from the
+-- right edge, right to left, all of one size.
+Nx.Window.ToolGap = 4            -- between buttons
+Nx.Window.ToolDangerGap = 16     -- before the destructive action
+Nx.Window.ToolIconSize = 22      -- toggle icons
+Nx.Window.ToolKinds = { "nav", "action", "danger" }
+
+-- items: { { button, kind }, ... } with kind "nav", "action" (default),
+-- "danger" or "toggle"; the order inside a kind is kept. Buttons are
+-- anchored to the tool strip, centered on it. Returns the width used on
+-- the left and on the right.
+function Nx.Window:ArrangeToolBar (items)
+
+    local tb = self:GetToolBar()
+    local x = 2
+    local prev
+    for _, kind in ipairs (self.ToolKinds) do
+        for _, item in ipairs (items) do
+            if (item[2] or "action") == kind then
+                local bf = item[1].Frm
+                if prev then
+                    x = x + ((kind == "danger" and prev ~= "danger") and self.ToolDangerGap or self.ToolGap)
+                end
+                bf:ClearAllPoints()
+                bf:SetPoint ("LEFT", tb, "LEFT", x, 0)
+                x = x + bf:GetWidth()
+                prev = kind
+            end
+        end
+    end
+
+    local xr = 0
+    local size = self.ToolIconSize
+    for _, item in ipairs (items) do
+        if item[2] == "toggle" then
+            local but = item[1]
+            if xr > 0 then
+                xr = xr + self.ToolGap
+            end
+            but:SetSize (size, size)
+            but.Frm:ClearAllPoints()
+            but.Frm:SetPoint ("RIGHT", tb, "RIGHT", -xr, 0)
+            xr = xr + size
+        end
+    end
+    return x, xr
 end
 
 -- Height a window with the game's frame keeps above its content.
@@ -2402,6 +2511,12 @@ function Nx.Window:SetTitleLineH (height)
     self.TitleH = self.TitleLines * self.TitleLineH + 2
     self.TopH = self.TitleH + self.BorderH
 
+    -- On the game's frame the band sets the title's role and the room.
+    if self.GameFrameOn then
+        self:StyleTitleBar()
+        return
+    end
+
     local role = height <= 10 and "small" or "normal"
 
     for n = 1, self.TitleLines do
@@ -2519,15 +2634,27 @@ function Nx.Window:StyleTitleBar()
         but.Frm:ClearAllPoints()
         but:SetPos ("TOPRIGHT", x, y)
     end
-    if self.ButClose then
-        place (self.ButClose)
-        x = x - step
-    end
-    -- Maximize and minimize share the slot, as in CreateButtons.
-    if self.ButMaxer or self.ButMiner then
-        if self.ButMaxer then place (self.ButMaxer) end
-        if self.ButMiner then place (self.ButMiner) end
-        x = x - step
+    if game then
+        -- Fixed order on the band (R9): close, maximize / restore, minimize,
+        -- lock, each in its own slot.
+        for _, key in ipairs (self.TitleButtonOrder) do
+            local but = self[key]
+            if but then
+                place (but)
+                x = x - step
+            end
+        end
+    else
+        if self.ButClose then
+            place (self.ButClose)
+            x = x - step
+        end
+        -- Maximize and minimize share the slot, as in CreateButtons.
+        if self.ButMaxer or self.ButMiner then
+            if self.ButMaxer then place (self.ButMaxer) end
+            if self.ButMiner then place (self.ButMiner) end
+            x = x - step
+        end
     end
     if x ~= x0 then
         self.ButW = -x - self.BorderW
@@ -2770,6 +2897,12 @@ end
 
 function Nx.Window:SetBorderSize (w, h)
 
+    -- On the game's frame the content stays inside the metal.
+    local game = self.GameFrameOn and self.GameFrameSpec
+    if game then
+        self.PlainBorderW, self.PlainBorderH = w, h
+        w, h = max (w, game.side or 0), max (h, game.side or 0)
+    end
     self.BorderW = w
     self.BorderH = h
     self.TopH = self.TitleH + h
@@ -4002,6 +4135,11 @@ function Nx.Window:OnUpdate (elapsed)
 
     local secureOk = not (win.Secure and InCombatLockdown())
 
+    if win.GameFramePending and secureOk then
+        win.GameFramePending = nil
+        win:UseDefaultGameFrame()
+    end
+
     if win.DeferredMouseUp and secureOk then
         win.DeferredMouseUp = nil
         win:SetFrmStrata (win.SaveData[win.LayoutMode.."L"])
@@ -4297,6 +4435,10 @@ Nx.Button.TypeData = {
         Skin = true,
         Up = "TabOff",
         Dn = "TabOn",
+    },
+    -- The game's tab: no texture of its own, Nx.TabBar draws its pieces.
+    ["GameTab"] = {
+        Bool = true,
     },
     ["Toggle"] = {
         Bool = true,
@@ -8111,6 +8253,7 @@ function Nx.DropDown:Init()
     local win = Nx.Window:Create ("NxDD", nil, nil, nil, 0, true, true, true)
     self.Win = win
     local frm = win.Frm
+    win:UseGameFrame (false)        -- A menu, not a window (#42)
 
     win:EnableMenu (false)
 
@@ -8218,8 +8361,88 @@ end
 Nx.TabBar.TabMinW = 66        -- default tab width
 Nx.TabBar.TabTextPad = 16     -- room around a tab label
 
+-- The game's bottom tabs (#42, PanelTabButtonTemplate): three atlas pieces,
+-- the active set while selected. Only in the theme "Blizzard" and where the
+-- client has every atlas (UseGameTabs); otherwise the theme's tab.
+Nx.TabBar.GameTabs = false
+Nx.TabBar.GameTabH = 32       -- tab height
+Nx.TabBar.GameTabCap = 20     -- width of the left and right pieces
+Nx.TabBar.GameTabPad = 40     -- room around a label
+Nx.TabBar.GameTabAtlases = {
+    Off = { "uiframe-tab-left", "uiframe-tab-center", "uiframe-tab-right" },
+    On  = { "uiframe-activetab-left", "uiframe-activetab-center", "uiframe-activetab-right" },
+}
+
 function Nx.TabBar:GetHeight()
-    return 22
+    return self.GameTabs and self.GameTabH or 22
+end
+
+-- True when the game's tabs can be drawn: theme "Blizzard" and the atlases.
+function Nx.TabBar:HasGameTabs()
+
+    local Skin = Carbonite.UI.Skin
+    if not (Skin and Skin.GameStyle and Skin:GameStyle()) then
+        return false
+    end
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    if not info then
+        return false
+    end
+    for _, set in pairs (self.GameTabAtlases) do
+        for _, name in ipairs (set) do
+            if not info (name) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+-- Switch a bar to the game's tabs. Call before AddTab; the bar loses its own
+-- strip and rule, since the tabs hang under the window as in the game. The
+-- window places the bar (at its bottom) with GetHeight. Returns true if used.
+function Nx.TabBar:UseGameTabs()
+
+    if not self:HasGameTabs() then
+        return false
+    end
+    self.GameTabs = true
+    local f = self.Frm
+    if f.texture then
+        f.texture:Hide()
+    end
+    local top = self.TopFrm
+    if top and top.texture then
+        top.texture:Hide()
+    end
+    return true
+end
+
+-- The pieces of a game tab, active while pressed.
+function Nx.TabBar:UpdateGameTab (tab)
+
+    local f = tab.But.Frm
+    local parts = f.NxTabParts
+    if not parts then
+        local cap = self.GameTabCap
+        parts = {}
+        for n = 1, 3 do
+            parts[n] = f:CreateTexture (nil, "BACKGROUND")
+        end
+        parts[1]:SetPoint ("TOPLEFT")
+        parts[1]:SetPoint ("BOTTOMLEFT")
+        parts[1]:SetWidth (cap)
+        parts[3]:SetPoint ("TOPRIGHT")
+        parts[3]:SetPoint ("BOTTOMRIGHT")
+        parts[3]:SetWidth (cap)
+        parts[2]:SetPoint ("TOPLEFT", parts[1], "TOPRIGHT")
+        parts[2]:SetPoint ("BOTTOMRIGHT", parts[3], "BOTTOMLEFT")
+        f.NxTabParts = parts
+    end
+    local set = tab.But:GetPressed() and self.GameTabAtlases.On or self.GameTabAtlases.Off
+    for n = 1, 3 do
+        parts[n]:SetAtlas (set[n])
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -8328,14 +8551,21 @@ function Nx.TabBar:AddTab (name, index, width, press, template, butId)
     -- label: translated labels are often longer than the English ones.
     local w = width or self.TabMinW
     local x = self.NextTabX or 1
+    local game = self.GameTabs
+    local pad = game and self.GameTabPad or self.TabTextPad
 
-    local but = Nx.Button:Create (self.TopFrm, "Tab", name, nil, x, -1, "TOPLEFT", w, 20, self.OnBut, self, template)
+    local but = Nx.Button:Create (self.TopFrm, game and "GameTab" or "Tab", name, nil, x, game and 0 or -1, "TOPLEFT",
+                                  w, game and self.GameTabH or 20, self.OnBut, self, template)
     tab.But = but
+
+    if game and but.FStr then
+        Carbonite.UI.Font:SetRole (but.FStr, "normal")
+    end
 
     if not width and but.FStr then
         local textW = but.FStr:GetStringWidth() or 0
-        if textW + self.TabTextPad > w then
-            w = math.ceil (textW + self.TabTextPad)
+        if textW + pad > w then
+            w = math.ceil (textW + pad)
             but.Frm:SetWidth (w)
         end
     end
@@ -8354,7 +8584,11 @@ function Nx.TabBar:AddTab (name, index, width, press, template, butId)
         but:SetPressed (true)
 
         local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. name
-        but:SetText (txt, 0, 2)
+        but:SetText (txt, 0, game and 0 or 2)
+    end
+
+    if game then
+        self:UpdateGameTab (tab)
     end
 end
 
@@ -8375,6 +8609,7 @@ function Nx.TabBar:Select (index, force)
     end
 
     local x = 1
+    local game = self.GameTabs
 
     for i, tab in pairs (self.Tabs) do
         if i ~= index then
@@ -8382,8 +8617,8 @@ function Nx.TabBar:Select (index, force)
             tab.But:SetText (tab.Name, 0, 0)
         end
 
-        tab.But:SetPos ("TOPLEFT", x, -1)
-        tab.But:SetSize (tab.W, 20)
+        tab.But:SetPos ("TOPLEFT", x, game and 0 or -1)
+        tab.But:SetSize (tab.W, game and self.GameTabH or 20)
 
         x = x + tab.W + 2
     end
@@ -8391,7 +8626,13 @@ function Nx.TabBar:Select (index, force)
     but:SetPressed (true)
 
     local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. selTab.Name
-    but:SetText (txt, 0, 2)
+    but:SetText (txt, 0, game and 0 or 2)
+
+    if game then
+        for _, tab in pairs (self.Tabs) do
+            self:UpdateGameTab (tab)
+        end
+    end
 
     if self.UserFunc then
         self.UserFunc (self.User, index)
@@ -8423,6 +8664,9 @@ function Nx.TabBar:SetFade (fade)
     for i, tab in pairs (self.Tabs) do
         local f = tab.But.Frm
         f.texture:SetVertexColor (1, 1, 1, fade)
+        for _, part in ipairs (f.NxTabParts or {}) do
+            part:SetVertexColor (1, 1, 1, fade)
+        end
     end
 end
 

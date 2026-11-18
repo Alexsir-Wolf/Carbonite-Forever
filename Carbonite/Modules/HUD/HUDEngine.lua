@@ -75,6 +75,8 @@ function HUD:Create()
     -- the rows actually used so short captions stay tight.
     local win = Nx.Window:Create("NxHUD", nil, nil, nil, 8, 1, nil, true)
     inst.Win = win
+    -- An overlay, not a window: its title rows are the arrow caption (#42).
+    win:UseGameFrame(false)
 
     -- Justification is finalised per-frame in Update (objective rows
     -- left, the distance row centred under the arrow); default here.
