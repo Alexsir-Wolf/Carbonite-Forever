@@ -1042,7 +1042,7 @@ function Nx.Info:UpdateItems()
 	-- an empty box. Show what it is and how to configure it; editing this line adds an item.
 	if not shown then
 		list:ItemAdd (#items + 1)
-		list:ItemSet (1, "|cff808080" .. format (L["Info #%d: nothing to show now. Right-click to configure"], self.Index or 0))
+		list:ItemSet (1, "|cff808080" .. L["Right-click to configure"])
 	end
 end
 
