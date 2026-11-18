@@ -5073,7 +5073,11 @@ function Nx.Map:OnEvent (event, ...)
         -- while the map is following, zooming, or scrolling, because those
         -- paths intentionally retain the previous POI snapshot.
         map.GossipPOIDirty = true
-        map:TargetGossipPOI()
+        -- The game's own spot first; this client gives none, so the Guide.
+        if not map:TargetGossipPOI() then
+            local guard = Carbonite.Modules.Map.GuardRoute
+            if guard then guard:Target(map) end
+        end
     elseif event == "PLAYER_REGEN_DISABLED" then
         local win = map.Win
         if (Nx.db.profile.Map.HideCombat and win:IsSizeMax()) then
