@@ -4299,12 +4299,15 @@ Nx.Button.TypeData = {
         RGBUp = "604040",
         RGBDn = "503030",
     },
+    -- Text buttons are 22 high, like the game's panel buttons (#42).
+    -- Txt64: main or destructive action, the game's red button.
     ["Txt64"] = {
         Skin = true,
         Up = "ButEmpty64",
         Dn = "ButEmpty64",
         RGBUp = "604040",
         RGBDn = "503030",
+        HeightUp = 22,
     },
     ["Txt64B"] = {
         Bool = true,
@@ -4313,6 +4316,28 @@ Nx.Button.TypeData = {
         Dn = "ButEmpty64",
         VRGBAUp = "1|1|1|1",
         VRGBADn = "1|.373|.373|1",
+        HeightUp = 22,
+    },
+    -- TxtGrey: any other action, the game's grey button (gold text like the
+    -- red one). TxtGreyB is its toggle, lit gold while pressed.
+    ["TxtGrey"] = {
+        Up = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        Dn = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        UpUV = { 0, .625, 0, .6875 },
+        DnUV = { 0, .625, 0, .6875 },
+        VRGBAUp = "1|1|1|1",
+        VRGBADn = ".7|.7|.7|1",
+        HeightUp = 22,
+    },
+    ["TxtGreyB"] = {
+        Bool = true,
+        Up = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        Dn = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        UpUV = { 0, .625, 0, .6875 },
+        DnUV = { 0, .625, 0, .6875 },
+        VRGBAUp = "1|1|1|1",
+        VRGBADn = "1|.82|.3|1",
+        HeightUp = 22,
     },
 }
 
@@ -4360,6 +4385,11 @@ for _, name in ipairs ({ "Txt64", "Txt64B" }) do
         { FileUp = "Interface\\Buttons\\UI-Panel-Button-Up", FileDn = "Interface\\Buttons\\UI-Panel-Button-Down",
           UV = { 0, .625, 0, .6875 }, Untinted = true },
     }
+end
+-- The grey button: the disabled look of the same red button. Without the
+-- atlas it keeps the grey panel button file. Tinted, so pressed still shows.
+for _, name in ipairs ({ "TxtGrey", "TxtGreyB" }) do
+    Nx.Button.ClientAtlases[name] = { AtlasUp = "128-RedButton-Disable", AtlasDn = "128-RedButton-Disable" }
 end
 -- Expand / collapse of a list header (quest log, Notes, Guide), registered
 -- by Carbonite.Quests: minus while open, plus while closed.
@@ -6316,7 +6346,7 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
 
     if not noHeader then
 
-        inst.HdrH = 12
+        inst.HdrH = self:DefaultHdrH()
 
         local hfrm = CreateFrame ("Frame", nil, frm, "BackdropTemplate")
         inst.HdrFrm = hfrm
@@ -6328,6 +6358,8 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
         hfrm.texture = hfrm:CreateTexture()
         hfrm.texture:SetAllPoints (hfrm)
         Carbonite.UI.Skin:Paint (hfrm.texture, "listHeader")
+        -- Bronze outline of the game's list headers (#42); clear in other themes.
+        hfrm.edges = self:AddEdges (hfrm, "sectionEdge")
         hfrm:SetPoint ("TOPLEFT", 0, 0)
         hfrm:Show()
     end
@@ -6449,7 +6481,7 @@ function Nx.List:SetLineHeight (height, hdrH)
 
     self.LineHPad = height
 
-    self.HdrH = hdrH or 12
+    self.HdrH = hdrH or (self.HdrFrm and self:DefaultHdrH()) or 12
 
     if self.Slider then
         self.Slider:SetTLOff (self.HdrH)
@@ -6613,6 +6645,10 @@ function Nx.List:Resize (width, height)
     if hf then
         hf:SetWidth (width)
         hf:SetHeight (hdrH)
+        -- A header too thin for text (the Guide's folder list) gets no outline.
+        for _, t in ipairs (hf.edges or {}) do
+            if hdrH >= 8 then t:Show() else t:Hide() end
+        end
     end
 
     local x = 0
@@ -6630,6 +6666,7 @@ function Nx.List:Resize (width, height)
         if hfstr then
             hfstr:SetPoint ("TOPLEFT", padW + x, 0)
             hfstr:SetWidth (colW)
+            hfstr:SetHeight (hdrH)
         end
 
         x = x + column.Width
@@ -6865,6 +6902,11 @@ function Nx.List:Update (showLast)
             local but = self.Buts[butNum]
             local butType = self.ButData[line]
 
+            -- A section strip draws its own +/- on the right.
+            if butType and self:IsSectionBar (line) then
+                butType = nil
+            end
+
             if butType then
 
                 if not but then
@@ -7033,6 +7075,7 @@ function Nx.List:Update (showLast)
     end
 
     self:UpdateBands (lineH, hdrH)
+    self:UpdateSections (lineH, hdrH)
 
     if self.ModernRows then
         self:UpdateModernRows()
@@ -7148,6 +7191,147 @@ function Nx.List:OnModernHover()
     end
 
     t:Hide()
+end
+
+---------------------------------------------------------------------------------------
+-- Lists in the game's style (#42, theme "Blizzard", Skin:GameStyle): a taller
+-- column header with a bronze outline, and section headers drawn like the
+-- Friends list: a dark strip with a bronze outline, gold text on the left and
+-- a gold +/- on the right that folds the section. In other themes a section
+-- line keeps its own look (the window's +/- button or icon).
+---------------------------------------------------------------------------------------
+
+function Nx.List:UsesSectionBars()
+    local Skin = Carbonite.UI.Skin
+    return Skin and Skin.GameStyle and Skin:GameStyle() or false
+end
+
+-- Header height when the window does not give one: room for the list font.
+function Nx.List:DefaultHdrH()
+    if self:UsesSectionBars() then
+        return max (Nx.Font:GetH ("Role.list") + 4, 16)
+    end
+    return 12
+end
+
+-- Four one pixel lines around `frame`, painted with `token`.
+function Nx.List:AddEdges (frame, token)
+    local edges = {}
+    for i, side in ipairs ({ "TOP", "BOTTOM", "LEFT", "RIGHT" }) do
+        local t = frame:CreateTexture (nil, "BORDER")
+        Carbonite.UI.Skin:Paint (t, token)
+        if i <= 2 then
+            t:SetHeight (1)
+            t:SetPoint (side .. "LEFT", frame, side .. "LEFT", 0, 0)
+            t:SetPoint (side .. "RIGHT", frame, side .. "RIGHT", 0, 0)
+        else
+            t:SetWidth (1)
+            t:SetPoint ("TOP" .. side, frame, "TOP" .. side, 0, 0)
+            t:SetPoint ("BOTTOM" .. side, frame, "BOTTOM" .. side, 0, 0)
+        end
+        edges[i] = t
+    end
+    return edges
+end
+
+--- Mark a line (default the last) as a section header, open or folded.
+function Nx.List:ItemSetSection (open, index)
+
+    if not self.SectionData then
+        self.SectionData = {}
+    end
+
+    self.SectionData[index or self.Num] = open and true or false
+end
+
+--- True when line `index` is a section header drawn as a strip.
+function Nx.List:IsSectionBar (index)
+    return self.SectionData ~= nil and self.SectionData[index] ~= nil and self:UsesSectionBars()
+end
+
+-- The strip of one section header: fill, outline and the +/- sign.
+function Nx.List:CreateSectionBar()
+
+    local f = self.Frm
+    local bar = {}
+
+    bar.Fill = f:CreateTexture (nil, "BACKGROUND", nil, 3)
+    Carbonite.UI.Skin:Paint (bar.Fill, "sectionBg")
+
+    bar.Box = CreateFrame ("Frame", nil, f)
+    bar.Box:EnableMouse (false)
+    bar.Edges = self:AddEdges (bar.Box, "sectionEdge")
+
+    -- The minus is a bar; the plus adds the upright one.
+    bar.Minus = bar.Box:CreateTexture (nil, "ARTWORK")
+    Carbonite.UI.Skin:Paint (bar.Minus, "sectionSign")
+    bar.Minus:SetSize (10, 2)
+    bar.Minus:SetPoint ("CENTER", bar.Box, "RIGHT", -10, 0)
+
+    bar.Plus = bar.Box:CreateTexture (nil, "ARTWORK")
+    Carbonite.UI.Skin:Paint (bar.Plus, "sectionSign")
+    bar.Plus:SetSize (2, 10)
+    bar.Plus:SetPoint ("CENTER", bar.Minus, "CENTER", 0, 0)
+
+    return bar
+end
+
+function Nx.List:UpdateSections (lineH, hdrH)
+
+    local bars = self.SectionBars
+
+    if not self.SectionData and not bars then
+        return
+    end
+
+    bars = bars or {}
+    self.SectionBars = bars
+
+    local n = 0
+
+    if self.SectionData and self:UsesSectionBars() then
+
+        local right = self.Slider and self.Slider.Frm:GetWidth() or 0
+
+        for row = 0, self.Vis - 1 do
+            local line = self.Top + row
+            if line <= self.Num and self.SectionData[line] ~= nil then
+                n = n + 1
+                local bar = bars[n] or self:CreateSectionBar()
+                bars[n] = bar
+                local y = -row * lineH - hdrH - 1
+                for _, t in ipairs ({ bar.Fill, bar.Box }) do
+                    t:ClearAllPoints()
+                    t:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", 2, y)
+                    t:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -right - 2, y)
+                    t:SetHeight (lineH - 2)
+                    t:Show()
+                end
+                if self.SectionData[line] then
+                    bar.Plus:Hide()
+                else
+                    bar.Plus:Show()
+                end
+            end
+        end
+    end
+
+    for i = n + 1, #bars do
+        bars[i].Fill:Hide()
+        bars[i].Box:Hide()
+    end
+end
+
+--- With section strips, a click on the +/- of a section line folds it: the
+--- window gets the "button" event of the line, as from its own +/- button.
+function Nx.List:SectionSignHit (line, x)
+
+    if not self:IsSectionBar (line) then
+        return false
+    end
+
+    local right = self.Slider and self.Slider.Frm:GetWidth() or 0
+    return x >= self.Frm:GetWidth() - right - 24
 end
 
 ---------------------------------------------------------------------------------------
@@ -7336,6 +7520,10 @@ function Nx.List:Empty()
         wipe (self.BandData)
     end
 
+    if self.SectionData then
+        wipe (self.SectionData)
+    end
+
 --    if self.FrmDataFrm then
 --        wipe (self.FrmDataFrm)
 --    end
@@ -7451,6 +7639,16 @@ function Nx.List:Sort()
         end
 
         self.BandData = data
+    end
+
+    if self.SectionData then
+        local data = {}
+
+        for n = 1, #t do
+            data[n] = self.SectionData[t[n]]
+        end
+
+        self.SectionData = data
     end
 end
 
@@ -7770,6 +7968,20 @@ function Nx.List:OnMouseDown (click)
 
             y = floor ((y - inst.HdrH) / inst:GetLineH())
             inst.Selected = min (y + inst.Top, inst.Num)
+
+            local line = y + inst.Top
+            if click == "LeftButton" and line <= inst.Num and inst:SectionSignHit (line, x) then
+                local data = inst.ButData
+                local pressed = not (data and data[-line])
+                if data and data[line] then
+                    data[-line] = pressed
+                end
+                if inst.UserFunc then
+                    inst.UserFunc (inst.User, "button", line, pressed, click)
+                end
+                inst:Update()
+                return
+            end
 
             local id = inst:ColumnHitTest (x)
 

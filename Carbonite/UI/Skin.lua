@@ -59,7 +59,14 @@ Skin.themes = {
         },
         borderColor = "1|1|1|1",
         bgColor     = "1|1|1|1",
+        -- Lists and search fields copy the game's windows (Skin:GameStyle).
+        gameStyle   = true,
         tokens = {
+            sectionBg   = "0.10|0.08|0.05|0.95",
+            sectionEdge = "0.55|0.42|0.20|1",
+            sectionSign = "1|0.82|0|1",
+            searchBg    = "0.02|0.02|0.02|0.85",
+            muted       = "0.6|0.6|0.6|1",
             hover       = "0.22|0.17|0.04|1",
             pressed     = "0.45|0.36|0.12|1",
             rowHover    = "1|0.82|0|0.12",
@@ -206,8 +213,16 @@ Skin.activeName = "Blizzard"
 --   menuHover   mouse-over band of a menu item (alpha comes from the fade)
 --   panelBg     plain panel behind a graph or a borderless window
 --   frameTitle  title centered on the band of the game's frame (#42)
+--   sectionBg   strip of a collapsible section header in a list
+--   sectionEdge outline of a section header and of a list's column header
+--   sectionSign the +/- of a section header
+--   searchBg    inside of a search field drawn like the game's
 Skin.tokens = {
     frameTitle  = "1|1|1|1",
+    sectionBg   = "0.2|0.2|0.3|1",
+    sectionEdge = "0|0|0|0",
+    sectionSign = "0.8|0.8|1|1",
+    searchBg    = "0.2|0.2|0.3|1",
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
     rowHover    = "0.5|0.5|0.7|0.18",
@@ -293,6 +308,12 @@ end
 function Skin:GetToken(name)
     local t = self:GetActive().tokens
     return parseColor(t and t[name] or self.tokens[name])
+end
+
+--- True when the active theme draws lists, buttons and search fields like the
+--- game's own windows (section strips, framed search field). Only "Blizzard".
+function Skin:GameStyle()
+    return self:GetActive().gameStyle == true
 end
 
 --- "|cffRRGGBB" escape of a token, for text built with color codes.

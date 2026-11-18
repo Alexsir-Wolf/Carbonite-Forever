@@ -11,6 +11,7 @@ local function fakeList()
     function list:ColumnSetName(id, name) self.names[id] = name end
     list.ItemSet, list.ItemSetButton, list.Select, list.Update = function() end, function() end,
         function() end, function() end
+    list.ItemSetSection = function() end
     return list
 end
 
@@ -82,21 +83,15 @@ end)
 describe("Notas: botões", function()
     it("Gravar, Subir e Descer usam o botão cinza do jogo; só Excluir fica vermelho", function()
         local src = loader.read(PATH)
-        expect(src:find('"NotesTxtB", L["Record"]', 1, true) ~= nil).toBe(true)
-        expect(src:find('"NotesTxt", L["Up"]', 1, true) ~= nil).toBe(true)
-        expect(src:find('"NotesTxt", L["Down"]', 1, true) ~= nil).toBe(true)
+        expect(src:find('"TxtGreyB", L["Record"]', 1, true) ~= nil).toBe(true)
+        expect(src:find('"TxtGrey", L["Up"]', 1, true) ~= nil).toBe(true)
+        expect(src:find('"TxtGrey", L["Down"]', 1, true) ~= nil).toBe(true)
         expect(src:find('"Txt64", L["Delete Item"]', 1, true) ~= nil).toBe(true)
     end)
 
-    it("os tipos novos são da janela de Notas e não mudam os compartilhados", function()
-        local types = { Txt64 = { Up = "red" } }
-        local Nx = wow.namespace({ Button = { TypeData = types } })
-        local env = wow.lenientEnv({ Nx = Nx })
-        loader.run(env, PATH, "Carbonite.Notes", {})
-        Nx.Notes:AddButtonTypes()
-        expect(types.NotesTxt.Up).toBe("Interface\\Buttons\\UI-Panel-Button-Disabled")
-        expect(types.NotesTxtB.Bool).toBe(true)
-        expect(types.NotesTxtB.VRGBAUp).toBe("1|1|1|1")
-        expect(types.Txt64.Up).toBe("red")
+    it("usa os tipos cinza compartilhados, sem tipos próprios (#42)", function()
+        local src = loader.read(PATH)
+        expect(src:find("NotesTxt", 1, true)).toBeNil()
+        expect(src:find("AddButtonTypes", 1, true)).toBeNil()
     end)
 end)

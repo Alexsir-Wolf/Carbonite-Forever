@@ -11,6 +11,8 @@ local function fakeList()
     function list:ItemGetDataEx(index, num) return self.rows[index].ex[num] end
     function list:ItemGetData(index) return self.rows[index].data end
     function list:ItemSetButton() end
+    function list:ItemSetSection(open) self.rows[#self.rows].section = open end
+    function list:UsesSectionBars() return false end
     function list:ItemGetButtonTip() end
     function list:ColumnSetName() end
     function list:Update() end

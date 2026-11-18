@@ -634,14 +634,11 @@ function Nx.Map.Guide:Create (map)
 
     -- On the window's tool strip: under the title band of the game's frame,
     -- on the title line in the other themes (#42).
-    local but = CreateFrame ("Button", nil, win:GetToolBar(), "UIPanelButtonTemplate")
-    but:SetText (L["Back"])
-    but:SetScript ("OnClick", function() g:Back() end)
-    but:SetSize (70, 19)
-    but:SetPoint ("TOPLEFT", 1, 0)
-    g.BackBut = but
+    -- Navigation, not a main action: the game's grey button (#42).
+    g.BackBut = Nx.Button:Create (win:GetToolBar(), "TxtGrey", L["Back"], nil,
+                                  1, 0, "TOPLEFT", 70, 22, function() g:Back() end)
 
-    Nx.List:SetCreateFont ("Font.Medium", 28)
+    Nx.List:SetCreateFont ("Role.list", 28)
     local list = Nx.List:Create (false, 0, 0, 1, 1, win.Frm)
     g.List = list
     list:SetUser (g, g.OnListEvent)
@@ -652,11 +649,11 @@ function Nx.Map.Guide:Create (map)
     win:Attach (list.Frm, 0, .33, 0, 1)
     g:CreateMenu()
 
-    Nx.List:SetCreateFont ("Font.Medium", 28)
+    Nx.List:SetCreateFont ("Role.list", 28)
     local list = Nx.List:Create (false, 0, 0, 1, 1, win.Frm)
     g.List2 = list
     list:SetUser (g, g.OnList2Event)
-    list:SetLineHeight (16, 11)
+    list:SetLineHeight (16)
     list:SetModernRows()
     list:ColumnAdd ("", 1, 35)
     list:ColumnAdd (L["Name"], 2, 220)

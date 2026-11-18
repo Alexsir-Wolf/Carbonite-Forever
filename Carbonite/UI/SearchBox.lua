@@ -71,6 +71,34 @@ local function paint(texture, token)
     if Skin and Skin.Paint then Skin:Paint(texture, token) end
 end
 
+-- Border of the game's input box (InputBoxTemplate / SearchBoxTemplate):
+-- left cap, stretched middle and right cap of one file every client has.
+local INPUT_BORDER = "Interface\\Common\\Common-Input-Border"
+
+local function inputBorder(f)
+    local left = f:CreateTexture(nil, "BORDER")
+    left:SetTexture(INPUT_BORDER)
+    left:SetTexCoord(0, 0.0625, 0, 0.625)
+    left:SetWidth(8)
+    left:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
+    left:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, 0)
+
+    local right = f:CreateTexture(nil, "BORDER")
+    right:SetTexture(INPUT_BORDER)
+    right:SetTexCoord(0.9375, 1, 0, 0.625)
+    right:SetWidth(8)
+    right:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
+    right:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+
+    local middle = f:CreateTexture(nil, "BORDER")
+    middle:SetTexture(INPUT_BORDER)
+    middle:SetTexCoord(0.0625, 0.9375, 0, 0.625)
+    middle:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
+    middle:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT", 0, 0)
+
+    return { left, middle, right }
+end
+
 --- New search field on `parent`. `onChanged(text, box)` runs after the delay,
 --- or at once on Enter, Esc and the clear button.
 function SearchBox:Create(parent, onChanged, opts)
@@ -145,8 +173,48 @@ function SearchBox:Create(parent, onChanged, opts)
         f:ClearFocus()
     end)
 
+    box:ApplyTheme()
+    local bus = Carbonite.Core and Carbonite.Core.EventBus
+    if bus and bus.Subscribe then
+        bus:Subscribe("SKIN_UPDATED", function() box:ApplyTheme() end)
+    end
+
     box:Refresh()
     return box
+end
+
+--- In the game's style (theme "Blizzard", #42) the field is drawn like the
+--- game's search box: dark inside, the input box border, no underline. Other
+--- themes keep the flat strip with the line under it.
+function SearchBox:ApplyTheme()
+    local Skin = Carbonite.UI.Skin
+    local game = Skin and Skin.GameStyle and Skin:GameStyle() or false
+    if game and not self.Border then
+        self.Border = inputBorder(self.Frm)
+    end
+    for _, t in ipairs(self.Border or {}) do
+        if game then t:Show() else t:Hide() end
+    end
+    local bg = self.Bg
+    bg:ClearAllPoints()
+    if game then
+        bg:SetPoint("TOPLEFT", self.Frm, "TOPLEFT", 3, -3)
+        bg:SetPoint("BOTTOMRIGHT", self.Frm, "BOTTOMRIGHT", -3, 3)
+        paint(bg, "searchBg")
+        self.Line:Hide()
+    else
+        bg:SetAllPoints(self.Frm)
+        paint(bg, "listHeader")
+        self.Line:Show()
+    end
+    -- Inside the border caps.
+    local pad = game and 3 or 0
+    self.Icon:ClearAllPoints()
+    self.Icon:SetPoint("LEFT", self.Frm, "LEFT", 3 + pad, -1)
+    self.Hint:ClearAllPoints()
+    self.Hint:SetPoint("LEFT", self.Frm, "LEFT", 19 + pad, 0)
+    self.Frm:SetTextInsets(19 + pad, 18 + pad, 0, 0)
+    self.GameStyle = game
 end
 
 --- The typed search (raw; compare it with SearchBox.Matches).
