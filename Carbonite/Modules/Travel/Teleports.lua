@@ -96,8 +96,28 @@ end
 -- Hearthstone place
 -------------------------------------------------------------------------------
 
--- The innkeeper of the zone named like the bind place, when it is the only
--- one for the player's faction (the client gives the place name only).
+-- Innkeepers of a zone the player's faction can use: { {x, y}, ... } in
+-- zone percent.
+local function innkeepersOf(guide, mapId, mine)
+    local list = {}
+    if type(guide[mapId]) ~= "string" then
+        return list
+    end
+    for entry in guide[mapId]:gmatch("[^|]+") do
+        local side, x, y = entry:match("^(%d+),([%d.]+),([%d.]+)")
+        if side and (side == "0" or side == mine) then
+            list[#list + 1] = { tonumber(x), tonumber(y) }
+        end
+    end
+    return list
+end
+
+-- Room around a subzone's label box where its inn may still stand.
+local AREA_MARGIN = 3
+
+-- The innkeeper of the bind place (the client gives its name only): the only
+-- one of the zone named like it, or the one closest to the subzone of that
+-- name ("Camp Taurajo"), found by its map label (Nx.Map.AreaLabels).
 local function innkeeperFor(place)
     local map = nxMap()
     local guide = _G.Nx and _G.Nx.GuideData and _G.Nx.GuideData[L["Innkeeper"]]
@@ -106,21 +126,42 @@ local function innkeeperFor(place)
     end
     local faction = UnitFactionGroup and UnitFactionGroup("player")
     local mine = faction == "Alliance" and "1" or (faction == "Horde" and "2" or nil)
+    local function at(mapId, p)
+        local wx, wy = map:GetWorldPos(mapId, p[1], p[2])
+        return { Name = place, MapId = mapId, X = wx, Y = wy }
+    end
+
     for mapId, info in pairs(map.MapWorldInfo) do
-        if type(mapId) == "number" and info.Name == place and type(guide[mapId]) == "string" then
-            local found
-            for entry in guide[mapId]:gmatch("[^|]+") do
-                local side, x, y = entry:match("^(%d+),([%d.]+),([%d.]+)")
-                if side and (side == "0" or side == mine) then
-                    if found then
-                        return nil       -- more than one: unknown
-                    end
-                    found = { tonumber(x), tonumber(y) }
-                end
+        if type(mapId) == "number" and info.Name == place then
+            local list = innkeepersOf(guide, mapId, mine)
+            if #list == 1 then
+                return at(mapId, list[1])
             end
-            if found then
-                local wx, wy = map:GetWorldPos(mapId, found[1], found[2])
-                return { Name = place, MapId = mapId, X = wx, Y = wy }
+        end
+    end
+
+    local labels = map.AreaLabels
+    local areaInfo = _G.C_Map and _G.C_Map.GetAreaInfo
+    if type(labels) ~= "table" or not areaInfo then
+        return nil
+    end
+    for mapId, areas in pairs(labels) do
+        for _, a in ipairs(areas) do
+            local ok, name = pcall(areaInfo, a[1])
+            if ok and name == place then
+                local best, bestD
+                for _, p in ipairs(innkeepersOf(guide, mapId, mine)) do
+                    local dx, dy = math.abs(p[1] - a[2]), math.abs(p[2] - a[3])
+                    if dx <= a[4] / 2 + AREA_MARGIN and dy <= a[5] / 2 + AREA_MARGIN then
+                        local d = dx * dx + dy * dy
+                        if not bestD or d < bestD then
+                            best, bestD = p, d
+                        end
+                    end
+                end
+                if best then
+                    return at(mapId, best)
+                end
             end
         end
     end
