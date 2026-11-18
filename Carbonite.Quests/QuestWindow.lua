@@ -24,6 +24,7 @@ local max        = math.max
 local min        = math.min
 local strfind    = strfind  or string.find
 local strsub     = strsub   or string.sub
+local strmatch   = strmatch or string.match
 local strlower   = strlower or string.lower
 local format     = format   or string.format
 local gsub       = gsub     or string.gsub
@@ -154,14 +155,195 @@ function Nx.Quest.List.FitColumns (list, width)
     if type (width) ~= "number" or width <= 0 then
         return false
     end
+    local QList = Nx.Quest.List
+    local butW, tagW, rightW = BUTTON_COLUMN_W, TAG_COLUMN_W, 0
+    if list.NxGameRows then
+        butW, tagW, rightW = QList.GameIconColumnW (list), QList.GAME_TAG_W, QList.GAME_CHECK_W
+    end
     local sliderW = list.Slider and list.Slider.Frm:GetWidth() or 10
-    local nameW = max (100, width - BUTTON_COLUMN_W - TAG_COLUMN_W - sliderW - 4)
-    local changed = list:ColumnGetWidth (2) ~= nameW or list:ColumnGetWidth (4) ~= TAG_COLUMN_W
-    list:ColumnSetWidth (1, BUTTON_COLUMN_W)
+    local nameW = max (100, width - butW - tagW - rightW - sliderW - 4)
+    local changed = list:ColumnGetWidth (1) ~= butW or list:ColumnGetWidth (2) ~= nameW
+        or list:ColumnGetWidth (4) ~= tagW
+    list:ColumnSetWidth (1, butW)
     list:ColumnSetWidth (2, nameW)
     list:ColumnSetWidth (3, 0)
-    list:ColumnSetWidth (4, TAG_COLUMN_W)
+    list:ColumnSetWidth (4, tagW)
     return changed
+end
+
+-------------------------------------------------------------------------------
+-- Rows of the "Current" tab in the game's quest log layout (theme "Blizzard",
+-- #42 R10): zone strips, a round state icon, objectives under the title,
+-- Spoken's Play, the (tag) and a watch check box on the right. One line
+-- height for all rows (Nx.List), so long titles are cut, not wrapped.
+-------------------------------------------------------------------------------
+
+local QList = Nx.Quest.List
+
+QList.GAME_TAG_W = 130          -- "(Masmorra)" plus room for Play on its left
+QList.GAME_CHECK_W = 26         -- watch check box column, right of the tag
+QList.GAME_LINE_PAD = 8         -- 14 px title -> ~22 px rows
+QList.GAME_ICON = 20            -- round state icon
+QList.GAME_HDR_X = 8            -- zone name inset in its strip
+QList.GAME_INK = "|cffe0d4bc"   -- light beige of the game's log text
+
+--- True when the "Current" tab draws the game's layout.
+function QList.GameRows (tab)
+    local skin = Carbonite and Carbonite.UI and Carbonite.UI.Skin
+    return tab == 1 and skin and skin.GameStyle and skin:GameStyle() or false
+end
+
+--- Width of the icon column: the list centers its icon half a line in.
+function QList.GameIconColumnW (list)
+    return floor (list:GetLineH() + 4)
+end
+
+--- "-0/1 Objective" from the client's "Objective: 0/1".
+function QList.ObjectiveText (desc)
+    desc = desc or "?"
+    local name, count = strmatch (desc, "^(.-):%s*(%d+%s*/%s*%d+)%s*$")
+    if name and name ~= "" then
+        desc = count .. " " .. name
+    end
+    return "-" .. desc
+end
+
+--- "(Dungeon)" etc in the quest's color, "" without a tag.
+function QList.GameTag (tag, color)
+    if not tag or tag == "" then
+        return ""
+    end
+    return format ("%s(%s)", color or "", tag)
+end
+
+-- Font of the objective lines: one pixel under the title role.
+local function ObjectiveFont()
+    local Font = Carbonite.UI.Font
+    local title = Font and Font:GetObject ("Role.title")
+    if not title then
+        return nil
+    end
+    local obj = QList.ObjFont
+    if not obj then
+        obj = CreateFont ("NxFontQuestObj")
+        obj:SetFontObject (title)
+        QList.ObjFont = obj
+    end
+    local face, size, flags = title:GetFont()
+    if face and size and (QList.ObjFontFace ~= face or QList.ObjFontSize ~= size) then
+        QList.ObjFontFace, QList.ObjFontSize = face, size
+        obj:SetFont (face, max (size - 1, 6), flags or "")
+    end
+    return obj
+end
+
+--- Switch the list between the game's layout (Current tab, theme Blizzard)
+--- and the classic one: font, line height, icon scale and columns.
+function Nx.Quest.List:ApplyRowStyle()
+    local list = self.List
+    local game = QList.GameRows (self.TabSelected)
+    local font = game and "Role.title" or "Quest.QuestFont"
+    local pad = game and QList.GAME_LINE_PAD or 0
+
+    local changed = list.NxGameRows ~= game or list.Font ~= font or list.LineHPad ~= pad
+    if changed then
+        list.NxGameRows = game
+        list.Font = font
+        list.FontObj = Nx.Font:GetObj (font)
+        for _, column in pairs (list.Columns) do
+            column.FontObj = list.FontObj
+        end
+        list.LineHPad = pad
+    end
+
+    -- Icons are 15 px at BaseLineH (the watch's round icons): scale to ~20 px.
+    local base = game and list:GetLineH() * 15 / QList.GAME_ICON or 12
+    changed = changed or list.BaseLineH ~= base
+    list.BaseLineH = base
+
+    local w, h = list:GetSize()
+    if w and h and w > 0 and (QList.FitColumns (list, w) or changed) then
+        list.SSW = nil
+        list:SetSize (w, h)
+    end
+end
+
+-- Watch check box of one row: the game's check box art.
+local function CreateCheck (qlist, parent)
+    local c = CreateFrame ("CheckButton", nil, parent)
+    c:SetSize (QList.GAME_ICON, QList.GAME_ICON)
+    c:SetNormalTexture ("Interface\\Buttons\\UI-CheckBox-Up")
+    c:SetPushedTexture ("Interface\\Buttons\\UI-CheckBox-Down")
+    c:SetHighlightTexture ("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD")
+    c:SetCheckedTexture ("Interface\\Buttons\\UI-CheckBox-Check")
+    c:SetScript ("OnClick", function (b)
+        b:SetChecked (b.NxWatched)      -- the rebuilt list shows the real state
+        qlist:ToggleWatchMembership (b.NxQId, b.NxQi)
+    end)
+    return c
+end
+
+--- Lay the widgets of the game's layout over the visible rows: objective
+--- fonts, watch check boxes and Spoken's Play left of the tag.
+--- Runs after every Nx.List.Update of this list (also when it scrolls).
+function Nx.Quest.List:DecorateRows (list)
+    local checks = self.Checks or {}
+    self.Checks = checks
+    local rows = self.RowInfo or {}
+    local game = list.NxGameRows
+    local vis, top = list.Vis or 0, list.Top or 1
+    local lineH = list:GetLineH()
+    local hdrH = list.HdrH or 0
+    local used = 0
+
+    local col2 = list.Columns[2]
+    local objFont = game and ObjectiveFont()
+    local sliderW = list.Slider and list.Slider.Frm:GetWidth() or 0
+
+    for row = 0, vis - 1 do
+        local line = top + row
+        local info = game and line <= (list.Num or 0) and rows[line]
+
+        local fstr = list.Strs[vis + row + 1]       -- column 2 of this row
+        if fstr and col2 then
+            fstr:SetFontObject (info and info.Obj and objFont or col2.FontObj)
+        end
+
+        if info and info.QId then
+            used = used + 1
+            local c = checks[used] or CreateCheck (self, list.Frm)
+            checks[used] = c
+            c.NxQId, c.NxQi, c.NxWatched = info.QId, info.Qi, info.Watched
+            c:SetChecked (info.Watched)
+            c:SetFrameLevel (list.Frm:GetFrameLevel() + 3)
+            c:ClearAllPoints()
+            c:SetPoint ("CENTER", list.Frm, "TOPRIGHT", -(sliderW + QList.GAME_CHECK_W / 2 + 2),
+                -(row * lineH + hdrH + lineH / 2))
+            c:Show()
+        end
+    end
+
+    for i = used + 1, #checks do
+        checks[i]:Hide()
+    end
+
+    local SP = Nx.Quest.SpokenPlay
+    if SP and SP.SweepLog then
+        local tagX = 1
+        for id = 1, 3 do
+            tagX = tagX + (list.Columns[id] and list.Columns[id].Width or 0)
+        end
+        local col4 = list.Columns[4]
+        local tagRight = tagX + (col4 and (col4.ClipW or col4.Width) or 0)
+        SP:SweepLog (game and list or nil, function (line)
+            local info = rows[line]
+            return info and info.QId
+        end, function (row, size)
+            local s = list.Strs[3 * vis + row + 1]       -- column 4 (tag) of this row
+            local w = s and s:GetText() and s:GetStringWidth() or 0
+            return tagRight - w - 3 - size / 2
+        end)
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -471,6 +653,12 @@ function Nx.Quest.List:Open()
     self.List = list
 
     list:SetUser (self, self.OnListEvent)
+
+    -- Check boxes and Play of the game's layout follow every redraw, scrolling too.
+    list.Update = function (l, showLast)
+        Nx.List.Update (l, showLast)
+        self:DecorateRows (l)
+    end
 
     list:SetLineHeight (0, 6)
 
@@ -2513,6 +2701,11 @@ function Nx.Quest.List:Update()
     local selQId = keepData > 0 and GetPackedQuestID (keepData) or 0
     local selQn = keepData > 0 and bit_band (keepData, 0xff) or 0
 
+    self:ApplyRowStyle()
+    local gameRows = list.NxGameRows
+    local rowInfo = wipe (self.RowInfo or {})
+    self.RowInfo = rowInfo
+
     list:Empty()
 
     local greenRange = 5
@@ -2581,7 +2774,8 @@ function Nx.Quest.List:Update()
                     nameStr = format ("(%d) %s (%s)", onQ, nameStr, onQStr)
                 end
 
-                if isComplete then
+                -- The game's layout tells "complete" by the round "?" icon.
+                if isComplete and not (gameRows and isComplete == 1) then
                     nameStr = nameStr .. (isComplete == 1 and "|cff80ff80 - "..L["Complete"] or "|cfff04040 - "..FAILED)
                 end
 
@@ -2606,7 +2800,15 @@ function Nx.Quest.List:Update()
 
                 if self.QOpts.NXShowHeaders and cur.Header ~= header then
                     header = cur.Header
-                    if show then
+                    if show and gameRows then
+                        -- Zone strip of the game's log: beige name, gold +/- on the right
+                        list:ItemAdd (0)
+                        list:ItemSet (2, QList.GAME_INK .. header)
+                        list:ItemSetDataEx (list:ItemGetNum(), cur, 1)
+                        list:ItemSetButton ("QuestLogHdr", Quest.HeaderHide[cur.Header])
+                        list:ItemSetSection (not Quest.HeaderHide[cur.Header])
+                        list:ItemSetOffset (QList.GAME_HDR_X - list:ColumnGetWidth (1), 0)
+                    elseif show then
                         -- Zone bar: +/- to collapse, text in the theme's title color
                         list:ItemAdd (0)
                         list:ItemSet (2, headerInk .. header)
@@ -2641,6 +2843,19 @@ function Nx.Quest.List:Update()
                         butOn = true
                     end
 
+                    if gameRows then
+                        -- Round icon of the watch: "?" complete, "..." in
+                        -- progress, lit while tracked; the check box shows
+                        -- the watch.
+                        butOn = bit_band (trackMode, 1) > 0
+                        if Quest.Watch and Quest.Watch.ModernAvailable and Quest.Watch:ModernAvailable() then
+                            butType = isComplete == 1 and "QuestWatchDone" or "QuestWatchProgTog"
+                        else
+                            butType = "QuestWatch"
+                        end
+                        rowInfo[list:ItemGetNum()] = { QId = qId, Qi = qn, Watched = qWatched }
+                    end
+
                     list:ItemSetButton (butType, butOn)
 
                     if quest and showQId then
@@ -2653,12 +2868,18 @@ function Nx.Quest.List:Update()
 
                     local state = isComplete == 1 and "complete" or isComplete and "failed" or "inProgress"
 
-                    list:ItemSet (2, QList.StateIcon (state) .. nameStr)
-                    list:ItemSet (4, (tag or "") .. Quest:XPText (qId))
+                    if gameRows then
+                        -- No stripes and no XP: the details pane has the reward.
+                        list:ItemSet (2, nameStr)
+                        list:ItemSet (4, QList.GameTag (tag, color))
+                    else
+                        list:ItemSet (2, QList.StateIcon (state) .. nameStr)
+                        list:ItemSet (4, (tag or "") .. Quest:XPText (qId))
 
-                    stripe = not stripe
-                    if stripe then
-                        list:ItemSetBand ("rowStripe")
+                        stripe = not stripe
+                        if stripe then
+                            list:ItemSetBand ("rowStripe")
+                        end
                     end
 
                     local selected = qId == selQId and qn == selQn
@@ -2669,9 +2890,19 @@ function Nx.Quest.List:Update()
                     -- Objectives with their progress, under every quest, only
                     -- with the "Show Objectives" option: the details pane next
                     -- to the list already shows the selected quest's ones.
-                    if self.QOpts.NXShowObj then
+                    -- The game's layout always lists them, as the game's log.
+                    if self.QOpts.NXShowObj or gameRows then
 
                         local num = GetNumQuestLeaderBoards (qn)
+
+                        -- No objectives: the short objective or turn-in text.
+                        local objText = gameRows and num == 0 and cur.ObjText
+                        objText = objText and strmatch (objText, "^[^\n]+")
+                        if objText and objText ~= "" then
+                            list:ItemAdd (qId * 0x10000 + qn)
+                            list:ItemSet (2, QList.GAME_INK .. "-" .. objText)
+                            rowInfo[list:ItemGetNum()] = { Obj = true }
+                        end
                         local oCompColor = Nx.Quest.Cols["oCompColor"]
                         local oIncompColor = Nx.Quest.Cols["oIncompColor"]
 
@@ -2709,14 +2940,20 @@ function Nx.Quest.List:Update()
                                 keepLine = list:ItemGetNum()
                             end
 
+                            if gameRows then
+                                -- "-0/1 Objective" under the title, no dots.
+                                str = (done and oCompColor or QList.GAME_INK) .. QList.ObjectiveText (desc)
+                                rowInfo[list:ItemGetNum()] = { Obj = true }
+                            end
+
                             local trkStr = ""
 
-                            if zone then
+                            if zone and not gameRows then
 --                                trkStr = "|cff505050o"
                                 list:ItemSetButton ("QuestWatch", false)
                             end
 
-                            if bit_band (trackMode, bit_lshift (1, ln)) > 0 then
+                            if not gameRows and bit_band (trackMode, bit_lshift (1, ln)) > 0 then
                                 list:ItemSetButton (qLocColors[ln][5], true)
                             end
                             list:ItemSet (1, trkStr)
