@@ -4743,10 +4743,37 @@ function Nx.Map:MaxSize()
             self.Scale = 256.0
         end
         if Nx.db.profile.Map.MaxCenter then
-            self:CenterMap()
+            self:CenterOnPlayerZone()
         end
         self.StepTime = min (self.StepTime, 1)
     end
+end
+
+---
+-- The player's map, never the zone under the cursor (#199)
+--
+function Nx.Map:GetPlayerZoneMapId()
+    local mapId = self:GetPlayerMapAreaID()
+    if mapId and mapId ~= 0 then
+        return mapId
+    end
+    return Nx.Map.UpdateMapID
+end
+
+---
+-- Fit the player's zone (city plan included) and center on the player.
+-- CenterMap() without a map id returns early, so it never centered (#199).
+--
+function Nx.Map:CenterOnPlayerZone()
+    local mapId = self:GetPlayerMapAreaID()
+    if not mapId or mapId == 0 or not self.MapWorldInfo[mapId] or self:IsInstanceMap(mapId) then
+        return
+    end
+    self:CenterMap(mapId)
+    if self.PlyrX ~= 0 or self.PlyrY ~= 0 then
+        self:Move(self.PlyrX, self.PlyrY, nil, 15)
+    end
+    self.RealScale = self.Scale
 end
 
 --------
@@ -5589,7 +5616,8 @@ function Nx.Map.OnUpdate(this, elapsed)
 
     local title = ""
     if Nx.db.profile.Map.ShowTitleName then
-        title = map:IdToName (map.UpdateMapID)
+        -- Player's zone, matching PlyrRZX; the hovered zone goes in the tip
+        title = map:IdToName (map:GetPlayerZoneMapId())
 --        for n = 1, MAX_BATTLEFIELD_QUEUES do
         for n = 1, GetMaxBattlefieldID() do        -- Patch 4.3
 
