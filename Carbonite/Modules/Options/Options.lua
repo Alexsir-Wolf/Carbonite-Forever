@@ -335,6 +335,28 @@ function Options:Register(id, provider, opts)
     end
 end
 
+-- AceConfigDialog shows each side-menu item's name in a tooltip to its right,
+-- over the first tab of the page (#96); the name is already readable in the
+-- menu. Carbonite's window keeps the menu without those tooltips.
+local function noop() end
+
+local function QuietTree(appName)
+    if appName ~= "Carbonite" then
+        return
+    end
+    local frame = AceConfigDialog.OpenFrames and AceConfigDialog.OpenFrames.Carbonite
+    local tree = frame and frame.children and frame.children[1]
+    if tree and tree.type == "TreeGroup" then
+        tree:SetCallback("OnButtonEnter", noop)
+        tree:SetCallback("OnButtonLeave", noop)
+    end
+    local tip = AceConfigDialog.tooltip
+    if tip then
+        tip:Hide()
+    end
+end
+Options._QuietTree = QuietTree
+
 function Options:Open(panelId)
     if self._rootRegistered then
         self:Refresh()
@@ -371,6 +393,9 @@ function Options:OnEnable()
     if AceConfigDialog.SetDefaultSize then
         AceConfigDialog:SetDefaultSize("Carbonite", 960, 600)
     end
+
+    -- Also when AceConfigDialog rebuilds the window itself (NotifyChange).
+    hooksecurefunc(AceConfigDialog, "Open", function(_, appName) QuietTree(appName) end)
 
     Carbonite.Core.SlashCommands:Register("options", function() self:Open() end, "open options panel")
 
