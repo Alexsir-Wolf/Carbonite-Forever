@@ -6701,7 +6701,11 @@ function Nx.List:SetFade (fade)
 
     if self.Slider then
         self.Slider.Frm.texture:SetAlpha (fade * .6)
-        self.Slider.ThumbFrm.texture:SetAlpha (fade * .9)
+        if self.Slider.Game then
+            self.Slider.ThumbFrm:SetAlpha (fade * .9)   -- the three thumb pieces
+        else
+            self.Slider.ThumbFrm.texture:SetAlpha (fade * .9)
+        end
     end
 end
 
@@ -9322,12 +9326,80 @@ function Nx.Slider:Create(parentFrm, typ, size, tlOff)
     tfrm:SetPoint ("TOPLEFT", 1, 1)
     tfrm:Show()
 
+    if not inst.TypeH and Carbonite.UI.Skin:GameStyle() then
+        inst:UseGameLook()
+    end
+
     --
 
     inst:Set (0, 0, 9, 1)
     inst:Update()
 
     return inst
+end
+
+---
+-- Theme "Blizzard" (#42): the game's minimal scroll bar, a thin dark track,
+-- a rounded thumb and arrows at both ends that move one line. Kept when the
+-- client lacks the thumb atlases.
+--
+local SCROLL_ARROW_H = 10
+
+function Nx.Slider:UseGameLook()
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    if not (info and info ("minimal-scrollbar-thumb-top") and info ("minimal-scrollbar-small-arrow-top")) then
+        return
+    end
+    self.Game = true
+    self.Inset = SCROLL_ARROW_H
+
+    local frm, tfrm = self.Frm, self.ThumbFrm
+
+    -- Track: a thin dark groove between the arrows.
+    local track = frm.texture
+    track:ClearAllPoints()
+    track:SetPoint ("TOP", frm, "TOP", 0, -SCROLL_ARROW_H)
+    track:SetPoint ("BOTTOM", frm, "BOTTOM", 0, SCROLL_ARROW_H)
+    track:SetWidth (4)
+    track:SetColorTexture (0, 0, 0, .55)
+
+    -- Thumb: top cap, stretched middle, bottom cap.
+    local mid = tfrm.texture
+    mid:ClearAllPoints()
+    mid:SetAtlas ("minimal-scrollbar-thumb-middle")
+    local top = tfrm:CreateTexture (nil, "ARTWORK")
+    top:SetAtlas ("minimal-scrollbar-thumb-top")
+    top:SetPoint ("TOPLEFT")
+    top:SetPoint ("TOPRIGHT")
+    top:SetHeight (4)
+    local bot = tfrm:CreateTexture (nil, "ARTWORK")
+    bot:SetAtlas ("minimal-scrollbar-thumb-bottom")
+    bot:SetPoint ("BOTTOMLEFT")
+    bot:SetPoint ("BOTTOMRIGHT")
+    bot:SetHeight (4)
+    mid:SetPoint ("TOPLEFT", top, "BOTTOMLEFT")
+    mid:SetPoint ("BOTTOMRIGHT", bot, "TOPRIGHT")
+
+    -- Arrows: one line per click.
+    local function arrow (dir, point)
+        local b = CreateFrame ("Button", nil, frm)
+        b:SetSize (frm:GetWidth(), SCROLL_ARROW_H)
+        b:SetPoint (point, frm, point)
+        local name = "minimal-scrollbar-small-arrow-" .. dir
+        b:SetNormalAtlas (name)
+        if info (name .. "-over") then b:SetHighlightAtlas (name .. "-over") end
+        if info (name .. "-down") then b:SetPushedAtlas (name .. "-down") end
+        b:SetScript ("OnClick", function()
+            self:Set (self.Pos + (dir == "top" and -1 or 1))
+            self:Update()
+            if self.UserFunc then
+                self.UserFunc (self.User, self, self.Pos)
+            end
+        end)
+        return b
+    end
+    self.ArrowUp = arrow ("top", "TOP")
+    self.ArrowDn = arrow ("bottom", "BOTTOM")
 end
 
 ---------------------------------------------------------------------------------------
@@ -9454,7 +9526,7 @@ function Nx.Slider:OnMouseDown (button)
                 else
 
                     local h = (frm:GetTop() or 0) - (frm:GetBottom() or 0)
-                    y = h - y
+                    y = h - y - (self.Inset or 0)
 
 --                    Nx.prt ("Slider XY %f %f", x, y)
 
@@ -9520,6 +9592,7 @@ function Nx.Slider:Drag()
 
                 local h = (frm:GetTop() or 0) - (frm:GetBottom() or 0)
                 y = h - y
+                h = max (h - (self.Inset or 0) * 2, 1)    -- the track between the arrows
 
                 if dy ~= 0 then
 
@@ -9571,6 +9644,8 @@ function Nx.Slider:DoUpdate()
     else
 
         local h = (frm:GetTop() or 0) - (frm:GetBottom() or 0)        -- Attached, so GetHeight is wrong
+        local inset = self.Inset or 0       -- room for the arrows
+        h = h - inset * 2
 
         local tper = min (self.VisSz / range, 1)
         if tper >= 1 or h < 6 then
@@ -9598,7 +9673,7 @@ function Nx.Slider:DoUpdate()
             h = h - tper * h
             self.TPt = -per * h
 
-            tfrm:SetPoint ("TOPLEFT", 0, self.TPt)
+            tfrm:SetPoint ("TOPLEFT", 0, self.TPt - inset)
         end
     end
 end
