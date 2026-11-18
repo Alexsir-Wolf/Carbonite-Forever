@@ -255,26 +255,37 @@ function Journey:Create()
     self.Group = self.Group or "all"
     win.Frm.NxInst = self
     win:CreateButtons(true, true)
+    win:UseGameFrame()
     win:InitLayoutData(nil, -.2, -.15, -.6, -.6)
     win.Frm:SetToplevel(true)
     win:Show(false)
     if type(_G.UISpecialFrames) == "table" then tinsert(_G.UISpecialFrames, win.Frm:GetName()) end
+
+    -- On the game's frame (#42) the search runs along the top of the
+    -- content, from the left, over both lists; otherwise over the entries.
+    local game = win.GameFrameOn
+    local top = game and 18 or 0
 
     -- Left: filter by type.
     local groups = Nx.List:Create(false, 0, 0, 1, 1, win.Frm)
     self.GroupList = groups
     groups:SetUser(self, self.OnGroupEvent)
     groups:ColumnAdd(L["Type"], 1, 120)
-    win:Attach(groups.Frm, 0, .16, 0, 1)
+    win:Attach(groups.Frm, 0, .16, top, 1)
 
-    -- Right: search box over the entries.
+    -- Search box over the entries.
     local box = Nx.SearchBox:Create(win.Frm, function() self:Update() end,
         { placeholder = L["Search the journey..."], maxLetters = 60 })
     self.EditBox = box
-    win:Attach(box.Frm, .16, 1, 0, 18)
+    win:Attach(box.Frm, game and 0 or .16, 1, 0, 18)
 
     local list = Nx.List:Create(false, 0, 0, 1, 1, win.Frm)
     self.List = list
+    if game then
+        -- The list rows of the other windows (#42).
+        groups:SetModernRows()
+        list:SetModernRows()
+    end
     list:ColumnAdd(L["Date"], 1, 110)
     list:ColumnAdd(L["Level"], 2, 40, "RIGHT")
     list:ColumnAdd(L["Zone"], 3, 150)

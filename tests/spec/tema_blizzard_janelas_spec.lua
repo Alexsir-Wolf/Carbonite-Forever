@@ -1,0 +1,207 @@
+-- Tema Blizzard nas demais janelas (#42, T10 e T11): diário de missões, Monitor,
+-- Info, Destinos, Jornada, Novidades e lista de missões mundiais no padrão do
+-- jogo: moldura, faixa de ferramentas ordenada, abas inferiores e busca no topo.
+
+-- Sem CR: parte dos arquivos sai do git com CRLF.
+local function src(path)
+    return (loader.read(path):gsub(string.char(13), ""))
+end
+
+local function has(s, needle)
+    return s:find(needle, 1, true) ~= nil
+end
+
+local function fn(s, pattern)
+    return s:match(pattern) or ""
+end
+
+describe("diário de missões: abas do jogo na base", function()
+    local quest = src("Carbonite.Quests/QuestWindow.lua")
+
+    it("liga as abas do jogo antes de criar as abas", function()
+        local open = fn(quest, "function Nx%.Quest%.List:Open%(%).-\nend\n")
+        local use = open:find("bar:UseGameTabs()", 1, true)
+        local add = open:find('bar:AddTab (L["Current"]', 1, true)
+        expect(use ~= nil and add ~= nil and use < add).toBe(true)
+    end)
+
+    it("pendura as abas sob a janela, como na ficha de personagem", function()
+        expect(has(quest, 'f:SetPoint ("TOPLEFT", win.Frm, "BOTTOMLEFT", 11, 2)')).toBe(true)
+        expect(has(quest, "self.TabsUnder = true")).toBe(true)
+    end)
+
+    it("com as abas sob a janela, o conteúdo vai até a base", function()
+        local attach = fn(quest, "function Nx%.Quest%.List:AttachFrames%(%).-\nend\n")
+        expect(has(attach, "self.TabsUnder and 1")).toBe(true)
+        -- A altura das abas vem da barra (32 com as abas do jogo), não da classe.
+        expect(has(attach, "self.Bar:GetHeight()")).toBe(true)
+    end)
+
+    it("a busca fica no topo do conteúdo, alinhada à esquerda", function()
+        expect(has(quest, "win:Attach (self.FilterFrm, 0, 1, 0, 18)")).toBe(true)
+    end)
+end)
+
+describe("Monitor de missões", function()
+    local watch = src("Carbonite.Quests/WatchWindow.lua")
+
+    it("o Monitor redimensionável pede a moldura completa; o fixo segue sem moldura", function()
+        local open = fn(watch, "function Nx%.Quest%.Watch:Open%(%).-\nend\n")
+        expect(has(open, "if border ~= false then\n        win:UseGameFrame()")).toBe(true)
+        expect(has(open, "self.GameChrome = win.GameFrameOn and true or false")).toBe(true)
+        expect(has(open, "self:SetupGameChrome (win)")).toBe(true)
+    end)
+
+    it("menus à esquerda e alternâncias à direita na faixa de ferramentas", function()
+        local setup = fn(watch, "function Nx%.Quest%.Watch:SetupGameChrome %(win%).-\nend\n")
+        expect(has(setup, "win:ArrangeToolBar (items)")).toBe(true)
+        expect(has(setup, '{ slot (self.ButMenu), "action" }')).toBe(true)
+        expect(has(setup, '{ slot (toggles[i]), "toggle" }')).toBe(true)
+        -- Título e contagem na faixa; a segunda linha do título some.
+        expect(has(setup, "win:SetHeaderCounter")).toBe(true)
+        expect(has(setup, "fs2:Hide()")).toBe(true)
+    end)
+
+    it("minimizado usa a moldura compacta, do tamanho da faixa", function()
+        local sync = fn(watch, "function Nx%.Quest%.Watch:SyncGameVariant%(%).-\nend\n")
+        expect(has(sync, "win:UseGameFrame (isMin and { compact = true } or nil)")).toBe(true)
+        expect(has(sync, "spec.band + spec.side")).toBe(true)
+    end)
+
+    it("controles com alvo de clique de 22 px no tema Blizzard (antiga #204)", function()
+        expect(has(watch, "local WATCH_TARGET = 22")).toBe(true)
+        expect(has(watch, "SetHitRectInsets (-k, -k, -k, -k)")).toBe(true)
+        local modern = fn(watch, "function Nx%.Quest%.Watch:SetupModernChrome %(win%).-\nend\n")
+        expect(has(modern, "big and MODERN_LINE_H_GAME or MODERN_LINE_H")).toBe(true)
+        expect(has(modern, "WidenHitRect (but, WATCH_TARGET)")).toBe(true)
+    end)
+end)
+
+describe("WidenHitRect do Monitor", function()
+    -- Recorta a função local do arquivo e roda com um botão falso.
+    local body = fn(src("Carbonite.Quests/WatchWindow.lua"), "local function WidenHitRect %(but, size%).-\nend\n")
+    local chunk = assert(loadstring("local max, floor = math.max, math.floor\n" .. body .. "\nreturn WidenHitRect"))
+    local widen = chunk()
+
+    local function but(typ, w)
+        local b = { Type = typ, Frm = {} }
+        function b.Frm.GetWidth() return w end
+        function b.Frm.SetHitRectInsets(_, l) b.inset = l end
+        return b
+    end
+
+    it("leva o ponto de 10 px a um alvo de 22 px", function()
+        local b = but({ SizeUp = 10 }, 13)
+        widen(b, 22)
+        expect(b.inset).toBe(-6)
+    end)
+
+    it("usa o tamanho do primeiro estado nos botões de três estados", function()
+        local b = but({ { Size = 10 } }, 13)
+        widen(b, 22)
+        expect(b.inset).toBe(-6)
+    end)
+
+    it("não encolhe um botão já maior que o alvo", function()
+        local b = but({}, 30)
+        widen(b, 22)
+        expect(b.inset).toBe(0)
+    end)
+end)
+
+describe("janelas de Info: moldura compacta sem cortar as linhas", function()
+    local function load()
+        local env = wow.lenientEnv()
+        env.Nx = wow.namespace({})
+        loader.run(env, "Carbonite.Info/NxInfo.lua")
+        return env.Nx.Info
+    end
+
+    it("pede a compacta antes do layout", function()
+        local info = src("Carbonite.Info/NxInfo.lua")
+        local create = fn(info, "function Nx%.Info:Create2 %(index%).-\nend\n")
+        local use = create:find("win:UseGameFrame ({ compact = true })", 1, true)
+        local fit = create:find("Nx.Info.FitGameFrame (win, plainChrome)", 1, true)
+        local layout = create:find("win:InitLayoutData", 1, true)
+        expect(use ~= nil and fit ~= nil and layout ~= nil).toBe(true)
+        expect(use < fit and fit < layout).toBe(true)
+    end)
+
+    it("cresce a altura salva uma vez só e devolve sem a moldura", function()
+        local Info = load()
+        local data = { H = 53 }
+        local win = { SaveData = data, GameFrameOn = true, TopH = 25, BorderH = 5 }
+        Info.FitGameFrame(win, 19)
+        expect(data.H).toBe(64)
+        expect(data.GFH).toBe(11)
+        Info.FitGameFrame(win, 19)          -- outro login: não soma de novo
+        expect(data.H).toBe(64)
+        win.GameFrameOn = false             -- outro tema
+        Info.FitGameFrame(win, 19)
+        expect(data.H).toBe(53)
+        expect(data.GFH).toBeNil()
+    end)
+
+    it("janela nova não muda: a altura padrão já conta a moldura", function()
+        local Info = load()
+        local data = {}
+        Info.FitGameFrame({ SaveData = data, GameFrameOn = true, TopH = 25, BorderH = 5 }, 19)
+        expect(data.H).toBeNil()
+        expect(data.GFH).toBe(11)
+    end)
+
+    it("altura em fração da tela fica como está", function()
+        local Info = load()
+        local data = { H = -.2 }
+        Info.FitGameFrame({ SaveData = data, GameFrameOn = true, TopH = 25, BorderH = 5 }, 19)
+        expect(data.H).toBe(-.2)
+    end)
+end)
+
+describe("Destinos: ações na faixa de ferramentas", function()
+    local function load()
+        local env = wow.lenientEnv()
+        env.Carbonite.Core.SlashCommands = { Register = function() end }
+        env.Nx = wow.namespace({ Map = wow.namespace({ Maps = { { Targets = {} } } }) })
+        loader.run(env, "Carbonite/Modules/Map/Targets.lua")
+        loader.run(env, "Carbonite/Modules/Map/TargetsWindow.lua")
+        return env.Carbonite.Modules.Map.TargetsWindow
+    end
+
+    it("remover e limpar tudo são as ações destrutivas", function()
+        local W = load()
+        local danger = {}
+        for _, a in ipairs(W.ACTIONS) do
+            if a[4] == "danger" then danger[#danger + 1] = a[2] end
+        end
+        expect(table.concat(danger, ",")).toBe("Remove,ClearAll")
+    end)
+
+    it("na moldura do jogo as ações vão para a faixa, ordenadas", function()
+        local s = src("Carbonite/Modules/Map/TargetsWindow.lua")
+        expect(has(s, "win:UseGameFrame()")).toBe(true)
+        expect(has(s, "local parent = game and win:GetToolBar() or bar")).toBe(true)
+        expect(has(s, "win:ArrangeToolBar(items)")).toBe(true)
+        expect(has(s, '(game and a[4] ~= "danger") and "TxtGrey" or "Txt64"')).toBe(true)
+    end)
+end)
+
+describe("Jornada, Novidades e missões mundiais", function()
+    it("Jornada: busca no topo, da esquerda, sobre as duas listas", function()
+        local s = src("Carbonite/Modules/Journey/Journey.lua")
+        expect(has(s, "win:UseGameFrame()")).toBe(true)
+        expect(has(s, "win:Attach(box.Frm, game and 0 or .16, 1, 0, 18)")).toBe(true)
+        expect(has(s, "win:Attach(groups.Frm, 0, .16, top, 1)")).toBe(true)
+    end)
+
+    it("Novidades: categorias na faixa pela ordem padrão", function()
+        local s = src("Carbonite/Modules/Whatsnew/WhatsnewEngine.lua")
+        expect(has(s, 'items[#items + 1] = { but, "nav" }')).toBe(true)
+        expect(has(s, "win:ArrangeToolBar(items)")).toBe(true)
+    end)
+
+    it("missões mundiais: o menu sai da faixa de título", function()
+        local s = src("Carbonite.Quests/WorldQuestWindow.lua")
+        expect(has(s, 'win:ArrangeToolBar({ { self.ButMenu, "action" } })')).toBe(true)
+    end)
+end)

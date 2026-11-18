@@ -192,24 +192,56 @@ end
 local MODERN_EDGE = 2           -- inset from the frame edge for bar/lines
 local WATCH_LOCK_W = 12
 local WATCH_CONTROL_GAP = 4
-local MODERN_CONTROL_W = WATCH_LOCK_W + WATCH_CONTROL_GAP + 16
+
+-- Click target of the header controls in the theme "Blizzard" (#204): the
+-- art keeps its size, the hit rect grows to `size` around it.
+local WATCH_TARGET = 22
+local MODERN_LINE_H_GAME = WATCH_TARGET + 2
+local WATCH_CONTROL_GAP_GAME = 8    -- 22 px targets side by side
+
+local function WidenHitRect (but, size)
+    local typ = but.Type or {}
+    local w = typ.SizeUp or (typ[1] and typ[1].Size) or but.Frm:GetWidth()
+    local k = max (0, floor ((size - w) / 2))
+    but.Frm:SetHitRectInsets (-k, -k, -k, -k)
+end
+
+local function BigControls()
+    return Carbonite.UI.Skin:GameStyle()
+end
+
+-- Room of the lock/close and minimize controls at the right of the header.
+local function ControlGap()
+    return BigControls() and WATCH_CONTROL_GAP_GAME or WATCH_CONTROL_GAP
+end
+
+local function ControlW()
+    return WATCH_LOCK_W + ControlGap() + 16
+end
 
 -- The close control becomes the unlock control when the watch is locked,
 -- even with ShowClose disabled. Always reserve its own header slot.
 local function PositionWatchHeaderControls (win, top, height)
+    local big = BigControls()
     local close = win.ButClose and win.ButClose.Frm
     if close then
         close:ClearAllPoints()
         close:SetPoint ("TOPRIGHT", win.Frm, "TOPRIGHT", -win.BorderW,
             top - floor ((height - close:GetHeight()) / 2))
+        if big then
+            WidenHitRect (win.ButClose, WATCH_TARGET)
+        end
     end
 
     local miner = win.ButMiner and win.ButMiner.Frm
     if miner then
         miner:ClearAllPoints()
         miner:SetPoint ("TOPRIGHT", win.Frm, "TOPRIGHT",
-            -win.BorderW - WATCH_LOCK_W - WATCH_CONTROL_GAP,
+            -win.BorderW - WATCH_LOCK_W - ControlGap(),
             top - floor ((height - miner:GetHeight()) / 2))
+        if big then
+            WidenHitRect (win.ButMiner, WATCH_TARGET)
+        end
     end
 end
 
@@ -218,9 +250,74 @@ local function MakeHeaderLine (f, y)
     return Carbonite.UI.Skin:AddHeaderRule (f, y, MODERN_EDGE)
 end
 
+-- The resizable watch on the game's frame (#42): title and count on the
+-- band, the window buttons in its corner (engine), the menus and toggles on
+-- the tool strip in the standard order, each in a slot of WATCH_TARGET px.
+function Nx.Quest.Watch:SetupGameChrome (win)
+    local tb = win:GetToolBar()
+    local size = win.ToolIconSize or WATCH_TARGET
+
+    win:SetTitle (L["Quest Watch"])
+    -- The second title line was the tool row: the strip has it now.
+    local fs2 = win.TitleFStr[2]
+    if fs2 then
+        fs2:SetText ("")
+        fs2:Hide()
+    end
+    win:SetHeaderCounter ("")
+    self.CountFStr = win.HeaderCounter
+
+    local function slot (but)
+        local s = CreateFrame ("Frame", nil, tb)
+        s:SetSize (size, size)
+        local holder = { Frm = s }
+        function holder:SetSize (w, h)
+            self.Frm:SetSize (w, h)
+        end
+        but.Frm:ClearAllPoints()
+        but.Frm:SetPoint ("CENTER", s, "CENTER")
+        WidenHitRect (but, size)
+        return holder
+    end
+
+    local items = {
+        { slot (self.ButMenu), "action" },
+        { slot (self.ButPri), "action" },
+    }
+    -- Toggles fill from the right edge: same left-to-right order as before.
+    local toggles = { self.ButShowOnMap, self.ButATarget, self.ButQGivers, self.ButShowParty }
+    for i = #toggles, 1, -1 do
+        items[#items + 1] = { slot (toggles[i]), "toggle" }
+    end
+    local left, right = win:ArrangeToolBar (items)
+    self.ToolBarW = left + right + win.ToolDangerGap
+end
+
+-- Minimized, the watch is its title band only: the compact frame fits it.
+function Nx.Quest.Watch:SyncGameVariant()
+    local win = self.Win
+    if not (self.GameChrome and win and win.GameFrameOn) then
+        return
+    end
+    local isMin = win:GetLayoutMode() == "Min"
+    if (win.GameFrameVariant == "compact") ~= isMin then
+        win:UseGameFrame (isMin and { compact = true } or nil)
+    end
+    local spec = win.GameFrameSpec
+    if isMin and spec and not InCombatLockdown() then
+        local h = spec.band + spec.side
+        if win.Frm:GetHeight() ~= h then
+            win.Frm:SetHeight (h)
+            win:Adjust()
+        end
+    end
+end
+
 function Nx.Quest.Watch:SetupModernChrome (win)
     local f = win.Frm
-    local lineH = MODERN_LINE_H
+    -- Theme "Blizzard" (#204): a taller tool row for 22 px click targets.
+    local big = Carbonite.UI.Skin:GameStyle()
+    local lineH = big and MODERN_LINE_H_GAME or MODERN_LINE_H
     local titleH = MODERN_TITLE_H
 
     win:SetTitleLineH (lineH)
@@ -252,7 +349,7 @@ function Nx.Quest.Watch:SetupModernChrome (win)
     cnt:SetFontObject ("NxFontS")
     cnt:SetJustifyH ("RIGHT")
     cnt:SetHeight (barH)
-    cnt:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -bw - MODERN_CONTROL_W - WATCH_CONTROL_GAP, barTop)
+    cnt:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -bw - ControlW() - ControlGap(), barTop)
     self.CountFStr = cnt
     fs1:SetPoint ("TOPRIGHT", cnt, "TOPLEFT", -8, 0)
 
@@ -271,19 +368,31 @@ function Nx.Quest.Watch:SetupModernChrome (win)
     -- Menu and priorities stay on the left; the four toggles are
     -- re-anchored to the window's right edge (they remain children of
     -- ButMenu so fade and minimize handling is unchanged).
+    -- In the theme "Blizzard" each control sits in a 22 px slot (#204).
+    local slot = big and WATCH_TARGET + 2 or nil
     local y2 = -bh - titleH - floor ((lineH - 14) / 2)
+    local x1 = big and bw + 6 or bw + 2
     self.ButMenu.Frm:ClearAllPoints()
-    self.ButMenu.Frm:SetPoint ("TOPLEFT", f, "TOPLEFT", bw + 2, y2)
+    self.ButMenu.Frm:SetPoint ("TOPLEFT", f, "TOPLEFT", x1, y2)
     self.ButPri.Frm:ClearAllPoints()
-    self.ButPri.Frm:SetPoint ("TOPLEFT", f, "TOPLEFT", bw + 17, y2)
+    self.ButPri.Frm:SetPoint ("TOPLEFT", f, "TOPLEFT", big and x1 + slot or bw + 17, y2)
 
     local cy = -bh - titleH - lineH / 2
     local toggles = { self.ButShowOnMap, self.ButATarget, self.ButQGivers, self.ButShowParty }
     for i, but in ipairs (toggles) do
         but.Frm:ClearAllPoints()
-        but.Frm:SetPoint ("CENTER", f, "TOPRIGHT", -bw - 8 - (#toggles - i) * 12, cy)
+        if big then
+            but.Frm:SetPoint ("CENTER", f, "TOPRIGHT", -bw - WATCH_TARGET / 2 - (#toggles - i) * slot, cy)
+        else
+            but.Frm:SetPoint ("CENTER", f, "TOPRIGHT", -bw - 8 - (#toggles - i) * 12, cy)
+        end
     end
 
+    if big then
+        for _, but in ipairs ({ self.ButMenu, self.ButPri, unpack (toggles) }) do
+            WidenHitRect (but, WATCH_TARGET)
+        end
+    end
 end
 
 -- Frame width that fits the title, the quest counter and the buttons.
@@ -306,8 +415,18 @@ function Nx.Quest.Watch:GetModernMinWidth()
     if self.CountFStr then
         countW = max (countW, self.CountFStr:GetStringWidth() or 0)
     end
+    if self.GameChrome then
+        -- Centered title clear of the count and the window buttons on both
+        -- sides; the tool strip in the normal layout.
+        local side = win.BorderW + max (win.ButW or 0, 0) + 6 + countW + 8
+        local need = titleW + side * 2
+        if win:GetLayoutMode() ~= "Min" then
+            need = max (need, (self.ToolBarW or 0) + win.BorderW * 2 + 4)
+        end
+        return floor (need + .5)
+    end
     return floor (MODERN_EDGE + 12 + titleW + 8 + countW
-        + WATCH_CONTROL_GAP + MODERN_CONTROL_W + win.BorderW + .5)
+        + ControlGap() + ControlW() + win.BorderW + .5)
 end
 
 function Nx.Quest.Watch:ApplyModernMinWidth()
@@ -359,7 +478,8 @@ function Nx.Quest.Watch:UpdateModernTitle (cur, maxQ)
     if not win then
         return
     end
-    win:SetTitle ("|cffffd100" .. L["Quest Watch"])
+    -- On the game's frame the band paints the title (frameTitle).
+    win:SetTitle (self.GameChrome and L["Quest Watch"] or ("|cffffd100" .. L["Quest Watch"]))
     if self.CountFStr then
         if cur then
             self.CountFStr:SetText (format ("|cff40af40%d/%d", cur, maxQ))
@@ -446,6 +566,13 @@ function Nx.Quest.Watch:Open()
 
     win:SetTitleXOff (84 + xo, -1 - yo)
 
+    -- Theme "Blizzard" (#42): the resizable watch wears the game's frame,
+    -- the fixed one stays frameless, like the game's objective tracker.
+    if border ~= false then
+        win:UseGameFrame()
+    end
+    self.GameChrome = win.GameFrameOn and true or false
+
 --    win:SetTitle ("[  ]")
     win.UserUpdateFade = self.WinUpdateFade
 
@@ -501,7 +628,9 @@ function Nx.Quest.Watch:Open()
     self.ButShowParty = Nx.Button:Create (self.ButMenu.Frm, "QuestWatchParty", nil, nil, 80, 0, "CENTER", 1, 1, func, self)
     self.ButShowParty:SetPressed (qopts.NXWWatchParty == nil or qopts.NXWWatchParty)
 
-    if self.Modern then
+    if self.GameChrome then
+        self:SetupGameChrome (win)
+    elseif self.Modern then
         self:SetupModernChrome (win)
     else
         PositionWatchHeaderControls (win, fixedSize and -3 or -win.BorderH, 12)
@@ -522,7 +651,7 @@ function Nx.Quest.Watch:Open()
         list.Frm:EnableMouse (false)
     end
 
-    if self.Modern then
+    if self.Modern or self.GameChrome then
         self:ApplyModernMinWidth()
     end
 
@@ -651,8 +780,10 @@ function Nx.Quest.Watch:Open()
     if win.ButMaxer then
         tinsert (minimizedHideFrames, win.ButMaxer.Frm)
     end
-    if self.Modern then
+    if win.TitleFStr[2] then
         tinsert (minimizedHideFrames, win.TitleFStr[2])
+    end
+    if self.HdrLine2 then
         tinsert (minimizedHideFrames, self.HdrLine2)
     end
 
@@ -683,9 +814,10 @@ end
 -------------------------------------------------------------------------------
 
 function Nx.Quest.Watch:OnWin (typ)
+    self:SyncGameVariant()
     if self.Win:GetLayoutMode() == "Min" then
         self.FirstUpdate = true
-        if self.Modern then
+        if self.Modern or self.GameChrome then
             self:UpdateModernTitle()
             self:FitMinimizedWidth()
         else
@@ -2719,9 +2851,11 @@ function Nx.Quest.Watch:UpdateList()
 
     -- Grow upwards
 
+    self:SyncGameVariant()
+
     if self.Win:IsSizeMin() then
         self.FirstUpdate = true
-        if self.Modern then
+        if self.Modern or self.GameChrome then
             self:UpdateModernTitle()
         else
             self.Win:SetTitle ("")
@@ -2738,7 +2872,7 @@ function Nx.Quest.Watch:UpdateList()
             self.Win:OffsetPos (0, h)
         end
 
-        if w < 127 and not self.Modern then
+        if w < 127 and not (self.Modern or self.GameChrome) then
             self.Win:SetTitle ("")
         else
             -- The shared compatibility layer preserves the native two-value
@@ -2752,7 +2886,7 @@ function Nx.Quest.Watch:UpdateList()
             -- internal quest-log capacity. Fall back to MAX_QUESTS/25 where
             -- the API is missing on older clients.
             local maxQ = (C_QuestLog and C_QuestLog.GetMaxNumQuestsCanAccept and C_QuestLog.GetMaxNumQuestsCanAccept()) or MAX_QUESTS or 25
-            if self.Modern then
+            if self.Modern or self.GameChrome then
                 self:UpdateModernTitle (i, maxQ)
             else
                 self.Win:SetTitle (format ("          |cff40af40%d/%d", i, maxQ))
@@ -2795,12 +2929,14 @@ function Nx.Quest.Watch:WinUpdateFade (fade, force)
         self.ButPri.Frm:SetAlpha (fade)
         self.ButShowOnMap.Frm:SetAlpha (fade)
         self.ButATarget.Frm:SetAlpha (fade)
-        if self.Modern then
+        if self.Modern or self.GameChrome then
             self.ButQGivers.Frm:SetAlpha (fade)
             self.ButShowParty.Frm:SetAlpha (fade)
             self.CountFStr:SetAlpha (fade)
-            self.HdrLine1:SetAlpha (fade)
-            self.HdrLine2:SetAlpha (fade)
+            if self.HdrLine1 then
+                self.HdrLine1:SetAlpha (fade)
+                self.HdrLine2:SetAlpha (fade)
+            end
             if self.Win.ButMiner then
                 self.Win.ButMiner.Frm:SetAlpha (fade)
             end
