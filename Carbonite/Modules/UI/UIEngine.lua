@@ -1837,7 +1837,9 @@ function Nx.Window:SetBordersFade (fade)
 --]]
 
         local col = Nx.Skin:GetBorderCol()
-        self.Frm:SetBackdropBorderColor (col[1], col[2], col[3], col[4] * fade)
+        -- A frameless window of the game theme (the quest watch) shows no edge.
+        local edge = (self.NoEdgeInGameStyle and Carbonite.UI.Skin:GameStyle()) and 0 or col[4] * fade
+        self.Frm:SetBackdropBorderColor (col[1], col[2], col[3], edge)
     end
 
     -- The title strip comes and goes with the border, as the game's frame.
@@ -5896,8 +5898,21 @@ function Nx.Menu:FitWidth (menuX)
     local textW = 0
     for _, item in ipairs (self.Items) do
         if item.ShowState and item.Text and not item.Spacer then
-            measure:SetText (item.Text)
-            textW = max (textW, measure:GetStringWidth() or 0)
+            -- A slider shows its value after the text (SliderUpdate): measure
+            -- it with the widest value it can take.
+            local labels = { item.Text }
+            if item.Slider then
+                local pos = item.Table and item.Table[item.VarName] or item.SliderPos
+                for _, v in ipairs ({ item.SliderMin, item.SliderMax, pos }) do
+                    if type (v) == "number" then
+                        labels[#labels + 1] = format ("%s (%.2f)", item.Text, v)
+                    end
+                end
+            end
+            for _, label in ipairs (labels) do
+                measure:SetText (label)
+                textW = max (textW, measure:GetStringWidth() or 0)
+            end
         end
     end
     local w = max (self.Width, ceil (textW) + MENU_TEXT_X + menuX * 2 + 4)

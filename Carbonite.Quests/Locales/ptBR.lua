@@ -124,6 +124,8 @@ L["When enabled, will place a button on the watch window to close it (RELOADS UI
 L["Fade Entire Window"] = "Esmaecer a janela inteira"
 L["When enabled, if the quest watch window fades, will ensure all of it fades text and all instead of just the window itself"] = "Quando ativado, se a janela de monitoramento de missões esmaecer, garante que tudo esmaeça, inclusive o texto, e não só a própria janela"
 L["Quest Watch Background Color"] = "Cor de fundo do monitor de missões"
+L["Quest Watch Background Opacity"] = "Opacidade do fundo do monitor de missões"
+L["How opaque the quest watch background is: 0 is fully transparent."] = "Quanto o fundo do monitor de missões é opaco: 0 deixa totalmente transparente."
 L["Quest Complete Color"] = "Cor de missão concluída"
 L["Quest Incomplete Color"] = "Cor de missão incompleta"
 L["Objective Complete Color"] = "Cor de objetivo concluído"

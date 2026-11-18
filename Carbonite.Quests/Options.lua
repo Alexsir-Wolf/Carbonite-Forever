@@ -1313,6 +1313,29 @@ function Nx.Quest:GetOptionsConfig()
                                 Nx.Quest.Watch:Update()
                             end,
                         },
+                        -- The alpha of the background color, on its own (#42):
+                        -- the watch is see-through, the user picks how much.
+                        qwbgalpha = {
+                            order = 29.5,
+                            type = "range",
+                            width = "full",
+                            name = L["Quest Watch Background Opacity"],
+                            desc = L["How opaque the quest watch background is: 0 is fully transparent."],
+                            min = 0,
+                            max = 1,
+                            step = .05,
+                            isPercent = true,
+                            get = function()
+                                local arr = { Nx.Split("|",Nx.qdb.profile.QuestWatch.BGColor) }
+                                return tonumber(arr[4]) or .4
+                            end,
+                            set = function(_,value)
+                                local arr = { Nx.Split("|",Nx.qdb.profile.QuestWatch.BGColor) }
+                                Nx.qdb.profile.QuestWatch.BGColor = (arr[1] or 0) .. "|" .. (arr[2] or 0) .. "|" .. (arr[3] or 0) .. "|" .. value
+                                Nx.Quest:SetCols()
+                                Nx.Quest.Watch:Update()
+                            end,
+                        },
                         qwcompletecol = {
                             order = 30,
                             type = "color",

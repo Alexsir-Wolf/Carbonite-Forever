@@ -570,6 +570,8 @@ function Nx.Quest.Watch:Open()
     -- objective tracker. It sizes itself to its list, which the metal frame's
     -- band and toolbar don't follow (the list spilled out under the frame).
     win:UseGameFrame (false)
+    -- Transparent, with no edge either: the old border drew a box around the header.
+    win.NoEdgeInGameStyle = true
     self.GameChrome = win.GameFrameOn and true or false
 
 --    win:SetTitle ("[  ]")

@@ -5,7 +5,8 @@ local function fitWidth()
     local src = loader.read("Carbonite/Modules/UI/UIEngine.lua")
     local first = src:find("local MENU_TEXT_X", 1, true)
     local last = src:find("function Nx.Menu:Update", first, true)
-    local env = { Nx = { Menu = {} }, max = math.max, ceil = math.ceil, ipairs = ipairs }
+    local env = { Nx = { Menu = {} }, max = math.max, ceil = math.ceil, ipairs = ipairs,
+        format = string.format, type = type }
     local chunk = assert(loadstring(src:sub(first, last - 1)))
     setfenv(chunk, env)
     chunk()
@@ -53,5 +54,13 @@ describe("largura do menu", function()
         local m = menu(240, { string.rep("x", 50) })
         m.Items[1].ShowState = false
         expect(FitWidth(m, 14)).toBe(240)
+    end)
+
+    it("conta o valor que o slider mostra depois do texto (#42)", function()
+        local m = menu(100, { "Ordenar" })
+        local item = m.Items[1]
+        item.Slider, item.SliderMin, item.SliderMax, item.SliderPos = true, 0, 2000, 1
+        -- "Ordenar (2000.00)" = 17 caracteres
+        expect(FitWidth(m, 14)).toBe(17 * 6 + 20 + 28 + 4)
     end)
 end)
