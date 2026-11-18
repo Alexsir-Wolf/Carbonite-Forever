@@ -77,7 +77,7 @@ local LAYOUT = {
     Main                 = { order = 0,  name = L["About"] },
     General              = { order = 1,  name = L["General"] },
     Maps                 = { order = 10, name = L["Map and Minimap"] },
-    ["Tracking HUD"]     = { order = 15, name = L["Navigation Arrow (HUD)"] },
+    ["Tracking HUD"]     = { order = 15, name = L["Navigation Arrow"] },
     ["Quest Module"]     = { order = 20, name = L["Quests"] },
     ["Guide & Gather"]   = { order = 30, name = L["Guide and Gathering"] },
     ["Notes Module"]     = { order = 40, name = L["Notes and Integrations"] },
