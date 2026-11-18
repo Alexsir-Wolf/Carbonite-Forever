@@ -4563,20 +4563,19 @@ end
 Nx.Button.ClientAtlases.Min = {
     AtlasUp = "ui-questtrackerbutton-collapse-all", AtlasDn = "ui-questtrackerbutton-expand-all", Untinted = true,
 }
--- Text buttons (Back of the Guide, Record of the Notes, the What's New
--- buttons): the game's red panel button. Every client has the panel button
--- files, so a client without the atlas gets them instead of the skin's TGA.
+-- Text buttons (Back of the Guide, Record of the Notes, tabs, tool strips):
+-- the game's red panel button file, symmetric at any width. The
+-- 128-RedButton atlases carry slice margins made for big buttons and cut
+-- one end on a 22 px button, so they are not used. Every client has the files.
+local PANEL_UP, PANEL_DN = "Interface\\Buttons\\UI-Panel-Button-Up", "Interface\\Buttons\\UI-Panel-Button-Down"
+local PANEL_UV = { 0, .625, 0, .6875 }
 for _, name in ipairs ({ "Txt64", "Txt64B" }) do
-    Nx.Button.ClientAtlases[name] = {
-        { AtlasUp = "128-RedButton-UP", AtlasDn = "128-RedButton-Pressed", Untinted = true },
-        { FileUp = "Interface\\Buttons\\UI-Panel-Button-Up", FileDn = "Interface\\Buttons\\UI-Panel-Button-Down",
-          UV = { 0, .625, 0, .6875 }, Untinted = true },
-    }
+    Nx.Button.ClientAtlases[name] = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = PANEL_UV, Untinted = true }
 end
--- The grey button: the disabled look of the same red button. Without the
--- atlas it keeps the grey panel button file. Tinted, so pressed still shows.
+-- The grey button: the same red button, desaturated, so grey and red share
+-- one shape. Tinted, so pressed still shows (gold on the toggles).
 for _, name in ipairs ({ "TxtGrey", "TxtGreyB" }) do
-    Nx.Button.ClientAtlases[name] = { AtlasUp = "128-RedButton-Disable", AtlasDn = "128-RedButton-Disable" }
+    Nx.Button.ClientAtlases[name] = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = PANEL_UV, Desaturate = true }
 end
 -- Expand / collapse of a list header (quest log, Notes, Guide), registered
 -- by Carbonite.Quests: minus while open, plus while closed.
@@ -4609,9 +4608,11 @@ function Nx.Button:UseClientAtlases (only)
                     typ.Skin = nil
                     typ.Up, typ.Dn = look.FileUp, look.FileDn
                     typ.UpUV, typ.DnUV = look.UV, look.UV
+                    typ.Desaturate = look.Desaturate
                 else
                     typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
                     typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
+                    typ.Desaturate = look.Desaturate
                 end
                 if look.Untinted then typ.VRGBAUp, typ.VRGBADn = nil, nil end
                 break
@@ -5074,6 +5075,11 @@ function Nx.Button:UpdateAtlasLook (typ, f, tx)
 
     local pressed = not self.State and self.Pressed
     local baseAtlas, uv, icon, iconCol
+
+    -- Grey buttons are the red one desaturated (atlas or panel file).
+    if tx.SetDesaturated then
+        tx:SetDesaturated (typ.Desaturate and true or false)
+    end
 
     if self.State then
         baseAtlas = nil

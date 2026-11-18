@@ -202,18 +202,26 @@ describe("botões vermelho e cinza", function()
         end
     end)
 
-    it("o cinza usa o atlas do jogo quando existe e mantém o tom de pressionado", function()
-        local Nx = loadEngine(true, { ["128-RedButton-Disable"] = true })
+    it("o cinza é o botão vermelho dessaturado: mesmo formato, tom de pressionado mantido", function()
+        local Nx = loadEngine(true, { ["128-RedButton-UP"] = true, ["128-RedButton-Pressed"] = true })
         Nx.Button:UseClientAtlases()
-        expect(Nx.Button.TypeData.TxtGrey.AtlasUp).toBe("128-RedButton-Disable")
+        local grey = Nx.Button.TypeData.TxtGrey
+        expect(grey.AtlasUp).toBeNil()
+        expect(grey.Up).toBe(Nx.Button.TypeData.Txt64.Up)
+        expect(grey.Desaturate).toBe(true)
+        expect(Nx.Button.TypeData.Txt64.Desaturate).toBeNil()
         expect(Nx.Button.TypeData.TxtGreyB.VRGBADn).toBe("1|.82|.3|1")
     end)
 
-    it("sem o atlas, fica o arquivo do botão cinza do painel", function()
+    it("sem o atlas, o cinza é o arquivo do botão vermelho do painel, dessaturado", function()
         local Nx = loadEngine(true, {})
         Nx.Button:UseClientAtlases()
-        expect(Nx.Button.TypeData.TxtGrey.AtlasUp).toBeNil()
-        expect(Nx.Button.TypeData.TxtGrey.Up).toBe("Interface\\Buttons\\UI-Panel-Button-Disabled")
+        local grey, red = Nx.Button.TypeData.TxtGrey, Nx.Button.TypeData.Txt64
+        expect(grey.AtlasUp).toBeNil()
+        expect(grey.Up).toBe(red.Up)
+        expect(grey.Up).toBe("Interface\\Buttons\\UI-Panel-Button-Up")
+        expect(grey.Desaturate).toBe(true)
+        expect(red.Desaturate).toBeNil()
     end)
 end)
 

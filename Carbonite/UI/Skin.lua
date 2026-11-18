@@ -49,7 +49,7 @@ Skin.themes = {
             -- band most of all; the band follows the scaled metal.
             edgeScale = 1.5,
             band     = 36,    -- title band of the frame
-            side     = 8,     -- metal of the sides and bottom: content inset
+            side     = 12,    -- metal of the sides and bottom at edgeScale: content inset
             gap      = 2,     -- band (or tool strip) to content
             toolBarH = 28,    -- tool strip under the band (22 px buttons + room)
             butSize  = 24,    -- close / maximize, RedButton atlases
