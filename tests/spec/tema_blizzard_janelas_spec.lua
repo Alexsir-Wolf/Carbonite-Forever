@@ -1,6 +1,6 @@
 -- Tema Blizzard nas demais janelas (#42, T10 e T11): diário de missões, Monitor,
 -- Info, Destinos, Jornada, Novidades e lista de missões mundiais no padrão do
--- jogo: moldura, faixa de ferramentas ordenada, abas inferiores e busca no topo.
+-- jogo: moldura, faixa de ferramentas ordenada, abas e busca no topo.
 
 -- Sem CR: parte dos arquivos sai do git com CRLF.
 local function src(path)
@@ -15,32 +15,7 @@ local function fn(s, pattern)
     return s:match(pattern) or ""
 end
 
-describe("diário de missões: abas do jogo na base", function()
-    local quest = src("Carbonite.Quests/QuestWindow.lua")
-
-    it("liga as abas do jogo antes de criar as abas", function()
-        local open = fn(quest, "function Nx%.Quest%.List:Open%(%).-\nend\n")
-        local use = open:find("bar:UseGameTabs()", 1, true)
-        local add = open:find('bar:AddTab (L["Current"]', 1, true)
-        expect(use ~= nil and add ~= nil and use < add).toBe(true)
-    end)
-
-    it("pendura as abas sob a janela, como na ficha de personagem", function()
-        expect(has(quest, 'f:SetPoint ("TOPLEFT", win.Frm, "BOTTOMLEFT", 11, 2)')).toBe(true)
-        expect(has(quest, "self.TabsUnder = true")).toBe(true)
-    end)
-
-    it("com as abas sob a janela, o conteúdo vai até a base", function()
-        local attach = fn(quest, "function Nx%.Quest%.List:AttachFrames%(%).-\nend\n")
-        expect(has(attach, "self.TabsUnder and 1")).toBe(true)
-        -- A altura das abas vem da barra (32 com as abas do jogo), não da classe.
-        expect(has(attach, "self.Bar:GetHeight()")).toBe(true)
-    end)
-
-    it("a busca fica no topo do conteúdo, alinhada à esquerda", function()
-        expect(has(quest, "win:Attach (self.FilterFrm, 0, 1, 0, 18)")).toBe(true)
-    end)
-end)
+-- Abas do diário: tests/spec/diario_abas_topo_spec.lua (faixa de ferramentas).
 
 describe("Monitor de missões", function()
     local watch = src("Carbonite.Quests/WatchWindow.lua")

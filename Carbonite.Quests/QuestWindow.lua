@@ -164,6 +164,80 @@ function Nx.Quest.List.FitColumns (list, width)
     return changed
 end
 
+-------------------------------------------------------------------------------
+-- Tabs as buttons on the window's tool strip (theme "Blizzard", #42): the
+-- grey buttons of the Notes, the active one pressed (gold). Same calls as a
+-- Nx.TabBar (SetUser, Select, GetHeight), so callers need not know.
+-------------------------------------------------------------------------------
+
+local ToolTabs = {}
+ToolTabs.__index = ToolTabs
+Nx.Quest.List.ToolTabs = ToolTabs
+
+ToolTabs.MinW = 64          -- narrowest tab button
+ToolTabs.TextPad = 24       -- room around a label
+ToolTabs.Height = 22        -- as the Notes buttons
+
+function ToolTabs:Create (win, names)
+
+    local tabs = setmetatable ({ Tabs = {}, Win = win }, self)
+    local strip = win:GetToolBar()
+    local items = {}
+    for i, name in ipairs (names) do
+        local but = Nx.Button:Create (strip, "TxtGreyB", name, nil, 0, 0, "TOPLEFT",
+                                      self.MinW, self.Height, self.OnBut, tabs)
+        but:SetId (i)
+        local textW = but.FStr and but.FStr:GetStringWidth() or 0
+        but.Frm:SetWidth (max (self.MinW, math.ceil (textW + self.TextPad)))
+        tabs.Tabs[i] = { But = but, Name = name }
+        items[i] = { but, "action" }
+    end
+    tabs.Width = win:ArrangeToolBar (items)
+    return tabs
+end
+
+function ToolTabs:SetUser (user, func)
+    self.User = user
+    self.UserFunc = func
+end
+
+-- Nothing under the content: the strip is above it.
+function ToolTabs:GetHeight()
+    return 0
+end
+
+-- Press the active tab and release the others, without notifying.
+function ToolTabs:SetActive (index)
+
+    self.Index = index
+    local active = Carbonite.UI.Skin:TextCode ("tabTextActive")
+    for i, tab in ipairs (self.Tabs) do
+        local on = i == index
+        tab.But:SetPressed (on)
+        tab.But:SetText (on and active .. tab.Name or tab.Name)
+    end
+end
+
+function ToolTabs:Select (index, force)
+
+    if not self.Tabs[index] or (not force and self.Index == index) then
+        return
+    end
+    self:SetActive (index)
+    if self.UserFunc then
+        self.UserFunc (self.User, index)
+    end
+end
+
+-- A click flips the toggle; on the active tab, keep it pressed.
+function ToolTabs:OnBut (but, id)
+    if not but:GetPressed() then
+        but:SetPressed (true)
+        return
+    end
+    self:Select (id, true)
+end
+
 -- Quest list
 -------------------------------------------------------------------------------
 
@@ -573,31 +647,35 @@ function Nx.Quest.List:Open()
 
     -- Create Tab Bar
 
-    local bar = TabBar:Create (nil, win.Frm, 1, 1)
-    self.Bar = bar
+    local tabNames = { L["Current"], L["History"], L["Database"], L["Player"] }
+    local bar
 
-    -- Theme "Blizzard" (#42): the game's bottom tabs hang under the window,
-    -- as on the character sheet; the content then runs to the bottom metal.
-    if bar:UseGameTabs() then
-        self.TabsUnder = true
-        local f = bar.Frm
-        f:ClearAllPoints()
-        f:SetPoint ("TOPLEFT", win.Frm, "BOTTOMLEFT", 11, 2)
-        f:SetPoint ("TOPRIGHT", win.Frm, "BOTTOMRIGHT", -11, 2)
-        f:SetHeight (bar:GetHeight())
+    -- Theme "Blizzard" (#42): the tabs are buttons on the tool strip under
+    -- the title band, in the Notes style; the content runs to the bottom.
+    if Carbonite.UI.Skin:GameStyle() then
+        bar = ToolTabs:Create (win, tabNames)
+        self.TabsOnTop = true
+        -- Wide enough for every tab button.
+        win.Frm:SetResizeBounds (max (250, bar.Width + 2 * (win.BorderW or 0) + 8), 120)
     else
+        bar = TabBar:Create (nil, win.Frm, 1, 1)
         local tbH = bar:GetHeight()
         win:Attach (bar.Frm, 0, 1, -tbH, 1)
     end
+    self.Bar = bar
 
     bar:SetUser (self, self.OnTabBar)
 
     self.TabSelected = 1
 
-    bar:AddTab (L["Current"], 1, nil, true)
-    bar:AddTab (L["History"], 2)
-    bar:AddTab (L["Database"], 3)
-    bar:AddTab (L["Player"], 4)
+    if self.TabsOnTop then
+        bar:SetActive (1)
+    else
+        bar:AddTab (tabNames[1], 1, nil, true)
+        bar:AddTab (tabNames[2], 2)
+        bar:AddTab (tabNames[3], 3)
+        bar:AddTab (tabNames[4], 4)
+    end
 
     -- Old attach
 
@@ -627,8 +705,8 @@ function Nx.Quest.List:AttachFrames()
     local win = self.Win
     local list = self.List
     -- Bottom of the content: above the tab bar, or the whole height (1) when
-    -- the tabs hang under the window.
-    local bottom = self.TabsUnder and 1 or -(self.Bar and self.Bar:GetHeight() or Nx.TabBar:GetHeight())
+    -- the tabs are on the tool strip at the top.
+    local bottom = self.TabsOnTop and 1 or -(self.Bar and self.Bar:GetHeight() or Nx.TabBar:GetHeight())
 
     if Nx.qdb.profile.Quest.SideBySide then
 
