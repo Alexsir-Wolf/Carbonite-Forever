@@ -5116,7 +5116,7 @@ function Nx.Button:UpdateAtlasLook (typ, f, tx)
     local glow = f.NxGlow
     if typ.GlowPressed and pressed then
         if not glow then
-            glow = f:CreateTexture (nil, "ARTWORK")
+            glow = f:CreateTexture (nil, "ARTWORK", nil, 7)   -- over the art
             glow:SetAllPoints (tx)
             glow:SetBlendMode ("ADD")
             f.NxGlow = glow
@@ -5125,8 +5125,20 @@ function Nx.Button:UpdateAtlasLook (typ, f, tx)
         local gv = typ.UpUV
         if gv then glow:SetTexCoord (gv[1], gv[2], gv[3], gv[4]) end
         glow:Show()
+        -- The rim alone is faint on the dark grey: a gold wash inside too.
+        local fill = f.NxGlowFill
+        if not fill then
+            fill = f:CreateTexture (nil, "ARTWORK", nil, 6)
+            fill:SetPoint ("TOPLEFT", tx, "TOPLEFT", 3, -3)
+            fill:SetPoint ("BOTTOMRIGHT", tx, "BOTTOMRIGHT", -3, 3)
+            fill:SetBlendMode ("ADD")
+            f.NxGlowFill = fill
+        end
+        fill:SetColorTexture (1, .82, 0, .22)
+        fill:Show()
     elseif glow then
         glow:Hide()
+        if f.NxGlowFill then f.NxGlowFill:Hide() end
     end
 
     local it = f.NxIcon
