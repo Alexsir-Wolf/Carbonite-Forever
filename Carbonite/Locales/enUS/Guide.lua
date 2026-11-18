@@ -68,7 +68,6 @@ L["Mana Loom"] = true
 L["Moonwell"] = true
 L["Name"] = true
 L["Info"] = true
-L["Back "] = true
 
 -- Menus
 L["Delete"] = true

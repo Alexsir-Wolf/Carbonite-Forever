@@ -68,7 +68,6 @@ L["Altar Of Shadows"] = "Altare delle Ombre"
 L["Lightforged Beacon"] = "Faro Forgialuce"
 L["Mana Loom"] = "Telaio di Mana"
 L["Moonwell"] = "Pozzo Lunare"
-L["Back "] = "Indietro "
 
 -- Menus
 L["Delete"] = "Cancella"

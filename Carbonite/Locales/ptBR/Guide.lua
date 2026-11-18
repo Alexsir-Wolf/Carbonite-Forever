@@ -72,7 +72,6 @@ L["Mana Loom"] = "Tear de Mana"
 L["Moonwell"] = "Poço Lunar"
 L["Name"] = "Nome"
 L["Info"] = "Informações"
-L["Back "] = "Voltar "
 
 -- Menus
 L["Delete"] = "Apagar"
