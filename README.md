@@ -4,13 +4,39 @@ O **Carbonite-Forever** reúne mapa, quests, navegação e utilidades num só ad
 
 Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic)](https://github.com/IrcDirk/Carbonite-All-in-One-Retail-Classic), mantido por IrcDirk. Ela traz o Carbonite completo mais correções e recursos voltados ao Forever. Para Retail e para os outros clientes Classic, use a versão oficial.
 
-## O que esta edição acrescenta
+## Diferenças do Carbonite original
+
+### Tema Blizzard (padrão)
+
+As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas o tema Blizzard já vem ligado; os outros temas continuam em Opções > Aparência.
+
+- Moldura metálica das janelas do jogo, com faixa de título e faixa de ferramentas; o minimapa integrado usa a versão compacta.
+- Fonte original do jogo (Friz Quadrata) em todo o addon, inclusive no Monitor de missões.
+- Menus e pop-ups com a moldura e a fonte do tooltip do jogo.
+- Barra de rolagem fina do jogo em todas as listas e textos.
+- Abas com o brilho dourado de botão selecionado.
+- Diário de missões no layout do diário original, com o pergaminho nos detalhes.
+- Opções dentro do painel de configurações do jogo (Esc > Opções > AddOns > Carbonite-Forever).
+- Botão do Carbonite pelo LibDBIcon, aceito pelos coletores de botões de minimapa.
+
+![Diário de missões no tema Blizzard](docs/img/diario-missoes.jpg)
+
+<img src="docs/img/minimapa-monitor.jpg" alt="Minimapa integrado e Monitor de missões no tema Blizzard" width="420">
+
+### Recursos novos
 
 | Recurso | O que faz |
 |---|---|
+| **Rota até o lugar indicado pelo guarda** | Quando o guarda da cidade indica onde fica um instrutor, um banco ou outro serviço, o Carbonite marca o NPC no mapa pelo Guia e traça a rota até ele. |
+| **Planta da masmorra com M** | Dentro de masmorras, a tecla **M** abre a planta com a rota pelos chefes, os retratos, o minimapa ao vivo e as quests do seu registro para aquele lugar. |
+| **Jornada do personagem** | Diário com as subidas de nível, quests concluídas, zonas visitadas, mortes e masmorras de cada personagem. |
+| **Fila de destinos** | Vários destinos em sequência, com a janela Destinos para ordenar, ir agora, remover e inverter. |
+| **Rotas mais espertas** | A rota pode começar pela pedra de regresso ou por um teleporte de mago e, com o GatherLite, a rota a pé contorna montanhas e água funda. |
+| **Navios, zepelins e bonde** | Os transportes aparecem em movimento no mapa, com o horário no píer. |
 | **Quests do Forever a partir do QuestieDB** | A base de quests do Carbonite não tem cerca de 1.300 quests do Forever. Com o QuestieDB instalado, o Carbonite as lê durante o jogo e mostra quem dá cada quest, onde entregar e os objetivos (onde ficam os NPCs, os objetos e quem dropa os itens). Acompanha as atualizações do QuestieDB sem precisar de uma versão nova desta edição. As quests que o Carbonite já tem não mudam. |
 | **Narração do Spoken na lista de quests** | O Carbonite esconde o rastreador de missões da Blizzard, que é onde o Spoken põe o botão de narração. Esta edição coloca o botão ▶ ao lado do ícone de cada quest na lista do Carbonite. Ele só aparece nas quests que o Spoken narra. |
 | **Minimapa ao vivo em masmorras** | O Forever não informa mapa nem posição dentro de masmorras, e o mapa do Carbonite ficava em branco ou mostrava o lugar errado. Agora a janela mostra o minimapa da Blizzard ao vivo, com o nome da masmorra. O mapa estático da masmorra continua no menu do mapa, em "Dungeon Maps". |
+| **Em português** | Textos fixos do núcleo, das quests, das notas, do armazém e das janelas de informação traduzidos, e um assistente de primeira execução com modo básico de opções. |
 
 ## O que o Carbonite faz
 
