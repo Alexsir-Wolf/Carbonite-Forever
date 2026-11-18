@@ -387,6 +387,7 @@ function Nx.Info:Init()
 
 	local dinfo = Nx.idb.profile.InfoData
 	self:OnTimer()
+	self:StartTimer()
 --	self:Create (1)
 
 	for n = 1, 10 do
@@ -497,6 +498,17 @@ function Nx.Info:OnTimer()
 	end
 
 	return .1
+end
+
+-- OnTimer refreshes the player/target vars and redraws visible windows; nothing
+-- else calls it, so without this poll the windows stay empty or show login values.
+function Nx.Info:StartTimer()
+	if self.Ticker then
+		self.Ticker:Cancel()
+	end
+	self.Ticker = C_Timer.NewTicker (.1, function()
+		Nx.Info:OnTimer()
+	end)
 end
 
 ---------------------------------------------------------------------------------------
@@ -859,6 +871,8 @@ function Nx.Info:ToggleShow()
 			info.Win:Show (not info.Win:IsShown())
 		end
 	end
+
+	self:OnTimer()		-- Fill the windows now instead of on the next tick
 end
 
 ---------------------------------------------------------------------------------------
