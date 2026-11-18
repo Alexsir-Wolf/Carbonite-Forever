@@ -45,7 +45,7 @@ end)
 describe("Monitor de missões", function()
     local watch = src("Carbonite.Quests/WatchWindow.lua")
 
-    it("o Monitor redimensionável pede a moldura completa; o fixo segue sem moldura", function()
+    it("o Monitor é a única janela transparente: sem moldura, como o rastreador do jogo", function()
         local open = fn(watch, "function Nx%.Quest%.Watch:Open%(%).-\nend\n")
         expect(has(open, "if border ~= false then\n        win:UseGameFrame()")).toBe(true)
         expect(has(open, "self.GameChrome = win.GameFrameOn and true or false")).toBe(true)

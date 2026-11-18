@@ -2420,7 +2420,7 @@ function Nx.Window:Lock (lock, fullLockout)
 
     svdata["Lk"] = lock or nil
 
-    self:SetBordersFade (lock and 0 or self.BackgndFade)
+    self:SetBordersFade ((lock and not self.GameFrameOn) and 0 or self.BackgndFade)
 
     if self.ButClose then
         if lock then
@@ -4215,6 +4215,11 @@ function Nx.Window:OnUpdate (elapsed)
     else
 
         win.BackgndFadeTarget = win.BackgndFadeOut
+    end
+    -- The game's frame is solid, as the game's windows: no fade out (#42).
+    -- The quest watch, the one see-through window, opts out of the frame.
+    if win.GameFrameOn then
+        win.BackgndFadeTarget = 1
     end
 
     local fade = Nx.Util_StepValue (win.BackgndFade, win.BackgndFadeTarget, elapsed * 2)

@@ -566,11 +566,10 @@ function Nx.Quest.Watch:Open()
 
     win:SetTitleXOff (84 + xo, -1 - yo)
 
-    -- Theme "Blizzard" (#42): the resizable watch wears the game's frame,
-    -- the fixed one stays frameless, like the game's objective tracker.
-    if border ~= false then
-        win:UseGameFrame()
-    end
+    -- Theme "Blizzard" (#42): the watch stays frameless, like the game's
+    -- objective tracker. It sizes itself to its list, which the metal frame's
+    -- band and toolbar don't follow (the list spilled out under the frame).
+    win:UseGameFrame (false)
     self.GameChrome = win.GameFrameOn and true or false
 
 --    win:SetTitle ("[  ]")
