@@ -24,7 +24,7 @@ local function setup(opts)
         GetDisplayableMapForPlayer = function() return 1432 end,
     }
     env.Nx = {
-        db = { char = opts.char or {}, profile = { Map = opts.mapOpts or {} } },
+        db = { char = opts.char or {}, profile = { Map = opts.mapOpts or { RouteTeleports = true } } },
         Travel = { Speed = .5, GetRidingSkill = function() return 0 end },
         GuideData = { Innkeeper = opts.guide or {} },
         Map = {
@@ -182,6 +182,13 @@ describe("Teleports: escolha", function()
     it("opção desligada: a rota não muda", function()
         local tp = setup({ char = saved, mapOpts = { RouteTeleports = false } })
         expect(tp:Plan(straightPath({}), 1432, 0, 0, 1432, 1000, 0, "Goto")).toBeNil()
+    end)
+
+    it("vem desligada por padrão: sem a opção gravada, a rota não muda", function()
+        local tp = setup({ char = saved, mapOpts = {} })
+        expect(tp:Plan(straightPath({}), 1432, 0, 0, 1432, 1000, 0, "Goto")).toBeNil()
+        local defaults = loader.read("Carbonite/Modules/PlayerCharacter/Defaults.lua")
+        expect(defaults:find("RouteTeleports = false,", 1, true) ~= nil).toBe(true)
     end)
 
     it("guarda a escolha por alguns segundos", function()

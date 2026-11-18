@@ -273,7 +273,7 @@ end
 
 local function enabled()
     local db = _G.Nx and _G.Nx.db and _G.Nx.db.profile
-    return not (db and db.Map and db.Map.RouteTeleports == false)
+    return db and db.Map and db.Map.RouteTeleports == true or false
 end
 
 local function routeFrom(makePath, mapId, x, y, dstMapId, dstX, dstY, targetType)

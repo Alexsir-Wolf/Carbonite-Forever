@@ -854,10 +854,10 @@ local function mapConfig()
                             width = "full",
                             desc = L["When enabled, the route starts with your hearthstone or a mage teleport when that arrives sooner. Needs travel routing."],
                             get = function()
-                                return Nx.db.profile.Map.RouteTeleports ~= false
+                                return Nx.db.profile.Map.RouteTeleports == true
                             end,
                             set = function()
-                                Nx.db.profile.Map.RouteTeleports = Nx.db.profile.Map.RouteTeleports == false
+                                Nx.db.profile.Map.RouteTeleports = Nx.db.profile.Map.RouteTeleports ~= true
                                 local tp = _G.Carbonite.Modules.Travel and _G.Carbonite.Modules.Travel.Teleports
                                 if tp then
                                     tp:Forget()
