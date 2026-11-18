@@ -427,23 +427,33 @@ end
 -- (h / max, h - prev, h * 100) throws "attempt to perform arithmetic on
 -- a secret number value". Convert to a plain number at the boundary so
 -- every downstream consumer (percentage, delta, format) sees a real
--- number. Returns 0 when conversion fails — for that tick the readout
--- snaps to 0 and recovers automatically when the taint clears.
+-- number. Returns nil (unknown) when the value is secret: some clients
+-- (WoW Forever) return a secret UnitHealth("player") even out of combat,
+-- and reading it as 0 made the windows show "HP 0" and fire IfLT checks.
+-- Items and conditions that depend on an unknown value stay hidden.
 local function _safeN (v)
 	if v == nil or (issecretvalue and issecretvalue (v)) then
-		return 0
+		return nil
 	end
 	local ok, r = pcall (function () return v + 0 end)
-	return ok and r or 0
+	if ok then
+		return r
+	end
 end
 
 local function _safeRatio (a, b)
 	a, b = _safeN (a), _safeN (b)
+	if not a or not b then
+		return nil
+	end
 	if b == 0 then
 		return 0
 	end
 	return a / b
 end
+
+Nx.Info.SafeN = _safeN
+Nx.Info.SafeRatio = _safeRatio
 
 function Nx.Info:OnTimer()
 
@@ -476,15 +486,15 @@ function Nx.Info:OnTimer()
 
 	if tarName then
 
-		local powerMax = _safeN (UnitPowerMax ("target"))
+		local powerMax = _safeN (UnitPowerMax ("target")) or 0
 		m = powerMax > 0 and 0 or -1
 		if not UnitIsDeadOrGhost ("target") then
 			h = _safeN (UnitHealth ("target"))
 			m = powerMax > 0 and _safeN (UnitPower ("target")) or -1
 		end
 
-		vars["THealthMax"] = max (_safeN (UnitHealthMax ("target")), 1)
-		vars["TManaMax"]   = max (_safeN (UnitPowerMax  ("target")), 1)
+		vars["THealthMax"] = max (_safeN (UnitHealthMax ("target")) or 1, 1)
+		vars["TManaMax"]   = max (_safeN (UnitPowerMax  ("target")) or 1, 1)
 	end
 	vars["THealth"] = _safeN (h)
 	vars["TMana"]   = (m == -1) and -1 or _safeN (m)
@@ -989,8 +999,11 @@ function Nx.Info:UpdateItems()
 					local cmd, v1, v2, v3, v4 = strsplit (";", cap)	-- FIX for multiple params!
 					local func = self.ItemFuncs[cmd]
 					if func then
-						color, text = func (self, v1, v2, v3, v4)
-						if not text then
+						-- An item that errors (e.g. arithmetic on a secret cast or
+						-- cooldown time) hides its line instead of breaking the window.
+						local ok
+						ok, color, text = pcall (func, self, v1, v2, v3, v4)
+						if not ok or not text then
 							break
 						end
 					end
@@ -1008,7 +1021,7 @@ function Nx.Info:UpdateItems()
 			str = format ("#%d %s = ", index, gsub (data, "|", "||")) .. str
 		end
 
-		if #str > 0 then
+		if strfind (str, "%S") then		-- Skip lines left with only the indent of a hidden item
 
 --			Nx.prtStrHex ("Info:", str)
 
@@ -1042,7 +1055,11 @@ function Nx.Info:CalcBarHPercent (color, perName, w, h)
 	w = tonumber (w) or 50
 	h = tonumber (h) or 10
 
-	local barW = (self.Vars[perName] or 0) * w		-- perNamemax (0, min ((self.Val1 or 0) / (self.Val2 or 1), 1))
+	local per = self.Vars[perName]
+	if not per then
+		return		-- Unknown (secret) value
+	end
+	local barW = per * w		-- perNamemax (0, min ((self.Val1 or 0) / (self.Val2 or 1), 1))
 
 	local xo = w
 
@@ -1081,17 +1098,27 @@ function Nx.Info:CalcFPS()
 end
 
 function Nx.Info:CalcHealth()
-	return "|cffc0c0c0", format ("%d", self.Vars["Health"])
+	local v = self.Vars["Health"]
+	if v then
+		return "|cffc0c0c0", format ("%d", v)
+	end
 end
 
 function Nx.Info:CalcHealthPercent()
-	return "|cffe0e0e0", format ("%d", self.Vars["Health%"] * 100)
+	local v = self.Vars["Health%"]
+	if v then
+		return "|cffe0e0e0", format ("%d", v * 100)
+	end
 end
 
 function Nx.Info:CalcHealthChange()
 
-	local i = self.Vars["Health"] - self.HealthLast
-	self.HealthLast = self.Vars["Health"]
+	local cur, last = self.Vars["Health"], self.HealthLast
+	self.HealthLast = cur
+	if not cur or not last then
+		return
+	end
+	local i = cur - last
 
 	if i == 0 then
 		i = self.HealthLastVal
@@ -1109,17 +1136,27 @@ function Nx.Info:CalcHealthChange()
 end
 
 function Nx.Info:CalcMana()
-	return "|cffc0c0c0", format ("%d", self.Vars["Mana"])
+	local v = self.Vars["Mana"]
+	if v then
+		return "|cffc0c0c0", format ("%d", v)
+	end
 end
 
 function Nx.Info:CalcManaPercent()
-	return "|cffe0e0e0", format ("%d", self.Vars["Mana%"] * 100)
+	local v = self.Vars["Mana%"]
+	if v then
+		return "|cffe0e0e0", format ("%d", v * 100)
+	end
 end
 
 function Nx.Info:CalcManaChange()
 
-	local i = self.Vars["Mana"] - self.ManaLast
-	self.ManaLast = self.Vars["Mana"]
+	local cur, last = self.Vars["Mana"], self.ManaLast
+	self.ManaLast = cur
+	if not cur or not last then
+		return
+	end
+	local i = cur - last
 
 	if i == 0 then
 		i = self.ManaLastVal
@@ -1201,7 +1238,7 @@ end
 
 function Nx.Info:CalcTargetHealth()
 
-	if self.Vars["TName"] then
+	if self.Vars["TName"] and self.Vars["THealth"] then
 		return "|cffc0c0c0", format ("%d", self.Vars["THealth"])
 	end
 end
@@ -1212,22 +1249,26 @@ function Nx.Info:CalcTargetHealthPercent()
 		-- _safeRatio guards against retail's secret-number taint; see
 		-- comment near _safeN at the top of this file.
 		self.Vars["THealth%"] = _safeRatio (self.Vars["THealth"], self.Vars["THealthMax"])
-		return "|cffe0e0e0", format ("%d", self.Vars["THealth%"] * 100)
+		if self.Vars["THealth%"] then
+			return "|cffe0e0e0", format ("%d", self.Vars["THealth%"] * 100)
+		end
 	end
 end
 
 function Nx.Info:CalcTargetMana()
 
-	if self.Vars["TMana"] >= 0 then
+	if (self.Vars["TMana"] or -1) >= 0 then
 		return "|cffc0c0c0", format ("%d", self.Vars["TMana"])
 	end
 end
 
 function Nx.Info:CalcTargetManaPercent()
 
-	if self.Vars["TMana"] >= 0 then
+	if (self.Vars["TMana"] or -1) >= 0 then
 		self.Vars["TMana%"] = _safeRatio (self.Vars["TMana"], self.Vars["TManaMax"])
-		return "|cffe0e0e0", format ("%d", self.Vars["TMana%"] * 100)
+		if self.Vars["TMana%"] then
+			return "|cffe0e0e0", format ("%d", self.Vars["TMana%"] * 100)
+		end
 	end
 end
 
@@ -1399,19 +1440,26 @@ function Nx.Info:CalcIfFalse (varName)
 	end
 end
 
+-- Unknown (secret) values never pass a comparison
 function Nx.Info:CalcIfLT (val, varName)
-	if (self.Vars[varName] or 0) < (tonumber (val) or 1) then
+	local v = self.Vars[varName]
+	if v and v < (tonumber (val) or 1) then
 		return "", ""
 	end
 end
 
 function Nx.Info:CalcIfLTOrCombat (val, varName)
-	if Nx.InCombat or (self.Vars[varName] or 0) < (tonumber (val) or 1) then
+	local v = self.Vars[varName]
+	if v and (Nx.InCombat or v < (tonumber (val) or 1)) then
 		return "", ""
 	end
 end
 
 function Nx.Info:CalcIfMana (val)
+
+	if not self.Vars["Mana%"] then
+		return
+	end
 
 	if self.ManaInvert then
 		if self.Vars["Mana%"] > 1 - (tonumber (val) or 1) then

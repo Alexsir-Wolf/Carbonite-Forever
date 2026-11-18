@@ -119,3 +119,87 @@ describe("Atualização periódica das janelas de info", function()
         expect(src).toContain("self:StartTimer()")
     end)
 end)
+
+describe("Valores secretos de vida e mana", function()
+    local SECRET = setmetatable({}, { __add = function() error("secret") end })
+
+    local function load(inCombat, target)
+        local env = wow.lenientEnv({ strsplit = split })
+        env.Nx = wow.namespace({ InCombat = inCombat })
+        env.issecretvalue = function(v) return v == SECRET end
+        env.UnitHealth = function() return SECRET end
+        env.UnitHealthMax = function() return 977 end
+        env.UnitPower = function() return SECRET end
+        env.UnitPowerMax = function() return 1650 end
+        env.UnitIsDeadOrGhost = function() return false end
+        env.UnitName = function(unit) if unit == "target" then return target end end
+        env.UnitCastingInfo = function() return nil end
+        env.UnitChannelInfo = function() return nil end
+        env.GetComboPoints = function() return 0 end
+        env.GetActionCooldown = function() return SECRET, SECRET end
+        env.UnitDetailedThreatSituation = function() return nil end
+        loader.run(env, "Carbonite.Info/NxInfo.lua")
+        local Info = env.Nx.Info
+        Info.Vars, Info.Infos = {}, {}
+        Info.ItemFuncs = {
+            ["BarH%"] = Info.CalcBarHPercent, Cast = Info.CalcCast, Combo = Info.CalcComboPoints,
+            Cooldown = Info.CalcCooldown, Health = Info.CalcHealth, ["Health%"] = Info.CalcHealthPercent,
+            HealthChange = Info.CalcHealthChange, IfCombat = Info.CalcIfCombat,
+            IfLTOrCombat = Info.CalcIfLTOrCombat, IfMana = Info.CalcIfMana, Mana = Info.CalcMana,
+            ["Mana%"] = Info.CalcManaPercent, ManaChange = Info.CalcManaChange,
+            THealth = Info.CalcTargetHealth, ["THealth%"] = Info.CalcTargetHealthPercent,
+            TMana = Info.CalcTargetMana, ["TMana%"] = Info.CalcTargetManaPercent,
+            ["Threat%"] = Info.CalcThreatPercent,
+        }
+        Info:OnTimer()
+        return Info
+    end
+
+    local WINDOW1 = {
+        "<IfLTOrCombat;1;Health%><Health><c>HP <t> <HealthChange><c><t> <IfCombat>|cffff4040* <Threat%;player><c><t>",
+        "<IfLTOrCombat;1;Health%>     <Health%><c><t>%<BarH%;G;Health%><t>",
+        "<IfMana><Mana><c>MP <t> <ManaChange><c><t>",
+        "<IfMana>     <Mana%><c><t>%<BarH%;B;Mana%><t>",
+        "<Combo><c><t>", "<Cooldown><c><t>", "<Cast><c><t>",
+    }
+    local WINDOW2 = {
+        "<THealth><c>HP <t>", "     <THealth%><c><t>%<BarH%;G;THealth%><t>",
+        "<TMana><c>MP <t>", "     <TMana%><c><t>%<BarH%;B;TMana%><t>", "<Cast;target><c><t>",
+    }
+
+    local function render(Info, index, items)
+        local info = setmetatable({ Index = index, Data = { Items = items }, List = fakeList() },
+            { __index = Info })
+        info:UpdateItems()
+        return info.List
+    end
+
+    it("viram desconhecidos (nil), não zero", function()
+        local Info = load(false)
+        expect(Info.Vars["Health"]).toBeNil()
+        expect(Info.Vars["Health%"]).toBeNil()
+        expect(Info.Vars["Mana"]).toBeNil()
+        expect(Info.Vars["Mana%"]).toBeNil()
+        expect(Info.Vars["HealthMax"]).toBe(977)
+    end)
+
+    it("a janela 1 esconde vida e mana desconhecidas e mostra só a dica", function()
+        local list = render(load(false), 1, WINDOW1)
+        expect(#list.data).toBe(1)
+        expect(list.rows[1]).toContain("Info #1: nothing to show now")
+    end)
+
+    it("a janela 1 também esconde em combate, sem erro de aritmética", function()
+        local list = render(load(true), 1, WINDOW1)
+        expect(#list.data).toBe(1)
+        expect(list.rows[1]).toContain("Info #1: nothing to show now")
+    end)
+
+    it("a janela 2 esconde vida e mana secretas do alvo", function()
+        local Info = load(false, "Lobo")
+        expect(Info.Vars["THealth"]).toBeNil()
+        local list = render(Info, 2, WINDOW2)
+        expect(#list.data).toBe(1)
+        expect(list.rows[1]).toContain("Info #2: nothing to show now")
+    end)
+end)
