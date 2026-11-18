@@ -448,6 +448,10 @@ function Nx.Quest.Watch:ApplyModernMinWidth()
         return
     end
     local f = win.Frm
+    -- The width to keep when minimized: the header stays this wide (#42).
+    if win:GetLayoutMode() ~= "Min" then
+        self.NormalW = f:GetWidth()
+    end
     local fixed = self.List and self.List.ShowAll
     local lineH = self.List and self.List:GetLineH() or 13
     -- A resizable watch restored with a tiny saved height renders zero rows.
@@ -502,12 +506,19 @@ function Nx.Quest.Watch:UpdateModernTitle (cur, maxQ)
     self:ApplyModernMinWidth()
 end
 
+-- Minimized, only the quests go: the header keeps the window's width and
+-- its title row (#42). It used to shrink to the title and keep an empty
+-- band where the tool row was.
 function Nx.Quest.Watch:FitMinimizedWidth()
     local win = self.Win
-    if not win or win:GetLayoutMode() ~= "Min" then
+    if not win or win:GetLayoutMode() ~= "Min" or InCombatLockdown() then
         return
     end
-    win.Frm:SetWidth (max (125, self:GetModernMinWidth(), self.ModernMinW or 0))
+    local need = max (125, self:GetModernMinWidth(), self.ModernMinW or 0)
+    win.Frm:SetWidth (max (need, self.NormalW or 0))
+    if self.Modern and not self.GameChrome then
+        win.Frm:SetHeight (floor (win.BorderH * 2 + MODERN_TITLE_H + 2 + .5))
+    end
     win:Adjust()
 end
 
@@ -584,6 +595,8 @@ function Nx.Quest.Watch:Open()
     win:UseGameFrame (false)
     -- Transparent, with no edge either: the old border drew a box around the header.
     win.NoEdgeInGameStyle = true
+    -- No inset either, so the header is as wide as the list.
+    win:ApplySkinBackdrop()
     self.GameChrome = win.GameFrameOn and true or false
 
 --    win:SetTitle ("[  ]")

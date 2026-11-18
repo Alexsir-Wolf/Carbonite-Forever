@@ -1823,6 +1823,31 @@ function Nx.Window:CreateBorders()
     self.Frm:SetBackdrop (bk)
 end
 
+---
+-- The backdrop of this window: the skin's, or for a frameless window of the
+-- game theme (the quest watch) the same background with no edge and no inset,
+-- so its header is as wide as the list under it (#42).
+--
+function Nx.Window:GetSkinBackdrop()
+    local bk = Nx.Skin:GetBackdrop()
+    if not (self.NoEdgeInGameStyle and Carbonite.UI.Skin:GameStyle()) then
+        return bk
+    end
+    local cache = Nx.Window.FramelessBackdrops or {}
+    Nx.Window.FramelessBackdrops = cache
+    if not cache[bk] then
+        cache[bk] = { bgFile = bk.bgFile, tile = bk.tile, tileSize = bk.tileSize,
+            insets = { left = 0, right = 0, top = 0, bottom = 0 } }
+    end
+    return cache[bk]
+end
+
+--- Put the backdrop back after NoEdgeInGameStyle changes, with its colors.
+function Nx.Window:ApplySkinBackdrop()
+    self.Frm:SetBackdrop (self:GetSkinBackdrop())
+    self.BackgndFade = (self.BackgndFadeTarget or 1) + .0001        -- Cause refresh
+end
+
 function Nx.Window:SetBordersFade (fade)
 
     if self.Border then
@@ -1871,7 +1896,7 @@ function Nx.Window:ResetBackdrops()
                                           or Carbonite.UI.Skin:GetGameFrame (win.GameFrameVariant or nil)) then
                     win:ApplyGameFrame()        -- Its own backdrop and header
                 else
-                    win.Frm:SetBackdrop (bk)
+                    win.Frm:SetBackdrop (win.NoEdgeInGameStyle and win:GetSkinBackdrop() or bk)
                     win:PlaceTitleBar()        -- The new border may be thicker
                 end
                 win.BackgndFade = win.BackgndFadeTarget + .0001        -- Cause refresh
@@ -2020,7 +2045,7 @@ function Nx.Window:ApplyGameFrame()
         end
     end
 
-    f:SetBackdrop (on and spec.backdrop or Nx.Skin:GetBackdrop())
+    f:SetBackdrop (on and spec.backdrop or self:GetSkinBackdrop())
     self.GameFrameSpec = on and spec or nil
 
     self:StyleTitleBar()
