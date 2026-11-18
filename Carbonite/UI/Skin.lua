@@ -75,6 +75,20 @@ Skin.themes = {
         },
         borderColor = "1|1|1|1",
         bgColor     = "1|1|1|1",
+        -- Menus wear the game's tooltip (#42, R11): navy background, silver
+        -- rounded edge, white text of the "menu" font role.
+        menu = {
+            backdrop = {
+                bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile     = true,
+                tileSize = 16,
+                edgeSize = 16,
+                insets   = { left = 5, right = 5, top = 5, bottom = 5 },
+            },
+            bgColor     = "0.09|0.09|0.19|0.95",
+            borderColor = "1|1|1|1",
+        },
         -- Lists and search fields copy the game's windows (Skin:GameStyle).
         gameStyle   = true,
         tokens = {
@@ -100,7 +114,7 @@ Skin.themes = {
             listHeaderText = "1|0.82|0|1",
             headerRule  = "1|0.82|0|0.8",
             buttonText  = "1|0.82|0|1",
-            menuHover   = "0.45|0.36|0.12|1",
+            menuHover   = "0.30|0.40|0.75|1",
             panelBg     = "0.08|0.06|0.04|0.7",
         },
     },

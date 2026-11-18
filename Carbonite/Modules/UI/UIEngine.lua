@@ -5573,6 +5573,15 @@ function Nx.Menu:SetSkin()
 
     local f = self.MainFrm
 
+    -- The Blizzard theme dresses menus as the game's tooltip (#42, R11).
+    local tip = Carbonite.UI.Skin:GetActive().menu
+    if tip then
+        f:SetBackdrop (tip.backdrop)
+        f:SetBackdropColor (Nx.Util_str2rgba (tip.bgColor))
+        f:SetBackdropBorderColor (Nx.Util_str2rgba (tip.borderColor))
+        return
+    end
+
     local bk = Nx.Skin:GetBackdrop()
     f:SetBackdrop (bk)
 
@@ -5581,6 +5590,18 @@ function Nx.Menu:SetSkin()
 
     local col = Nx.Skin:GetBorderCol()
     f:SetBackdropBorderColor (col[1], col[2], col[3], tonumber(col[4]))
+end
+
+---
+-- Font of the menu texts and the height of an item line: the tooltip's
+-- 12 px "menu" role in the Blizzard theme, the "Menu Font" slot otherwise.
+--
+function Nx.Menu:GetFont()
+    if Carbonite.UI.Skin:GetActive().menu then
+        local Font = Carbonite.UI.Font
+        return Font:GetRole ("menu"), max (12, Font:GetHeight ("Role.menu"))
+    end
+    return "NxFontMenu", 12
 end
 
 function Nx.Menu:OnUpdate (elapsed)
@@ -5891,10 +5912,10 @@ function Nx.Menu:FitWidth (menuX)
     local measure = self.MeasureFStr
     if not measure then
         measure = self.MainFrm:CreateFontString()
-        measure:SetFontObject ("NxFontMenu")
         measure:Hide()
         self.MeasureFStr = measure
     end
+    measure:SetFontObject ((self:GetFont()))
     local textW = 0
     for _, item in ipairs (self.Items) do
         if item.ShowState and item.Text and not item.Spacer then
@@ -5935,6 +5956,7 @@ function Nx.Menu:Update()
     local menuX = 14
     local menuY = 14
     local menuW = self:FitWidth (menuX)
+    local font, lineH = self:GetFont()
 
     for n = 1, #self.Items do
 
@@ -5953,7 +5975,7 @@ function Nx.Menu:Update()
             end
         else
 
-            local itemH = 12        -- Not counting space between items
+            local itemH = lineH     -- Not counting space between items
 
             if not item.Spacer then
 
@@ -5992,12 +6014,13 @@ function Nx.Menu:Update()
 
                         fstr = itemF:CreateFontString()
                         item.TextFStr = fstr
-                        fstr:SetFontObject ("NxFontMenu")
                         fstr:SetPoint ("TOPLEFT", MENU_TEXT_X, 0)
                         fstr:SetWidth (menuW - menuX * 2 - MENU_TEXT_X)
-                        fstr:SetHeight (12)
                         fstr:SetJustifyH ("LEFT")
                     end
+                    -- Every open: the theme or the font size may have changed.
+                    fstr:SetFontObject (font)
+                    fstr:SetHeight (lineH)
 
                     if item.ShowState < 0 then
                         fstr:SetText (Carbonite.UI.Skin:TextCode ("menuDisabled") .. item.Text)
@@ -6023,7 +6046,7 @@ function Nx.Menu:Update()
                         frm.texture:SetAllPoints (frm)
                     end
 
-                    frm:SetPoint ("TOPLEFT", 1, 0)
+                    frm:SetPoint ("TOPLEFT", 1, -floor ((lineH - 12) / 2))
                     frm:Show()
 
                     self:CheckUpdate (item)

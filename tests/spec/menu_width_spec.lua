@@ -25,7 +25,8 @@ local function fontString()
 end
 
 local function menu(width, texts)
-    local m = { Width = width, Items = {}, MainFrm = { CreateFontString = fontString } }
+    local m = { Width = width, Items = {}, MainFrm = { CreateFontString = fontString },
+        GetFont = function() return "NxFontMenu", 12 end }
     for _, t in ipairs(texts) do
         local item = { Text = t, ShowState = 1, Frm = { SetWidth = function(f, w) f.width = w end },
             TextFStr = fontString() }
