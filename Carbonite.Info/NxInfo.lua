@@ -943,6 +943,7 @@ function Nx.Info:UpdateItems()
 	local ch = Nx.CurCharacter
 
 	local items = self.Data["Items"]
+	local shown
 
 	for index, val in ipairs (items) do
 
@@ -1006,7 +1007,15 @@ function Nx.Info:UpdateItems()
 			end
 
 			list:ItemSet (1, str)
+			shown = true
 		end
+	end
+
+	-- Every line is conditional (combat, target, BG...), so an idle window would be
+	-- an empty box. Show what it is and how to configure it; editing this line adds an item.
+	if not shown then
+		list:ItemAdd (#items + 1)
+		list:ItemSet (1, "|cff808080" .. format (L["Info #%d: nothing to show now. Right-click to configure"], self.Index or 0))
 	end
 end
 
