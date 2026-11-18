@@ -4577,9 +4577,11 @@ end
 -- The grey button: the same red button, desaturated, so grey and red share
 -- one shape. Tinted, so pressed still shows (gold on the toggles).
 Nx.Button.ClientAtlases.TxtGrey = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = PANEL_UV, Desaturate = true }
--- The toggle (tabs, "Record") pressed: the raised art lit gold by its tint,
--- not the sunken one, which the tint only turned a dull brown (#42).
-Nx.Button.ClientAtlases.TxtGreyB = { FileUp = PANEL_UP, FileDn = PANEL_UP, UV = PANEL_UV, Desaturate = true }
+-- The toggle (tabs, "Record") pressed: the raised art with the game's button
+-- glow over it, as Blizzard lights a selected button. Grey tinted gold alone
+-- only turned a dull olive (#42).
+Nx.Button.ClientAtlases.TxtGreyB = { FileUp = PANEL_UP, FileDn = PANEL_UP, UV = PANEL_UV, Desaturate = true,
+    GlowPressed = "Interface\\Buttons\\UI-Panel-Button-Highlight" }
 -- Expand / collapse of a list header (quest log, Notes, Guide), registered
 -- by Carbonite.Quests: minus while open, plus while closed.
 Nx.Button.ClientAtlases.QuestHdr = {
@@ -4612,6 +4614,7 @@ function Nx.Button:UseClientAtlases (only)
                     typ.Up, typ.Dn = look.FileUp, look.FileDn
                     typ.UpUV, typ.DnUV = look.UV, look.UV
                     typ.Desaturate = look.Desaturate
+                    typ.GlowPressed = look.GlowPressed
                 else
                     typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
                     typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
@@ -5107,6 +5110,23 @@ function Nx.Button:UpdateAtlasLook (typ, f, tx)
     elseif self.TxCoordSet then
         tx:SetTexCoord (0, 1, 0, 1)
         self.TxCoordSet = nil
+    end
+
+    -- Selected toggle: the game's button glow, added over the art.
+    local glow = f.NxGlow
+    if typ.GlowPressed and pressed then
+        if not glow then
+            glow = f:CreateTexture (nil, "ARTWORK")
+            glow:SetAllPoints (tx)
+            glow:SetBlendMode ("ADD")
+            f.NxGlow = glow
+        end
+        glow:SetTexture (typ.GlowPressed)
+        local gv = typ.UpUV
+        if gv then glow:SetTexCoord (gv[1], gv[2], gv[3], gv[4]) end
+        glow:Show()
+    elseif glow then
+        glow:Hide()
     end
 
     local it = f.NxIcon
