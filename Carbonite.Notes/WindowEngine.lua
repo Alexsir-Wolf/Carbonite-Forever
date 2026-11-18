@@ -21,6 +21,21 @@ local addonNotes = Nx.Notes.addonNotes
 -- Window creation
 -- -------------------------------------------------------------------
 
+-- The game's grey panel button: the red one (Txt64) stays for delete only,
+-- so Record / Up / Down do not read as errors (#201).
+local GREY_BUTTON = "Interface\\Buttons\\UI-Panel-Button-Disabled"
+local GREY_UV = { 0, .625, 0, .6875 }
+
+function Nx.Notes:AddButtonTypes()
+    local types = Nx.Button.TypeData
+    if rawget(types, "NotesTxt") then return end
+    types.NotesTxt = { Up = GREY_BUTTON, Dn = GREY_BUTTON, UpUV = GREY_UV, DnUV = GREY_UV,
+                       VRGBAUp = "1|1|1|1", VRGBADn = ".7|.7|.7|1" }
+    -- Record is a toggle: pressed (recording) lights up gold.
+    types.NotesTxtB = { Bool = true, Up = GREY_BUTTON, Dn = GREY_BUTTON, UpUV = GREY_UV, DnUV = GREY_UV,
+                        VRGBAUp = "1|1|1|1", VRGBADn = "1|.82|.3|1" }
+end
+
 function Nx.Notes:Create()
     self.Side = 1
 
@@ -42,15 +57,16 @@ function Nx.Notes:Create()
     local bw, bh = win:GetBorderSize()
 
     -- Header buttons.
-    local recBut = Nx.Button:Create(win.Frm, "Txt64B", L["Record"], nil,
+    self:AddButtonTypes()
+    local recBut = Nx.Button:Create(win.Frm, "NotesTxtB", L["Record"], nil,
                                     bw + 1, -bh, "TOPLEFT", 44, 20,
                                     self.But_OnRecord, self)
     self.RecBut = recBut
 
-    local upBut = Nx.Button:Create(win.Frm, "Txt64", L["Up"], nil,
+    local upBut = Nx.Button:Create(win.Frm, "NotesTxt", L["Up"], nil,
                                    bw + 48, -bh, "TOPLEFT", 40, 20,
                                    self.But_OnUp, self)
-    local dnBut = Nx.Button:Create(upBut.Frm, "Txt64", L["Down"], nil,
+    local dnBut = Nx.Button:Create(upBut.Frm, "NotesTxt", L["Down"], nil,
                                    42, 0, "TOPLEFT", 40, 20,
                                    self.But_OnDown, self)
     Nx.Button:Create(dnBut.Frm, "Txt64", L["Delete Item"], nil,
@@ -83,6 +99,17 @@ function Nx.Notes:Create()
     list:ColumnAdd(L["Value"], 3, 250)
     list:ColumnAdd(L["Location"], 4, 900)
     win:Attach(list.Frm, .3, 1, 0, 1)
+
+    -- Empty state: how to create the first note, over the item list.
+    local hint = list.Frm:CreateFontString(nil, "OVERLAY")
+    Carbonite.UI.Font:SetRole(hint, "normal")
+    Carbonite.UI.Skin:PaintText(hint, "muted")
+    hint:SetPoint("TOPLEFT", list.Frm, "TOPLEFT", 16, -40)
+    hint:SetPoint("TOPRIGHT", list.Frm, "TOPRIGHT", -16, -40)
+    hint:SetJustifyH("CENTER")
+    hint:SetText(format(L["No notes yet. Right-click the map and choose \"%s\" to create one."], L["Add Note"]))
+    hint:Hide()
+    self.EmptyHint = hint
 
     self:CreateMenu()
     self:Update()
@@ -430,7 +457,7 @@ function Nx.Notes:Update()
     local list = self.List
     list:Empty()
     list:ItemAdd()
-    list:ItemSet(2, Carbonite.UI.Skin:TextCode("muted") .. "Root")
+    list:ItemSet(2, Carbonite.UI.Skin:TextCode("muted") .. L["All notes"])
 
     self.FavCnt = 0
     self.Search = self.SearchBox and self.SearchBox:GetText() or ""
@@ -439,8 +466,32 @@ function Nx.Notes:Update()
     list:Update()
 
     self:UpdateItems()
+    self:UpdateEmptyState()
     self.Win:SetTitle(L["Notes"])
-    self.Win:SetHeaderCounter(self.FavCnt)
+    -- A lone "0" says nothing; the hint covers the empty case.
+    self.Win:SetHeaderCounter(self.FavCnt > 0 and self.FavCnt or nil)
+end
+
+-- True when there is nothing to list: no note of the player's and no addon note.
+function Nx.Notes:IsEmpty()
+    if (self.FavCnt or 0) > 0 or (self.Search or "") ~= "" then return false end
+    for a in pairs(addonNotes or {}) do
+        if a ~= "Hide" then return false end
+    end
+    return true
+end
+
+-- Item list columns only while it has rows; the hint while there are no notes.
+function Nx.Notes:UpdateEmptyState()
+    local list = self.ItemList
+    if not list then return end
+    local hasRows = list:ItemGetNum() > 0
+    list:ColumnSetName(2, hasRows and L["Type"] or "")
+    list:ColumnSetName(3, hasRows and L["Value"] or "")
+    list:ColumnSetName(4, hasRows and L["Location"] or "")
+    if self.EmptyHint then
+        if self:IsEmpty() then self.EmptyHint:Show() else self.EmptyHint:Hide() end
+    end
 end
 
 function Nx.Notes:AddonFolders(level)
