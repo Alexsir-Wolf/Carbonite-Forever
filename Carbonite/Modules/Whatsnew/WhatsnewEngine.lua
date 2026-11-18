@@ -110,13 +110,15 @@ function Nx.Whatsnew:Create()
     win:Attach(detail.Frm, .2, 1, 0, .94)
 
     -- Category-selector buttons across the top, right of the title, which
-    -- is larger in the modern header (#43).
-    local _, bh = win:GetBorderSize()
+    -- is larger in the modern header (#43). On the window's tool strip, so
+    -- the centered title of the game's frame stays clear (#42).
+    local bw, bh = win:GetBorderSize()
+    local bar = win:GetToolBar()
     local pos = 200
     for i, name in pairs(Nx.Whatsnew.Categories) do
         local function func() Nx.Whatsnew:Cat_button(i) end
         local label = L[name]
-        local but = Nx.Button:Create(win.Frm, "Txt64", label, nil, pos, -bh, "TOPLEFT",
+        local but = Nx.Button:Create(bar, "Txt64", label, nil, pos - bw, 0, "TOPLEFT",
             string.len(label) * 10, 20, func, self)
         pos = pos + but.Frm:GetWidth()
     end

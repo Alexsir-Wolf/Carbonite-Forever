@@ -632,11 +632,14 @@ function Nx.Map.Guide:Create (map)
     win:Show (false)
     tinsert (UISpecialFrames, win.Frm:GetName())
 
-    local but = CreateFrame ("Button", nil, win.Frm, "UIPanelButtonTemplate")
+    -- On the window's tool strip: under the title band of the game's frame,
+    -- on the title line in the other themes (#42).
+    local but = CreateFrame ("Button", nil, win:GetToolBar(), "UIPanelButtonTemplate")
     but:SetText (L["Back"])
     but:SetScript ("OnClick", function() g:Back() end)
+    but:SetSize (70, 19)
+    but:SetPoint ("TOPLEFT", 1, 0)
     g.BackBut = but
-    win:Attach (but, 1.01, 1.01+70, -10020, -10001)
 
     Nx.List:SetCreateFont ("Font.Medium", 28)
     local list = Nx.List:Create (false, 0, 0, 1, 1, win.Frm)

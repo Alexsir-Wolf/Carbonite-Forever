@@ -100,7 +100,7 @@ describe("Guia (#200)", function()
 
     it("botão Voltar no estilo do jogo, com o texto do locale", function()
         local src = loader.read("Carbonite/Data/Shared/NxMapGuide.lua")
-        expect(src:find('CreateFrame ("Button", nil, win.Frm, "UIPanelButtonTemplate")', 1, true) ~= nil).toBe(true)
+        expect(src:find('CreateFrame ("Button", nil, win:GetToolBar(), "UIPanelButtonTemplate")', 1, true) ~= nil).toBe(true)
         expect(src:find('but:SetText (L["Back"])', 1, true) ~= nil).toBe(true)
         expect(src:find('L["Back "]', 1, true)).toBeNil()
     end)
