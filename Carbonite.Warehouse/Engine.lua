@@ -62,14 +62,42 @@ local function GetStoredItemStats(inv)
 end
 
 -- Equipment slot as the client names it: "ShoulderSlot" is SHOULDERSLOT
--- ("Ombros" on a pt-BR client). Without the global, the name without "Slot".
+-- ("Ombros" on a pt-BR client). Bag slots ("Bag0Slot") have no global of
+-- their own and use BAGSLOT. Without the global, the name without "Slot".
 local function SlotName(slot)
     local name = _G[strupper (slot)]
     if type (name) == "string" and name ~= "" then
         return name
     end
+    if strmatch (slot, "^Bag%d+Slot$") then
+        name = _G.BAGSLOT
+        return type (name) == "string" and name ~= "" and name or L["Bag"]
+    end
     return (gsub (gsub (slot, "Slot", ""), "%d", ""))
 end
+
+-- Realm name as shown in the character list. Server-cluster names like
+-- "CAMWOW US1 Realm 5 PvE" lose the cluster tag and region and get the
+-- ruleset in parentheses: "Realm 5 (PvE)". Other names are kept.
+local function RealmLabel(realm)
+    realm = tostring (realm or "")
+    local name = strmatch (realm, "^%u[%u%d]* %u%u%d+ (.+)$") or realm
+    local base, ruleset = strmatch (name, "^(.-) (RPPvP)$")
+    if not base then
+        base, ruleset = strmatch (name, "^(.-) (PvE)$")
+    end
+    if not base then
+        base, ruleset = strmatch (name, "^(.-) (PvP)$")
+    end
+    if not base then
+        base, ruleset = strmatch (name, "^(.-) (RP)$")
+    end
+    if base and base ~= "" then
+        return format ("%s |cff999999(%s)|r", base, ruleset)
+    end
+    return name
+end
+Nx.Warehouse.RealmLabel = RealmLabel
 
 local function FormatScanStatus(scanTime, hasData)
     scanTime = tonumber(scanTime)
@@ -619,15 +647,24 @@ local function CollapsedSections(create)
     return type(opts.CollapsedSections) == "table" and opts.CollapsedSections or nil
 end
 
+-- The long item sections start folded (#202); the summary and the rest stay
+-- open. A section the user toggled keeps its saved true/false.
+local DefaultCollapsed = { Equipped = true, Bags = true, Bank = true }
+
 function Nx.Warehouse:IsSectionCollapsed(key)
     local state = CollapsedSections(false)
-    return state and state[key] and true or false
+    local saved = state and state[key]
+    if saved == nil then
+        return DefaultCollapsed[key] and true or false
+    end
+    return saved and true or false
 end
 
 function Nx.Warehouse:ToggleSection(key)
+    local collapsed = self:IsSectionCollapsed(key)
     local state = CollapsedSections(true)
     if state then
-        state[key] = not state[key] or nil
+        state[key] = not collapsed
     end
 end
 
@@ -907,6 +944,46 @@ function Nx.Warehouse:AddProfessionSection(list, cn1, cn2, allCharacters)
 end
 
 -------------------------------------------------------------------------------
+-- Character pane width (#202)
+-- The left list takes just the width of its longest row (plus the icon
+-- column and scroll bar), between PaneMinW and PaneMaxShare of the window;
+-- the item list gets the rest.
+-------------------------------------------------------------------------------
+
+local PaneMinW, PaneMaxShare, PanePad = 200, .4, 56
+
+function Nx.Warehouse:FitCharPane()
+    local win, list = self.Win, self.List
+    local column = list and list.Columns and list.Columns[2]
+    if not (win and win.Frm and win.Attach and column and column.Data) then
+        return
+    end
+
+    local measure = self.PaneMeasureFStr
+    if not measure then
+        measure = win.Frm:CreateFontString()
+        measure:Hide()
+        self.PaneMeasureFStr = measure
+    end
+    measure:SetFontObject (column.FontObj)
+
+    local textW = 0
+    for _, str in pairs (column.Data) do
+        measure:SetText (str)
+        textW = max (textW, measure:GetStringWidth() or 0)
+    end
+
+    local winW = win.Frm:GetWidth() - (win.BorderW or 0) * 2
+    local w = max (PaneMinW, min (ceil (textW) + PanePad, floor (winW * PaneMaxShare)))
+    if w ~= self.PaneSplit then
+        self.PaneSplit = w
+        win:Attach (list.Frm, 0, w, 0, 1)
+        win:Attach (self.ItemList.Frm, w, 1, 18, 1)
+        win:Attach (self.EditBox.Frm, w, 1, 0, 18)
+    end
+end
+
+-------------------------------------------------------------------------------
 -- Update Warehouse
 -------------------------------------------------------------------------------
 
@@ -1025,7 +1102,7 @@ function Nx.Warehouse:Update()
                     local lvlHours = difftime (time(), ch["LvlTime"]) / 3600
                     local played = Nx.Util_GetTimeElapsedStr (ch["TimePlayed"])
                     list:ItemAdd (cnum)
-                    list:ItemSet (2, format (L[" Realm:%s %s"],hicol,rname))
+                    list:ItemSet (2, format (L[" Realm:%s %s"], hicol, RealmLabel (rname)))
                     list:ItemAdd (cnum)
                     local moneyStr = Nx.Util_GetMoneyStr (ch["Money"])
                     list:ItemSet (2, format (" " .. L["Current Funds"] .. ": %s",moneyStr))
@@ -1061,7 +1138,7 @@ function Nx.Warehouse:Update()
                     end
                 else
                     list:ItemAdd (cnum)
-                    list:ItemSet (2, format (L[" Realm:%s %s"],hicol,rname))
+                    list:ItemSet (2, format (L[" Realm:%s %s"], hicol, RealmLabel (rname)))
                     local moneyStr = Nx.Util_GetMoneyStr (ch["Money"])
                     list:ItemAdd (cnum)
                     list:ItemSet (2, format (" " .. L["Current Funds"] .. ": %s",moneyStr))
@@ -1134,6 +1211,7 @@ function Nx.Warehouse:Update()
     end
 
     list:Update()
+    self:FitCharPane()
 
     -- Right side list
 
