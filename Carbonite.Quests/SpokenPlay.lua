@@ -49,13 +49,15 @@ local ICON_OVERLAP = 2
 local TEXT_GAP = 2
 
 local buttons = {}      -- by position among the buttons shown, reused as the list scrolls
+local logButtons = {}   -- the same, on the journal's list (theme "Blizzard")
 local details = {}      -- the journal's details panel: frame, its Play, the quest shown
 local shows = {}        -- questID -> { shows, time asked }
 local failed, callbacksSet, relaying
 
-local function HideFrom(first)
-    for i = first, #buttons do
-        buttons[i]:Hide()
+local function HideFrom(first, pool)
+    pool = pool or buttons
+    for i = first, #pool do
+        pool[i]:Hide()
     end
 end
 
@@ -94,6 +96,7 @@ local function Fail(err)
     if failed then return end
     failed = true
     HideFrom(1)
+    HideFrom(1, logButtons)
     if details.button then details.button:Hide() end
     Nx.prt(L["Spoken Play button turned off for this session: %s"], tostring(err))
     local watch = Nx.Quest.Watch
@@ -153,14 +156,15 @@ local function Title(questID)
     return ""
 end
 
-local function GetButton(ui, index, parent)
-    local button = buttons[index]
+local function GetButton(ui, index, parent, pool)
+    pool = pool or buttons
+    local button = pool[index]
     if button then return button end
     button = Call(ui, "MakePlayButton", parent)
     if not button then return nil end
     -- As Spoken's own tracker buttons: the glyph follows the queue (Play, Stop, Replay).
     if not button.setPlayState then button.setPlayState = ui.FollowQueue end
-    buttons[index] = button
+    pool[index] = button
     return button
 end
 
@@ -190,6 +194,10 @@ function SP:Reset()
     if list and list.Frm then
         local ok, err = pcall(SP.Sweep, SP, list)
         if not ok then Fail(err) end
+    end
+    local log = Nx.Quest.List and Nx.Quest.List.List
+    if log and log.Frm and log.NxGameRows then
+        pcall(log.Update, log)      -- lays the journal's Play out again
     end
 end
 
@@ -285,6 +293,51 @@ function SP:Sweep(list)
     end
 
     HideFrom(used + 1)
+end
+
+--- The journal's list in the game's layout (theme "Blizzard", #42): Play on each quest title row
+--- Spoken has, right of the title as the game's log shows it. titleOf(line) gives the quest of a
+--- title line (nil for others); xOf(row, size) the Play's centre from the list's left edge.
+--- A nil list hides them.
+function SP:SweepLog(list, titleOf, xOf)
+    local ui = list and Overlay()
+    if not ui then
+        HideFrom(1, logButtons)
+        return
+    end
+
+    local lineH = list:GetLineH()
+    local size = max(12, min(MAX_SIZE + 2, lineH - 4))
+    local frm = list.Frm
+    local hdrH = list.HdrH or 0
+    local top = list.Top or 1
+    local last = min(top + (list.Vis or 0) - 1, list.Num or 0)
+    local used = 0
+
+    for line = top, last do
+        local questID = titleOf(line)
+        if questID and Shows(ui, questID) then
+            SetCallbacks()
+            local button = GetButton(ui, used + 1, frm, logButtons)
+            if failed then return end
+            if button then
+                used = used + 1
+                button:SetSize(size, size)
+                button:ClearAllPoints()
+                button:SetPoint("CENTER", frm, "TOPLEFT", xOf(line - top, size), -((line - top) * lineH + hdrH + lineH / 2))
+                if button.NxQuestID ~= questID then
+                    local _, ok = Call(ui, "BindPlayButton", button, questID, Title(questID), DETAILS_ORIGIN)
+                    if not ok then return end
+                    button.NxQuestID = questID
+                end
+                button:Show()
+                Call(ui, "SetPlayButtonState", button)
+                if failed then return end
+            end
+        end
+    end
+
+    HideFrom(used + 1, logButtons)
 end
 
 -- Every list shares Nx.List.Update through its metatable; only the watch list gets buttons.
