@@ -716,6 +716,29 @@ function Nx.Info:Create (index)
 end
 
 ---------------------------------------------------------------------------------------
+-- The game's frame (#42) takes more height than the plain border: its band
+-- and metal. Grow the saved height of the window by the difference, once
+-- (SaveData "GFH" holds what was added), so the lines keep their room; give
+-- it back when the frame is off (another theme). Call before InitLayoutData:
+-- a new window's default height already counts the frame.
+---------------------------------------------------------------------------------------
+
+function Nx.Info.FitGameFrame (win, plainChrome)
+
+	local data = win.SaveData
+	local extra = 0
+	if win.GameFrameOn then
+		extra = math.floor (win.TopH + win.BorderH - plainChrome + .5)
+	end
+	local delta = extra - (data["GFH"] or 0)
+	local h = data["H"]
+	if delta ~= 0 and type (h) == "number" and h > 0 then
+		data["H"] = h + delta
+	end
+	data["GFH"] = extra ~= 0 and extra or nil
+end
+
+---------------------------------------------------------------------------------------
 -- Create info window
 -- self = instance
 ---------------------------------------------------------------------------------------
@@ -810,6 +833,12 @@ function Nx.Info:Create2 (index)
 
 --	win:CreateButtons (true)
 	win:SetTitleLineH (3)
+
+	-- Small window, no title: the game's compact frame (#42), its lines
+	-- keeping their room (FitGameFrame) before the layout is applied.
+	local plainChrome = win.TopH + win.BorderH
+	win:UseGameFrame ({ compact = true })
+	Nx.Info.FitGameFrame (win, plainChrome)
 
 	local layout = layouts[index] or layouts[0]
 

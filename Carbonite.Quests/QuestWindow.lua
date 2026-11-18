@@ -576,9 +576,19 @@ function Nx.Quest.List:Open()
     local bar = TabBar:Create (nil, win.Frm, 1, 1)
     self.Bar = bar
 
-    local tbH = TabBar:GetHeight()
-
-    win:Attach (bar.Frm, 0, 1, -tbH, 1)
+    -- Theme "Blizzard" (#42): the game's bottom tabs hang under the window,
+    -- as on the character sheet; the content then runs to the bottom metal.
+    if bar:UseGameTabs() then
+        self.TabsUnder = true
+        local f = bar.Frm
+        f:ClearAllPoints()
+        f:SetPoint ("TOPLEFT", win.Frm, "BOTTOMLEFT", 11, 2)
+        f:SetPoint ("TOPRIGHT", win.Frm, "BOTTOMRIGHT", -11, 2)
+        f:SetHeight (bar:GetHeight())
+    else
+        local tbH = bar:GetHeight()
+        win:Attach (bar.Frm, 0, 1, -tbH, 1)
+    end
 
     bar:SetUser (self, self.OnTabBar)
 
@@ -616,7 +626,9 @@ end
 function Nx.Quest.List:AttachFrames()
     local win = self.Win
     local list = self.List
-    local tbH = Nx.TabBar:GetHeight()
+    -- Bottom of the content: above the tab bar, or the whole height (1) when
+    -- the tabs hang under the window.
+    local bottom = self.TabsUnder and 1 or -(self.Bar and self.Bar:GetHeight() or Nx.TabBar:GetHeight())
 
     if Nx.qdb.profile.Quest.SideBySide then
 
@@ -624,16 +636,16 @@ function Nx.Quest.List:AttachFrames()
         if self.TabSelected ~= 1 then
             r = 1
         end
-        win:Attach (list.Frm, 0, r, 18, -tbH)
-        win:Attach (self.DetailsFrm, .55, 1, 18, -tbH)
+        win:Attach (list.Frm, 0, r, 18, bottom)
+        win:Attach (self.DetailsFrm, .55, 1, 18, bottom)
 
     else
         local bot = .6
         if self.TabSelected ~= 1 then
-            bot = -tbH
+            bot = bottom
         end
         win:Attach (list.Frm, 0, 1, 18, bot)
-        win:Attach (self.DetailsFrm, 0, 1, .6, -tbH)
+        win:Attach (self.DetailsFrm, 0, 1, .6, bottom)
     end
 end
 

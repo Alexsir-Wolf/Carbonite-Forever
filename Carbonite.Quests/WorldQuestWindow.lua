@@ -1122,6 +1122,14 @@ function Nx.Quest.WQList:Open()
         self
     )
 
+    -- On the game's frame (#42) the menu leaves the title band for the tool
+    -- strip, with a 22 px click target (#204).
+    win:UseGameFrame()
+    if win.GameFrameOn then
+        win:ArrangeToolBar({ { self.ButMenu, "action" } })
+        self.ButMenu.Frm:SetHitRectInsets(-4, -4, -4, -4)
+    end
+
     Nx.List:SetCreateFont("QuestWatch.WatchFont", 12)
     local list = Nx.List:Create(
         "NxQuestWQList",

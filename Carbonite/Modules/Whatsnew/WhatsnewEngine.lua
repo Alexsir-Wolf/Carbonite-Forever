@@ -112,15 +112,23 @@ function Nx.Whatsnew:Create()
     -- Category-selector buttons across the top, right of the title, which
     -- is larger in the modern header (#43). On the window's tool strip, so
     -- the centered title of the game's frame stays clear (#42).
+    -- On the game's frame the strip has no title: the buttons start at its
+    -- left edge (navigation, grey), in the standard order (ArrangeToolBar).
     local bw, bh = win:GetBorderSize()
     local bar = win:GetToolBar()
+    local game = win.GameFrameOn
+    local items = {}
     local pos = 200
-    for i, name in pairs(Nx.Whatsnew.Categories) do
+    for i, name in ipairs(Nx.Whatsnew.Categories) do
         local function func() Nx.Whatsnew:Cat_button(i) end
         local label = L[name]
-        local but = Nx.Button:Create(bar, "Txt64", label, nil, pos - bw, 0, "TOPLEFT",
-            string.len(label) * 10, 20, func, self)
+        local but = Nx.Button:Create(bar, game and "TxtGrey" or "Txt64", label, nil, pos - bw, 0, "TOPLEFT",
+            string.len(label) * 10, game and 22 or 20, func, self)
         pos = pos + but.Frm:GetWidth()
+        items[#items + 1] = { but, "nav" }
+    end
+    if game then
+        win:ArrangeToolBar(items)
     end
 
     -- "Don't show this update again" button, bottom-left of the window.
