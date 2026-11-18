@@ -266,6 +266,9 @@ function Journey:Create()
     local game = win.GameFrameOn
     local top = game and 18 or 0
 
+    -- The list font of the other windows (#42): 12 px and the global scale.
+    if game then Nx.List:SetCreateFont("Role.list", 16) end
+
     -- Left: filter by type.
     local groups = Nx.List:Create(false, 0, 0, 1, 1, win.Frm)
     self.GroupList = groups
@@ -287,7 +290,8 @@ function Journey:Create()
         list:SetModernRows()
     end
     list:ColumnAdd(L["Date"], 1, 110)
-    list:ColumnAdd(L["Level"], 2, 40, "RIGHT")
+    -- Wide enough for "60" in the list font, a gap before the zone.
+    list:ColumnAdd(L["Level"], 2, game and 56 or 40, "RIGHT")
     list:ColumnAdd(L["Zone"], 3, 150)
     list:ColumnAdd(L["Event"], 4, 600)
     win:Attach(list.Frm, .16, 1, 18, 1)

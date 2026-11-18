@@ -4576,9 +4576,10 @@ for _, name in ipairs ({ "Txt64", "Txt64B" }) do
 end
 -- The grey button: the same red button, desaturated, so grey and red share
 -- one shape. Tinted, so pressed still shows (gold on the toggles).
-for _, name in ipairs ({ "TxtGrey", "TxtGreyB" }) do
-    Nx.Button.ClientAtlases[name] = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = PANEL_UV, Desaturate = true }
-end
+Nx.Button.ClientAtlases.TxtGrey = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = PANEL_UV, Desaturate = true }
+-- The toggle (tabs, "Record") pressed: the raised art lit gold by its tint,
+-- not the sunken one, which the tint only turned a dull brown (#42).
+Nx.Button.ClientAtlases.TxtGreyB = { FileUp = PANEL_UP, FileDn = PANEL_UP, UV = PANEL_UV, Desaturate = true }
 -- Expand / collapse of a list header (quest log, Notes, Guide), registered
 -- by Carbonite.Quests: minus while open, plus while closed.
 Nx.Button.ClientAtlases.QuestHdr = {

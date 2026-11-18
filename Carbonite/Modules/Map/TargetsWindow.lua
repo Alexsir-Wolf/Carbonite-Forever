@@ -212,6 +212,8 @@ function Window:Create()
         top = 22
     end
 
+    -- The list font of the other windows (#42): 12 px and the global scale.
+    if game then Nx.List:SetCreateFont("Role.list", 16) end
     local list = Nx.List:Create(false, 0, 0, 1, 1, win.Frm)
     self.List = list
     list:SetUser(self, self.OnListEvent)
@@ -219,7 +221,7 @@ function Window:Create()
         list:SetModernRows()    -- The list rows of the other windows (#42)
     end
     list:ColumnAdd("#", 1, 24, "RIGHT")
-    list:ColumnAdd(L["Name"], 2, 220)
+    list:ColumnAdd(L["Name"], 2, 300)
     list:ColumnAdd(L["Zone"], 3, 150)
     list:ColumnAdd(L["Distance"], 4, 80, "RIGHT")
     win:Attach(list.Frm, 0, 1, top, 1)
@@ -270,8 +272,11 @@ function Window:Update()
         list:ItemSet(4, distText(r.dist))
     end
     if #rows == 0 then
+        -- Two rows: one did not fit the name column and was cut.
         list:ItemAdd(nil)
-        list:ItemSet(2, L["No destinations. Shift+click Goto on the map to queue several."])
+        list:ItemSet(2, L["No destinations."])
+        list:ItemAdd(nil)
+        list:ItemSet(2, L["Shift+click Goto on the map to queue several."])
     end
     if (list.Selected or 0) > list:ItemGetNum() then list.Selected = list:ItemGetNum() end
     list:Update()
