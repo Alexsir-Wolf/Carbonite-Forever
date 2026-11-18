@@ -7157,7 +7157,9 @@ function Nx.List:Update (showLast)
         local f = self.Frm
         local win = f:GetParent().NxWin
 
-        if win then
+        -- A minimized window that keeps its own size (the quest watch, #42)
+        -- does not follow its hidden list.
+        if win and not (win.MinKeepsSize and win.LayoutMode == "Min") then
             win:SetSize (f:GetWidth(), -7, true)
         end
     end

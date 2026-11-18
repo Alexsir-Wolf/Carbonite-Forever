@@ -563,6 +563,8 @@ function Nx.Quest.Watch:Open()
     -- Shared layouts retain the screen-side edge instead of always retaining
     -- the left edge. Other Carbonite windows keep their existing behavior.
     win.MinimizeToEdge = true
+    -- Minimized, the header keeps its size: the hidden list must not resize it.
+    win.MinKeepsSize = true
 
     win:InitLayoutData (nil, -.80, -.35, -.2, -.1)
 
