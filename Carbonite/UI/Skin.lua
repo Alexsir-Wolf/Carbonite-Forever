@@ -29,10 +29,42 @@ end
 Skin.themes = {
     -- The game's own window look: the dialog border and dark rock background of
     -- Blizzard's frames, bronze separators and the gold highlight of its lists.
-    -- The NineSlice frame of the character sheet was tried and does not fit
-    -- Carbonite's windows (its title bar covers their first lines, and on the
-    -- map its edges break into stray marks), so the border is a backdrop.
+    -- Every window with a border wears the metal NineSlice frame of the game
+    -- (#42, Nx.Window:UseGameFrame): the title centered in its own band, the
+    -- content pushed below it (the band used to cover the first lines) and
+    -- action buttons on a tool strip under the band. Small windows wear the
+    -- compact variant; a window may opt out (UseGameFrame (false)).
     ["Blizzard"] = {
+        nineSlice = "ButtonFrameTemplateNoPortrait",
+        frame = {
+            -- Background under the metal edges; no edge of its own.
+            backdrop = {
+                bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
+                tile     = true,
+                tileSize = 256,
+                insets   = { left = 3, right = 3, top = 3, bottom = 3 },
+            },
+            -- The game's own windows wear the metal about 1.5x thicker than the
+            -- layout at scale 1 (measured beside the character sheet), the top
+            -- band most of all; the band follows the scaled metal.
+            edgeScale = 1.5,
+            band     = 36,    -- title band of the frame
+            side     = 12,    -- metal of the sides and bottom at edgeScale: content inset
+            gap      = 2,     -- band (or tool strip) to content
+            toolBarH = 28,    -- tool strip under the band (22 px buttons + room)
+            butSize  = 24,    -- close / maximize, RedButton atlases
+            -- Compact variant (UseGameFrame ({ compact = true })): the metal at
+            -- scale 1 and a low band for the title only, for the integrated
+            -- minimap and small windows. Missing fields come from the full one.
+            compact = {
+                edgeScale = 1,
+                band     = 24,
+                side     = 5,
+                gap      = 1,
+                toolBarH = 24,
+                butSize  = 18,
+            },
+        },
         backdrop = {
             bgFile   = "Interface\\FrameGeneral\\UI-Background-Rock",
             edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -43,7 +75,28 @@ Skin.themes = {
         },
         borderColor = "1|1|1|1",
         bgColor     = "1|1|1|1",
+        -- Menus wear the game's tooltip (#42, R11): navy background, silver
+        -- rounded edge, white text of the "menu" font role.
+        menu = {
+            backdrop = {
+                bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile     = true,
+                tileSize = 16,
+                edgeSize = 16,
+                insets   = { left = 5, right = 5, top = 5, bottom = 5 },
+            },
+            bgColor     = "0.09|0.09|0.19|0.95",
+            borderColor = "1|1|1|1",
+        },
+        -- Lists and search fields copy the game's windows (Skin:GameStyle).
+        gameStyle   = true,
         tokens = {
+            sectionBg   = "0.10|0.08|0.05|0.95",
+            sectionEdge = "0.55|0.42|0.20|1",
+            sectionSign = "1|0.82|0|1",
+            searchBg    = "0.02|0.02|0.02|0.85",
+            muted       = "0.6|0.6|0.6|1",
             hover       = "0.22|0.17|0.04|1",
             pressed     = "0.45|0.36|0.12|1",
             rowHover    = "1|0.82|0|0.12",
@@ -61,7 +114,7 @@ Skin.themes = {
             listHeaderText = "1|0.82|0|1",
             headerRule  = "1|0.82|0|0.8",
             buttonText  = "1|0.82|0|1",
-            menuHover   = "0.45|0.36|0.12|1",
+            menuHover   = "0.30|0.40|0.75|1",
             panelBg     = "0.08|0.06|0.04|0.7",
         },
     },
@@ -189,7 +242,17 @@ Skin.activeName = "Blizzard"
 --   menuText    menu item; menuDisabled a greyed menu item
 --   menuHover   mouse-over band of a menu item (alpha comes from the fade)
 --   panelBg     plain panel behind a graph or a borderless window
+--   frameTitle  title centered on the band of the game's frame (#42)
+--   sectionBg   strip of a collapsible section header in a list
+--   sectionEdge outline of a section header and of a list's column header
+--   sectionSign the +/- of a section header
+--   searchBg    inside of a search field drawn like the game's
 Skin.tokens = {
+    frameTitle  = "1|1|1|1",
+    sectionBg   = "0.2|0.2|0.3|1",
+    sectionEdge = "0|0|0|0",
+    sectionSign = "0.8|0.8|1|1",
+    searchBg    = "0.2|0.2|0.3|1",
     hover       = "0.06|0.06|0.25|1",
     pressed     = "0.188|0.188|0.5|1",
     rowHover    = "0.5|0.5|0.7|0.18",
@@ -230,6 +293,45 @@ function Skin:GetBackdrop()
     return self:GetActive().backdrop
 end
 
+-- Metrics of a variant: its own fields over the full frame's.
+local variants = setmetatable({}, { __mode = "k" })
+
+local function variantSpec(frame, variant)
+    local own = variant and frame[variant]
+    if type(own) ~= "table" then return frame end
+    local cache = variants[frame]
+    if not cache then
+        cache = {}
+        variants[frame] = cache
+    end
+    local spec = cache[variant]
+    if not spec then
+        spec = setmetatable({ variant = variant }, { __index = function(_, k)
+            local v = own[k]
+            if v == nil then v = frame[k] end
+            return v
+        end })
+        cache[variant] = spec
+    end
+    return spec
+end
+
+--- The game's NineSlice frame of the active theme: its layout name and the
+--- metrics of `frame` (or of its `variant`, e.g. "compact"). Nil when the
+--- theme has none or this client lacks the layout (the window then keeps the
+--- theme's backdrop).
+function Skin:GetGameFrame(variant)
+    local t = self:GetActive()
+    local name = t.nineSlice
+    if not (name and t.frame) then return nil end
+    local util, layouts = _G.NineSliceUtil, _G.NineSliceLayouts
+    if type(util) ~= "table" or not util.ApplyLayoutByName
+       or type(layouts) ~= "table" or not layouts[name] then
+        return nil
+    end
+    return name, variantSpec(t.frame, variant)
+end
+
 -- The color the player picked in the options, saved in the profile. Picking a
 -- theme writes its colors there (Skin:Set), so this is the theme's color
 -- until the player changes it.
@@ -262,6 +364,12 @@ function Skin:GetToken(name)
     return parseColor(t and t[name] or self.tokens[name])
 end
 
+--- True when the active theme draws lists, buttons and search fields like the
+--- game's own windows (section strips, framed search field). Only "Blizzard".
+function Skin:GameStyle()
+    return self:GetActive().gameStyle == true
+end
+
 --- "|cffRRGGBB" escape of a token, for text built with color codes.
 function Skin:TextCode(name)
     local r, g, b = self:GetToken(name)
@@ -272,6 +380,76 @@ end
 local painted = setmetatable({}, { __mode = "k" })
 
 --- Color a texture with a token and keep it in step with the theme.
+-- The game's minimal scroll bar (#42), shared by every Carbonite scroll bar
+-- in the theme "Blizzard": a thin dark track, a rounded thumb and small
+-- arrows. Nx.Slider draws its own with these sizes (Nx.Slider:UseGameLook).
+Skin.SCROLL = { width = 10, arrowH = 10, trackW = 4, capH = 4, trackColor = { 0, 0, 0, .55 } }
+
+-- Whether this client has the minimal scroll bar art.
+function Skin:HasMinimalScroll()
+    local info = _G.C_Texture and _G.C_Texture.GetAtlasInfo
+    return info and info("minimal-scrollbar-thumb-top") and info("minimal-scrollbar-small-arrow-top") and true or false
+end
+
+--- Dress a Blizzard template scroll bar (UIPanelScrollFrameTemplate,
+--- FauxScrollFrameTemplate) as the game's minimal one, like Carbonite's lists.
+--- Takes the ScrollFrame or its ScrollBar; does nothing outside the theme.
+function Skin:StyleScrollBar(frame)
+    if not (frame and self:GameStyle() and self:HasMinimalScroll()) then return end
+    local name = frame.GetName and frame:GetName()
+    local bar = frame.ScrollBar or (name and _G[name .. "ScrollBar"]) or frame
+    if not (bar and bar.GetThumbTexture) or bar.NxMinimal then return end
+    bar.NxMinimal = true
+    local S = self.SCROLL
+    local barName = bar.GetName and bar:GetName()
+    local thumb = bar:GetThumbTexture()
+
+    -- The template's track art goes; a thin groove takes its place.
+    for _, region in ipairs({ bar:GetRegions() }) do
+        if region ~= thumb and region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:SetAlpha(0)
+        end
+    end
+    bar:SetWidth(S.width)
+    local track = bar:CreateTexture(nil, "BACKGROUND")
+    track:SetPoint("TOP")
+    track:SetPoint("BOTTOM")
+    track:SetWidth(S.trackW)
+    track:SetColorTexture(S.trackColor[1], S.trackColor[2], S.trackColor[3], S.trackColor[4])
+
+    -- Thumb: the stretched middle, with caps above and below.
+    if thumb then
+        thumb:SetAtlas("minimal-scrollbar-thumb-middle")
+        thumb:SetWidth(S.width - 2)
+        local top = bar:CreateTexture(nil, "OVERLAY")
+        top:SetAtlas("minimal-scrollbar-thumb-top")
+        top:SetPoint("BOTTOMLEFT", thumb, "TOPLEFT")
+        top:SetPoint("BOTTOMRIGHT", thumb, "TOPRIGHT")
+        top:SetHeight(S.capH)
+        local bottom = bar:CreateTexture(nil, "OVERLAY")
+        bottom:SetAtlas("minimal-scrollbar-thumb-bottom")
+        bottom:SetPoint("TOPLEFT", thumb, "BOTTOMLEFT")
+        bottom:SetPoint("TOPRIGHT", thumb, "BOTTOMRIGHT")
+        bottom:SetHeight(S.capH)
+    end
+
+    -- Arrows: the small ones, dimmed at the ends.
+    local info = _G.C_Texture.GetAtlasInfo
+    local function arrow(button, dir)
+        if not button then return end
+        local atlas = "minimal-scrollbar-small-arrow-" .. dir
+        button:SetSize(S.width, S.arrowH)
+        button:SetNormalAtlas(atlas)
+        button:SetPushedAtlas(info(atlas .. "-down") and atlas .. "-down" or atlas)
+        button:SetHighlightAtlas(info(atlas .. "-over") and atlas .. "-over" or atlas)
+        button:SetDisabledAtlas(atlas)
+        local off = button:GetDisabledTexture()
+        if off then off:SetDesaturated(true); off:SetAlpha(.4) end
+    end
+    arrow(bar.ScrollUpButton or (barName and _G[barName .. "ScrollUpButton"]), "top")
+    arrow(bar.ScrollDownButton or (barName and _G[barName .. "ScrollDownButton"]), "bottom")
+end
+
 function Skin:Paint(texture, name)
     painted[texture] = name
     texture:SetColorTexture(self:GetToken(name))
@@ -372,6 +550,9 @@ function Skin:Update()
         paintRule(rule)
     end
     Carbonite.Core.EventBus:Fire("SKIN_UPDATED", self.activeName)
+    -- The theme "Blizzard" sets the font face too (Font:GameFace).
+    local Font = Carbonite.UI.Font
+    if Font and Font.initialized then Font:Update() end
     -- Push to legacy Window/Menu resets so existing widgets restyle.
     if _G.Nx and _G.Nx.Window and _G.Nx.Window.ResetBackdrops then _G.Nx.Window:ResetBackdrops() end
     if _G.Nx and _G.Nx.Menu   and _G.Nx.Menu.ResetSkins      then _G.Nx.Menu:ResetSkins()      end

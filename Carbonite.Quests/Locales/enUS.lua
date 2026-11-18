@@ -122,6 +122,8 @@ L["When enabled, will place a button on the watch window to close it (RELOADS UI
 L["Fade Entire Window"] = true
 L["When enabled, if the quest watch window fades, will ensure all of it fades text and all instead of just the window itself"] = true
 L["Quest Watch Background Color"] = true
+L["Quest Watch Background Opacity"] = true
+L["How opaque the quest watch background is: 0 is fully transparent."] = true
 L["Quest Complete Color"] = true
 L["Quest Incomplete Color"] = true
 L["Objective Complete Color"] = true

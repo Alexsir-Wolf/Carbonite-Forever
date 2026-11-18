@@ -1705,6 +1705,9 @@ function Nx.Window:Create (name, minResizeW, minResizeH, secure, titleLines, bor
 
     if win.Border then
         win:CreateBorders()
+        -- The game's frame by default (#42), once the window is set up and
+        -- shown (OnUpdate): UseGameFrame before that chooses another one.
+        win.GameFramePending = true
     end
 
     if not noButs then
@@ -1820,6 +1823,31 @@ function Nx.Window:CreateBorders()
     self.Frm:SetBackdrop (bk)
 end
 
+---
+-- The backdrop of this window: the skin's, or for a frameless window of the
+-- game theme (the quest watch) the same background with no edge and no inset,
+-- so its header is as wide as the list under it (#42).
+--
+function Nx.Window:GetSkinBackdrop()
+    local bk = Nx.Skin:GetBackdrop()
+    if not (self.NoEdgeInGameStyle and Carbonite.UI.Skin:GameStyle()) then
+        return bk
+    end
+    local cache = Nx.Window.FramelessBackdrops or {}
+    Nx.Window.FramelessBackdrops = cache
+    if not cache[bk] then
+        cache[bk] = { bgFile = bk.bgFile, tile = bk.tile, tileSize = bk.tileSize,
+            insets = { left = 0, right = 0, top = 0, bottom = 0 } }
+    end
+    return cache[bk]
+end
+
+--- Put the backdrop back after NoEdgeInGameStyle changes, with its colors.
+function Nx.Window:ApplySkinBackdrop()
+    self.Frm:SetBackdrop (self:GetSkinBackdrop())
+    self.BackgndFade = (self.BackgndFadeTarget or 1) + .0001        -- Cause refresh
+end
+
 function Nx.Window:SetBordersFade (fade)
 
     if self.Border then
@@ -1834,10 +1862,15 @@ function Nx.Window:SetBordersFade (fade)
 --]]
 
         local col = Nx.Skin:GetBorderCol()
-        self.Frm:SetBackdropBorderColor (col[1], col[2], col[3], col[4] * fade)
+        -- A frameless window of the game theme (the quest watch) shows no edge.
+        local edge = (self.NoEdgeInGameStyle and Carbonite.UI.Skin:GameStyle()) and 0 or col[4] * fade
+        self.Frm:SetBackdropBorderColor (col[1], col[2], col[3], edge)
     end
 
-    -- The title strip comes and goes with the border.
+    -- The title strip comes and goes with the border, as the game's frame.
+    if self.GameFrame then
+        self.GameFrame:SetAlpha (fade)
+    end
     if self.TitleBar then
         self.TitleBar:SetAlpha (fade)
     end
@@ -1850,68 +1883,285 @@ end
 -- Set backdrops of all created windows
 ---------------------------------------------------------------------------------------
 
--- Region names NineSliceUtil creates on the container.
-local NX_NINESLICE_PIECES = {
-    "TopLeftCorner", "TopRightCorner",
-    "BottomLeftCorner", "BottomRightCorner",
-    "TopEdge", "BottomEdge", "LeftEdge", "RightEdge",
-    "Center",
-}
-
-local function NxClearNineSlice(frm)
-    for i = 1, #NX_NINESLICE_PIECES do
-        local p = frm[NX_NINESLICE_PIECES[i]]
-        if p and p.Hide then
-            p:Hide()
-        end
-    end
-end
-
 function Nx.Window:ResetBackdrops()
 
     if self.Wins then
 
         local bk = Nx.Skin:GetBackdrop()
-        local nsLayout = Nx.Skin:GetNineSliceLayout()
-        -- Verify the named layout actually exists in this flavor's
-        -- NineSliceLayouts registry before calling ApplyLayoutByName.
-        -- The function exists on Cata Classic / TBC Classic but many
-        -- layouts (PortraitFrameTemplate, Dialog, etc.) aren't shipped
-        -- there and Blizzard crashes with "attempt to index nil
-        -- userLayout" if we pass an unknown name.
-        local canNineSlice = false
-        if nsLayout and NineSliceUtil and NineSliceUtil.ApplyLayoutByName
-           and _G.NineSliceLayouts and _G.NineSliceLayouts[nsLayout] then
-            canNineSlice = true
-        end
 
         for win, v in pairs (self.Wins) do
 
             if win.Border then
-                -- Strategy: always apply the legacy backdrop first as a
-                -- guaranteed-visible base layer. When the theme also
-                -- wants nine-slice atlas chrome we layer it on top —
-                -- if atlas resolves it visually replaces the backdrop,
-                -- if atlas fails (textureKit missing, layout
-                -- incompatible with the frame, regions not rendering)
-                -- the legacy backdrop is still there and the window
-                -- is never transparent.
-                if win.Frm._NxNineSliceApplied and not canNineSlice then
-                    NxClearNineSlice(win.Frm)
-                    win.Frm._NxNineSliceApplied = false
+                if win.WantGameFrame and (win.GameFrameOn or not win.GameFrameAuto
+                                          or Carbonite.UI.Skin:GetGameFrame (win.GameFrameVariant or nil)) then
+                    win:ApplyGameFrame()        -- Its own backdrop and header
+                else
+                    win.Frm:SetBackdrop (win.NoEdgeInGameStyle and win:GetSkinBackdrop() or bk)
+                    win:PlaceTitleBar()        -- The new border may be thicker
                 end
-                win.Frm:SetBackdrop (bk)
-                if canNineSlice then
-                    local ok = pcall(NineSliceUtil.ApplyLayoutByName, win.Frm, nsLayout)
-                    if ok then
-                        win.Frm._NxNineSliceApplied = true
-                    end
-                end
-
-                win:PlaceTitleBar()        -- The new border may be thicker
                 win.BackgndFade = win.BackgndFadeTarget + .0001        -- Cause refresh
             end
         end
+    end
+end
+
+---------------------------------------------------------------------------------------
+-- The game's window frame (#42). Every window with a border wears the NineSlice
+-- frame of its theme (Skin:GetGameFrame): metal edges drawn by a child frame
+-- at the window's own level (the backdrop of the window frame shares piece
+-- names with NineSlice, so they cannot live on the same frame), the title
+-- centered on the band, the window buttons in the band's right corner and
+-- the content below the band and the tool strip. Without the layout, or in
+-- another theme, the window keeps the theme's backdrop and header.
+--
+--   win:UseGameFrame()                     full frame (also UseGameFrame (true))
+--   win:UseGameFrame ({ compact = true })  compact: metal at scale 1, low band
+--   win:UseGameFrame (false)               no frame for this window (opt-out)
+--
+-- A window that calls none of them gets the default on its first update:
+-- compact when small (IsCompactWindow), full otherwise.
+---------------------------------------------------------------------------------------
+
+Nx.Window.GameFrameVariant = false    -- false (full) or "compact"
+Nx.Window.GameFrameAuto = false       -- true when the frame is the default one
+Nx.Window.ButLock = false             -- optional lock button, last title slot
+Nx.Window.ToolBarHidden = false       -- tool strip hidden (ShowToolBar)
+
+-- Title band buttons, right to left, each in its own slot of the same size.
+Nx.Window.TitleButtonOrder = { "ButClose", "ButMaxer", "ButMiner", "ButLock" }
+
+function Nx.Window:UseGameFrame (opts)
+
+    self.GameFramePending = nil
+    if opts == false then
+        self.WantGameFrame = false
+        if self.GameFrameOn then
+            self:ApplyGameFrame()
+        end
+        return
+    end
+    self.WantGameFrame = true
+    self.GameFrameAuto = false
+    self.GameFrameVariant = type (opts) == "table" and opts.compact and "compact" or false
+    self:ApplyGameFrame()
+end
+
+-- Small windows: no title line, fixed size or no window buttons.
+function Nx.Window:IsCompactWindow()
+    return (self.TitleLines == 0 or not self.Sizeable or self.NoButs) and true or false
+end
+
+-- The frame a window gets when it did not choose one.
+function Nx.Window:UseDefaultGameFrame()
+
+    if self.WantGameFrame ~= nil or not self.Border then
+        return
+    end
+    self.WantGameFrame = true
+    self.GameFrameAuto = true
+    self.GameFrameVariant = self:IsCompactWindow() and "compact" or false
+    -- In another theme the window stays as it is, until one with a frame.
+    if Carbonite.UI.Skin:GetGameFrame (self.GameFrameVariant or nil) then
+        self:ApplyGameFrame()
+    end
+end
+
+function Nx.Window:ApplyGameFrame()
+
+    local Skin = Carbonite.UI.Skin
+    local f = self.Frm
+    local layout, spec = Skin:GetGameFrame (self.GameFrameVariant or nil)
+    if not self.Border or self.WantGameFrame == false then
+        layout = nil
+    end
+
+    local gf = self.GameFrame
+    if layout and not gf and not self.GameFrameFailed then
+        gf = CreateFrame ("Frame", nil, f)
+        gf:SetAllPoints (f)
+        if gf.SetUsingParentLevel then
+            gf:SetUsingParentLevel (true)
+        else
+            gf:SetFrameLevel (f:GetFrameLevel())
+        end
+        gf:EnableMouse (false)
+        if pcall (NineSliceUtil.ApplyLayoutByName, gf, layout) then
+            self.GameFrame = gf
+        else
+            gf:Hide()
+            gf = nil
+            self.GameFrameFailed = true
+        end
+    end
+
+    local on = layout and gf and true or false
+    if gf then
+        gf:SetShown (on)
+        if on then
+            -- Thicker metal, as on the game's windows; anchors still cover the window.
+            gf:SetScale (spec.edgeScale or 1)
+        end
+    end
+
+    local was = self.GameFrameOn and true or false
+    -- Keep the content inside the metal sides and bottom (any variant).
+    if on then
+        if not was then
+            self.PlainBorderW, self.PlainBorderH = self.BorderW, self.BorderH
+        end
+        local side = spec.side or 0
+        self.BorderW, self.BorderH = max (self.PlainBorderW, side), max (self.PlainBorderH, side)
+    end
+
+    if on ~= was then
+        self.GameFrameOn = on
+        if not on and self.PlainBorderW then
+            self:SetBorderSize (self.PlainBorderW, self.PlainBorderH)
+        end
+        -- The title moves above the metal band, the buttons too.
+        local titleFrm = self.TitleFrm
+        if on and not titleFrm then
+            titleFrm = CreateFrame ("Frame", nil, f)
+            titleFrm:SetAllPoints (f)
+            titleFrm:EnableMouse (false)
+            self.TitleFrm = titleFrm
+        end
+        for _, fstr in ipairs (self.TitleFStr) do
+            pcall (fstr.SetParent, fstr, on and titleFrm or f)
+            Carbonite.UI.Font:SetRole (fstr, "title")
+            if on then
+                fstr:SetJustifyH ("CENTER")
+                Skin:PaintText (fstr, "frameTitle")
+            else
+                fstr:SetJustifyH ("LEFT")
+                Skin:PaintText (fstr, "title")
+            end
+        end
+        for _, key in ipairs (self.TitleButtonOrder) do
+            local but = self[key]
+            if but and but.Frm then
+                but.Frm:SetFrameLevel (f:GetFrameLevel() + (on and 2 or 1))
+            end
+        end
+    end
+
+    f:SetBackdrop (on and spec.backdrop or self:GetSkinBackdrop())
+    self.GameFrameSpec = on and spec or nil
+
+    self:StyleTitleBar()
+    if self.HeaderCounter then
+        self:SetHeaderCounter (false)        -- Same text, new place
+    end
+    self:Adjust()
+end
+
+-- Strip under the title for a window's action buttons (Back, Record, ...).
+-- With the game's frame it sits below the band and the content moves down
+-- to make room; otherwise it is the title line, as before (#42). Create the
+-- buttons on the returned frame, anchored to its TOPLEFT.
+function Nx.Window:GetToolBar()
+
+    local tb = self.ToolBar
+    if not tb then
+        tb = CreateFrame ("Frame", nil, self.Frm)
+        tb:SetSize (1, 1)
+        self.ToolBar = tb
+        self:PlaceToolBar()
+        if self.GameFrameOn then        -- Make room under the band
+            self:StyleTitleBar()
+            self:Adjust()
+        end
+    end
+    return tb
+end
+
+function Nx.Window:PlaceToolBar()
+
+    local tb = self.ToolBar
+    if not tb then
+        return
+    end
+    local spec = self.GameFrameOn and self.GameFrameSpec
+    local y = spec and -(spec.band + 2) or -self.BorderH
+    tb:ClearAllPoints()
+    tb:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", self.BorderW, y)
+    -- As wide as the content; on the title line, clear of the window buttons.
+    local r = self.BorderW + (spec and 0 or max (self.ButW or 0, 0))
+    tb:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, y)
+    tb:SetHeight (spec and spec.toolBarH or self.TitleLineH)
+end
+
+-- Tool strip order (#42): navigation, common actions (grey), then the
+-- destructive action (red) set apart, left to right; toggle icons from the
+-- right edge, right to left, all of one size.
+Nx.Window.ToolGap = 4            -- between buttons
+Nx.Window.ToolDangerGap = 16     -- before the destructive action
+Nx.Window.ToolIconSize = 22      -- toggle icons
+Nx.Window.ToolKinds = { "nav", "action", "danger" }
+
+-- items: { { button, kind }, ... } with kind "nav", "action" (default),
+-- "danger" or "toggle"; the order inside a kind is kept. Buttons are
+-- anchored to the tool strip, centered on it. Returns the width used on
+-- the left and on the right.
+function Nx.Window:ArrangeToolBar (items)
+
+    local tb = self:GetToolBar()
+    local x = 2
+    local prev
+    for _, kind in ipairs (self.ToolKinds) do
+        for _, item in ipairs (items) do
+            if (item[2] or "action") == kind then
+                local bf = item[1].Frm
+                if prev then
+                    x = x + ((kind == "danger" and prev ~= "danger") and self.ToolDangerGap or self.ToolGap)
+                end
+                bf:ClearAllPoints()
+                bf:SetPoint ("LEFT", tb, "LEFT", x, 0)
+                x = x + bf:GetWidth()
+                prev = kind
+            end
+        end
+    end
+
+    local xr = 0
+    local size = self.ToolIconSize
+    for _, item in ipairs (items) do
+        if item[2] == "toggle" then
+            local but = item[1]
+            if xr > 0 then
+                xr = xr + self.ToolGap
+            end
+            but:SetSize (size, size)
+            but.Frm:ClearAllPoints()
+            but.Frm:SetPoint ("RIGHT", tb, "RIGHT", -xr, 0)
+            xr = xr + size
+        end
+    end
+    return x, xr
+end
+
+-- Height a window with the game's frame keeps above its content.
+function Nx.Window:GetGameFrameTop()
+
+    local spec = self.GameFrameSpec
+    local top = spec.band + spec.gap
+    if self.ToolBar and not self.ToolBarHidden then
+        top = top + spec.toolBarH
+    end
+    return top
+end
+
+-- Show or hide the tool strip; a hidden one gives its room back to the
+-- content (the map keeps its tools on the strip only when maximized).
+function Nx.Window:ShowToolBar (on)
+
+    on = on and true or false
+    local tb = self:GetToolBar()
+    self.ToolBarHidden = not on
+    tb:SetShown (on)
+    if self.GameFrameOn then
+        self:StyleTitleBar()
+        self:Adjust()
     end
 end
 
@@ -2197,7 +2447,7 @@ function Nx.Window:Lock (lock, fullLockout)
 
     svdata["Lk"] = lock or nil
 
-    self:SetBordersFade (lock and 0 or self.BackgndFade)
+    self:SetBordersFade ((lock and not self.GameFrameOn) and 0 or self.BackgndFade)
 
     if self.ButClose then
         if lock then
@@ -2303,6 +2553,12 @@ function Nx.Window:SetTitleLineH (height)
     self.TitleH = self.TitleLines * self.TitleLineH + 2
     self.TopH = self.TitleH + self.BorderH
 
+    -- On the game's frame the band sets the title's role and the room.
+    if self.GameFrameOn then
+        self:StyleTitleBar()
+        return
+    end
+
     local role = height <= 10 and "small" or "normal"
 
     for n = 1, self.TitleLines do
@@ -2376,18 +2632,37 @@ function Nx.Window:StyleTitleBar()
 
     local Skin = Carbonite.UI.Skin
     local f = self.Frm
+    -- The game's frame (#42): title centered on its band, content below it.
+    local game = self.GameFrameOn and self.GameFrameSpec
 
     local _, size = self.TitleFStr[1]:GetFont()
     local lineH = max (self.TitleLineH, math.floor ((size or 10) + 4))
 
     self.TitleLineH = lineH
     self.TitleH = self.TitleLines * lineH + 2
+    if game then
+        self.TitleH = self:GetGameFrameTop() - self.BorderH
+    end
     self.TopH = self.TitleH + self.BorderH
 
-    for _, fstr in ipairs (self.TitleFStr) do
-        fstr:SetHeight (lineH)
+    -- On the band: as many title lines as fit (two on the full band, one on
+    -- the compact one), sharing its height; the rest stay hidden.
+    local bandFit, bandLineH = 1, 0
+    if game then
+        local room = game.band - 4
+        bandFit = max (1, min (#self.TitleFStr, math.floor (room / ((size or 10) + 2))))
+        bandLineH = math.floor (room / bandFit)
+    end
+
+    for n, fstr in ipairs (self.TitleFStr) do
+        fstr:SetHeight (game and bandLineH or lineH)
+        if game and n > bandFit then
+            fstr:Hide()
+        else
+            fstr:Show()
+        end
         fstr:SetWordWrap (false)
-        Skin:PaintText (fstr, "title")
+        Skin:PaintText (fstr, game and "frameTitle" or "title")
     end
     -- Keep the room a window left for its own header buttons (Guide, Notes).
     self:SetTitleXOff (self.TitleXOff or 0, self.TitleYOff)
@@ -2402,28 +2677,56 @@ function Nx.Window:StyleTitleBar()
         self:PlaceTitleBar()
     end
 
-    -- Window buttons as tall as one title line, right to left.
-    local butSize = lineH
-    local y = self.Sizeable and -self.BorderH or -3
-    local x = -self.BorderW
+    -- Window buttons as tall as one title line, right to left. On the game's
+    -- frame they take the size of its close button, in the band's corner.
+    local butSize = game and game.butSize or lineH
+    -- On the game's frame: inside the band, centered on it, clear of the metal.
+    local y = game and -math.floor ((game.band - butSize) / 2) or self.Sizeable and -self.BorderH or -3
+    local x0 = game and -(game.side or 0) or -self.BorderW
+    local step = butSize + 2
+    local x = x0
     local function place (but)
         but:SetSize (butSize, butSize)
         but.Frm:ClearAllPoints()
         but:SetPos ("TOPRIGHT", x, y)
     end
-    if self.ButClose then
-        place (self.ButClose)
-        x = x - butSize - 2
+    if game then
+        -- Fixed order on the band (R9): close, maximize / restore, minimize,
+        -- lock, each in its own slot.
+        for _, key in ipairs (self.TitleButtonOrder) do
+            local but = self[key]
+            if but then
+                place (but)
+                x = x - step
+            end
+        end
+    else
+        if self.ButClose then
+            place (self.ButClose)
+            x = x - step
+        end
+        -- Maximize and minimize share the slot, as in CreateButtons.
+        if self.ButMaxer or self.ButMiner then
+            if self.ButMaxer then place (self.ButMaxer) end
+            if self.ButMiner then place (self.ButMiner) end
+            x = x - step
+        end
     end
-    -- Maximize and minimize share the slot, as in CreateButtons.
-    if self.ButMaxer or self.ButMiner then
-        if self.ButMaxer then place (self.ButMaxer) end
-        if self.ButMiner then place (self.ButMiner) end
-        x = x - butSize - 2
-    end
-    if x ~= -self.BorderW then
+    if x ~= x0 then
         self.ButW = -x - self.BorderW
     end
+
+    if game then
+        -- Centered between the buttons, the same margin on both sides.
+        local m = self.BorderW + max (self.ButW or 0, 0)
+        for n, fstr in ipairs (self.TitleFStr) do
+            local ty = -2 - (n - 1) * bandLineH
+            fstr:ClearAllPoints()
+            fstr:SetPoint ("TOPLEFT", f, "TOPLEFT", m, ty)
+            fstr:SetPoint ("TOPRIGHT", f, "TOPRIGHT", -m, ty)
+        end
+    end
+    self:PlaceToolBar()
 end
 
 ---------------------------------------------------------------------------------------
@@ -2445,6 +2748,10 @@ function Nx.Window:ApplyModernHeader()
         self.HeaderRule = Carbonite.UI.Skin:AddHeaderRule (self.Frm, 0)
         self:PlaceTitleBar()
     end
+
+    -- The game's frame where the theme has one (#42). Not on the map: it
+    -- styles its title with StyleTitleBar only.
+    self:UseGameFrame()
 end
 
 ---------------------------------------------------------------------------------------
@@ -2463,10 +2770,17 @@ function Nx.Window:SetHeaderCounter (text)
         self.HeaderCounter = cnt
     end
 
+    -- On the game's frame it sits on the band, above the metal.
+    local game = self.GameFrameOn and self.GameFrameSpec
+    if self.TitleFrm then
+        pcall (cnt.SetParent, cnt, game and self.TitleFrm or self.Frm)
+    end
     cnt:ClearAllPoints()
-    cnt:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -self.BorderW - (self.ButW or 0) - 6, -self.BorderH)
-    cnt:SetHeight (self.TitleLineH)
-    cnt:SetText (text and tostring (text) or "")
+    cnt:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -self.BorderW - (self.ButW or 0) - 6, game and -2 or -self.BorderH)
+    cnt:SetHeight (game and game.band - 4 or self.TitleLineH)
+    if text ~= false then
+        cnt:SetText (text and tostring (text) or "")
+    end
 end
 
 -- Strip from the inner edge of the border down to the end of the title.
@@ -2476,7 +2790,8 @@ function Nx.Window:PlaceTitleBar()
     if not strip then
         return
     end
-    local bk = Nx.Skin:GetBackdrop()
+    local game = self.GameFrameOn and self.GameFrameSpec
+    local bk = game and game.backdrop or Nx.Skin:GetBackdrop()
     local ins = bk and bk.insets
     local l = ins and ins.left or 0
     local r = ins and ins.right or 0
@@ -2485,11 +2800,19 @@ function Nx.Window:PlaceTitleBar()
     strip:ClearAllPoints()
     strip:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, -t)
     strip:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, -t)
-    strip:SetHeight (self.BorderH - t + self.TitleH)
+    -- On the game's frame only the band is darker, not the tool strip.
+    strip:SetHeight (game and game.band - t or self.BorderH - t + self.TitleH)
 
     local rule = self.HeaderRule
     if rule then
         local y = -(self.BorderH + self.TitleH)
+        if game then
+            y = y + 1
+            -- The band has its own edge; the rule closes a tool strip only.
+            rule:SetShown (self.ToolBar and not self.ToolBarHidden and true or false)
+        else
+            rule:Show()
+        end
         rule:ClearAllPoints()
         rule:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", l, y)
         rule:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -r, y)
@@ -2630,6 +2953,12 @@ end
 
 function Nx.Window:SetBorderSize (w, h)
 
+    -- On the game's frame the content stays inside the metal.
+    local game = self.GameFrameOn and self.GameFrameSpec
+    if game then
+        self.PlainBorderW, self.PlainBorderH = w, h
+        w, h = max (w, game.side or 0), max (h, game.side or 0)
+    end
     self.BorderW = w
     self.BorderH = h
     self.TopH = self.TitleH + h
@@ -3862,6 +4191,11 @@ function Nx.Window:OnUpdate (elapsed)
 
     local secureOk = not (win.Secure and InCombatLockdown())
 
+    if win.GameFramePending and secureOk then
+        win.GameFramePending = nil
+        win:UseDefaultGameFrame()
+    end
+
     if win.DeferredMouseUp and secureOk then
         win.DeferredMouseUp = nil
         win:SetFrmStrata (win.SaveData[win.LayoutMode.."L"])
@@ -3908,6 +4242,11 @@ function Nx.Window:OnUpdate (elapsed)
     else
 
         win.BackgndFadeTarget = win.BackgndFadeOut
+    end
+    -- The game's frame is solid, as the game's windows: no fade out (#42).
+    -- The quest watch, the one see-through window, opts out of the frame.
+    if win.GameFrameOn then
+        win.BackgndFadeTarget = 1
     end
 
     local fade = Nx.Util_StepValue (win.BackgndFade, win.BackgndFadeTarget, elapsed * 2)
@@ -4158,6 +4497,10 @@ Nx.Button.TypeData = {
         Up = "TabOff",
         Dn = "TabOn",
     },
+    -- The game's tab: no texture of its own, Nx.TabBar draws its pieces.
+    ["GameTab"] = {
+        Bool = true,
+    },
     ["Toggle"] = {
         Bool = true,
         Skin = true,
@@ -4170,12 +4513,15 @@ Nx.Button.TypeData = {
         RGBUp = "604040",
         RGBDn = "503030",
     },
+    -- Text buttons are 22 high, like the game's panel buttons (#42).
+    -- Txt64: main or destructive action, the game's red button.
     ["Txt64"] = {
         Skin = true,
         Up = "ButEmpty64",
         Dn = "ButEmpty64",
         RGBUp = "604040",
         RGBDn = "503030",
+        HeightUp = 22,
     },
     ["Txt64B"] = {
         Bool = true,
@@ -4184,6 +4530,28 @@ Nx.Button.TypeData = {
         Dn = "ButEmpty64",
         VRGBAUp = "1|1|1|1",
         VRGBADn = "1|.373|.373|1",
+        HeightUp = 22,
+    },
+    -- TxtGrey: any other action, the game's grey button (gold text like the
+    -- red one). TxtGreyB is its toggle, lit gold while pressed.
+    ["TxtGrey"] = {
+        Up = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        Dn = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        UpUV = { 0, .625, 0, .6875 },
+        DnUV = { 0, .625, 0, .6875 },
+        VRGBAUp = "1|1|1|1",
+        VRGBADn = ".7|.7|.7|1",
+        HeightUp = 22,
+    },
+    ["TxtGreyB"] = {
+        Bool = true,
+        Up = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        Dn = "Interface\\Buttons\\UI-Panel-Button-Disabled",
+        UpUV = { 0, .625, 0, .6875 },
+        DnUV = { 0, .625, 0, .6875 },
+        VRGBAUp = "1|1|1|1",
+        VRGBADn = "1|.82|.3|1",
+        HeightUp = 22,
     },
 }
 
@@ -4222,16 +4590,23 @@ end
 Nx.Button.ClientAtlases.Min = {
     AtlasUp = "ui-questtrackerbutton-collapse-all", AtlasDn = "ui-questtrackerbutton-expand-all", Untinted = true,
 }
--- Text buttons (Back of the Guide, Record of the Notes, the What's New
--- buttons): the game's red panel button. Every client has the panel button
--- files, so a client without the atlas gets them instead of the skin's TGA.
+-- Text buttons (Back of the Guide, Record of the Notes, tabs, tool strips):
+-- the game's red panel button file, symmetric at any width. The
+-- 128-RedButton atlases carry slice margins made for big buttons and cut
+-- one end on a 22 px button, so they are not used. Every client has the files.
+local PANEL_UP, PANEL_DN = "Interface\\Buttons\\UI-Panel-Button-Up", "Interface\\Buttons\\UI-Panel-Button-Down"
+local PANEL_UV = { 0, .625, 0, .6875 }
 for _, name in ipairs ({ "Txt64", "Txt64B" }) do
-    Nx.Button.ClientAtlases[name] = {
-        { AtlasUp = "128-RedButton-UP", AtlasDn = "128-RedButton-Pressed", Untinted = true },
-        { FileUp = "Interface\\Buttons\\UI-Panel-Button-Up", FileDn = "Interface\\Buttons\\UI-Panel-Button-Down",
-          UV = { 0, .625, 0, .6875 }, Untinted = true },
-    }
+    Nx.Button.ClientAtlases[name] = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = PANEL_UV, Untinted = true }
 end
+-- The grey button: the same red button, desaturated, so grey and red share
+-- one shape. Tinted, so pressed still shows (gold on the toggles).
+Nx.Button.ClientAtlases.TxtGrey = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = PANEL_UV, Desaturate = true }
+-- The toggle (tabs, "Record") pressed: the raised art with the game's button
+-- glow over it, as Blizzard lights a selected button. Grey tinted gold alone
+-- only turned a dull olive (#42).
+Nx.Button.ClientAtlases.TxtGreyB = { FileUp = PANEL_UP, FileDn = PANEL_UP, UV = PANEL_UV, Desaturate = true,
+    GlowPressed = "Interface\\Buttons\\UI-Panel-Button-Highlight" }
 -- Expand / collapse of a list header (quest log, Notes, Guide), registered
 -- by Carbonite.Quests: minus while open, plus while closed.
 Nx.Button.ClientAtlases.QuestHdr = {
@@ -4263,9 +4638,12 @@ function Nx.Button:UseClientAtlases (only)
                     typ.Skin = nil
                     typ.Up, typ.Dn = look.FileUp, look.FileDn
                     typ.UpUV, typ.DnUV = look.UV, look.UV
+                    typ.Desaturate = look.Desaturate
+                    typ.GlowPressed = look.GlowPressed
                 else
                     typ.AtlasUp, typ.AtlasDn = look.AtlasUp, look.AtlasDn
                     typ.IconDn, typ.IconScale = look.IconDn, look.IconScale
+                    typ.Desaturate = look.Desaturate
                 end
                 if look.Untinted then typ.VRGBAUp, typ.VRGBADn = nil, nil end
                 break
@@ -4729,6 +5107,11 @@ function Nx.Button:UpdateAtlasLook (typ, f, tx)
     local pressed = not self.State and self.Pressed
     local baseAtlas, uv, icon, iconCol
 
+    -- Grey buttons are the red one desaturated (atlas or panel file).
+    if tx.SetDesaturated then
+        tx:SetDesaturated (typ.Desaturate and true or false)
+    end
+
     if self.State then
         baseAtlas = nil
     elseif pressed then
@@ -4752,6 +5135,35 @@ function Nx.Button:UpdateAtlasLook (typ, f, tx)
     elseif self.TxCoordSet then
         tx:SetTexCoord (0, 1, 0, 1)
         self.TxCoordSet = nil
+    end
+
+    -- Selected toggle: the game's button glow, added over the art.
+    local glow = f.NxGlow
+    if typ.GlowPressed and pressed then
+        if not glow then
+            glow = f:CreateTexture (nil, "ARTWORK", nil, 7)   -- over the art
+            glow:SetAllPoints (tx)
+            glow:SetBlendMode ("ADD")
+            f.NxGlow = glow
+        end
+        glow:SetTexture (typ.GlowPressed)
+        local gv = typ.UpUV
+        if gv then glow:SetTexCoord (gv[1], gv[2], gv[3], gv[4]) end
+        glow:Show()
+        -- The rim alone is faint on the dark grey: a gold wash inside too.
+        local fill = f.NxGlowFill
+        if not fill then
+            fill = f:CreateTexture (nil, "ARTWORK", nil, 6)
+            fill:SetPoint ("TOPLEFT", tx, "TOPLEFT", 3, -3)
+            fill:SetPoint ("BOTTOMRIGHT", tx, "BOTTOMRIGHT", -3, 3)
+            fill:SetBlendMode ("ADD")
+            f.NxGlowFill = fill
+        end
+        fill:SetColorTexture (1, .82, 0, .22)
+        fill:Show()
+    elseif glow then
+        glow:Hide()
+        if f.NxGlowFill then f.NxGlowFill:Hide() end
     end
 
     local it = f.NxIcon
@@ -5219,6 +5631,15 @@ function Nx.Menu:SetSkin()
 
     local f = self.MainFrm
 
+    -- The Blizzard theme dresses menus as the game's tooltip (#42, R11).
+    local tip = Carbonite.UI.Skin:GetActive().menu
+    if tip then
+        f:SetBackdrop (tip.backdrop)
+        f:SetBackdropColor (Nx.Util_str2rgba (tip.bgColor))
+        f:SetBackdropBorderColor (Nx.Util_str2rgba (tip.borderColor))
+        return
+    end
+
     local bk = Nx.Skin:GetBackdrop()
     f:SetBackdrop (bk)
 
@@ -5227,6 +5648,18 @@ function Nx.Menu:SetSkin()
 
     local col = Nx.Skin:GetBorderCol()
     f:SetBackdropBorderColor (col[1], col[2], col[3], tonumber(col[4]))
+end
+
+---
+-- Font of the menu texts and the height of an item line: the tooltip's
+-- 13 px "menu" role in the Blizzard theme, with the tooltip's line gap, the "Menu Font" slot otherwise.
+--
+function Nx.Menu:GetFont()
+    if Carbonite.UI.Skin:GetActive().menu then
+        local Font = Carbonite.UI.Font
+        return Font:GetRole ("menu"), max (12, Font:GetHeight ("Role.menu")) + 3
+    end
+    return "NxFontMenu", 12
 end
 
 function Nx.Menu:OnUpdate (elapsed)
@@ -5537,15 +5970,28 @@ function Nx.Menu:FitWidth (menuX)
     local measure = self.MeasureFStr
     if not measure then
         measure = self.MainFrm:CreateFontString()
-        measure:SetFontObject ("NxFontMenu")
         measure:Hide()
         self.MeasureFStr = measure
     end
+    measure:SetFontObject ((self:GetFont()))
     local textW = 0
     for _, item in ipairs (self.Items) do
         if item.ShowState and item.Text and not item.Spacer then
-            measure:SetText (item.Text)
-            textW = max (textW, measure:GetStringWidth() or 0)
+            -- A slider shows its value after the text (SliderUpdate): measure
+            -- it with the widest value it can take.
+            local labels = { item.Text }
+            if item.Slider then
+                local pos = item.Table and item.Table[item.VarName] or item.SliderPos
+                for _, v in ipairs ({ item.SliderMin, item.SliderMax, pos }) do
+                    if type (v) == "number" then
+                        labels[#labels + 1] = format ("%s (%.2f)", item.Text, v)
+                    end
+                end
+            end
+            for _, label in ipairs (labels) do
+                measure:SetText (label)
+                textW = max (textW, measure:GetStringWidth() or 0)
+            end
         end
     end
     local w = max (self.Width, ceil (textW) + MENU_TEXT_X + menuX * 2 + 4)
@@ -5568,6 +6014,7 @@ function Nx.Menu:Update()
     local menuX = 14
     local menuY = 14
     local menuW = self:FitWidth (menuX)
+    local font, lineH = self:GetFont()
 
     for n = 1, #self.Items do
 
@@ -5586,7 +6033,7 @@ function Nx.Menu:Update()
             end
         else
 
-            local itemH = 12        -- Not counting space between items
+            local itemH = lineH     -- Not counting space between items
 
             if not item.Spacer then
 
@@ -5625,12 +6072,13 @@ function Nx.Menu:Update()
 
                         fstr = itemF:CreateFontString()
                         item.TextFStr = fstr
-                        fstr:SetFontObject ("NxFontMenu")
                         fstr:SetPoint ("TOPLEFT", MENU_TEXT_X, 0)
                         fstr:SetWidth (menuW - menuX * 2 - MENU_TEXT_X)
-                        fstr:SetHeight (12)
                         fstr:SetJustifyH ("LEFT")
                     end
+                    -- Every open: the theme or the font size may have changed.
+                    fstr:SetFontObject (font)
+                    fstr:SetHeight (lineH)
 
                     if item.ShowState < 0 then
                         fstr:SetText (Carbonite.UI.Skin:TextCode ("menuDisabled") .. item.Text)
@@ -5656,7 +6104,7 @@ function Nx.Menu:Update()
                         frm.texture:SetAllPoints (frm)
                     end
 
-                    frm:SetPoint ("TOPLEFT", 1, 0)
+                    frm:SetPoint ("TOPLEFT", 1, -floor ((lineH - 12) / 2))
                     frm:Show()
 
                     self:CheckUpdate (item)
@@ -6187,7 +6635,7 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
 
     if not noHeader then
 
-        inst.HdrH = 12
+        inst.HdrH = self:DefaultHdrH()
 
         local hfrm = CreateFrame ("Frame", nil, frm, "BackdropTemplate")
         inst.HdrFrm = hfrm
@@ -6199,6 +6647,8 @@ function Nx.List:Create (saveName, xpos, ypos, width, height, parentFrm, showAll
         hfrm.texture = hfrm:CreateTexture()
         hfrm.texture:SetAllPoints (hfrm)
         Carbonite.UI.Skin:Paint (hfrm.texture, "listHeader")
+        -- Bronze outline of the game's list headers (#42); clear in other themes.
+        hfrm.edges = self:AddEdges (hfrm, "sectionEdge")
         hfrm:SetPoint ("TOPLEFT", 0, 0)
         hfrm:Show()
     end
@@ -6276,7 +6726,11 @@ function Nx.List:SetFade (fade)
 
     if self.Slider then
         self.Slider.Frm.texture:SetAlpha (fade * .6)
-        self.Slider.ThumbFrm.texture:SetAlpha (fade * .9)
+        if self.Slider.Game then
+            self.Slider.ThumbFrm:SetAlpha (fade * .9)   -- the three thumb pieces
+        else
+            self.Slider.ThumbFrm.texture:SetAlpha (fade * .9)
+        end
     end
 end
 
@@ -6320,7 +6774,7 @@ function Nx.List:SetLineHeight (height, hdrH)
 
     self.LineHPad = height
 
-    self.HdrH = hdrH or 12
+    self.HdrH = hdrH or (self.HdrFrm and self:DefaultHdrH()) or 12
 
     if self.Slider then
         self.Slider:SetTLOff (self.HdrH)
@@ -6484,6 +6938,10 @@ function Nx.List:Resize (width, height)
     if hf then
         hf:SetWidth (width)
         hf:SetHeight (hdrH)
+        -- A header too thin for text (the Guide's folder list) gets no outline.
+        for _, t in ipairs (hf.edges or {}) do
+            if hdrH >= 8 then t:Show() else t:Hide() end
+        end
     end
 
     local x = 0
@@ -6501,6 +6959,7 @@ function Nx.List:Resize (width, height)
         if hfstr then
             hfstr:SetPoint ("TOPLEFT", padW + x, 0)
             hfstr:SetWidth (colW)
+            hfstr:SetHeight (hdrH)
         end
 
         x = x + column.Width
@@ -6698,7 +7157,9 @@ function Nx.List:Update (showLast)
         local f = self.Frm
         local win = f:GetParent().NxWin
 
-        if win then
+        -- A minimized window that keeps its own size (the quest watch, #42)
+        -- does not follow its hidden list.
+        if win and not (win.MinKeepsSize and win.LayoutMode == "Min") then
             win:SetSize (f:GetWidth(), -7, true)
         end
     end
@@ -6735,6 +7196,11 @@ function Nx.List:Update (showLast)
 
             local but = self.Buts[butNum]
             local butType = self.ButData[line]
+
+            -- A section strip draws its own +/- on the right.
+            if butType and self:IsSectionBar (line) then
+                butType = nil
+            end
 
             if butType then
 
@@ -6904,6 +7370,7 @@ function Nx.List:Update (showLast)
     end
 
     self:UpdateBands (lineH, hdrH)
+    self:UpdateSections (lineH, hdrH)
 
     if self.ModernRows then
         self:UpdateModernRows()
@@ -7019,6 +7486,147 @@ function Nx.List:OnModernHover()
     end
 
     t:Hide()
+end
+
+---------------------------------------------------------------------------------------
+-- Lists in the game's style (#42, theme "Blizzard", Skin:GameStyle): a taller
+-- column header with a bronze outline, and section headers drawn like the
+-- Friends list: a dark strip with a bronze outline, gold text on the left and
+-- a gold +/- on the right that folds the section. In other themes a section
+-- line keeps its own look (the window's +/- button or icon).
+---------------------------------------------------------------------------------------
+
+function Nx.List:UsesSectionBars()
+    local Skin = Carbonite.UI.Skin
+    return Skin and Skin.GameStyle and Skin:GameStyle() or false
+end
+
+-- Header height when the window does not give one: room for the list font.
+function Nx.List:DefaultHdrH()
+    if self:UsesSectionBars() then
+        return max (Nx.Font:GetH ("Role.list") + 4, 16)
+    end
+    return 12
+end
+
+-- Four one pixel lines around `frame`, painted with `token`.
+function Nx.List:AddEdges (frame, token)
+    local edges = {}
+    for i, side in ipairs ({ "TOP", "BOTTOM", "LEFT", "RIGHT" }) do
+        local t = frame:CreateTexture (nil, "BORDER")
+        Carbonite.UI.Skin:Paint (t, token)
+        if i <= 2 then
+            t:SetHeight (1)
+            t:SetPoint (side .. "LEFT", frame, side .. "LEFT", 0, 0)
+            t:SetPoint (side .. "RIGHT", frame, side .. "RIGHT", 0, 0)
+        else
+            t:SetWidth (1)
+            t:SetPoint ("TOP" .. side, frame, "TOP" .. side, 0, 0)
+            t:SetPoint ("BOTTOM" .. side, frame, "BOTTOM" .. side, 0, 0)
+        end
+        edges[i] = t
+    end
+    return edges
+end
+
+--- Mark a line (default the last) as a section header, open or folded.
+function Nx.List:ItemSetSection (open, index)
+
+    if not self.SectionData then
+        self.SectionData = {}
+    end
+
+    self.SectionData[index or self.Num] = open and true or false
+end
+
+--- True when line `index` is a section header drawn as a strip.
+function Nx.List:IsSectionBar (index)
+    return self.SectionData ~= nil and self.SectionData[index] ~= nil and self:UsesSectionBars()
+end
+
+-- The strip of one section header: fill, outline and the +/- sign.
+function Nx.List:CreateSectionBar()
+
+    local f = self.Frm
+    local bar = {}
+
+    bar.Fill = f:CreateTexture (nil, "BACKGROUND", nil, 3)
+    Carbonite.UI.Skin:Paint (bar.Fill, "sectionBg")
+
+    bar.Box = CreateFrame ("Frame", nil, f)
+    bar.Box:EnableMouse (false)
+    bar.Edges = self:AddEdges (bar.Box, "sectionEdge")
+
+    -- The minus is a bar; the plus adds the upright one.
+    bar.Minus = bar.Box:CreateTexture (nil, "ARTWORK")
+    Carbonite.UI.Skin:Paint (bar.Minus, "sectionSign")
+    bar.Minus:SetSize (10, 2)
+    bar.Minus:SetPoint ("CENTER", bar.Box, "RIGHT", -10, 0)
+
+    bar.Plus = bar.Box:CreateTexture (nil, "ARTWORK")
+    Carbonite.UI.Skin:Paint (bar.Plus, "sectionSign")
+    bar.Plus:SetSize (2, 10)
+    bar.Plus:SetPoint ("CENTER", bar.Minus, "CENTER", 0, 0)
+
+    return bar
+end
+
+function Nx.List:UpdateSections (lineH, hdrH)
+
+    local bars = self.SectionBars
+
+    if not self.SectionData and not bars then
+        return
+    end
+
+    bars = bars or {}
+    self.SectionBars = bars
+
+    local n = 0
+
+    if self.SectionData and self:UsesSectionBars() then
+
+        local right = self.Slider and self.Slider.Frm:GetWidth() or 0
+
+        for row = 0, self.Vis - 1 do
+            local line = self.Top + row
+            if line <= self.Num and self.SectionData[line] ~= nil then
+                n = n + 1
+                local bar = bars[n] or self:CreateSectionBar()
+                bars[n] = bar
+                local y = -row * lineH - hdrH - 1
+                for _, t in ipairs ({ bar.Fill, bar.Box }) do
+                    t:ClearAllPoints()
+                    t:SetPoint ("TOPLEFT", self.Frm, "TOPLEFT", 2, y)
+                    t:SetPoint ("TOPRIGHT", self.Frm, "TOPRIGHT", -right - 2, y)
+                    t:SetHeight (lineH - 2)
+                    t:Show()
+                end
+                if self.SectionData[line] then
+                    bar.Plus:Hide()
+                else
+                    bar.Plus:Show()
+                end
+            end
+        end
+    end
+
+    for i = n + 1, #bars do
+        bars[i].Fill:Hide()
+        bars[i].Box:Hide()
+    end
+end
+
+--- With section strips, a click on the +/- of a section line folds it: the
+--- window gets the "button" event of the line, as from its own +/- button.
+function Nx.List:SectionSignHit (line, x)
+
+    if not self:IsSectionBar (line) then
+        return false
+    end
+
+    local right = self.Slider and self.Slider.Frm:GetWidth() or 0
+    return x >= self.Frm:GetWidth() - right - 24
 end
 
 ---------------------------------------------------------------------------------------
@@ -7207,6 +7815,10 @@ function Nx.List:Empty()
         wipe (self.BandData)
     end
 
+    if self.SectionData then
+        wipe (self.SectionData)
+    end
+
 --    if self.FrmDataFrm then
 --        wipe (self.FrmDataFrm)
 --    end
@@ -7322,6 +7934,16 @@ function Nx.List:Sort()
         end
 
         self.BandData = data
+    end
+
+    if self.SectionData then
+        local data = {}
+
+        for n = 1, #t do
+            data[n] = self.SectionData[t[n]]
+        end
+
+        self.SectionData = data
     end
 end
 
@@ -7642,6 +8264,20 @@ function Nx.List:OnMouseDown (click)
             y = floor ((y - inst.HdrH) / inst:GetLineH())
             inst.Selected = min (y + inst.Top, inst.Num)
 
+            local line = y + inst.Top
+            if click == "LeftButton" and line <= inst.Num and inst:SectionSignHit (line, x) then
+                local data = inst.ButData
+                local pressed = not (data and data[-line])
+                if data and data[line] then
+                    data[-line] = pressed
+                end
+                if inst.UserFunc then
+                    inst.UserFunc (inst.User, "button", line, pressed, click)
+                end
+                inst:Update()
+                return
+            end
+
             local id = inst:ColumnHitTest (x)
 
             if id and inst.UserFunc then
@@ -7759,6 +8395,7 @@ function Nx.DropDown:Init()
     local win = Nx.Window:Create ("NxDD", nil, nil, nil, 0, true, true, true)
     self.Win = win
     local frm = win.Frm
+    win:UseGameFrame (false)        -- A menu, not a window (#42)
 
     win:EnableMenu (false)
 
@@ -7866,8 +8503,88 @@ end
 Nx.TabBar.TabMinW = 66        -- default tab width
 Nx.TabBar.TabTextPad = 16     -- room around a tab label
 
+-- The game's bottom tabs (#42, PanelTabButtonTemplate): three atlas pieces,
+-- the active set while selected. Only in the theme "Blizzard" and where the
+-- client has every atlas (UseGameTabs); otherwise the theme's tab.
+Nx.TabBar.GameTabs = false
+Nx.TabBar.GameTabH = 32       -- tab height
+Nx.TabBar.GameTabCap = 20     -- width of the left and right pieces
+Nx.TabBar.GameTabPad = 40     -- room around a label
+Nx.TabBar.GameTabAtlases = {
+    Off = { "uiframe-tab-left", "uiframe-tab-center", "uiframe-tab-right" },
+    On  = { "uiframe-activetab-left", "uiframe-activetab-center", "uiframe-activetab-right" },
+}
+
 function Nx.TabBar:GetHeight()
-    return 22
+    return self.GameTabs and self.GameTabH or 22
+end
+
+-- True when the game's tabs can be drawn: theme "Blizzard" and the atlases.
+function Nx.TabBar:HasGameTabs()
+
+    local Skin = Carbonite.UI.Skin
+    if not (Skin and Skin.GameStyle and Skin:GameStyle()) then
+        return false
+    end
+    local info = C_Texture and C_Texture.GetAtlasInfo
+    if not info then
+        return false
+    end
+    for _, set in pairs (self.GameTabAtlases) do
+        for _, name in ipairs (set) do
+            if not info (name) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+-- Switch a bar to the game's tabs. Call before AddTab; the bar loses its own
+-- strip and rule, since the tabs hang under the window as in the game. The
+-- window places the bar (at its bottom) with GetHeight. Returns true if used.
+function Nx.TabBar:UseGameTabs()
+
+    if not self:HasGameTabs() then
+        return false
+    end
+    self.GameTabs = true
+    local f = self.Frm
+    if f.texture then
+        f.texture:Hide()
+    end
+    local top = self.TopFrm
+    if top and top.texture then
+        top.texture:Hide()
+    end
+    return true
+end
+
+-- The pieces of a game tab, active while pressed.
+function Nx.TabBar:UpdateGameTab (tab)
+
+    local f = tab.But.Frm
+    local parts = f.NxTabParts
+    if not parts then
+        local cap = self.GameTabCap
+        parts = {}
+        for n = 1, 3 do
+            parts[n] = f:CreateTexture (nil, "BACKGROUND")
+        end
+        parts[1]:SetPoint ("TOPLEFT")
+        parts[1]:SetPoint ("BOTTOMLEFT")
+        parts[1]:SetWidth (cap)
+        parts[3]:SetPoint ("TOPRIGHT")
+        parts[3]:SetPoint ("BOTTOMRIGHT")
+        parts[3]:SetWidth (cap)
+        parts[2]:SetPoint ("TOPLEFT", parts[1], "TOPRIGHT")
+        parts[2]:SetPoint ("BOTTOMRIGHT", parts[3], "BOTTOMLEFT")
+        f.NxTabParts = parts
+    end
+    local set = tab.But:GetPressed() and self.GameTabAtlases.On or self.GameTabAtlases.Off
+    for n = 1, 3 do
+        parts[n]:SetAtlas (set[n])
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -7976,14 +8693,21 @@ function Nx.TabBar:AddTab (name, index, width, press, template, butId)
     -- label: translated labels are often longer than the English ones.
     local w = width or self.TabMinW
     local x = self.NextTabX or 1
+    local game = self.GameTabs
+    local pad = game and self.GameTabPad or self.TabTextPad
 
-    local but = Nx.Button:Create (self.TopFrm, "Tab", name, nil, x, -1, "TOPLEFT", w, 20, self.OnBut, self, template)
+    local but = Nx.Button:Create (self.TopFrm, game and "GameTab" or "Tab", name, nil, x, game and 0 or -1, "TOPLEFT",
+                                  w, game and self.GameTabH or 20, self.OnBut, self, template)
     tab.But = but
+
+    if game and but.FStr then
+        Carbonite.UI.Font:SetRole (but.FStr, "normal")
+    end
 
     if not width and but.FStr then
         local textW = but.FStr:GetStringWidth() or 0
-        if textW + self.TabTextPad > w then
-            w = math.ceil (textW + self.TabTextPad)
+        if textW + pad > w then
+            w = math.ceil (textW + pad)
             but.Frm:SetWidth (w)
         end
     end
@@ -8002,7 +8726,11 @@ function Nx.TabBar:AddTab (name, index, width, press, template, butId)
         but:SetPressed (true)
 
         local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. name
-        but:SetText (txt, 0, 2)
+        but:SetText (txt, 0, game and 0 or 2)
+    end
+
+    if game then
+        self:UpdateGameTab (tab)
     end
 end
 
@@ -8023,6 +8751,7 @@ function Nx.TabBar:Select (index, force)
     end
 
     local x = 1
+    local game = self.GameTabs
 
     for i, tab in pairs (self.Tabs) do
         if i ~= index then
@@ -8030,8 +8759,8 @@ function Nx.TabBar:Select (index, force)
             tab.But:SetText (tab.Name, 0, 0)
         end
 
-        tab.But:SetPos ("TOPLEFT", x, -1)
-        tab.But:SetSize (tab.W, 20)
+        tab.But:SetPos ("TOPLEFT", x, game and 0 or -1)
+        tab.But:SetSize (tab.W, game and self.GameTabH or 20)
 
         x = x + tab.W + 2
     end
@@ -8039,7 +8768,13 @@ function Nx.TabBar:Select (index, force)
     but:SetPressed (true)
 
     local txt = Carbonite.UI.Skin:TextCode ("tabTextActive") .. selTab.Name
-    but:SetText (txt, 0, 2)
+    but:SetText (txt, 0, game and 0 or 2)
+
+    if game then
+        for _, tab in pairs (self.Tabs) do
+            self:UpdateGameTab (tab)
+        end
+    end
 
     if self.UserFunc then
         self.UserFunc (self.User, index)
@@ -8071,6 +8806,9 @@ function Nx.TabBar:SetFade (fade)
     for i, tab in pairs (self.Tabs) do
         local f = tab.But.Frm
         f.texture:SetVertexColor (1, 1, 1, fade)
+        for _, part in ipairs (f.NxTabParts or {}) do
+            part:SetVertexColor (1, 1, 1, fade)
+        end
     end
 end
 
@@ -8615,12 +9353,79 @@ function Nx.Slider:Create(parentFrm, typ, size, tlOff)
     tfrm:SetPoint ("TOPLEFT", 1, 1)
     tfrm:Show()
 
+    if not inst.TypeH and Carbonite.UI.Skin:GameStyle() then
+        inst:UseGameLook()
+    end
+
     --
 
     inst:Set (0, 0, 9, 1)
     inst:Update()
 
     return inst
+end
+
+---
+-- Theme "Blizzard" (#42): the game's minimal scroll bar, a thin dark track,
+-- a rounded thumb and arrows at both ends that move one line. Kept when the
+-- client lacks the thumb atlases.
+--
+function Nx.Slider:UseGameLook()
+    if not Carbonite.UI.Skin:HasMinimalScroll() then
+        return
+    end
+    local info = C_Texture.GetAtlasInfo
+    local SCROLL_ARROW_H = Carbonite.UI.Skin.SCROLL.arrowH   -- the shared sizes
+    self.Game = true
+    self.Inset = SCROLL_ARROW_H
+
+    local frm, tfrm = self.Frm, self.ThumbFrm
+
+    -- Track: a thin dark groove between the arrows.
+    local track = frm.texture
+    track:ClearAllPoints()
+    track:SetPoint ("TOP", frm, "TOP", 0, -SCROLL_ARROW_H)
+    track:SetPoint ("BOTTOM", frm, "BOTTOM", 0, SCROLL_ARROW_H)
+    track:SetWidth (4)
+    track:SetColorTexture (0, 0, 0, .55)
+
+    -- Thumb: top cap, stretched middle, bottom cap.
+    local mid = tfrm.texture
+    mid:ClearAllPoints()
+    mid:SetAtlas ("minimal-scrollbar-thumb-middle")
+    local top = tfrm:CreateTexture (nil, "ARTWORK")
+    top:SetAtlas ("minimal-scrollbar-thumb-top")
+    top:SetPoint ("TOPLEFT")
+    top:SetPoint ("TOPRIGHT")
+    top:SetHeight (4)
+    local bot = tfrm:CreateTexture (nil, "ARTWORK")
+    bot:SetAtlas ("minimal-scrollbar-thumb-bottom")
+    bot:SetPoint ("BOTTOMLEFT")
+    bot:SetPoint ("BOTTOMRIGHT")
+    bot:SetHeight (4)
+    mid:SetPoint ("TOPLEFT", top, "BOTTOMLEFT")
+    mid:SetPoint ("BOTTOMRIGHT", bot, "TOPRIGHT")
+
+    -- Arrows: one line per click.
+    local function arrow (dir, point)
+        local b = CreateFrame ("Button", nil, frm)
+        b:SetSize (frm:GetWidth(), SCROLL_ARROW_H)
+        b:SetPoint (point, frm, point)
+        local name = "minimal-scrollbar-small-arrow-" .. dir
+        b:SetNormalAtlas (name)
+        if info (name .. "-over") then b:SetHighlightAtlas (name .. "-over") end
+        if info (name .. "-down") then b:SetPushedAtlas (name .. "-down") end
+        b:SetScript ("OnClick", function()
+            self:Set (self.Pos + (dir == "top" and -1 or 1))
+            self:Update()
+            if self.UserFunc then
+                self.UserFunc (self.User, self, self.Pos)
+            end
+        end)
+        return b
+    end
+    self.ArrowUp = arrow ("top", "TOP")
+    self.ArrowDn = arrow ("bottom", "BOTTOM")
 end
 
 ---------------------------------------------------------------------------------------
@@ -8747,7 +9552,7 @@ function Nx.Slider:OnMouseDown (button)
                 else
 
                     local h = (frm:GetTop() or 0) - (frm:GetBottom() or 0)
-                    y = h - y
+                    y = h - y - (self.Inset or 0)
 
 --                    Nx.prt ("Slider XY %f %f", x, y)
 
@@ -8813,6 +9618,7 @@ function Nx.Slider:Drag()
 
                 local h = (frm:GetTop() or 0) - (frm:GetBottom() or 0)
                 y = h - y
+                h = max (h - (self.Inset or 0) * 2, 1)    -- the track between the arrows
 
                 if dy ~= 0 then
 
@@ -8864,6 +9670,8 @@ function Nx.Slider:DoUpdate()
     else
 
         local h = (frm:GetTop() or 0) - (frm:GetBottom() or 0)        -- Attached, so GetHeight is wrong
+        local inset = self.Inset or 0       -- room for the arrows
+        h = h - inset * 2
 
         local tper = min (self.VisSz / range, 1)
         if tper >= 1 or h < 6 then
@@ -8891,7 +9699,7 @@ function Nx.Slider:DoUpdate()
             h = h - tper * h
             self.TPt = -per * h
 
-            tfrm:SetPoint ("TOPLEFT", 0, self.TPt)
+            tfrm:SetPoint ("TOPLEFT", 0, self.TPt - inset)
         end
     end
 end

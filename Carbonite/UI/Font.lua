@@ -33,13 +33,19 @@ Font.slots = {
 --   normal  body text (the "Normal Font" slot)
 --   small   secondary text, list columns, buttons (the "Small Font" slot)
 --   number  counters and amounts (narrow face, follows the small size)
+--   list    rows of the Guide, Notes and Warehouse lists (#203)
 -- A role either reuses a slot's font object or owns one derived from a slot:
 -- `add` pixels over the slot size, an optional fixed `face` and a shadow.
+-- `min` is the smallest size before the global scale: lists read 12 and
+-- titles 14 like the game's windows, even with a smaller "Normal Font".
 Font.roles = {
-    title  = { object = "NxFontTitle",  slot = "Font.Medium", add = 2, shadow = true },
+    title  = { object = "NxFontTitle",  slot = "Font.Medium", add = 2, min = 14, shadow = true },
     normal = { slot = "Font.Medium" },
+    list   = { object = "NxFontList",   slot = "Font.Medium", min = 12 },
     small  = { slot = "Font.Small" },
     number = { object = "NxFontNumber", slot = "Font.Small", add = 1, face = "Fonts\\ARIALN.TTF", shadow = true },
+    -- Menus in the Blizzard theme read like the game's tooltip (#42, R11).
+    menu   = { object = "NxFontMenuGame", slot = "Font.Menu", min = 13, shadow = true },
 }
 
 -- Sizes of a slot before the player's profile is read (Defaults.lua).
@@ -113,7 +119,26 @@ function Font:GetRoleSize(name)
     local Nx = _G.Nx
     local profile = Nx and Nx.db and Nx.db.profile
     local size = profile and profile[cat] and profile[cat][sub .. "Size"] or BASE_SIZE[role.slot] or 12
-    return math.floor((size + (role.add or 0)) * self:GetScale() + 0.5)
+    size = math.max(size + (role.add or 0), role.min or 0)
+    return math.floor(size * self:GetScale() + 0.5)
+end
+
+-- Line height of a role: its size plus the spacing of its slot.
+local function roleHeight(name)
+    local role = Font.roles[name]
+    local cat, sub = role.slot:match("^(.-)%.(.+)$")
+    local Nx = _G.Nx
+    local profile = Nx and Nx.db and Nx.db.profile
+    local spacing = profile and profile[cat] and profile[cat][sub .. "Spacing"] or 0
+    return math.max(Font:GetRoleSize(name) + spacing, 6)
+end
+
+-- "Role.list" names the font object of a role where a slot key is expected
+-- (Nx.List:SetCreateFont), so a list can ask for a role.
+local function roleOfKey(key)
+    local name = type(key) == "string" and key:match("^Role%.(.+)$")
+    local role = name and Font.roles[name]
+    if role and role.object then return name, role end
 end
 
 -- Refresh the font objects the roles own (the others are slots).
@@ -124,7 +149,8 @@ function Font:UpdateRoles()
         if role.object then
             local obj = ensureRoleObject(role)
             local cat, sub = role.slot:match("^(.-)%.(.+)$")
-            local face = role.face or self:GetFacePath(profile and profile[cat] and profile[cat][sub])
+            local face = self:GameFace() or role.face
+                or self:GetFacePath(profile and profile[cat] and profile[cat][sub])
             local _, _, flags = obj:GetFont()
             obj:SetFont(face, self:GetRoleSize(name), flags or "")
             if role.shadow then
@@ -150,6 +176,7 @@ function Font:Define(key, spec)
         object  = spec.object  or ("NxFont" .. key:gsub("%W", "")),
         inherit = spec.inherit or "GameFontNormalSmall",
         scope   = spec.scope   or "db",
+        min     = spec.min,
     }
     ensureFontObject(self.slots[key])
     if self.initialized then self:Update() end
@@ -176,11 +203,15 @@ function Font:ScanShared()
 end
 
 function Font:GetObject(key)
+    local _, role = roleOfKey(key)
+    if role then return ensureRoleObject(role) end
     local slot = self.slots[key]
     return slot and ensureFontObject(slot) or nil
 end
 
 function Font:GetHeight(key)
+    local name = roleOfKey(key)
+    if name then return roleHeight(name) end
     local slot = self.slots[key]
     return slot and slot.height or 12
 end
@@ -193,6 +224,16 @@ end
 function Font:GetFaceName(index)
     local v = self.faces[index]
     return v and v[1]
+end
+
+-- Theme "Blizzard" (#42): every Carbonite font is the game's own, Friz
+-- Quadrata, whatever face a slot saved (the quest watch defaulted to Arial).
+-- The other themes keep the face picked in the options.
+Font.GAME_FACE = "Fonts\\FRIZQT__.TTF"
+
+function Font:GameFace()
+    local Skin = Carbonite.UI and Carbonite.UI.Skin
+    if Skin and Skin.GameStyle and Skin:GameStyle() then return self.GAME_FACE end
 end
 
 function Font:GetFacePath(name)
@@ -215,8 +256,9 @@ function Font:Update()
             local cat, sub = key:match("^(.-)%.(.+)$")
             local profileCat = cat and profile[cat]
             if profileCat then
-                local file = self:GetFacePath(profileCat[sub])
-                local size = math.floor((profileCat[sub .. "Size"] or 12) * scale + 0.5)
+                local file = self:GameFace() or self:GetFacePath(profileCat[sub])
+                local size = math.max(profileCat[sub .. "Size"] or 12, slot.min or 0)
+                size = math.floor(size * scale + 0.5)
                 -- Optional per-slot outline flag ("", "OUTLINE",
                 -- "THICKOUTLINE"). Only slots whose profile defines a
                 -- <sub>Outline key are affected; others keep the flags
@@ -266,7 +308,7 @@ Carbonite.Core.EventBus:Subscribe("CARBONITE_LOADED", function()
     local target = _G.Nx.Font
     target.Init       = function(self) Font:Init() end
     target.ModuleAdd  = function(self, key, value)
-        Font:Define(key, { object = value[1], inherit = value[2], scope = value[3] })
+        Font:Define(key, { object = value[1], inherit = value[2], scope = value[3], min = value[4] })
     end
     target.AddonLoaded = function()
         if Font.initialized and Font:ScanShared() then Font:Update() end

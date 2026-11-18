@@ -302,7 +302,8 @@ L["Go Now"] = true
 L["Remove"] = true
 L["Clear All"] = true
 L["Distance"] = true
-L["No destinations. Shift+click Goto on the map to queue several."] = true
+L["No destinations."] = true
+L["Shift+click Goto on the map to queue several."] = true
 L["open the destination queue"] = true
 -- First-run setup assistant (#63)
 L["Which map opens with M?"] = true

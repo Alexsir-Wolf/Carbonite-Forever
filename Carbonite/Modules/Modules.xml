@@ -44,6 +44,8 @@
     <!-- Destinations window: list and edit the goto queue (#70). -->
     <Script file="Map\TargetsWindow.lua" />
     <Script file="Map\BlizzardPin.lua" />
+    <!-- Directions asked to a city guard: target the Guide NPC. -->
+    <Script file="Map\GuardRoute.lua" />
     <Script file="Map\IconTypes.lua" />
     <Script file="Map\Renderer.lua" />
     <Script file="Map\MinimapGlow.lua" />

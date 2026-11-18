@@ -50,10 +50,12 @@ function Nx.NXMiniMapBut:Init()
 
     NXMiniMapBut:SetClampedToScreen (true)
 
+    local dbIcon = self:RegisterDBIcon()
+
     -- Blizzard's minimap is 198x198 on Retail 12.1 but remains 140x140 on
     -- the supported Classic clients. Keep the launcher on the live minimap
     -- boundary whenever Edit Mode or Carbonite changes those dimensions.
-    if not Nx.db.profile.MiniMap.ButOwn then
+    if not Nx.db.profile.MiniMap.ButOwn and not dbIcon then
         local mm = _G.Minimap
         if mm and mm.HookScript and not f.NxBoundaryHooked then
             f.NxBoundaryHooked = true
@@ -79,6 +81,30 @@ function Nx.NXMiniMapBut:Init()
     if ok and var ~= "0" then
         Nx:ShowMessage (L["Profiling is on. This decreases game performance. Disable?"], L["Disable and Reload"], self.ToggleProfiling, L["Cancel"])
     end
+end
+
+---
+-- The addon button every other addon has (#42): the Carbonite broker as a
+-- LibDBIcon minimap button, so button collectors (MinimapButtonButton and
+-- the like) gather it with the others. LibDBIcon comes with other addons;
+-- without it, or with the button docked in the map (ButOwn, unless another
+-- collector took that job: #86), the own launcher stays. Its saved position
+-- lives in MiniMap.DBIcon.
+--
+function Nx.NXMiniMapBut:RegisterDBIcon()
+    local mm = Nx.db.profile.MiniMap
+    local icon = LibStub and LibStub ("LibDBIcon-1.0", true)
+    local dock = Nx.Map and Nx.Map.Dock
+    local other = dock and dock.OtherCollector and dock:OtherCollector()
+    if (mm.ButOwn and not other) or not icon or not Nx.Broker then
+        return false
+    end
+    if not icon:IsRegistered ("Carbonite") then
+        mm.DBIcon = mm.DBIcon or {}
+        icon:Register ("Carbonite", Nx.Broker, mm.DBIcon)
+    end
+    NXMiniMapBut:Hide()
+    return true
 end
 
 function Nx.NXMiniMapBut:Menu_OnOptions()

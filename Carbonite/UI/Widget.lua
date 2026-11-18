@@ -61,6 +61,7 @@ end
 
 function Widget.CreateScrollFrame(parent, name, ...)
     local sf = CreateFrame("ScrollFrame", name, parent or UIParent, "UIPanelScrollFrameTemplate")
+    Carbonite.UI.Skin:StyleScrollBar(sf)
     Mixin.Apply(sf, Base, ...)
     return sf
 end

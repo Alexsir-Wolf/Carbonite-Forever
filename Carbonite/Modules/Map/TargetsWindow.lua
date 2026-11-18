@@ -146,13 +146,14 @@ function Window:IsShown()
 end
 
 -- Toolbar actions, in order: label key, method, acts on the selected row.
+-- { label, method, needs a selected row, tool strip kind (#42) }
 Window.ACTIONS = {
     { "Move Up", "MoveUp", true },
     { "Move Down", "MoveDown", true },
     { "Go Now", "GoNow", true },
-    { "Remove", "Remove", true },
+    { "Remove", "Remove", true, "danger" },
     { "Reverse Targets", "Reverse" },
-    { "Clear All", "ClearAll" },
+    { "Clear All", "ClearAll", false, "danger" },
 }
 
 --- Run toolbar / menu action `n` on the selected row.
@@ -177,31 +178,53 @@ function Window:Create()
     self.Win = win
     win.Frm.NxInst = self
     win:CreateButtons(true, true)
+    win:UseGameFrame()
     win:InitLayoutData(nil, -.35, -.25, -.3, -.4)
     win.Frm:SetToplevel(true)
     win:Show(false)
     if type(_G.UISpecialFrames) == "table" then tinsert(_G.UISpecialFrames, win.Frm:GetName()) end
 
-    -- Toolbar on top: one button per action.
+    -- One button per action. On the game's frame (#42) they go on the
+    -- window's tool strip in the standard order, the destructive ones red
+    -- and set apart; otherwise on a bar over the list, as before.
+    local game = win.GameFrameOn
     local bar = CreateFrame("Frame", nil, win.Frm)
     self.Bar = bar
+    local parent = game and win:GetToolBar() or bar
+    local items = {}
     local x = 0
     for n, a in ipairs(self.ACTIONS) do
         local label = L[a[1]]
         local w = string.len(label) * 7 + 16
-        Nx.Button:Create(bar, "Txt64", label, nil, x, 0, "TOPLEFT", w, 20, function() self:Do(n) end, self)
+        local typ = (game and a[4] ~= "danger") and "TxtGrey" or "Txt64"
+        local but = Nx.Button:Create(parent, typ, label, nil, x, 0, "TOPLEFT", w, game and 22 or 20,
+                                     function() self:Do(n) end, self)
+        items[#items + 1] = { but, a[4] }
         x = x + w + 2
     end
-    win:Attach(bar, 0, 1, 0, 22)
+    local top = 0
+    if game then
+        win:ArrangeToolBar(items)
+        bar:SetSize(1, 1)       -- Only the refresh timer
+        bar:SetPoint("TOPLEFT")
+    else
+        win:Attach(bar, 0, 1, 0, 22)
+        top = 22
+    end
 
+    -- The list font of the other windows (#42): 12 px and the global scale.
+    if game then Nx.List:SetCreateFont("Role.list", 16) end
     local list = Nx.List:Create(false, 0, 0, 1, 1, win.Frm)
     self.List = list
     list:SetUser(self, self.OnListEvent)
+    if game then
+        list:SetModernRows()    -- The list rows of the other windows (#42)
+    end
     list:ColumnAdd("#", 1, 24, "RIGHT")
-    list:ColumnAdd(L["Name"], 2, 220)
+    list:ColumnAdd(L["Name"], 2, 300)
     list:ColumnAdd(L["Zone"], 3, 150)
     list:ColumnAdd(L["Distance"], 4, 80, "RIGHT")
-    win:Attach(list.Frm, 0, 1, 22, 1)
+    win:Attach(list.Frm, 0, 1, top, 1)
 
     -- Right-click menu on a row: the same actions.
     local menu = Nx.Menu:Create(list.Frm)
@@ -249,8 +272,11 @@ function Window:Update()
         list:ItemSet(4, distText(r.dist))
     end
     if #rows == 0 then
+        -- Two rows: one did not fit the name column and was cut.
         list:ItemAdd(nil)
-        list:ItemSet(2, L["No destinations. Shift+click Goto on the map to queue several."])
+        list:ItemSet(2, L["No destinations."])
+        list:ItemAdd(nil)
+        list:ItemSet(2, L["Shift+click Goto on the map to queue several."])
     end
     if (list.Selected or 0) > list:ItemGetNum() then list.Selected = list:ItemGetNum() end
     list:Update()
