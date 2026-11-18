@@ -30,6 +30,7 @@ Esta é uma edição **não oficial** do [Carbonite All in One (Retail & Classic
 - **Seta HUD:** aponta para o destino e mostra nome, distância e tempo estimado de chegada.
 - **Fila de destinos:** Shift+clique em Goto adiciona o destino sem apagar os outros; ao chegar, a seta passa ao próximo. A janela Destinos (`/carb destinos`, Rota... > Destinos... no menu do mapa ou um atalho de teclado) lista a fila com zona e distância e permite subir, descer, ir agora, remover, inverter e limpar.
 - **Rotas:** caminho entre zonas por estradas, conexões e pontos de voo.
+- **Pedra de regresso e teleportes na rota:** quando a pedra está pronta (ou, para magos, um teleporte para uma capital com a runa na bolsa) e chega bem antes, a rota começa por ela: "Usar Pedra de Regresso (lugar)" e, dali, o caminho de sempre. O lugar da pedra é gravado quando você fala com o estalajadeiro. Vem desligada por padrão; liga em Opções > Mapas.
 - **Rota a pé que contorna o terreno:** com o GatherLite instalado, a linha da rota e a seta do HUD desviam de montanhas, penhascos e água funda, em vez de seguir em linha reta. A distância mostrada é a do caminho. Desliga em Opções > Mapas.
 - Compatível com os comandos do TomTom: `/way`, `/cway`, `/wayback`.
 
