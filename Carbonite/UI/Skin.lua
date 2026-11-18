@@ -550,6 +550,9 @@ function Skin:Update()
         paintRule(rule)
     end
     Carbonite.Core.EventBus:Fire("SKIN_UPDATED", self.activeName)
+    -- The theme "Blizzard" sets the font face too (Font:GameFace).
+    local Font = Carbonite.UI.Font
+    if Font and Font.initialized then Font:Update() end
     -- Push to legacy Window/Menu resets so existing widgets restyle.
     if _G.Nx and _G.Nx.Window and _G.Nx.Window.ResetBackdrops then _G.Nx.Window:ResetBackdrops() end
     if _G.Nx and _G.Nx.Menu   and _G.Nx.Menu.ResetSkins      then _G.Nx.Menu:ResetSkins()      end

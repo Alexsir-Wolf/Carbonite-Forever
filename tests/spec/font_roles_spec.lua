@@ -94,3 +94,30 @@ describe("código de cor de um token", function()
         expect(Skin:TextCode("listHeaderText")).toBe("|cffffd100")
     end)
 end)
+
+describe("fonte do jogo no tema Blizzard (#42)", function()
+    local function loadThemed(game, faceName)
+        local env = wow.lenientEnv()
+        env.Carbonite.UI = { Skin = { GameStyle = function() return game end } }
+        env.CreateFont = function(name) return fontObject(name) end
+        env.LibStub = function() return nil end
+        env.Nx = { db = { profile = { Font = {
+            Small = faceName, SmallSize = 10, Medium = faceName, MediumSize = 12 } } } }
+        loader.run(env, "Carbonite/UI/Font.lua")
+        local Font = env.Carbonite.UI.Font
+        Font:Init()
+        return Font
+    end
+
+    it("no tema Blizzard toda fonte é a Friz, mesmo com Arial salvo", function()
+        local Font = loadThemed(true, "Arial")
+        expect(Font.slots["Font.Small"].fontObject.face).toBe([[Fonts\FRIZQT__.TTF]])
+        expect(Font.roles.number.fontObject.face).toBe([[Fonts\FRIZQT__.TTF]])
+    end)
+
+    it("nos outros temas vale a fonte escolhida", function()
+        local Font = loadThemed(false, "Arial")
+        expect(Font.slots["Font.Small"].fontObject.face).toBe([[Fonts\ARIALN.TTF]])
+        expect(Font.roles.number.fontObject.face).toBe([[Fonts\ARIALN.TTF]])
+    end)
+end)

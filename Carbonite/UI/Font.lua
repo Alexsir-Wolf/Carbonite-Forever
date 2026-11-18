@@ -149,7 +149,8 @@ function Font:UpdateRoles()
         if role.object then
             local obj = ensureRoleObject(role)
             local cat, sub = role.slot:match("^(.-)%.(.+)$")
-            local face = role.face or self:GetFacePath(profile and profile[cat] and profile[cat][sub])
+            local face = self:GameFace() or role.face
+                or self:GetFacePath(profile and profile[cat] and profile[cat][sub])
             local _, _, flags = obj:GetFont()
             obj:SetFont(face, self:GetRoleSize(name), flags or "")
             if role.shadow then
@@ -225,6 +226,16 @@ function Font:GetFaceName(index)
     return v and v[1]
 end
 
+-- Theme "Blizzard" (#42): every Carbonite font is the game's own, Friz
+-- Quadrata, whatever face a slot saved (the quest watch defaulted to Arial).
+-- The other themes keep the face picked in the options.
+Font.GAME_FACE = "Fonts\\FRIZQT__.TTF"
+
+function Font:GameFace()
+    local Skin = Carbonite.UI and Carbonite.UI.Skin
+    if Skin and Skin.GameStyle and Skin:GameStyle() then return self.GAME_FACE end
+end
+
 function Font:GetFacePath(name)
     for _, v in ipairs(self.faces) do if v[1] == name then return v[2] end end
     return self.faces[2][2]  -- default = Friz
@@ -245,7 +256,7 @@ function Font:Update()
             local cat, sub = key:match("^(.-)%.(.+)$")
             local profileCat = cat and profile[cat]
             if profileCat then
-                local file = self:GetFacePath(profileCat[sub])
+                local file = self:GameFace() or self:GetFacePath(profileCat[sub])
                 local size = math.max(profileCat[sub .. "Size"] or 12, slot.min or 0)
                 size = math.floor(size * scale + 0.5)
                 -- Optional per-slot outline flag ("", "OUTLINE",
