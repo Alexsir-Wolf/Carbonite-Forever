@@ -2,7 +2,7 @@
 -- Driver for the periodic "pulse" effect on the Carbonite minimap
 -- button when there are unread events / changelog entries / etc.
 -- The legacy code lives as the GlowOn flag + a per-frame check that
--- swaps the minimap button texture between MMBut / MMButFilled.
+-- swaps the minimap button texture between Logo / LogoGlow.
 --
 -- This class wraps the Glow lifecycle so plugin code can flip it
 -- on/off without poking Nx.GlowOn directly.

@@ -70,8 +70,8 @@
 			</Texture>
 		</Layer>
 		<Layer level="ARTWORK">
-			<Texture parentKey="icon" file="Interface\AddOns\Carbonite\Gfx\MMBut">
-				<Size x="18" y="18" />
+			<Texture parentKey="icon" file="Interface\AddOns\Carbonite\Gfx\Logo">
+				<Size x="21" y="21" />
 				<Anchors>
 					<Anchor point="CENTER" />
 				</Anchors>

@@ -10,7 +10,7 @@
 ## LoadOnDemand: 0
 ## SavedVariables: NXInfo
 ## RequiredDeps: Carbonite
-## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
+## IconTexture: Interface\AddOns\Carbonite\Gfx\Logo.tga
 
 
 Locales\locales.xml

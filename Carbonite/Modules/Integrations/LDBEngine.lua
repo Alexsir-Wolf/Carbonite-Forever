@@ -45,7 +45,7 @@ end
 
 Nx.Broker = LibStub("LibDataBroker-1.1"):NewDataObject("Broker_Carbonite", {
     type  = "data source",
-    icon  = "Interface\\AddOns\\Carbonite\\Gfx\\MMBut",
+    icon  = "Interface\\AddOns\\Carbonite\\Gfx\\Logo",
     label = NXTITLEFULL,
     text  = NXTITLEFULL,
 

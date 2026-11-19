@@ -6,7 +6,7 @@
 ## Notes: Your characters' items for Carbonite
 ## Notes-ptBR: Itens dos seus personagens no Carbonite
 ## X-License: GPL-3.0
-## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
+## IconTexture: Interface\AddOns\Carbonite\Gfx\Logo.tga
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: NXWhouse

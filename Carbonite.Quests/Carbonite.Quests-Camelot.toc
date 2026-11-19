@@ -7,7 +7,7 @@
 ## Notes: Quest database and tracking for Carbonite
 ## Notes-ptBR: Base e acompanhamento de quests do Carbonite
 ## X-License: GPL-3.0
-## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
+## IconTexture: Interface\AddOns\Carbonite\Gfx\Logo.tga
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: NXQuest
