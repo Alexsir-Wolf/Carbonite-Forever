@@ -28,10 +28,10 @@ function MinimapButton:GetFrame()
     return _G.NXMiniMapBut
 end
 
--- The two textures the legacy code swaps between: "MMBut" (idle)
--- and "MMButFilled" (glow / unread state).
-local TEX_IDLE  = "Interface\\AddOns\\Carbonite\\Gfx\\MMBut"
-local TEX_GLOW  = "Interface\\AddOns\\Carbonite\\Gfx\\MMButFilled"
+-- The two textures the button swaps between: "Logo" (idle)
+-- and "LogoGlow" (glow / unread state), both from the edition logo.
+local TEX_IDLE  = "Interface\\AddOns\\Carbonite\\Gfx\\Logo"
+local TEX_GLOW  = "Interface\\AddOns\\Carbonite\\Gfx\\LogoGlow"
 
 -- The art sits on the `icon` texture (Carbonite.xml) inside the round
 -- border, not on the button's NormalTexture.

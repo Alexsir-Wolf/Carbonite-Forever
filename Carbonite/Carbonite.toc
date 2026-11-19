@@ -6,7 +6,7 @@
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: CarbData
-## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
+## IconTexture: Interface\AddOns\Carbonite\Gfx\Logo.tga
 ## OptionalDeps: Carbonite-media-en, Carbonite-media-de, Carbonite-media-es, Carbonite-media-esmx, Carbonite-media-fr, Carbonite-media-it, Carbonite-media-ko, Carbonite-media-pt, Carbonite-media-ru, Carbonite-media-zhcn, Carbonite-media-zhtw
 
 

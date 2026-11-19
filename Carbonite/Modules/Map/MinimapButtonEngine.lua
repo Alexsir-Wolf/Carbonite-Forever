@@ -188,9 +188,12 @@ function Nx.NXMiniMapBut:ApplyStyle (frm)
         frm.background:SetSize (20, 20)
         frm.background:ClearAllPoints()
         frm.background:SetPoint ("TOPLEFT", frm, "TOPLEFT", 7, -5)
-        frm.icon:SetSize (17, 17)
+        -- The edition logo has pointed tips around the disc: a bit larger
+        -- than LibDBIcon's 17 so the disc fills the ring and the tips
+        -- tuck under the border.
+        frm.icon:SetSize (20, 20)
         frm.icon:ClearAllPoints()
-        frm.icon:SetPoint ("TOPLEFT", frm, "TOPLEFT", 7, -6)
+        frm.icon:SetPoint ("TOPLEFT", frm, "TOPLEFT", 6, -5)
     end
 
     self:UpdateIconCoord (frm)

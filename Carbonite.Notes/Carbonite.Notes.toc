@@ -6,7 +6,7 @@
 ## Notes: Map notes for Carbonite
 ## Notes-ptBR: Notas no mapa do Carbonite
 ## X-License: GPL-3.0
-## IconTexture: Interface\AddOns\Carbonite\Gfx\MMBut.tga
+## IconTexture: Interface\AddOns\Carbonite\Gfx\Logo.tga
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: NXNotes
