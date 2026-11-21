@@ -1985,6 +1985,25 @@ end
 -- Window state change handler
 -- @param typ  Event type: "SizeNorm", "SizeMax", or "Close"
 --
+-- Esc closes the full map through a plain proxy registered once at load
+-- (#221). Adding and removing the map window in UISpecialFrames at run time
+-- tainted the list CloseSpecialWindows walks, and Esc in combat then tripped
+-- a blocked action. The proxy has no protected children; it is shown while
+-- the map is maximized and its OnHide restores the map like RestoreSize.
+local mapEscProxy = CreateFrame("Frame", "NxMapEscProxy", UIParent)
+mapEscProxy:Hide()
+tinsert(UISpecialFrames, "NxMapEscProxy")
+mapEscProxy:SetScript("OnHide", function(self)
+    if self.NxQuiet then
+        return
+    end
+    local map = Nx.Map.GetMap and Nx.Map:GetMap(1)
+    if map and map.Win and map.Win:IsSizeMax() then
+        map:RestoreSize()
+    end
+end)
+Nx.Map.EscProxy = mapEscProxy
+
 function Nx.Map:OnWin(typ)
     if typ == "SizeNorm" or typ == "SizeMax" then
         -- Full frame on the big map, compact on the minimap (#42)
@@ -2000,7 +2019,7 @@ function Nx.Map:OnWin(typ)
         if WorldMapFrame:IsShown() then
             HideUIPanel(WorldMapFrame)
         end
-        tinsert(UISpecialFrames, self:GetWinName())
+        mapEscProxy:Show()
         self:AttachWorldMap()
 
     elseif typ == "Close" then
@@ -4988,14 +5007,10 @@ function Nx.Map:RestoreSize()
         end
     end
 
-    -- Remove from escape-closable frames list
-    local wname = self:GetWinName()
-    for n, name in pairs(UISpecialFrames) do
-        if name == wname then
-            tremove(UISpecialFrames, n)
-            break
-        end
-    end
+    -- Esc no longer applies: hide the proxy without restoring again.
+    mapEscProxy.NxQuiet = true
+    mapEscProxy:Hide()
+    mapEscProxy.NxQuiet = nil
 end
 
 ---
