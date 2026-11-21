@@ -2,6 +2,19 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## Em desenvolvimento
+
+### Novidades
+- **Usar só o minimapa da Blizzard:** opção nova em Opções do Minimapa. Esconde o mapa pequeno do Carbonite; M e o botão do minimapa abrem o mapa grande, e fechá-lo esconde o Carbonite de novo.
+- **Monitor de missões redimensionável:** no tamanho fixo, arraste a borda esquerda ou direita para mudar a largura (fica salva); "Largura padrão" no menu do monitor volta ao padrão.
+
+### Correções
+- **Pontos de coleta no minimapa integrado:** com Localizar Plantas ou Minérios ativo, os pontos das ervas e minérios aparecem sobre o mapa do Carbonite, maiores e sem o terreno do minimapa. Três opções novas em Opções do Minimapa ajustam o comportamento.
+- Monitor de missões: títulos e objetivos longos quebram em linhas em vez de alargar o card.
+- Fechar o mapa grande com Esc durante o combate não gera mais erro.
+- Com um coletor de botões (como o MinimapButtonButton), o botão do Carbonite não aparece mais solto ao lado do minimapa.
+- README: o QuestieDB passa a ser obrigatório.
+
 ## v1.0.1
 
 ### Visual
