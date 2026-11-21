@@ -1193,10 +1193,24 @@ local function mapConfig()
                     type = "group",
                     name = L["MiniMap Options"],
                     args = {
+                        MMBlizzOnly = {
+                            order = 0.5,
+                            type = "toggle",
+                            width = "full",
+                            name = L["Use only the Blizzard minimap"],
+                            desc = L["When enabled, Carbonite hides its small map and leaves the minimap to Blizzard. The map key still opens the full map, and closing it hides Carbonite again (RELOAD REQUIRED)"],
+                            get = function()
+                                return Nx.db.profile.MiniMap.BlizzOnly
+                            end,
+                            set = function()
+                                Nx.Opts:NXCmdBlizzOnlyChange (not Nx.db.profile.MiniMap.BlizzOnly)
+                            end,
+                        },
                         MMOwn = {
                             order = 1,
                             type = "toggle",
                             width = "full",
+                            disabled = function() return Nx.db.profile.MiniMap.BlizzOnly end,
                             name = L["Combine Blizzard Minimap with Carbonite Minimap"],
                             desc = L["When enabled, Carbonite will combine the minimap into itself to create a more functional minimap for you (RELOAD REQUIRED)"],
                             get = function()
@@ -3769,6 +3783,24 @@ end
 function Nx.Opts:NXCmdMMOwnChange (item, var)
     Nx.db.profile.MiniMap.ShowOldNameplate = not var        -- Nameplate is opposite of integration
     Nx.db.profile.MiniMap.ButOwn = var
+    self:Update()
+    self:NXCmdReload()
+end
+
+-- Only the Blizzard minimap: the combined minimap goes off with it (the
+-- same companions as NXCmdMMOwnChange) and the small map hides now.
+function Nx.Opts:NXCmdBlizzOnlyChange (on)
+    local mm = Nx.db.profile.MiniMap
+    mm.BlizzOnly = on
+    if on then
+        mm.Own = false
+        mm.ShowOldNameplate = true
+        mm.ButOwn = false
+        local map = Nx.Map.GetMap and Nx.Map:GetMap (1)
+        if map and map.Win and not map.Win:IsSizeMax() then
+            map.Win:Show (false)
+        end
+    end
     self:Update()
     self:NXCmdReload()
 end

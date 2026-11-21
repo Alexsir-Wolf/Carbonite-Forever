@@ -103,6 +103,9 @@ function Nx.NXMiniMapBut:RegisterDBIcon()
         mm.DBIcon = mm.DBIcon or {}
         icon:Register ("Carbonite", Nx.Broker, mm.DBIcon)
     end
+    -- The LibDBIcon button stands in for the launcher from now on:
+    -- MinimapButtonShowUpdate keeps the launcher hidden.
+    self.DBIcon = icon
     NXMiniMapBut:Hide()
     return true
 end
