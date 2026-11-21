@@ -74,6 +74,7 @@ L["Minimap Full Size"] = true
 L["Docked Scale"] = true
 L["Docked Scale In BG"] = true
 L["Docked Transparency"] = true
+L["Transparency While Tracking Herbs or Minerals"] = true
 L["Docking Below Map Scale"] = true
 L["Auto Scale Min"] = true
 L["Auto Scale Max"] = true
