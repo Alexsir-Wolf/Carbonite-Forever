@@ -1268,6 +1268,35 @@ local function mapConfig()
                                 Nx.db.profile.MiniMap.IScale = value
                             end,
                         },
+                        MMTrackHideTerrain = {
+                            order = 5.4,
+                            type = "toggle",
+                            width = "full",
+                            name = L["Hide the minimap terrain while tracking herbs or minerals"],
+                            desc = L["With Find Herbs or Find Minerals on, the minimap on the map shows only the node dots, without its terrain and circle."],
+                            get = function()
+                                return Nx.db.profile.MiniMap.TrackHideTerrain ~= false
+                            end,
+                            set = function()
+                                Nx.db.profile.MiniMap.TrackHideTerrain = Nx.db.profile.MiniMap.TrackHideTerrain == false
+                            end,
+                        },
+                        MMTrackIconScale = {
+                            order = 5.5,
+                            type = "range",
+                            name = Nx.Opts.Unit(L["Icon Scale While Tracking Herbs or Minerals"], "×"),
+                            desc = L["Scale of the minimap icons on the map while Find Herbs or Find Minerals is on, so the nodes stand out."],
+                            min = .1,
+                            max = 10,
+                            step = .1,
+                            bigStep = .1,
+                            get = function()
+                                return Nx.db.profile.MiniMap.TrackIScale or 1.8
+                            end,
+                            set = function(info,value)
+                                Nx.db.profile.MiniMap.TrackIScale = value
+                            end,
+                        },
                         MMDockIScale = {
                             order = 6,
                             type = "range",
@@ -1518,6 +1547,7 @@ local function mapConfig()
                             hidden = noMiniMap,
                         },
                         MMAlpha = mapRange(101, L["Transparency"], 0, 1, .01, mapSettings, "NXMMAlpha"),
+                        MMTrackAlpha = mapRange(101.5, L["Transparency While Tracking Herbs or Minerals"], 0, 1, .01, mapSettings, "NXMMTrackAlpha"),
                         MMDockScale = mapRange(102, L["Docked Scale"], .01, 3, .01, mapSettings, "NXMMDockScale", mmZoomChanged),
                         MMDockScaleBG = mapRange(103, L["Docked Scale In BG"], .01, 3, .01, mapSettings, "NXMMDockScaleBG", mmZoomChanged),
                         MMDockAlpha = mapRange(104, L["Docked Transparency"], 0, 1, .01, mapSettings, "NXMMDockAlpha"),
@@ -1719,7 +1749,7 @@ local function mapConfig()
             },
         }
         -- The free edition has no minimap docking, as the old menu did.
-        for _, key in ipairs({ "MMAlpha", "MMDockScale", "MMDockScaleBG", "MMDockAlpha", "MMDockOnAtScale" }) do
+        for _, key in ipairs({ "MMAlpha", "MMTrackAlpha", "MMDockScale", "MMDockScaleBG", "MMDockAlpha", "MMDockOnAtScale" }) do
             map.args.miniMap.args[key].hidden = noMiniMap
         end
         -- Unit and help of the sliders built by mapRange (#64). "%" shows an
@@ -1758,6 +1788,7 @@ local function mapConfig()
             },
             miniMap = {
                 MMAlpha = { "%", L["Opacity of the minimap."] },
+                MMTrackAlpha = { "%", L["Opacity of the minimap on the map while Find Herbs or Find Minerals is on, so the nodes show."] },
                 MMDockScale = { "×", L["Zoom of the docked minimap."] },
                 MMDockScaleBG = { "×", L["Zoom of the docked minimap in battlegrounds."] },
                 MMDockAlpha = { "%", L["Opacity of the docked minimap."] },
