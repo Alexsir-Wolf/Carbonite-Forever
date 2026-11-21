@@ -243,6 +243,7 @@ L["Show Finished Quests"] = true
 L["Show Only Non Dungeon Dailies"] = true
 L["Track None"] = true
 L["Options..."] = true
+L["Default Width"] = true
 L[" Completed"] = true
 L[" Database"] = true
 L["Complete"] = true

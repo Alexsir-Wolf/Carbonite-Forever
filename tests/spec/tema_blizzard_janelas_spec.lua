@@ -289,7 +289,7 @@ describe("Monitor minimizado e alinhado", function()
         expect(has(fit, "win.Frm:SetWidth (max (need, self.NormalW or 0))")).toBe(true)
         expect(has(watch, "win.MinKeepsSize = true")).toBe(true)
         local ui = src("Carbonite/Modules/UI/UIEngine.lua")
-        expect(has(ui, 'if win and not (win.MinKeepsSize and win.LayoutMode == "Min") then')).toBe(true)
+        expect(has(ui, 'if win and not (win.MinKeepsSize and win.LayoutMode == "Min") and not win.WidthSizing then')).toBe(true)
     end)
 
     it("sem borda, o fundo não tem recuo e o cabeçalho tem a largura da lista", function()

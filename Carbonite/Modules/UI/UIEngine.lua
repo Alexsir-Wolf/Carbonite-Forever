@@ -4000,10 +4000,11 @@ function Nx.Window:OnMouseDown (button)
 
         local side = win:IsOnWinUI (x, y)
 
-        if win.Sizeable then
+        if win.Sizeable or win.SizeableW then
             if side > 0 then
                 this:StartSizing (win.SideNames[side])
                 win.MovSizing = true
+                win.WidthSizing = not win.Sizeable and true or nil
             end
         end
 
@@ -4045,6 +4046,16 @@ function Nx.Window:IsOnWinUI (x, y)
     local bot = f:GetBottom()
 
     -- Bits set: 1=Left, 2=Right, 3=Top, 4=Bottom
+
+    -- Width-only sizing (the fixed-size quest watch): the side edges.
+    if not self.Sizeable and self.SizeableW then
+        local grip = math.max (self.BorderW or 0, 6)
+        if x >= f:GetRight() - grip then
+            return 2            -- RIGHT
+        elseif x < f:GetLeft() + grip then
+            return 1            -- LEFT
+        end
+    end
 
     if self.Sizeable then
 
@@ -4119,6 +4130,11 @@ function Nx.Window:OnMouseUp (button)
         end
 
         win:RecordLayoutData()
+
+        if win.WidthSizing then
+            win.WidthSizing = nil
+            win:Notify ("SizeW")
+        end
 
         -- Windows that do not opt into a shared normal/minimized anchor retain
         -- their existing independently placed minimized layout.
@@ -7159,7 +7175,8 @@ function Nx.List:Update (showLast)
 
         -- A minimized window that keeps its own size (the quest watch, #42)
         -- does not follow its hidden list.
-        if win and not (win.MinKeepsSize and win.LayoutMode == "Min") then
+        -- Nor while the user drags its width (WidthSizing).
+        if win and not (win.MinKeepsSize and win.LayoutMode == "Min") and not win.WidthSizing then
             win:SetSize (f:GetWidth(), -7, true)
         end
     end

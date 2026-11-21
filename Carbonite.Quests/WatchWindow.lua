@@ -148,6 +148,55 @@ local function SplitWatchMarkupLine(text, maxVisible)
     return text, nil
 end
 
+-- Fewest visible characters a wrapped line keeps, so a very narrow width
+-- does not shred an objective into one word per line.
+local WRAP_MIN_CHARS = 12
+
+-- Fit one watch line in maxW pixels: a long title or objective wraps instead
+-- of widening the watch. Searches the most visible glyphs (up to the
+-- character cap) whose split still fits, so the split lands on a space and
+-- never inside markup; a few measurements per line, not one per glyph.
+local function WrapWatchLineToWidth(text, maxVisible, maxW, measure)
+    local line, rest = SplitWatchMarkupLine(text, maxVisible)
+    if not maxW or maxW <= 0 or not measure or (measure(line) or 0) <= maxW then
+        return line, rest
+    end
+    local lo, hi = WRAP_MIN_CHARS, maxVisible - 1
+    line, rest = SplitWatchMarkupLine(text, lo)
+    while lo <= hi do
+        local mid = floor((lo + hi) / 2)
+        local l, r = SplitWatchMarkupLine(text, mid)
+        if (measure(l) or 0) <= maxW then
+            line, rest = l, r
+            lo = mid + 1
+        else
+            hi = mid - 1
+        end
+    end
+    return line, rest
+end
+Nx.Quest.WrapWatchLineToWidth = WrapWatchLineToWidth
+
+-- The color in effect at the end of a line, so a wrapped title's next line
+-- keeps it (a color code with no |r after it).
+local function WatchLineColor(line)
+    local color
+    local i = 1
+    while true do
+        local s, e = strfind(line, "|c%x%x%x%x%x%x%x%x", i)
+        if not s then
+            break
+        end
+        color = strsub(line, s, e)
+        i = e + 1
+    end
+    if color and strfind(line, "|r", i, true) then
+        color = nil
+    end
+    return color or ""
+end
+Nx.Quest.WatchLineColor = WatchLineColor
+
 -- Promoted from NxQuest.lua's file-local cache helper.
 local GetCachedDifficultyColorStr = Nx.Quest.GetCachedDifficultyColorStr
 
@@ -462,7 +511,7 @@ function Nx.Quest.Watch:ApplyModernMinWidth()
         self.ModernMinW = need
         self.ModernMinH = minH
         if fixed then
-            self.List:SetMinSize (max (124, need - win.BorderW * 2), 1)
+            self.List:SetMinSize (self:GetFixedListW(), 1)
         elseif f.SetResizeBounds then
             f:SetResizeBounds (need, max (40, minH))
         end
@@ -504,6 +553,57 @@ function Nx.Quest.Watch:UpdateModernTitle (cur, maxQ)
         end
     end
     self:ApplyModernMinWidth()
+end
+
+-- Natural width of a watch line in the list's text font. The measuring
+-- string stays shown at alpha 0: a hidden one reports 0.
+function Nx.Quest.Watch:MeasureWatchText (str)
+    local list = self.List
+    if not list or not str then
+        return 0
+    end
+    local fs = self.MeasureFStr
+    if not fs then
+        fs = list.Frm:CreateFontString()
+        fs:SetPoint ("TOPLEFT", list.Frm, "TOPLEFT", 0, 0)
+        fs:SetAlpha (0)
+        self.MeasureFStr = fs
+    end
+    local column = list.Columns[2]
+    fs:SetFontObject (column and column.FontObj or list.FontObj)
+    fs:Show()
+    fs:SetText (str)
+    local w = fs:GetStringWidth() or 0
+    fs:SetText ("")
+    return w
+end
+
+-- List width of the fixed-size watch: the header's, or the width the user
+-- dragged the watch to (QuestWatch.FixedW, frame width; 0 = the header's).
+function Nx.Quest.Watch:GetFixedListW()
+    local win = self.Win
+    local bw = win and win.BorderW or 0
+    local userW = Nx.qdb.profile.QuestWatch.FixedW or 0
+    return floor (max (124, (self.ModernMinW or 0) - bw * 2,
+        userW > 0 and userW - bw * 2 or 0) + .5)
+end
+
+-- Pixels a line's text can take without widening the watch: the fixed list
+-- width, or the window's in the free-size watch (less its scroll bar), less
+-- the icon column and the line's indent (offX).
+function Nx.Quest.Watch:GetWrapW (offX)
+    local list = self.List
+    if not list then
+        return 0
+    end
+    local listW
+    if list.ShowAll then
+        listW = self:GetFixedListW()
+    else
+        listW = (list.Frm:GetWidth() or 0) - (list.Slider and list.Slider.Frm:GetWidth() or 0)
+    end
+    local col1 = list.Columns[1]
+    return listW - 2 - (col1 and col1.Width or 0) - (offX or 0)
 end
 
 -- Minimized, only the quests go: the header keeps the window's width and
@@ -577,6 +677,11 @@ function Nx.Quest.Watch:Open()
 
     win:SetUser (self, self.OnWin)
     win:SetBGAlpha (0, 1)
+    if not fixedSize then
+        win.Frm:HookScript ("OnSizeChanged", function()
+            self.ForceListRefresh = true
+        end)
+    end
     win.Frm:SetClampedToScreen (true)
 
     local xo = 0
@@ -587,6 +692,8 @@ function Nx.Quest.Watch:Open()
         yo = 3
         win:SetBorderSize (0, 7)
         win.Sizeable = false
+        -- Its height follows the list; the side edges set its width.
+        win.SizeableW = true
     end
 
     win:SetTitleXOff (84 + xo, -1 - yo)
@@ -725,6 +832,15 @@ function Nx.Quest.Watch:Open()
 
     menu:AddItem (0, L["Options..."], func)
 
+    if fixedSize then
+        local function func()
+            Nx.qdb.profile.QuestWatch.FixedW = 0
+            self.ForceListRefresh = true
+            self:Update()
+        end
+        menu:AddItem (0, L["Default Width"], func)
+    end
+
     --local item = menu:AddItem (0, L["Hide BfA Emmissaries"], update, self)
     --item:SetChecked (qopts, "NXWHideBfAEmmissaries")
 
@@ -842,6 +958,12 @@ end
 -------------------------------------------------------------------------------
 
 function Nx.Quest.Watch:OnWin (typ)
+    if typ == "SizeW" then
+        -- Dragged a side edge: keep that width, never below the header's.
+        local qw = Nx.qdb.profile.QuestWatch
+        qw.FixedW = floor (max (self.Win.Frm:GetWidth(), self.ModernMinW or 0) + .5)
+        self.ForceListRefresh = true
+    end
     self:SyncGameVariant()
     if self.Win:GetLayoutMode() == "Min" then
         self.FirstUpdate = true
@@ -2170,6 +2292,17 @@ function Nx.Quest.Watch:UpdateList()
 
     local oldw, oldh = list:GetSize()
 
+    -- Titles and objectives wrap to the watch's width instead of widening it.
+    if not self.MeasureFn then
+        self.MeasureFn = function (s) return self:MeasureWatchText (s) end
+    end
+    local measure = self.MeasureFn
+    if fixedSize then
+        list:SetMinSize (self:GetFixedListW(), 1)
+    end
+    local titleWrapW = self:GetWrapW (0)
+    local objWrapW = self:GetWrapW (16)
+
     self.ForceListRefresh = nil
 
     list:SetBGColor (Nx.Quest.Cols["BGColorR"], Nx.Quest.Cols["BGColorG"], Nx.Quest.Cols["BGColorB"], Nx.Quest.Cols["BGColorA"])
@@ -2732,7 +2865,13 @@ function Nx.Quest.Watch:UpdateList()
                             if cur.Party then
                                 nameStr = nameStr .. " |cffb0b0f0" .. cur.Party
                             end
-                            list:ItemSet (2, nameStr)
+                            local tline, trest = WrapWatchLineToWidth (nameStr, 200, titleWrapW, measure)
+                            list:ItemSet (2, tline)
+                            while trest and trest ~= "" do
+                                list:ItemAdd (qId * 0x10000 + qi)
+                                tline, trest = WrapWatchLineToWidth (WatchLineColor (tline) .. trest, 200, titleWrapW, measure)
+                                list:ItemSet (2, tline)
+                            end
                             if cur.TimeExpire then    -- Have a timer?
                                 list:ItemAdd (0)
                                 list:ItemSet (2, format ("  |cfff06060%s %s", TIME_REMAINING, SecondsToTime (cur.TimeExpire - time())))
@@ -2833,15 +2972,16 @@ function Nx.Quest.Watch:UpdateList()
                                         elseif done then
                                             list:ItemSetButton ("QuestWatchObjDone", false)
                                         end
-                                        if fixedSize then
-                                            local maxVisible = Nx.qdb.profile.QuestWatch.OMaxLen + 10
-                                            local line, rest = SplitWatchMarkupLine(str, maxVisible)
+                                        do
+                                            local maxVisible = oMaxLen + 10
+                                            local wrapW = objWrapW
+                                            local line, rest = WrapWatchLineToWidth(str, maxVisible, wrapW, measure)
                                             while rest and rest ~= "" do
                                                 list:ItemSet (2, line)
                                                 str = color .. rest
                                                 list:ItemAdd (qId * 0x10000 + ln * 0x100 + qi)
                                                 list:ItemSetOffset (16, lnOffset)
-                                                line, rest = SplitWatchMarkupLine(str, maxVisible)
+                                                line, rest = WrapWatchLineToWidth(str, maxVisible, wrapW, measure)
                                             end
                                             str = line or str
                                         end
