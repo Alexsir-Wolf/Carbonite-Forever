@@ -511,6 +511,7 @@ Nx.Quest.defaults = {
             ChalTrack = true,                           -- Track challenge modes
             FadeAll = false,                            -- Fade entire window
             FixedSize = true,                           -- Fixed window size
+            FixedW = 0,                                 -- Fixed window width (0 = header width)
             GrowUp = false,                             -- Grow upward
             HideBlizz = true,                           -- Hide Blizzard watch
             HideDoneObj = false,                        -- Hide done objectives
