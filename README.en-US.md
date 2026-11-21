@@ -35,7 +35,7 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
 | **Destination queue** | Several destinations in a row, with the Destinations window to reorder, go now, remove and reverse them. |
 | **Smarter routes** | The route can start with the hearthstone or a mage teleport and, with GatherLite, the walking route goes around mountains and deep water. |
 | **Ships, zeppelins and tram** | Transports move on the map, with their schedule at the pier. |
-| **Forever quests from QuestieDB** | Carbonite's quest database is missing about 1,300 Forever quests. With QuestieDB installed, Carbonite reads them while you play and shows who gives each quest, where to turn it in and the objectives (where the NPCs and objects are and who drops the items). It follows QuestieDB updates without needing a new release of this edition. Quests Carbonite already has are unchanged. |
+| **Forever quests from QuestieDB** | Carbonite's quest database is missing about 1,300 Forever quests. Carbonite reads these quests from QuestieDB while you play and shows who gives each quest, where to turn it in and the objectives (where the NPCs and objects are and who drops the items). It follows QuestieDB updates without needing a new release of this edition. Quests Carbonite already has are unchanged. |
 | **Spoken narration in the quest list** | Carbonite hides Blizzard's quest tracker, which is where Spoken puts its narration button. This edition adds the ▶ button next to each quest's icon in Carbonite's list. It only shows on quests Spoken narrates. |
 | **Live minimap in dungeons** | Forever gives no map or position inside dungeons, and Carbonite's map was blank or showed the wrong place. The window now shows Blizzard's live minimap with the dungeon name. The static dungeon map is still in the map menu, under "Dungeon Maps". |
 | **In Portuguese** | Fixed texts of the core, quests, notes, warehouse and info windows translated, plus a first-run assistant with a basic options mode. |
@@ -103,8 +103,8 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
 ## Requirements
 
 - **World of Warcraft: Forever** 1.60.x (interface 16001).
+- **QuestieDB** (required): the Forever quest database, maintained by the Questie team. Without it, about 1,300 Forever quests are missing from the map, the quest log and the tracker. Install the latest Forever version and enable only QuestieDB; Questie itself can stay off. Inside dungeons, the **M** key panel also lists the quests from your log that QuestieDB places there and the objective items that drop there (QuestieDB has no positions inside dungeons, so they don't go on the plan).
 - Optional:
-  - **QuestieDB:** needed for the Forever quests missing from Carbonite's database. Enable only QuestieDB; Questie itself can stay off. Inside dungeons, the **M** key panel also lists the quests from your log that QuestieDB places there and the objective items that drop there (QuestieDB has no positions inside dungeons, so they don't go on the plan).
   - **Spoken** (with the Spoken_Quests module): needed for the narration button in the quest list.
   - **ForeverDungeonJournal** or **FojjiCore:** dungeon plan (art, bosses and route order; FojjiCore also knows which bosses are dead). Read while you play; Carbonite does not copy this data.
   - **[GatherLite](https://www.curseforge.com/wow/addons/gatherlite):** provides the terrain data used by the walking route around the terrain. Without it, the route is a straight line.
@@ -115,7 +115,8 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
 1. Close WoW.
 2. Delete the `Carbonite`, `Carbonite.Quests`, `Carbonite.Info`, `Carbonite.Notes`, `Carbonite.Warehouse` and, if present, `Carbonite.Gathermate2_Data` folders from `World of Warcraft\_forever_\Interface\AddOns`.
 3. Download the zip of the latest version from the [Releases](https://github.com/Alexsir-Wolf/Carbonite-Forever/releases) page and extract it into `Interface\AddOns`.
-4. If you use an addon manager (CurseForge, WowUp, etc.), turn off updates for the official Carbonite there. Otherwise, the next official update replaces this edition.
+4. Install the Forever **QuestieDB** into `Interface\AddOns` if you don't have it yet, and keep it up to date.
+5. If you use an addon manager (CurseForge, WowUp, etc.), turn off updates for the official Carbonite there. Otherwise, the next official update replaces this edition.
 
 Your official Carbonite settings keep working, because the internal names are the same.
 

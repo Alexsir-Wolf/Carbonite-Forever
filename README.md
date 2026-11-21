@@ -35,7 +35,7 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
 | **Fila de destinos** | Vários destinos em sequência, com a janela Destinos para ordenar, ir agora, remover e inverter. |
 | **Rotas mais espertas** | A rota pode começar pela pedra de regresso ou por um teleporte de mago e, com o GatherLite, a rota a pé contorna montanhas e água funda. |
 | **Navios, zepelins e bonde** | Os transportes aparecem em movimento no mapa, com o horário no píer. |
-| **Quests do Forever a partir do QuestieDB** | A base de quests do Carbonite não tem cerca de 1.300 quests do Forever. Com o QuestieDB instalado, o Carbonite as lê durante o jogo e mostra quem dá cada quest, onde entregar e os objetivos (onde ficam os NPCs, os objetos e quem dropa os itens). Acompanha as atualizações do QuestieDB sem precisar de uma versão nova desta edição. As quests que o Carbonite já tem não mudam. |
+| **Quests do Forever a partir do QuestieDB** | A base de quests do Carbonite não tem cerca de 1.300 quests do Forever. O Carbonite lê essas quests do QuestieDB durante o jogo e mostra quem dá cada quest, onde entregar e os objetivos (onde ficam os NPCs, os objetos e quem dropa os itens). Acompanha as atualizações do QuestieDB sem precisar de uma versão nova desta edição. As quests que o Carbonite já tem não mudam. |
 | **Narração do Spoken na lista de quests** | O Carbonite esconde o rastreador de missões da Blizzard, que é onde o Spoken põe o botão de narração. Esta edição coloca o botão ▶ ao lado do ícone de cada quest na lista do Carbonite. Ele só aparece nas quests que o Spoken narra. |
 | **Minimapa ao vivo em masmorras** | O Forever não informa mapa nem posição dentro de masmorras, e o mapa do Carbonite ficava em branco ou mostrava o lugar errado. Agora a janela mostra o minimapa da Blizzard ao vivo, com o nome da masmorra. O mapa estático da masmorra continua no menu do mapa, em "Dungeon Maps". |
 | **Em português** | Textos fixos do núcleo, das quests, das notas, do armazém e das janelas de informação traduzidos, e um assistente de primeira execução com modo básico de opções. |
@@ -103,8 +103,8 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
 ## Requisitos
 
 - **World of Warcraft: Forever** 1.60.x (interface 16001).
+- **QuestieDB** (obrigatório): a base de quests do Forever, mantida pela equipe do Questie. Sem ele, faltam cerca de 1.300 quests do Forever no mapa, no diário e no monitor. Instale a versão mais recente para o Forever e ative só o QuestieDB; o Questie pode ficar desligado. Dentro de masmorras, o painel da tecla **M** também lista as quests do registro que o QuestieDB põe ali e os itens de objetivo que caem lá (o QuestieDB não tem posições dentro de masmorras, então elas não vão para a planta).
 - Opcionais:
-  - **QuestieDB:** necessário para as quests do Forever que faltam na base do Carbonite. Ative só o QuestieDB; o Questie pode ficar desligado. Dentro de masmorras, o painel da tecla **M** também lista as quests do registro que o QuestieDB põe ali e os itens de objetivo que caem lá (o QuestieDB não tem posições dentro de masmorras, então elas não vão para a planta).
   - **Spoken** (com o módulo Spoken_Quests): necessário para o botão de narração na lista de quests.
   - **ForeverDungeonJournal** ou **FojjiCore:** planta da masmorra (arte, chefes e a ordem da rota; o FojjiCore também sabe os chefes mortos). Lidos durante o jogo; o Carbonite não copia esses dados.
   - **[GatherLite](https://www.curseforge.com/wow/addons/gatherlite):** traz os dados de terreno usados pela rota a pé que contorna o terreno. Sem ele, a rota segue em linha reta.
@@ -115,7 +115,8 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
 1. Feche o WoW.
 2. Apague as pastas `Carbonite`, `Carbonite.Quests`, `Carbonite.Info`, `Carbonite.Notes`, `Carbonite.Warehouse` e, se existir, `Carbonite.Gathermate2_Data` de `World of Warcraft\_forever_\Interface\AddOns`.
 3. Baixe o zip da versão mais recente na página de [Releases](https://github.com/Alexsir-Wolf/Carbonite-Forever/releases) e extraia em `Interface\AddOns`.
-4. Se você usa um gerenciador de addons (CurseForge, WowUp etc.), desligue as atualizações do Carbonite oficial nele. Senão, a próxima atualização oficial substitui esta edição.
+4. Instale o **QuestieDB** do Forever em `Interface\AddOns`, se ainda não tiver, e mantenha-o atualizado.
+5. Se você usa um gerenciador de addons (CurseForge, WowUp etc.), desligue as atualizações do Carbonite oficial nele. Senão, a próxima atualização oficial substitui esta edição.
 
 As configurações do Carbonite oficial continuam valendo, porque os nomes internos são os mesmos.
 
