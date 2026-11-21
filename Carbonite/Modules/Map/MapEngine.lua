@@ -729,7 +729,8 @@ function Nx.Map:Create(index)
     -- Map Identity and Display Settings
     ---------------------------------------------------------------------------
     m.MapIndex = index                      -- This map's index
-    m.MMOwn = Nx.db.profile.MiniMap.Own and index == 1  -- Owns minimap?
+    m.MMOwn = Nx.db.profile.MiniMap.Own and not Nx.db.profile.MiniMap.BlizzOnly
+        and index == 1                      -- Owns minimap?
 
     m.ShowUnexplored = opts.NXShowUnexplored    -- Show unexplored areas
     m.KillShow = opts.NXKillShow                -- Show kill locations
@@ -951,7 +952,8 @@ function Nx.Map:Create(index)
     win.Frm:SetToplevel(true)
     win.Frm.NxMap = m
 
-    m.StartupShown = win:IsShown()
+    -- Only the Blizzard minimap: the small map never comes up at login.
+    m.StartupShown = win:IsShown() and not (index == 1 and Nx.Map:BlizzMinimapOnly())
     win.Frm:Show()
 
     ---------------------------------------------------------------------------
@@ -4809,6 +4811,13 @@ end
 -- Toggle map window size/visibility
 -- @param szmode  Size mode: nil = toggle, 0 = normal, 1 = max
 --
+-- Carbonite leaves the minimap to Blizzard and keeps no small map on
+-- screen: only the full map opens (Options > Minimap).
+function Nx.Map:BlizzMinimapOnly()
+    local db = Nx.db and Nx.db.profile
+    return db and db.MiniMap and db.MiniMap.BlizzOnly == true or false
+end
+
 function Nx.Map:ToggleSize(szmode)
     -- Guard against early calls before initialization
     if not self.Maps then
@@ -4819,6 +4828,12 @@ function Nx.Map:ToggleSize(szmode)
 
     local map = self:GetMap(1)
     local win = map.Win
+
+    -- Only the Blizzard minimap: there is no small map to show, so the
+    -- normal-size request opens the full map.
+    if szmode == 0 and self:BlizzMinimapOnly() then
+        szmode = 1
+    end
 
     if not win:IsShown() and not win:IsSizeMax() then
         -- Window is hidden, show it
@@ -4875,8 +4890,9 @@ function Nx.Map:RestoreSize()
         self:RestoreView("")
         self:DetachWorldMap()
 
-        -- Optionally hide window after restore
-        if Nx.db.profile.Map.MaxRestoreHide then
+        -- Optionally hide window after restore; always with only the
+        -- Blizzard minimap, which has no small map to go back to.
+        if Nx.db.profile.Map.MaxRestoreHide or Nx.Map:BlizzMinimapOnly() then
             self.Win:Show(false)
         end
     end

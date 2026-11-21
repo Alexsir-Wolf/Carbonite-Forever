@@ -211,9 +211,21 @@ function MiniMap:Buttons() return BUTTON_MAP end
 function MiniMap:ApplyButtonVisibility()
     local db = _G.Nx and _G.Nx.db and _G.Nx.db.profile and _G.Nx.db.profile.MiniMap
     if not db then return end
+    -- With the LibDBIcon button standing in for the launcher
+    -- (RegisterDBIcon), the launcher stays hidden and the option shows or
+    -- hides the stand-in; showing both left a loose second button.
+    local but = _G.Nx.NXMiniMapBut
+    local dbIcon = but and but.DBIcon
     for _, entry in ipairs(BUTTON_MAP) do
         local f = _G[entry.frameName]
-        if f then
+        if dbIcon and entry.frameName == "NXMiniMapBut" then
+            if f and f.Hide then f:Hide() end
+            if db[entry.setting] then
+                dbIcon:Show("Carbonite")
+            else
+                dbIcon:Hide("Carbonite")
+            end
+        elseif f then
             if db[entry.setting] then
                 if f.Show then f:Show() end
             else

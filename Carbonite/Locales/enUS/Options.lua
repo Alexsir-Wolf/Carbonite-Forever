@@ -133,6 +133,8 @@ L["Sets the action performed when clicking 4th mouse button holding CTRL"] = tru
 
 -- Minimap Options
 L["MiniMap Options"] = true
+L["Use only the Blizzard minimap"] = true
+L["When enabled, Carbonite hides its small map and leaves the minimap to Blizzard. The map key still opens the full map, and closing it hides Carbonite again (RELOAD REQUIRED)"] = true
 L["Combine Blizzard Minimap with Carbonite Minimap"] = true
 L["When enabled, Carbonite will combine the minimap into itself to create a more functional minimap for you (RELOAD REQUIRED)"] = true
 L["Minimap is drawn above icons"] = true

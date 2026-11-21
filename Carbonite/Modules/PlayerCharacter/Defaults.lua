@@ -466,6 +466,7 @@ Nx.Defaults = {
             IScale = 1,
             MoveCapBars = true,
             NodeGD = 0,
+            BlizzOnly = false,                  -- Only the Blizzard minimap, no small map
             Own = false,
             ShowOldNameplate = true,
             Square = false,

@@ -137,6 +137,8 @@ L["Sets the action performed when clicking 4th mouse button holding CTRL"] = "De
 
 -- Minimap Options
 L["MiniMap Options"] = "Opções do Minimapa"
+L["Use only the Blizzard minimap"] = "Usar só o minimapa da Blizzard"
+L["When enabled, Carbonite hides its small map and leaves the minimap to Blizzard. The map key still opens the full map, and closing it hides Carbonite again (RELOAD REQUIRED)"] = "Quando ativado, o Carbonite-Forever esconde o mapa pequeno e deixa o minimapa com a Blizzard. A tecla do mapa continua abrindo o mapa grande, e fechá-lo esconde o Carbonite-Forever de novo (REQUER RECARREGAMENTO)"
 L["Combine Blizzard Minimap with Carbonite Minimap"] = "Combinar Minimapa da Blizzard com o Minimapa do Carbonite-Forever"
 L["When enabled, Carbonite will combine the minimap into itself to create a more functional minimap for you (RELOAD REQUIRED)"] = "Quando ativado, o Carbonite-Forever combinará o minimapa em si mesmo para criar um minimapa mais funcional para você (REQUER RECARREGAMENTO)"
 L["Minimap is drawn above icons"] = "Minimapa é desenhado acima dos ícones"
