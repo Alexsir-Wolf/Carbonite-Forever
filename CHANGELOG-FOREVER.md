@@ -2,7 +2,7 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
-## Em desenvolvimento
+## v1.2.0
 
 ### Novidades
 - **Sem seta dourada no mapa:** com o minimapa no mapa do Carbonite, a seta de quest do jogo some e a rota continua. O marcador 3D e o destaque dessa quest no jogo somem junto; para ter tudo de volta, desligue "Esconder seta de quest" em Opções do Minimapa.
@@ -14,6 +14,9 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 - **Zoom com rota:** o zoom que você escolhe fica até a rota acabar, e o mapa continua seguindo o personagem. Para voltar ao ajuste automático antes disso, clique no botão de zoom automático no mapa grande.
 - Com o Shortest Path Forever instalado, o Carbonite não confunde mais o TomTom que ele cria com o TomTom de verdade.
 - A opção "Ativar emulação do TomTom" passa a valer de fato.
+
+### Conhecido
+- TomTom e Shortest Path Forever como guia ainda não foram testados no jogo. Se com um deles a seta dourada voltar ou o marcador dele sumir, desligue "Esconder seta de quest" em Opções do Minimapa.
 
 ## v1.1.0
 
