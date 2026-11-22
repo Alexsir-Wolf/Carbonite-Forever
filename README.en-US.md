@@ -54,7 +54,7 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
 - API for other addons to draw icons on Carbonite's map ([Map Provider API](Carbonite/Docs/MapProvider.md)).
 
 ### Navigation
-- **Goto:** mark any point on the map, a coordinate (`/carb goto x y`) or an icon. The map adjusts its zoom to show you and the destination.
+- **Goto:** mark any point on the map, a coordinate (`/carb goto x y`) or an icon. The map adjusts its zoom to show you and the destination; if you change the zoom, it stays as you left it until the route ends.
 - **HUD arrow:** points to the destination and shows its name, distance and estimated time of arrival.
 - **Destination queue:** Shift+click on Goto adds the destination without clearing the others; when you arrive, the arrow moves to the next one. The Destinations window (`/carb destinos`, Route... > Destinations... in the map menu or a key binding) lists the queue with zone and distance and lets you move up, move down, go now, remove, reverse and clear.
 - **Routes:** path between zones over roads, connections and flight points.

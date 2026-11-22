@@ -10,6 +10,7 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 - **Assistente de configuração a cada versão:** abre de novo quando o addon é atualizado; o Novidades espera ele fechar.
 
 ### Correções
+- **Zoom com rota:** o zoom que você escolhe fica até a rota acabar, e o mapa continua seguindo o personagem. Para voltar ao ajuste automático antes disso, clique no botão de zoom automático no mapa grande.
 - Com o Shortest Path Forever instalado, o Carbonite não confunde mais o TomTom que ele cria com o TomTom de verdade.
 - A opção "Ativar emulação do TomTom" passa a valer de fato.
 

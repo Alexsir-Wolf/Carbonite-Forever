@@ -1049,7 +1049,12 @@ function Nx.Map:Create(index)
 
     -- Auto-scale toggle button
     local function func(self, but)
+        -- While a manual zoom holds it, the click resumes auto scale.
+        if self.ZoomHeld then
+            but:SetPressed(true)
+        end
         self.LOpts.NXAutoScaleOn = but:GetPressed()
+        self:ReleaseZoom()
     end
 
     m.ButAutoScaleOn = Nx.Button:Create(win.Frm, "MapAutoScale", nil, nil, -20, -bh, "TOPRIGHT", 12, 12, func, m)
@@ -4268,6 +4273,7 @@ function Nx.Map:Menu_OnScaleRestore()
         Nx.Map:GetMap(1).Scale = s
         Nx.Map:GetMap(1).RealScale = s
         Nx.Map:GetMap(1).StepTime = 10
+        Nx.Map:GetMap(1):HoldZoom()
     else
 --        Nx.prt ("Scale not set")
     end
@@ -5498,6 +5504,7 @@ function Nx.Map:MouseWheel(value)
     local oy = map.MapPosY + (fy - map.TitleH - map.MapH / 2) / map.Scale
 
     -- Apply zoom
+    map:HoldZoom()
     map.Scale = map:ScrollScale(value)
     map.StepTime = 10
     map.MapScale = map.Scale / 10.02
@@ -5548,6 +5555,52 @@ function Nx.Map:SetScaleOverTime(steps)
     end
 
     self.StepTime = 10
+    self:HoldZoom()
+end
+
+-- Handing in a quest empties the route until the next one takes it.
+local ZOOM_HOLD_GAP = 2
+
+---
+-- A route auto scale follows: a target, a flight or the way to the corpse.
+--
+function Nx.Map:HasScaledRoute()
+    return #self.Targets > 0
+        or (UnitOnTaxi("player") and Nx.Map.TaxiX ~= nil)
+        or UnitIsDeadOrGhost("player")
+end
+
+---
+-- A zoom chosen by hand during a route suspends auto scale, separately for
+-- the small and the big map. It outlives a change of target (quests re-target
+-- by themselves) and ends with the route or a click on the auto scale button.
+--
+function Nx.Map:HoldZoom()
+    if not self:HasScaledRoute() then return end
+    self.ZoomHeld = self.ZoomHeld or {}
+    self.ZoomHeld[self.Win:IsSizeMax() and "max" or "small"] = true
+end
+
+function Nx.Map:IsZoomHeld()
+    local held = self.ZoomHeld
+    return held ~= nil and held[self.Win:IsSizeMax() and "max" or "small"] == true
+end
+
+function Nx.Map:ReleaseZoom()
+    self.ZoomHeld = nil
+    self.NoRouteSince = nil
+end
+
+function Nx.Map:SyncZoomHold()
+    if not self.ZoomHeld then return end
+    if self:HasScaledRoute() then
+        self.NoRouteSince = nil
+        return
+    end
+    self.NoRouteSince = self.NoRouteSince or GetTime()
+    if GetTime() - self.NoRouteSince >= ZOOM_HOLD_GAP then
+        self:ReleaseZoom()
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -6932,6 +6985,7 @@ function Nx.Map:Update (elapsed)
                 -- pull a small instance canvas off screen or undo its fit.
                 local scOn = self.LOpts.NXAutoScaleOn
                     and not self:UsesModernInstanceCanvas(rid)
+                    and not self:IsZoomHeld()
                 if plZX ~= 0 or plZY ~= 0 then
                     if #self.Tracking == 0 or not scOn then
                         self:Move (plX, plY, nil, 30)
@@ -7989,6 +8043,7 @@ function Nx.Map:Update (elapsed)
     self.TrackDir = false
 
     self.Guide:OnMapUpdate()    -- For closest target
+    self:SyncZoomHold()
 
     if #self.Targets > 0 then
 
