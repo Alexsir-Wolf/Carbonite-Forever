@@ -2217,7 +2217,7 @@ function Nx.Map:UpdateWorldMap()
             self.Arch:Hide()
         end
 
-        local superTrackedQuestID = C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
+        local superTrackedQuestID = Nx.GetSuperTrackedQID and Nx.GetSuperTrackedQID()
         local isWorldQuest = superTrackedQuestID and superTrackedQuestID > 0 and QuestUtils_IsQuestWorldQuest and QuestUtils_IsQuestWorldQuest(superTrackedQuestID)
 
         if isInstanceMap and self.CurOpts.NXInstanceMaps then
@@ -13382,8 +13382,7 @@ function Nx.Map:QuestIconClick (this, button)
         -- while objective 2 is active switches arrows rather
         -- than toggling the quest off, and clicking the same
         -- objective twice clears both super-track + arrow.
-        local activeQID = (C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID
-                            and C_SuperTrack.GetSuperTrackedQuestID()) or 0
+        local activeQID = Nx.GetSuperTrackedQID and Nx.GetSuperTrackedQID() or 0
         if activeQID == 0 and Nx.Quest then
             activeQID = Nx.Quest.ActiveQID or 0
         end

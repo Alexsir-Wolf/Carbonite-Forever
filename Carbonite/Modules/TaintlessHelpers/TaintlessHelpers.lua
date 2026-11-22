@@ -87,6 +87,29 @@ if _G.Nx then
         return type(fn) == "function" and fn or nil
     end
 
+    -- The quest super tracked as far as Carbonite goes: the game's one, or the
+    -- one whose arrow is hidden (Quest.HiddenQID, SuperTrack.lua), which the
+    -- game no longer tracks. 0 when none.
+    local function trackedQID()
+        local get = superTrackAPI("GetSuperTrackedQuestID")
+        local live = get and get() or 0
+        if live ~= 0 then return live end
+        local Quest = _G.Nx.Quest
+        return Quest and Quest.HiddenQID or 0
+    end
+    _G.Nx.GetSuperTrackedQID = trackedQID
+
+    -- Empties the game's quest super-track and nothing else: only to hide the
+    -- arrow of a quest that stays tracked for Carbonite.
+    _G.Nx.HideSuperTrackedQuestSafe = function()
+        local api = superTrackAPI("SetSuperTrackedQuestID")
+        if not api then return false end
+        RunNowOrAfterCombat(function()
+            CallBlizzardAPI(api, 0)
+        end)
+        return true
+    end
+
     _G.Nx.SetSuperTrackedQuestIDSafe = function(questID)
         local api = superTrackAPI("SetSuperTrackedQuestID")
         if not api then return false end
@@ -95,8 +118,16 @@ if _G.Nx then
             local get = superTrackAPI("GetSuperTrackedQuestID")
             _G.Nx.SuperTrackOwnQID = questID
             _G.Nx.SuperTrackOwnTime = _G.GetTime and _G.GetTime() or 0
-            if get and (get() or 0) == questID then
-                local Quest = _G.Nx.Quest
+            local Quest = _G.Nx.Quest
+            if questID == 0 and Quest and Quest.HiddenQID and Quest.SetHiddenQuest then
+                Quest:SetHiddenQuest(nil)
+                if get and (get() or 0) == 0 then
+                    -- Already empty in the game, so no event will say it.
+                    Quest:NoteSuperTrackEvent()
+                    return
+                end
+            end
+            if get and trackedQID() == questID then
                 if questID ~= 0 and Quest and Quest.OnSuperTrackChanged and Quest.IsGotoOnQuest
                     and not Quest:IsGotoOnQuest(questID) then
                     Quest:OnSuperTrackChanged()

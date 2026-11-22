@@ -61,7 +61,7 @@ end
 
 function QuestRouting:GetActiveQuestID()
     if _G.C_SuperTrack and _G.C_SuperTrack.GetSuperTrackedQuestID then
-        return _G.C_SuperTrack.GetSuperTrackedQuestID()
+        return _G.Nx.GetSuperTrackedQID()
     end
     local q = quest()
     return q and q.ActiveQuestID or nil
