@@ -3328,7 +3328,10 @@ function Nx.Map:MinimapSyncPlayerArrowLayer()
         if strata and playerFrame:GetFrameStrata() ~= strata then
             playerFrame:SetFrameStrata(strata)
         end
-        playerFrame:SetFrameLevel(mm:GetFrameLevel() + 3)
+        -- Above the minimap, but never below where this pass drew it: as with
+        -- the route trail, "minimap + 3" put the arrow under the route and
+        -- whatever else is drawn after the minimap, so it vanished.
+        playerFrame:SetFrameLevel(max(mm:GetFrameLevel() + 3, playerFrame:GetFrameLevel()))
         playerFrame.NxMinimapRaised = true
     end
 end
