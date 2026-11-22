@@ -6,9 +6,11 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 
 ### Correções
 - **Seta ao fechar o RestedXP ou o Zygor:** fechar o guia tira o destino dele do Carbonite, e a seta some se não houver outro. Os seus destinos ficam; reabrir o guia devolve o destino do passo.
+- **Ícone do jogador no mapa:** com o minimapa dentro do mapa, a seta do personagem não fica mais escondida embaixo das setas de rota e dos ícones.
 
 ### Conhecido
-- Esta correção ainda não foi testada no jogo. Uma quest que o guia colocou em destaque no rastreador do jogo continua sendo seguida depois de fechar o guia.
+- As correções desta versão ainda não foram testadas no jogo.
+- Uma quest que o guia colocou em destaque no rastreador do jogo continua sendo seguida depois de fechar o guia.
 
 ## v1.2.1
 
