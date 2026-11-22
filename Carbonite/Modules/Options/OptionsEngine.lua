@@ -96,6 +96,29 @@ end
 -- Select control for one map mouse-button action. The profile keeps the
 -- action id ("Goto", "Menu"...); Nx.Map:GetFuncs gives the translated labels.
 --
+-- Who guides to the destinations (#222/#223): Carbonite plus the addons
+-- that are enabled, and the saved one so the box never shows blank.
+local function navigatorModule()
+    local integrations = Carbonite.Modules.Integrations
+    return integrations and integrations.Navigator
+end
+
+local function navigatorChoices()
+    local nav = navigatorModule()
+    local out = { carbonite = "Carbonite" }
+    local names = { tomtom = "TomTom", spf = "Shortest Path Forever" }
+    if nav then
+        for id, name in pairs(names) do
+            if nav:Available(id) then out[id] = name end
+        end
+        local saved = nav:Saved()
+        if not out[saved] then
+            out[saved] = ("%s (%s)"):format(names[saved] or saved, L["Not installed"])
+        end
+    end
+    return out
+end
+
 local function mapButton(order, key, name, desc)
     return {
         order = order,
@@ -3307,12 +3330,36 @@ local function trackConfig()
                     width = "full",
                     name = " ",
                 },
+                navigator = {
+                    order = 18.5,
+                    type = "select",
+                    width = "double",
+                    name = L["Who guides you to the destination?"],
+                    desc = L["Carbonite's own arrow, TomTom's arrow or Shortest Path Forever. Only installed addons are listed. Changing it takes a reload."],
+                    values = navigatorChoices,
+                    sorting = { "carbonite", "tomtom", "spf" },
+                    get = function()
+                        local nav = navigatorModule()
+                        return nav and nav:Saved() or "carbonite"
+                    end,
+                    set = function(_, value)
+                        local nav = navigatorModule()
+                        if not nav or not nav:Available(value) or nav:Saved() == value then return end
+                        nav:Set(value)
+                        Nx.Opts:NXCmdReload()
+                    end,
+                },
                 emutomtom = {
                     order = 19,
                     type = "toggle",
                     width = "full",
                     name = L["Enable TomTom Emulation"],
                     desc = L["When Enabled, Attempts to emulate tomtom's features (requires reload)"],
+                    -- The emulation only answers while Carbonite guides (#222).
+                    disabled = function()
+                        local nav = navigatorModule()
+                        return nav ~= nil and nav:Active() ~= "carbonite"
+                    end,
                     get = function()
                         return Nx.db.profile.Track.EmuTomTom
                     end,

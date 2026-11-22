@@ -25,9 +25,18 @@ local function RealTomTom()
     return loaded and loaded("TomTom") and true or false
 end
 
+-- With TomTom chosen to guide (#223), Carbonite's destinations go to
+-- TomTom's arrow; following that arrow back would loop.
+local function TomTomLeads()
+    local C = _G.Carbonite
+    local integrations = C and C.Modules and C.Modules.Integrations
+    local nav = integrations and integrations.Navigator
+    return nav and nav:Active() == "tomtom" or false
+end
+
 local function Enabled()
     local notes = Nx.fdb and Nx.fdb.profile and Nx.fdb.profile.Notes
-    return notes and notes.TomTomArrow and RealTomTom() or false
+    return notes and notes.TomTomArrow and RealTomTom() and not TomTomLeads() or false
 end
 
 local function TomTomArrowFrame()

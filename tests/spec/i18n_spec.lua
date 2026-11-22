@@ -62,7 +62,8 @@ local ALLOWED = {
         "^MapId=", "^first label area",
     },
     -- Theme id the dark choice saves (Skin.Name); the shown name comes from L.
-    ["Carbonite/Modules/Assistant/Assistant.lua"] = { "Modern Dark" },
+    -- Addon names of the navigator choice (#222/#223), not translated.
+    ["Carbonite/Modules/Assistant/Assistant.lua"] = { "Modern Dark", "Carbonite", "TomTom", "Shortest Path Forever" },
     -- Section ids of the options registry (#64); the shown names come from L.
     ["Carbonite/Modules/Options/Options.lua"] = {
         "Carbonite-Forever", "Quest Module", "Notes Module", "Warehouse Module", "Info Module",
@@ -71,6 +72,8 @@ local ALLOWED = {
     },
     ["Carbonite/Modules/Options/OptionsEngine.lua"] = {
         "Carbonite-Forever", "EditItem error (%s)",
+        -- Addon names of the navigator choice (#222/#223), not translated.
+        "Shortest Path Forever",
         -- Expansion names, as the pt-BR client shows them.
         "|cff1eff00The Burning Crusade|r", "|cff0070ddWrath of the Lich King|r", "|cffa335eeCataclysm|r",
         "|cff00ff96Mists of Pandaria|r", "|cffff8000Warlords of Draenor|r", "|cffe268a8Legion|r",

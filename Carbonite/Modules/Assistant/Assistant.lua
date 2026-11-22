@@ -8,17 +8,24 @@
 --   theme        - the game's look (Blizzard) or the dark one
 --   givers       - quest givers on the map: all, or only the quests the
 --                  player can take now
+--   navigator    - who guides to the destinations: Carbonite, TomTom or
+--                  Shortest Path Forever (#222/#223); addons not installed
+--                  are shown but cannot be picked
 --   integrations - the companion addons found and what each one adds,
 --                  plus the main shortcuts
 --
 -- Every choice writes the same profile key its option writes (no keys of
 -- its own): Map.MaxOverride, MiniMap.Own (with ButOwn and ShowOldNameplate,
--- as the option does), Skin.Name and Map.QuestGiversAvailable. The only key
--- the assistant owns is the "seen" flag, Version.Assistant in the profile.
+-- as the option does), Skin.Name, Map.QuestGiversAvailable and
+-- Track.Navigator. The only keys the assistant owns are the "seen" marks in
+-- the profile: Version.Assistant and Version.AssistantSeen (the addon
+-- version it was last shown for).
 --
+-- It opens on the first run and again on every new version of the addon
+-- (#222), and when the saved navigator is an addon no longer enabled.
 -- "Skip", "Done", the close button and ESC all end it and mark it seen.
--- Putting the minimap in or out takes a reload: when that choice changed,
--- ending the assistant asks to reload, as the option does.
+-- Putting the minimap in or out, or changing the navigator, takes a reload:
+-- when one of them changed, ending the assistant asks to reload.
 --
 -- It replaces the old one-question "quick options" dialog of
 -- Nx.Opts:QuickOptsTimer (Version.QuickVer), which only asked the minimap
@@ -97,6 +104,19 @@ Assistant.PAGES = {
         },
     },
     {
+        id = "navigator",
+        title = L["Who guides you to the destination?"],
+        text = L["Carbonite, TomTom or Shortest Path Forever can lead you to your destinations. The map, the quests and the destination list stay in Carbonite. Changing it takes a reload."],
+        choices = {
+            { value = "carbonite", label = "Carbonite",
+              desc = L["Carbonite's arrow and route line. Guides that use TomTom (RestedXP, Zygor) send their destinations to Carbonite."] },
+            { value = "tomtom", label = "TomTom", addon = "TomTom",
+              desc = L["TomTom's arrow points to the current Carbonite destination. Carbonite still draws the route on its map."] },
+            { value = "spf", label = "Shortest Path Forever", addon = "ShortestPathForever",
+              desc = L["Plans the fastest route (flights, boats, portals, hearthstone) and guides with its own arrow and line."] },
+        },
+    },
+    {
         id = "integrations",
         title = L["Integrations and shortcuts"],
         text = L["Carbonite works with these addons when they are installed and enabled:"],
@@ -119,6 +139,8 @@ Assistant.INTEGRATIONS = {
       what = L["The herb, ore and treasure nodes of GatherLite on the Carbonite map."] },
     { addon = "TomTom",
       what = L["The destinations other addons send to TomTom go to Carbonite's arrow."] },
+    { addon = "ShortestPathForever", global = "ShortestPathForever",
+      what = L["The fastest route by time, with flights, boats, portals and the hearthstone, when chosen to guide."] },
     { addon = "MapUtils", global = "MAUTTAB",
       what = L["Ship and zeppelin departure times shared by other MapUtils players."] },
 }
@@ -140,14 +162,50 @@ local function section(name)
     return p[name]
 end
 
+local function navigator()
+    local integrations = Carbonite.Modules.Integrations
+    return integrations and integrations.Navigator
+end
+
+--- The addon version the assistant is shown for: the TOC version of a
+--- release, or the newest What's New entry on a development build.
+function Assistant:CurrentVersion()
+    local comm = Carbonite.Modules.Comm
+    local check = comm and comm.VersionCheck
+    local version = check and check.MyVersion and check:MyVersion()
+    if version then return version end
+    local whatsnew = _G.Nx and _G.Nx.Whatsnew
+    if whatsnew and whatsnew.GetMaxTime then
+        local ok, stamp = pcall(whatsnew.GetMaxTime, whatsnew)
+        if ok and type(stamp) == "number" and stamp > 0 then return "dev-" .. stamp end
+    end
+    return nil
+end
+
 function Assistant:ShouldShow()
     local version = section("Version")
-    return version ~= nil and (tonumber(version.Assistant) or 0) < self.VERSION
+    if version == nil then return false end
+    if (tonumber(version.Assistant) or 0) < self.VERSION then return true end
+    -- Every new version of the addon opens it again (#222).
+    local current = self:CurrentVersion()
+    if current and version.AssistantSeen ~= current then return true end
+    local nav = navigator()
+    return nav ~= nil and nav:SavedUnavailable()
 end
 
 function Assistant:MarkSeen()
     local version = section("Version")
-    if version then version.Assistant = self.VERSION end
+    if version then
+        version.Assistant = self.VERSION
+        version.AssistantSeen = self:CurrentVersion()
+    end
+end
+
+--- A choice that can be picked: its addon (when it names one) is enabled.
+function Assistant:ChoiceAvailable(id, value)
+    if id ~= "navigator" then return true end
+    local nav = navigator()
+    return nav ~= nil and nav:Available(value)
 end
 
 -------------------------------------------------------------------------------
@@ -162,6 +220,10 @@ local getters = {
         return (name == nil or name == "") and "Blizzard" or name
     end,
     givers = function() return section("Map").QuestGiversAvailable and true or false end,
+    navigator = function()
+        local nav = navigator()
+        return nav and nav:Saved() or "carbonite"
+    end,
 }
 
 function Assistant:Get(id)
@@ -205,9 +267,17 @@ function setters.givers(value)
     end
 end
 
+-- Options > Tracking > Who guides you to the destination (#222/#223). The
+-- reload it takes comes when the assistant ends (Finish).
+function setters.navigator(value)
+    local nav = navigator()
+    if nav then nav:Set(value) end
+end
+
 function Assistant:Choose(id, value)
     local set = setters[id]
     if not set or not profile() then return end
+    if not self:ChoiceAvailable(id, value) then return end
     set(value)
     if self.Render then self:Render() end
 end
@@ -247,6 +317,7 @@ function Assistant:Open(page)
     if not self.active then
         self.active = true
         self.startMinimap = self:Get("minimap")
+        self.startNavigator = self:Get("navigator")
     end
     self.page = math.max(1, math.min(tonumber(page) or 1, #self.PAGES))
     if not self.frame then self:Build() end
@@ -268,17 +339,28 @@ function Assistant:GoTo(page)
 end
 
 --- End the assistant: mark it seen, close the window, ask to reload when
---- the minimap choice changed, then open the options when asked to.
+--- the minimap or navigator choice changed, then open the options when
+--- asked to. What's New, when it waited (NXOnUpdate), opens after.
 function Assistant:Finish(openOptions)
     if self.active then
         self.active = false
+        -- A saved navigator whose addon is gone goes back to Carbonite, so
+        -- the assistant does not ask again on every login.
+        local nav = navigator()
+        if nav and nav:SavedUnavailable() then nav:Set("carbonite") end
         self:MarkSeen()
         if self.frame then self.frame:Hide() end
-        if self.startMinimap ~= nil and self:Get("minimap") ~= self.startMinimap then
+        local minimapChanged = self.startMinimap ~= nil and self:Get("minimap") ~= self.startMinimap
+        local navigatorChanged = self.startNavigator ~= nil and self:Get("navigator") ~= self.startNavigator
+        if minimapChanged or navigatorChanged then
             local Opts = _G.Nx and _G.Nx.Opts
             if Opts and Opts.NXCmdReload then Opts:NXCmdReload() end
         end
         self.startMinimap = nil
+        self.startNavigator = nil
+        local after = self.afterFinish
+        self.afterFinish = nil
+        if after then after() end
     end
     if openOptions then
         local Options = Carbonite.GetModule and Carbonite:GetModule("Options", true)
@@ -298,7 +380,7 @@ end
 -- Window
 -------------------------------------------------------------------------------
 
-local WIDTH, HEIGHT = 540, 460
+local WIDTH, HEIGHT = 540, 480
 local TEXT_W = WIDTH - 48
 
 local function fontString(parent, font, width)
@@ -374,9 +456,13 @@ function Assistant:Build()
     self.body = fontString(f, "GameFontHighlight", TEXT_W)
     self.body:SetPoint("TOPLEFT", self.heading, "BOTTOMLEFT", 0, -10)
 
-    -- Two choice rows: a check button used as a radio, its label and text.
+    -- Choice rows: a check button used as a radio, its label and text.
     self.rows = {}
-    for i = 1, 2 do
+    local rows = 2
+    for _, page in ipairs(self.PAGES) do
+        rows = math.max(rows, page.choices and #page.choices or 0)
+    end
+    for i = 1, rows do
         local check = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
         check:SetSize(26, 26)
         check:SetScript("OnClick", function()
@@ -400,6 +486,9 @@ function Assistant:Build()
     end
     self.shortcuts = fontString(f, "GameFontHighlightSmall", TEXT_W)
     self.shortcuts:SetPoint("TOPLEFT", self.lines[#self.lines], "BOTTOMLEFT", 0, -14)
+
+    -- A note under the choices (navigator page).
+    self.note = fontString(f, "GameFontHighlightSmall", TEXT_W)
 
     -- Footer.
     self.skipBut = button(f, L["Skip"], function() Assistant:Skip() end)
@@ -442,9 +531,31 @@ function Assistant:Render()
                 row.check:SetPoint("TOPLEFT", self.rows[i - 1].desc, "BOTTOMLEFT", -30, -10)
             end
             row.check:SetChecked(current == choice.value)
-            row.label:SetText(choice.label)
-            row.desc:SetText(choice.desc)
+            local available = self:ChoiceAvailable(page.id, choice.value)
+            if available then
+                row.check:Enable()
+                row.label:SetText(choice.label)
+                row.desc:SetText(choice.desc)
+            else
+                row.check:Disable()
+                row.label:SetText(("|cff909090%s (%s)|r"):format(choice.label, L["Not installed"]))
+                row.desc:SetText("|cff909090" .. choice.desc .. "|r")
+            end
         end
+    end
+
+    -- Shortest Path Forever follows some guides by itself: with another
+    -- navigator there would be two arrows.
+    local note = self:Note(page.id)
+    shown(self.note, note)
+    if note then
+        local lastRow
+        for i, row in ipairs(self.rows) do
+            if page.choices and page.choices[i] then lastRow = row end
+        end
+        self.note:ClearAllPoints()
+        self.note:SetPoint("TOPLEFT", lastRow and lastRow.desc or self.body, "BOTTOMLEFT", lastRow and -30 or 0, -14)
+        self.note:SetText(note)
     end
 
     local integrations = page.id == "integrations"
@@ -474,6 +585,16 @@ function Assistant:Render()
     shown(self.skipBut, not last)
     self.backBut:ClearAllPoints()
     self.backBut:SetPoint("RIGHT", last and self.optionsBut or self.nextBut, "LEFT", -8, 0)
+end
+
+--- The note under a page's choices, or nil.
+function Assistant:Note(id)
+    if id ~= "navigator" then return nil end
+    local nav = navigator()
+    if nav and nav:SPFEnabled() and self:Get("navigator") ~= "spf" then
+        return "|cffffd200" .. L["Shortest Path Forever keeps following RestedXP and Guidelime by itself. For a single arrow, turn that off in its options or choose it here."] .. "|r"
+    end
+    return nil
 end
 
 -------------------------------------------------------------------------------

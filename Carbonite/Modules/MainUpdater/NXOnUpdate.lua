@@ -145,6 +145,13 @@ function Nx:NXOnUpdate (elapsed)
         -- Closing with the X does not dismiss, so it reappears next login.
         -- A fresh install never opens it (see ShouldAutoShow).
         local function showWhatsNew()
+            -- The setup assistant opens on each new version too (#222):
+            -- What's New waits for it to close, one window at a time.
+            local Assistant = _G.Carbonite.Modules and _G.Carbonite.Modules.Assistant
+            if Assistant and (Assistant.active or Assistant:ShouldShow()) then
+                Assistant.afterFinish = showWhatsNew
+                return
+            end
             if Nx.Whatsnew:ShouldAutoShow()
                 and not (Nx.Whatsnew.Win and Nx.Whatsnew.Win:IsShown()) then
                 Nx.Whatsnew:ToggleShow()

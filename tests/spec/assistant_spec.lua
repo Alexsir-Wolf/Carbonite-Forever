@@ -163,11 +163,11 @@ describe("assistente: cada escolha grava a chave das opções", function()
 end)
 
 describe("assistente: páginas e integrações", function()
-    it("tem de 3 a 5 páginas, cada pergunta com duas escolhas e a última com as integrações", function()
+    it("tem de 3 a 6 páginas, cada pergunta com duas ou três escolhas e a última com as integrações", function()
         local A = load()
-        expect(#A.PAGES >= 3 and #A.PAGES <= 5).toBe(true)
+        expect(#A.PAGES >= 3 and #A.PAGES <= 6).toBe(true)
         for i, page in ipairs(A.PAGES) do
-            if i < #A.PAGES then expect(#page.choices).toBe(2) end
+            if i < #A.PAGES then expect(#page.choices >= 2 and #page.choices <= 3).toBe(true) end
         end
         expect(A.PAGES[#A.PAGES].id).toBe("integrations")
     end)
@@ -192,5 +192,120 @@ describe("assistente: botões da última página", function()
     it("Voltar fica à esquerda de Abrir opções, não por cima dele", function()
         expect(src:find('self.backBut:SetPoint("RIGHT", last and self.optionsBut or self.nextBut, "LEFT", -8, 0)', 1, true) ~= nil).toBe(true)
         expect(src:find("shown(self.skipBut, not last)", 1, true) ~= nil).toBe(true)
+    end)
+end)
+
+-- Página "Quem guia você até o destino" e reabertura a cada versão (#222/#223)
+local function loadNav(over)
+    over = over or {}
+    local addons = over.addons or {}
+    local env = wow.lenientEnv({
+        C_AddOns = {
+            IsAddOnLoaded = function(name) return addons[name] == true end,
+            DoesAddOnExist = function(name) return addons[name] == true end,
+            GetAddOnEnableState = function(name) return addons[name] and 2 or 0 end,
+        },
+        UnitGUID = function() return "Player-1" end,
+    })
+    local calls = { reload = 0, after = 0 }
+    env.Nx = {
+        db = { profile = over.profile or { Version = {}, Map = {}, MiniMap = {}, Skin = {}, Track = {} } },
+        Map = { ApplyMapKeyOverrides = function() end, Maps = { {} } },
+        Skin = { Set = function() end },
+        Opts = { NXCmdReload = function() calls.reload = calls.reload + 1 end, Open = function() end },
+    }
+    env.Carbonite.Core.SlashCommands = { Register = function() end }
+    env.Carbonite.Modules.Comm = { VersionCheck = { MyVersion = function() return over.version end } }
+    loader.run(env, "Carbonite/Modules/Integrations/Navigator.lua")
+    loader.run(env, "Carbonite/Modules/Assistant/Assistant.lua")
+    local A = env.Carbonite.Modules.Assistant
+    A.Build = function(self) self.frame = wow.frame("CarboniteAssistant") end
+    A.Render = function() end
+    return A, env.Nx.db.profile, calls
+end
+
+local function navPage(A)
+    for i, page in ipairs(A.PAGES) do
+        if page.id == "navigator" then return page, i end
+    end
+end
+
+describe("assistente: quem guia até o destino", function()
+    it("tem a página com Carbonite, TomTom e Shortest Path Forever, antes das integrações", function()
+        local A = loadNav()
+        local page, index = navPage(A)
+        expect(page ~= nil).toBe(true)
+        expect(index).toBe(#A.PAGES - 1)
+        expect(page.choices[1].value).toBe("carbonite")
+        expect(page.choices[2].value).toBe("tomtom")
+        expect(page.choices[3].value).toBe("spf")
+    end)
+
+    it("addon não instalado não pode ser escolhido", function()
+        local A, profile = loadNav()
+        A:Open(1)
+        A:Choose("navigator", "spf")
+        expect(profile.Track.Navigator).toBeNil()
+        expect(A:ChoiceAvailable("navigator", "spf")).toBe(false)
+        expect(A:ChoiceAvailable("navigator", "carbonite")).toBe(true)
+    end)
+
+    it("escolher grava Track.Navigator e pede para recarregar ao concluir", function()
+        local A, profile, calls = loadNav({ addons = { ShortestPathForever = true } })
+        A:Open(1)
+        A:Choose("navigator", "spf")
+        expect(profile.Track.Navigator).toBe("spf")
+        A:Finish(false)
+        expect(calls.reload).toBe(1)
+    end)
+
+    it("sem mudar a escolha, não recarrega", function()
+        local A, _, calls = loadNav({ addons = { ShortestPathForever = true } })
+        A:Open(1)
+        A:Finish(false)
+        expect(calls.reload).toBe(0)
+    end)
+
+    it("avisa das duas setas quando o SPF está instalado e não é o escolhido", function()
+        local A, profile = loadNav({ addons = { ShortestPathForever = true } })
+        expect(A:Note("navigator") ~= nil).toBe(true)
+        profile.Track.Navigator = "spf"
+        expect(A:Note("navigator")).toBeNil()
+        expect(A:Note("map")).toBeNil()
+    end)
+end)
+
+describe("assistente: abre de novo a cada versão", function()
+    it("versão nova reabre; a mesma versão não", function()
+        local A, profile = loadNav({ version = "v1.2.0" })
+        expect(A:ShouldShow()).toBe(true)
+        A:AutoShow()
+        A:Finish(false)
+        expect(profile.Version.AssistantSeen).toBe("v1.2.0")
+        expect(A:ShouldShow()).toBe(false)
+        profile.Version.AssistantSeen = "v1.1.0"
+        expect(A:ShouldShow()).toBe(true)
+    end)
+
+    it("escolha salva desinstalada reabre e, ao concluir, volta ao Carbonite", function()
+        local A, profile = loadNav({ version = "v1.2.0" })
+        profile.Version = { Assistant = A.VERSION, AssistantSeen = "v1.2.0" }
+        profile.Track.Navigator = "tomtom"
+        expect(A:ShouldShow()).toBe(true)
+        A:AutoShow()
+        A:Finish(false)
+        expect(profile.Track.Navigator).toBe("carbonite")
+        expect(A:ShouldShow()).toBe(false)
+    end)
+
+    it("o Novidades espera o assistente fechar", function()
+        local A = loadNav({ version = "v1.2.0" })
+        local opened = 0
+        A:AutoShow()
+        A.afterFinish = function() opened = opened + 1 end
+        A:Finish(false)
+        expect(opened).toBe(1)
+        local src = loader.read("Carbonite/Modules/MainUpdater/NXOnUpdate.lua")
+        expect(src:find("Assistant.afterFinish = showWhatsNew", 1, true) ~= nil).toBe(true)
     end)
 end)

@@ -448,3 +448,4 @@ L["Import %s character data and reload?"] = true
 L["Import"] = true
 L["Delete %s character data?"] = true
 L["Diagnostics"] = true
+L["Carbonite's own arrow, TomTom's arrow or Shortest Path Forever. Only installed addons are listed. Changing it takes a reload."] = true

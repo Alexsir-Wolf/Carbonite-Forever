@@ -15,6 +15,11 @@
 -- Without the data, with the option off, in instances or on a taxi, nothing
 -- changes: the leg stays a straight line. A search runs at most BUDGET_MS per
 -- frame, one at a time; until it finishes the straight line is drawn.
+--
+-- With Shortest Path Forever loaded (API version 2 with WalkPath), each leg
+-- asks SPF first (#222): its walking map is updated with every SPF version and
+-- knows tunnels and city levels. A leg SPF cannot answer falls back to the
+-- GroundNav search above; paths are dropped when SPF's NavVersion changes.
 
 local Carbonite = _G.Carbonite
 local _, addon = ...
@@ -46,6 +51,18 @@ end
 local function ns()
     return addon and addon.GroundNavigation
 end
+
+-- Shortest Path Forever's API when it can walk a leg (#222).
+local SPF_OWNER = "Carbonite"
+local function spfWalk()
+    local spf = rawget(_G, "ShortestPathForever")
+    local api = type(spf) == "table" and spf.API or nil
+    if type(api) ~= "table" or tonumber(api.version) ~= 2 then
+        return nil
+    end
+    return type(api.WalkPath) == "function" and api or nil
+end
+GroundRoute.SPFWalk = spfWalk
 
 local function debugLog(fmt, ...)
     local logger = Carbonite.Core.Logger and Carbonite.Core.Logger:Get("GroundRoute")
@@ -109,7 +126,7 @@ function GroundRoute:Supported()
 end
 
 function GroundRoute:Available()
-    return optionOn() and self:Supported()
+    return optionOn() and (spfWalk() ~= nil or self:Supported())
 end
 
 -------------------------------------------------------------------------------
@@ -206,6 +223,13 @@ local function toWorld(points, mapId)
     return out
 end
 
+local function redraw()
+    local map = _G.Nx and _G.Nx.Map and _G.Nx.Map.GetMap and _G.Nx.Map:GetMap(1)
+    if map then
+        map.UpdateTrackingDelay = 0    -- draw the new path on the next frame
+    end
+end
+
 local function finish(points)
     local key, spec = job.key, job.spec
     local search = ns().PathSearch
@@ -215,20 +239,151 @@ local function finish(points)
         local world = toWorld(points, spec.mapId)
         if world then
             remember(key, { points = world, srcX = spec.srcX, srcY = spec.srcY })
-            local map = _G.Nx and _G.Nx.Map and _G.Nx.Map.GetMap and _G.Nx.Map:GetMap(1)
-            if map then
-                map.UpdateTrackingDelay = 0    -- draw the new path on the next frame
-            end
+            redraw()
             return
         end
     end
     remember(key, { failed = true })
 end
 
+-- The GroundNav search for a leg, or nil when the terrain data cannot walk it.
+local function terrainSpec(srcMap, sx, sy, dstMap, dx, dy, fromPlayer)
+    if not GroundRoute:Supported() then
+        return nil
+    end
+    local inst, fx, fy = GroundRoute:ToTerrain(srcMap, sx, sy)
+    local inst2, tx, ty = GroundRoute:ToTerrain(dstMap or srcMap, dx, dy)
+    if not inst or inst ~= inst2 or not GroundRoute:HasMap(inst) then
+        return nil
+    end
+    local from = { x = fx, y = fy }
+    if fromPlayer and UnitPosition then
+        local py, px, pz, pInst = UnitPosition("player")
+        if pInst == inst and py and px then
+            from = { x = py, y = px, z = (pz and pz ~= 0) and pz or nil }
+        end
+    end
+    return {
+        instance = inst, mapId = srcMap, srcX = sx, srcY = sy,
+        from = from, to = { x = tx, y = ty },
+    }
+end
+
+-- The same leg as SPF places: uiMapID and 0-1 fractions.
+local function spfSpec(srcMap, sx, sy, dstMap, dx, dy, fromPlayer)
+    local c = coords()
+    if not c then
+        return nil
+    end
+    local fx, fy = c:ZoneFromWorld(srcMap, sx, sy)
+    local tx, ty = c:ZoneFromWorld(dstMap or srcMap, dx, dy)
+    if not (fx and fy and tx and ty) then
+        return nil
+    end
+    return {
+        spf = true, mapId = srcMap, srcX = sx, srcY = sy,
+        from = { map = srcMap, x = fx / 100, y = fy / 100 },
+        to = { map = dstMap or srcMap, x = tx / 100, y = ty / 100 },
+        leg = { srcMap = srcMap, sx = sx, sy = sy, dstMap = dstMap, dx = dx, dy = dy, fromPlayer = fromPlayer },
+    }
+end
+
+-- SPF's waypoints -> Carbonite world points, endpoints dropped. Each
+-- waypoint names its own map: a walking map can span several zones.
+local function spfToWorld(waypoints)
+    local c = coords()
+    if not c then
+        return nil
+    end
+    local out = {}
+    for i = 2, #waypoints - 1 do
+        local p = waypoints[i]
+        local wx, wy
+        if type(p) == "table" and p.map and p.x and p.y then
+            wx, wy = c:WorldFromZone(p.map, p.x * 100, p.y * 100)
+        end
+        if not wx then
+            return nil
+        end
+        out[#out + 1] = { X = wx, Y = wy }
+    end
+    return out
+end
+
+-- SPF had no path for the leg: the GroundNav search takes it, or it fails.
+local function fallBack(key, spec)
+    local leg = spec.leg
+    local terrain = leg and terrainSpec(leg.srcMap, leg.sx, leg.sy, leg.dstMap, leg.dx, leg.dy, leg.fromPlayer)
+    if terrain then
+        specs[key] = terrain
+        table.insert(queue, 1, key)
+        return true
+    end
+    remember(key, { failed = true })
+    return false
+end
+
+local function finishSPF(path, reason)
+    local key, spec = job.key, job.spec
+    job = nil
+    if type(path) == "table" and type(path.waypoints) == "table" and #path.waypoints >= 2 then
+        local world = spfToWorld(path.waypoints)
+        if world then
+            remember(key, {
+                points = world, srcX = spec.srcX, srcY = spec.srcY,
+                spf = true, navVersion = path.navVersion,
+            })
+            redraw()
+            if pumpFrame then pumpFrame:Show() end    -- the next queued leg
+            return
+        end
+    end
+    debugLog("WalkPath gave no path (%s); trying the terrain search", tostring(reason))
+    fallBack(key, spec)
+    if pumpFrame then pumpFrame:Show() end
+end
+
+-- Ask SPF for the leg; false when it refused at once.
+local function startSPF(key, spec)
+    local api = spfWalk()
+    if not api then
+        return false
+    end
+    local token = {}
+    local ok, cancel, reason = pcall(api.WalkPath, SPF_OWNER, spec.from, spec.to, function(path, why)
+        if job and job.token == token then
+            finishSPF(path, why)
+        end
+    end)
+    if not ok or type(cancel) ~= "function" then
+        debugLog("WalkPath refused: %s", tostring(ok and reason or cancel))
+        return false
+    end
+    job = { key = key, spec = spec, spf = true, token = token, cancel = cancel }
+    return true
+end
+
+-- Drop the running search; SPF's request is cancelled so it never calls back.
+local function dropJob()
+    if job and job.cancel then
+        pcall(job.cancel)
+    end
+    job = nil
+end
+
 local function startNext()
     while #queue > 0 do
         local key = table.remove(queue, 1)
         local spec = specs[key]
+        if spec and spec.spf and not cache[key] then
+            if startSPF(key, spec) then
+                return true
+            end
+            -- Refused at once: fallBack queued the terrain search first (or
+            -- marked the leg failed); the loop takes it next.
+            fallBack(key, spec)
+            spec = nil
+        end
         if spec and not cache[key] then
             local n = ns()
             job = {
@@ -246,6 +401,10 @@ end
 local function pump()
     if not job and not startNext() then
         pumpFrame:Hide()
+        return
+    end
+    if job.spf then
+        pumpFrame:Hide()      -- SPF calls back; finishSPF shows the frame again
         return
     end
     local n = ns()
@@ -350,6 +509,13 @@ function GroundRoute:Leg(srcMap, sx, sy, dstMap, dx, dy, fromPlayer)
     end
     local key = legKey(fromPlayer, sx, sy, dx, dy)
     local entry = cache[key]
+    local api = spfWalk()
+    -- A path from older SPF walking data is searched again.
+    if entry and entry.spf and api and type(api.NavVersion) == "function"
+        and entry.navVersion ~= api.NavVersion() then
+        cache[key] = nil
+        entry = nil
+    end
     if entry then
         entry.used = now()
         if entry.failed then
@@ -368,22 +534,11 @@ function GroundRoute:Leg(srcMap, sx, sy, dstMap, dx, dy, fromPlayer)
         end
     end
 
-    local inst, fx, fy = self:ToTerrain(srcMap, sx, sy)
-    local inst2, tx, ty = self:ToTerrain(dstMap or srcMap, dx, dy)
-    if not inst or inst ~= inst2 or not self:HasMap(inst) then
-        return nil
+    local spec = (api and spfSpec(srcMap, sx, sy, dstMap, dx, dy, fromPlayer))
+        or terrainSpec(srcMap, sx, sy, dstMap, dx, dy, fromPlayer)
+    if spec then
+        request(key, spec)
     end
-    local from = { x = fx, y = fy }
-    if fromPlayer and UnitPosition then
-        local py, px, pz, pInst = UnitPosition("player")
-        if pInst == inst and py and px then
-            from = { x = py, y = px, z = (pz and pz ~= 0) and pz or nil }
-        end
-    end
-    request(key, {
-        instance = inst, mapId = srcMap, srcX = sx, srcY = sy,
-        from = from, to = { x = tx, y = ty },
-    })
     return nil
 end
 
@@ -433,7 +588,7 @@ function GroundRoute:Expand(map, tracking)
 
     -- A search nobody asks for any more (target changed) is dropped.
     if job and not wanted[job.key] then
-        job = nil
+        dropJob()
     end
     for key in pairs(specs) do
         if not wanted[key] then
@@ -456,7 +611,7 @@ function GroundRoute:Clear()
     wipe(queue)
     wipe(specs)
     wipe(wanted)
-    job = nil
+    dropJob()
     if pumpFrame then
         pumpFrame:Hide()
     end

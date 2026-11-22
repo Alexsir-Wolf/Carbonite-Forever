@@ -485,6 +485,7 @@ Nx.Defaults = {
         },
         Track = {
             EmuTomTom = true,
+            Navigator = "carbonite",        -- Who guides to the destinations: carbonite, tomtom or spf (#222/#223)
             BlizzardPin = true,             -- Blizzard's 3D waypoint pin on the Carbonite target
             Hide = false,
             HideInBG = false,

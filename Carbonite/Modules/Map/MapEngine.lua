@@ -332,8 +332,9 @@ function Nx.Map:Init()
     }
 
     -- TomTom emulation for compatibility with addons that depend on it
+    -- Emulate also checks who guides (Navigator, #222/#223) and never takes
+    -- over another addon's TomTom table.
     if Nx.db.profile.Track.EmuTomTom and not Nx.RealTom then
-        TomTom = {}
         Nx.EmulateTomTom()
     end
 
@@ -9310,6 +9311,16 @@ function Nx.Map:CalcTracking()
     local tr = {}
     self.Tracking = tr
 
+    -- Shortest Path Forever plans and draws the route (#222): Carbonite keeps
+    -- only its destinations, for their pins and the arrival check.
+    local Navigator = Carbonite.Modules.Integrations and Carbonite.Modules.Integrations.Navigator
+    if Navigator and Navigator:HidesCarbRoute() then
+        for _, tar in ipairs(self.Targets) do
+            tinsert(tr, tar)
+        end
+        return
+    end
+
     local srcX = self.PlyrX
     local srcY = self.PlyrY
     -- Carbonite's player-map resolver is independent of map hover and also
@@ -9501,6 +9512,12 @@ function Nx.Map:DrawTracking(srcX, srcY, dstX, dstY, mode, target)
 
         -- The hearthstone or teleport jump (#37) is not travelled: no trail.
         if mode == "T" then
+            return
+        end
+
+        -- Shortest Path Forever draws its own route line (#222).
+        local Navigator = Carbonite.Modules.Integrations and Carbonite.Modules.Integrations.Navigator
+        if Navigator and Navigator:HidesCarbRoute() then
             return
         end
 
