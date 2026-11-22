@@ -23,7 +23,8 @@
 -- * The tracking arrow (HUD) hides: the player has no position here, and the
 --   distance to an outdoor destination is measured from the entrance.
 -- * Carbonite's minimap button hides: it rides the minimap's rim, which now
---   sits inside the map window. It comes back on leaving, if enabled.
+--   sits inside the map window. It comes back on leaving, if enabled and
+--   no LibDBIcon button stands in for it (it would ride the player arrow).
 --
 -- Public (on Nx.Map):
 --   map:UpdateUnmappedInstanceView()    show/hide; sets map.UInstViewActive,
@@ -109,7 +110,7 @@ function Map:UpdateUnmappedInstanceView()
     if but and active ~= (self.UInstViewActive or false) then
         if active then
             but:Hide()
-        elseif Nx.db.profile.MiniMap.ButShowCarb then
+        elseif Nx.db.profile.MiniMap.ButShowCarb and not Nx.NXMiniMapBut.DBIcon then
             but:Show()
         end
     end
