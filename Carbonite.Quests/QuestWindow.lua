@@ -1799,8 +1799,7 @@ function Nx.Quest.List:ToggleWatch (qId, qIndex, qObj, shift)
                 Quest:PatchQuestFromBlizzard(liveQID)
             end
 
-            local activeQID = (C_SuperTrack.GetSuperTrackedQuestID
-                                and C_SuperTrack.GetSuperTrackedQuestID()) or 0
+            local activeQID = Nx.GetSuperTrackedQID()
             if activeQID == 0 then activeQID = Quest.ActiveQID or 0 end
             local activeObjI = Quest.ActiveObjI or 0
             local toggleOff = (activeQID == liveQID and activeObjI == qObj)
@@ -2122,6 +2121,9 @@ function CarboniteQuest:OnQuestUpdate (event, ...)
         end
         Nx.Quest.List:Refresh(event)
     elseif event == "QUEST_WATCH_LIST_CHANGED" then
+        if arg2 == false and Quest.OnHiddenQuestUnwatched then
+            Quest:OnHiddenQuestUnwatched (arg1)
+        end
         if Quest.Watch and Quest.Watch.OnBlizzardWatchChanged then
             Quest.Watch:OnBlizzardWatchChanged (arg1, arg2)
         end
@@ -2225,9 +2227,9 @@ function CarboniteQuest:OnQuestUpdate (event, ...)
            and QuestUtils_IsQuestWorldQuest and QuestUtils_IsQuestWorldQuest(questId)
            and C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID
            and C_SuperTrack.SetSuperTrackedQuestID
-           and (C_SuperTrack.GetSuperTrackedQuestID() or 0) == 0 then
+           and Nx.GetSuperTrackedQID() == 0 then
             Nx.SuperTrackSafe(function()
-                if (C_SuperTrack.GetSuperTrackedQuestID() or 0) ~= 0 then
+                if Nx.GetSuperTrackedQID() ~= 0 then
                     return        -- something got tracked in the meantime
                 end
                 if Nx.AddWorldQuestWatchSafe and Enum and Enum.QuestWatchType
@@ -2245,6 +2247,9 @@ function CarboniteQuest:OnQuestUpdate (event, ...)
         --Nx.Quest:RecordQuests()
     elseif event == "QUEST_REMOVED" then
         local questId = arg1
+        if Quest.ForgetHiddenQuest then
+            Quest:ForgetHiddenQuest (questId)
+        end
         if Quest.NoteQuestLogRemoval then
             Quest:NoteQuestLogRemoval (questId)
         end

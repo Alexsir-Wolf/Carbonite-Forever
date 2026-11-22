@@ -829,10 +829,138 @@ function Nx.Quest:IsAutoTrackOn()
     return w and w.ButATarget and w.ButATarget:GetPressed() and true or false
 end
 
+-------------------------------------------------------------------------------
+-- The game's gold quest arrow on the Carbonite map
+--
+-- The integrated minimap draws an arrow to the super tracked quest and the
+-- Forever client has no API to clear its texture. The game's super-track is
+-- emptied instead, and HiddenQID keeps that quest tracked for Carbonite: read
+-- Nx.GetSuperTrackedQID(), not the game's value.
+-------------------------------------------------------------------------------
+
+local ARROW_SYNC_SECONDS = 0.2
+
+local function GameTrackedQID()
+    local get = C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID
+    return get and get() or 0
+end
+
+local function WaypointTracked()
+    local is = C_SuperTrack and C_SuperTrack.IsSuperTrackingUserWaypoint
+    return is and is() or false
+end
+
+local function HiddenStore()
+    return Nx.db and Nx.db.char and Nx.db.char.Map
+end
+
+function Nx.Quest:SetHiddenQuest(qId)
+    self.HiddenQID = qId
+    local store = HiddenStore()
+    if store then store.HiddenQuest = qId end
+end
+
+-- After a reload the game has no quest tracked: the hidden one is saved.
+function Nx.Quest:LoadHiddenQuest()
+    if self.HiddenLoaded then return end
+    local store = HiddenStore()
+    if not store then return end
+    self.HiddenLoaded = true
+    local saved = store.HiddenQuest
+    if saved and not self.HiddenQID then
+        self.HiddenQID = saved
+        if (self.ActiveQID or 0) == 0 then self.ActiveQID = saved end
+    end
+end
+
+function Nx.Quest:ForgetHiddenQuest(qId)
+    self:LoadHiddenQuest()
+    if qId and self.HiddenQID == qId then
+        self:SetHiddenQuest(nil)
+    end
+end
+
+-- The game drops the super-track of a quest no longer watched; with a route
+-- Carbonite put it back, so then it stays.
+function Nx.Quest:OnHiddenQuestUnwatched(qId)
+    if not qId or self.HiddenQID ~= qId or self:IsGotoOnQuest(qId) then return end
+    self:SetHiddenQuest(nil)
+    if self.ActiveQID == qId then
+        self.ActiveQID = 0
+        self.ActiveObjI = 0
+    end
+end
+
+function Nx.Quest:SyncQuestArrow()
+    local api = C_SuperTrack and C_SuperTrack.SetSuperTrackedQuestID
+    local map = Nx.Map and Nx.Map.Maps and Nx.Map.Maps[1]
+    local profile = Nx.db and Nx.db.profile
+    if not (api and map and profile and Nx.QInit) then return end
+
+    self:LoadHiddenQuest()
+    -- Same limits as the 3D pin: the game's data providers run on this event.
+    local worldMap = _G.WorldMapFrame
+    if InCombatLockdown() or (worldMap and worldMap:IsShown()) or WaypointTracked() then
+        self.SeenSuperQID = nil
+        return
+    end
+
+    local live = GameTrackedQID()
+    if not (map.MMOwn and profile.MiniMap.HideQuestArrow) then
+        self.SeenSuperQID = nil
+        local hidden = self.HiddenQID
+        if hidden then
+            self:SetHiddenQuest(nil)
+            if live == 0 then
+                self.RestoredQID = hidden
+                self._stLastSet = 0     -- giving it back is not a second click
+                Nx.SetSuperTrackedQuestIDSafe(hidden)
+            end
+        end
+        return
+    end
+
+    if live == 0 then
+        self.SeenSuperQID = nil
+        return
+    end
+    -- The mirror runs a frame after the event: act on the second pass.
+    if self.SeenSuperQID ~= live then
+        self.SeenSuperQID = live
+        return
+    end
+    self.SeenSuperQID = nil
+
+    if self.PendingGotoQID == live then
+        self:OnSuperTrackChanged(true)
+    end
+    -- A quest the mirror ignored (auto tracked on accept) leaves the active one.
+    if (self.ActiveQID or 0) == 0 then
+        self.ActiveQID = live
+    end
+    self:SetHiddenQuest(self.ActiveQID)
+    Nx.HideSuperTrackedQuestSafe()
+end
+
+if CreateFrame then
+    local driver, since = CreateFrame("Frame"), 0
+    driver:SetScript("OnUpdate", function(_, elapsed)
+        since = since + elapsed
+        if since < ARROW_SYNC_SECONDS then return end
+        since = 0
+        Nx.Quest:SyncQuestArrow()
+    end)
+end
+
 function Nx.Quest:NoteSuperTrackEvent()
     local evtTime = GetTime()
     C_Timer.After(0, function()
-        Nx.Quest:OnSuperTrackChanged(nil, evtTime)
+        local Quest = Nx.Quest
+        -- The emptying that hides the arrow is not a change of quest.
+        if Quest.HiddenQID and GameTrackedQID() == 0 and not WaypointTracked() then
+            return
+        end
+        Quest:OnSuperTrackChanged(nil, evtTime)
     end)
 end
 
@@ -876,6 +1004,7 @@ function Nx.Quest:OnSuperTrackChanged(isRefresh, evtTime)
         if pin and pin.OwnsWaypoint and pin:OwnsWaypoint() then
             return
         end
+        if self.HiddenQID then self:SetHiddenQuest(nil) end
         self.ActiveQID = 0
         self.ActiveObjI = 0
         if self.UpdateQuestBlob then
@@ -885,7 +1014,8 @@ function Nx.Quest:OnSuperTrackChanged(isRefresh, evtTime)
         return
     end
 
-    local liveQID = C_SuperTrack.GetSuperTrackedQuestID()
+    local liveQID = GameTrackedQID()
+    if liveQID == 0 and self.HiddenQID then liveQID = self.HiddenQID end
     if liveQID and liveQID ~= 0 and self:IsIgnoredRXPSuperTrack(liveQID, isRefresh) then
         return
     end
@@ -949,8 +1079,19 @@ function Nx.Quest:OnSuperTrackChanged(isRefresh, evtTime)
         if not self:IsGotoOnQuest(liveQID) and self.PendingGotoQID ~= liveQID then
             return
         end
-    elseif not self:IsAutoTrackOn() and self:IsAutomaticSuperTrack(liveQID, evtTime) then
-        return
+    else
+        if self.RestoredQID == liveQID then
+            -- The arrow given back: no route out of it.
+            self.RestoredQID = nil
+            if not self:IsGotoOnQuest(liveQID) then return end
+        end
+        -- The game tracks an accepted quest whenever it tracks none, which is
+        -- always while the arrow is hidden: that must not take the route.
+        local otherHidden = self.HiddenQID and self.HiddenQID ~= liveQID
+        if (otherHidden or not self:IsAutoTrackOn()) and self:IsAutomaticSuperTrack(liveQID, evtTime) then
+            return
+        end
+        if otherHidden then self:SetHiddenQuest(nil) end
     end
 
     self.ActiveQID = liveQID

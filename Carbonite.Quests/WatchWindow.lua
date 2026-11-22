@@ -2281,7 +2281,7 @@ function Nx.Quest.Watch:UpdateList()
     -- arrow is pointing at" — POI on map, objective tracker row, etc.
     -- Same source as UpdateIcons: super-track on retail / Wrath+,
     -- Carbonite ActiveQID on older flavors.
-    local superTrackedQID = (C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()) or 0
+    local superTrackedQID = Nx.GetSuperTrackedQID and Nx.GetSuperTrackedQID() or 0
     if superTrackedQID == 0 then
         superTrackedQID = Nx.Quest.ActiveQID or 0
     end

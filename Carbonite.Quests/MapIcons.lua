@@ -1093,8 +1093,7 @@ function Nx.Quest:UpdateIcons (map)
     -- plus map / super-track / hover state so visual feedback stays
     -- snappy. Quest log changes are picked up at the next 10-tick
     -- bucket.
-    local activeQID = (C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID
-        and C_SuperTrack.GetSuperTrackedQuestID()) or 0
+    local activeQID = Nx.GetSuperTrackedQID and Nx.GetSuperTrackedQID() or 0
     if activeQID == 0 then activeQID = Nx.Quest.ActiveQID or 0 end
     local hoverCur  = Quest.IconHoverCur
     local hoverObjI = Quest.IconHoverObjI or 0
@@ -1333,8 +1332,7 @@ function Nx.Quest:UpdateIcons (map)
     -- internal ActiveQID set by SetActiveCarboniteQuest. cur.QId may
     -- be stale, so we also resolve via the live log index for the
     -- comparison.
-    local activeQID = (C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID
-        and C_SuperTrack.GetSuperTrackedQuestID()) or 0
+    local activeQID = Nx.GetSuperTrackedQID and Nx.GetSuperTrackedQID() or 0
     if activeQID == 0 then
         activeQID = Nx.Quest.ActiveQID or 0
     end
@@ -1911,7 +1909,7 @@ function Nx.Quest:UpdateIcons (map)
                             f:Hide()
                         else
 
-                        local selected = info.questID == C_SuperTrack.GetSuperTrackedQuestID()
+                        local selected = info.questID == Nx.GetSuperTrackedQID()
 
                         local function WQTGetOverlay(memberName)
                             for j = 1, #WorldMapFrame.overlayFrames do
@@ -1960,7 +1958,7 @@ function Nx.Quest:UpdateIcons (map)
                                     local mapID = self.mapID
                                     local shift = IsShiftKeyDown()
                                     local watchType = C_QuestLog.GetQuestWatchType(questID)
-                                    local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
+                                    local isSuperTracked = Nx.GetSuperTrackedQID() == questID
 
                                     if ZygorGuidesViewer and ZygorGuidesViewer.WorldQuests then
                                         ZygorGuidesViewer.WorldQuests:SuggestWorldQuestGuideFromMap(nil, questID, "force", mapID)

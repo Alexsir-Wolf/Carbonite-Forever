@@ -5,6 +5,7 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 ## Em desenvolvimento
 
 ### Novidades
+- **Sem seta dourada no mapa:** com o minimapa no mapa do Carbonite, a seta de quest do jogo some e a rota continua. O marcador 3D e o destaque dessa quest no jogo somem junto; para ter tudo de volta, desligue "Esconder seta de quest" em Opções do Minimapa.
 - **Quem guia você até o destino:** escolha entre a seta do Carbonite, a do TomTom ou o Shortest Path Forever, no assistente de configuração ou em Opções > Rastreamento (exige recarregar a interface). Com o TomTom, o destino atual do Carbonite vira um waypoint dele. Com o Shortest Path Forever, ele planeja a rota mais rápida (voos, barcos, portais, pedra de regresso) e guia com a própria seta e linha. Só aparecem os addons instalados.
 - **Caminho a pé pelo Shortest Path Forever:** com ele instalado, a linha de rota do Carbonite segue o caminho a pé dele (túneis e níveis das cidades), mesmo sem o GatherLite.
 - **Assistente de configuração a cada versão:** abre de novo quando o addon é atualizado; o Novidades espera ele fechar.

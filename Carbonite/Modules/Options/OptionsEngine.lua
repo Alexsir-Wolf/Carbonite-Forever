@@ -1291,6 +1291,19 @@ local function mapConfig()
                                 Nx.db.profile.MiniMap.IScale = value
                             end,
                         },
+                        MMHideQuestArrow = {
+                            order = 4.5,
+                            type = "toggle",
+                            width = "full",
+                            name = L["Hide the quest arrow"],
+                            desc = L["With the minimap on the Carbonite map, the game's gold quest arrow is hidden and Carbonite's route stays. The game's own 3D marker and highlight of that quest are hidden too. In combat the arrow can show until it ends."],
+                            get = function()
+                                return Nx.db.profile.MiniMap.HideQuestArrow
+                            end,
+                            set = function()
+                                Nx.db.profile.MiniMap.HideQuestArrow = not Nx.db.profile.MiniMap.HideQuestArrow
+                            end,
+                        },
                         MMTrackHideTerrain = {
                             order = 5.4,
                             type = "toggle",

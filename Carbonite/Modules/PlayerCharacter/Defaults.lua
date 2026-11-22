@@ -464,6 +464,7 @@ Nx.Defaults = {
             IndoorTogFullSize = false,
             BuggedTogFullSize = false,
             IScale = 1,
+            HideQuestArrow = true,              -- No game quest arrow on the integrated minimap
             TrackHideTerrain = true,            -- Only node blips while tracking herbs/minerals
             TrackIScale = 1.8,                  -- Icon scale while tracking herbs/minerals
             MoveCapBars = true,
