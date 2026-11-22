@@ -62,6 +62,7 @@ function ZoomController:ScrollSteps(steps)
     -- Mouse-wheel / minimap zoom buttons drive ScrollSteps. Treat as
     -- user intent for the remembered-scale fix above.
     self:RememberScale(m.Scale)
+    if m.HoldZoom then m:HoldZoom() end
 end
 
 function ZoomController:Move(x, y, scale, stepTime)

@@ -54,7 +54,7 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
 - API para outros addons desenharem ícones no mapa do Carbonite ([Map Provider API](Carbonite/Docs/MapProvider.md)).
 
 ### Navegação
-- **Goto:** marque qualquer ponto do mapa, uma coordenada (`/carb goto x y`) ou um ícone. O mapa ajusta o zoom para mostrar você e o destino.
+- **Goto:** marque qualquer ponto do mapa, uma coordenada (`/carb goto x y`) ou um ícone. O mapa ajusta o zoom para mostrar você e o destino; se você mudar o zoom, ele fica como você deixou até a rota acabar.
 - **Seta HUD:** aponta para o destino e mostra nome, distância e tempo estimado de chegada.
 - **Fila de destinos:** Shift+clique em Goto adiciona o destino sem apagar os outros; ao chegar, a seta passa ao próximo. A janela Destinos (`/carb destinos`, Rota... > Destinos... no menu do mapa ou um atalho de teclado) lista a fila com zona e distância e permite subir, descer, ir agora, remover, inverter e limpar.
 - **Rotas:** caminho entre zonas por estradas, conexões e pontos de voo.
