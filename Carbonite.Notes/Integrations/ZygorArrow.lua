@@ -64,6 +64,25 @@ local function activeWaypoint(P)
     if type(way) == "table" then return way end
 end
 
+-- Zygor keeps the waypoint when its window closes and just hides its arrow,
+-- by hidearrowwithguide (#220). IsShown, not IsVisible: Alt+Z is not closing,
+-- nor is the window hiding itself in combat.
+local function guideClosed(ZGV)
+    local frame = ZGV.Frame
+    if not (frame and frame.IsShown) or frame:IsShown() then return false end
+    if ZGV.hiddenincombat then return false end
+    local profile = ZGV.db and ZGV.db.profile
+    return not (profile and profile.hidearrowwithguide == false)
+end
+
+-- A waypoint the player set in Zygor, or a leg of the route to one.
+local function isManual(P, way)
+    if not way then return false end
+    if way.type == "manual" then return true end
+    local dest = P.DestinationWaypoint
+    return way.type == "route" and type(dest) == "table" and dest.type == "manual"
+end
+
 -- Quantize a number for a stable signature key.
 local function q(n, scale)
     if type(n) ~= "number" then return 0 end
@@ -242,13 +261,20 @@ function Nx.Notes:ZygorArrowSync()
     suppressZygorArrow(true)
 
     local way = activeWaypoint(P)
+    local closed = guideClosed(ZGV)
+    if closed and not isManual(P, way) then
+        clearTarget()
+        return
+    end
+
     local sig = waypointSig(way)
     if not sig then
         clearTarget()
         return
     end
 
-    local title = buildTitle(ZGV, way)
+    -- With the guide closed only a manual waypoint is left: no step caption.
+    local title = buildTitle(not closed and ZGV or nil, way)
 
     -- Same destination and our target is still live: the coords didn't
     -- change, but the objective label might have (a kill / collect
