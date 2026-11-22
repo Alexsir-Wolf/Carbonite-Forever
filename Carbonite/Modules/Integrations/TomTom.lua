@@ -65,8 +65,17 @@ end
 -- Standalone-detection API
 -- =====================================================================
 
+-- The TomTom table Carbonite made (Emulate). Never another addon's table:
+-- the global may hold Shortest Path Forever's shim (#222).
+local ownTable
+
+local function navigator()
+    local integrations = Carbonite.Modules.Integrations
+    return integrations and integrations.Navigator
+end
+
 function TomTom:IsReal()      return _G.Nx and _G.Nx.RealTom == true end
-function TomTom:IsEmulating() return _G.TomTom ~= nil and not self:IsReal() end
+function TomTom:IsEmulating() return ownTable ~= nil and _G.TomTom == ownTable end
 
 -- =====================================================================
 -- Stable identity / key helpers (mirrors TomTom:GetKey exactly)
@@ -311,9 +320,15 @@ local function bindSlashCommands()
 end
 
 function TomTom:Emulate()
-    if _G.TomTom and self:IsReal() then return false end
+    if self:IsReal() then return false end
+    -- Only while Carbonite guides and the emulation option is on (#222,
+    -- #223): with TomTom or Shortest Path Forever chosen, the guides talk to
+    -- that addon instead.
+    local nav = navigator()
+    if nav and not nav:ShouldEmulateTomTom() then return false end
 
-    local tom = _G.TomTom or {}
+    ownTable = ownTable or {}
+    local tom = ownTable
     _G.TomTom = tom
     bindLegacyTomTomTable(tom)
     bindSlashCommands()
@@ -323,7 +338,7 @@ function TomTom:Emulate()
 end
 
 function TomTom:Stop()
-    if self:IsReal() then return end
+    if self:IsReal() or not self:IsEmulating() then return end
     _G.TomTom = nil
     Carbonite.Core.EventBus:Fire("INTEGRATION_TOMTOM_STOPPED")
 end

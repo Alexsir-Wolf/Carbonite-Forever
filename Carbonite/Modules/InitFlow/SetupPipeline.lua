@@ -114,7 +114,10 @@ end
 function Nx:UNIT_NAME_UPDATE (event, arg1, ...)
     Nx.PlayerFnd = true
 
-    if _G.TomTom then
+    -- The TomTom addon itself: the global may be Carbonite's emulation or
+    -- Shortest Path Forever's shim (#222).
+    local nav = _G.Carbonite.Modules.Integrations and _G.Carbonite.Modules.Integrations.Navigator
+    if (nav and nav:TomTomEnabled()) or (not nav and _G.TomTom) then
         Nx.RealTom = true
         SLASH_CBWAY1 = '/cbway'
         SlashCmdList["CBWAY"] = function (msg, editbox)

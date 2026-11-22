@@ -2,6 +2,17 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## Em desenvolvimento
+
+### Novidades
+- **Quem guia você até o destino:** escolha entre a seta do Carbonite, a do TomTom ou o Shortest Path Forever, no assistente de configuração ou em Opções > Rastreamento (exige recarregar a interface). Com o TomTom, o destino atual do Carbonite vira um waypoint dele. Com o Shortest Path Forever, ele planeja a rota mais rápida (voos, barcos, portais, pedra de regresso) e guia com a própria seta e linha. Só aparecem os addons instalados.
+- **Caminho a pé pelo Shortest Path Forever:** com ele instalado, a linha de rota do Carbonite segue o caminho a pé dele (túneis e níveis das cidades), mesmo sem o GatherLite.
+- **Assistente de configuração a cada versão:** abre de novo quando o addon é atualizado; o Novidades espera ele fechar.
+
+### Correções
+- Com o Shortest Path Forever instalado, o Carbonite não confunde mais o TomTom que ele cria com o TomTom de verdade.
+- A opção "Ativar emulação do TomTom" passa a valer de fato.
+
 ## v1.1.0
 
 ### Novidades

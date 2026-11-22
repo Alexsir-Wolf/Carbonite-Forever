@@ -457,3 +457,4 @@ L["Import %s character data and reload?"] = "Importar os dados do personagem %s 
 L["Import"] = "Importar"
 L["Delete %s character data?"] = "Excluir os dados do personagem %s?"
 L["Diagnostics"] = "Diagnóstico"
+L["Carbonite's own arrow, TomTom's arrow or Shortest Path Forever. Only installed addons are listed. Changing it takes a reload."] = "A seta do Carbonite, a do TomTom ou o Shortest Path Forever. Só aparecem os addons instalados. Trocar exige recarregar a interface."

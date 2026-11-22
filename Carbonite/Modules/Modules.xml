@@ -245,6 +245,8 @@
     <!-- Integrations with sibling addons. -->
     <!-- LDB broker + base menu template extracted from Carbonite.lua. -->
     <Script file="Integrations\LDBEngine.lua" />
+    <!-- Who guides to the destinations: Carbonite, TomTom or SPF (#222/#223). -->
+    <Script file="Integrations\Navigator.lua" />
     <Script file="Integrations\TomTom.lua" />
     <Script file="Integrations\TomTomWaypoints.lua" />
     <Script file="Integrations\LDB.lua" />

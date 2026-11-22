@@ -203,6 +203,13 @@ end
 -- Per-frame update (driven by NxMap)
 -------------------------------------------------------------------------------
 
+-- TomTom or Shortest Path Forever leads the current destination (#222/#223).
+local function navigatorLeads()
+    local integrations = Carbonite.Modules.Integrations
+    local nav = integrations and integrations.Navigator
+    return nav and nav:HidesCarbArrow() or false
+end
+
 --- Update the HUD each frame. Called from NxMap's main loop with
 --- the primary map instance as the argument.
 function HUD:Update(map)
@@ -214,6 +221,7 @@ function HUD:Update(map)
         and not (Nx.InBG and Nx.db.profile.Track.HideInBG)
         -- No player position inside an unmapped instance (UnmappedInstance.lua).
         and not (map.IsUnmappedInstance and map:IsUnmappedInstance())
+        and not navigatorLeads()
 
     if shouldShow then
         local frm = self.Frm
