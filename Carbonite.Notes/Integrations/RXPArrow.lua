@@ -14,6 +14,7 @@
 -- the frame, but the element keeps updating on every step change — so
 -- our mirror stays live. The user's original disableArrow value is
 -- snapshotted and restored when the feature is turned back off.
+-- The element also outlives the guide, so its state is checked apart (#220).
 --
 -- This mirrors the approach RestedXP-TomTom uses against TomTom; here
 -- the destination is Carbonite's emulated TomTom waypoint queue, which
@@ -56,6 +57,16 @@ end
 local function arrowFrame()
     local af = _G.RXPG_ARROW
     if type(af) == "table" then return af end
+end
+
+-- RXP never clears the arrow element. Its close button, minimap button and
+-- /rxp hide only turn showEnabled off, and unloading loads an empty guide (#220).
+-- "Hide main window" (hideGuideWindow) is not closing: RXP keeps its arrow.
+local function guideClosed(rxp)
+    local profile = rxp.settings and rxp.settings.profile
+    if profile and profile.showEnabled == false then return true end
+    local guide = rxp.currentGuide
+    return guide ~= nil and guide.empty == true
 end
 
 -- Quantize a number for a stable signature key.
@@ -265,6 +276,11 @@ function Nx.Notes:RXPArrowSync()
     end
 
     suppressRxpArrow(true)
+
+    if guideClosed(rxp) then
+        clearTarget()
+        return
+    end
 
     local af  = arrowFrame()
     local el  = af and af.element
