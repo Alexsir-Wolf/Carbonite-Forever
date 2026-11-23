@@ -77,7 +77,10 @@ function W.env(overrides)
     env.Carbonite = {
         Core = { EventBus = W.eventBus() },
         Modules = { Map = {} },
+        Util = {},
     }
+    -- Util/ loads before every module in the game: the distance text (#245).
+    require("loader").run(env, "Carbonite/Util/Distance.lua")
     for k, v in pairs(overrides or {}) do env[k] = v end
     return env
 end

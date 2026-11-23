@@ -157,7 +157,7 @@ for _, key in ipairs({
     "Ogri'la", "Kirin Tor", "frFR - powerstrk", "deDE - atl77 & samyonair", "itIT - ThorwaldOdin",
     "ruRU - NotDead", "zhCN - Raka-loah", "zhTW - kc305chen",
     "Solo", "Menu", "Menus", "Total", "arena", "Ok", "Neon", "Bronze", "Item %d",
-    "XP", "iLevel", "Ctrl+C:", "Wowhead (Ctrl+C):",
+    "XP", "km", "iLevel", "Ctrl+C:", "Wowhead (Ctrl+C):",
     " LR %f, %f", " BT %f, %f", "%s#%d %s ID%s (%s) show%d l%d x%d y%d", "!BUT %s", "XOff", "YOff",
     "PXOff", "PYOff", "ZWOff", "ZHOff", "LOOT_OPENED %s (%s %s)",
     " begins? in (%d+) ", "(%d+) minutes? until the battle",
