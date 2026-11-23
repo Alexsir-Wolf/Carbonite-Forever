@@ -2,7 +2,7 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
-## Em desenvolvimento
+## v1.4.0
 
 ### Novidades
 - **Mapa mais fluido:** arrastar e dar zoom no mapa acompanha o mouse quadro a quadro (até 60 por segundo), e o zoom desacelera suavemente no fim. Parado ou seguindo o personagem, o mapa continua na taxa de atualização das opções, sem custo extra. O botão de zoom da barra dá um passo, igual à roda do mouse.
@@ -17,6 +17,7 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 ### Conhecido
 - Os voos e as entradas novas vêm do MapUtils, do ForeverDungeonJournal e do Shortest Path Forever e ainda não foram conferidos no jogo. A entrada do The Hall of Thanes é provisória: as fontes divergem.
 - O mapa mais fluido e os ícones novos da barra ainda não foram testados no jogo.
+- Os ícones do mapa ainda são todos refeitos a cada atualização; redesenhar só o que mudou fica para uma próxima versão.
 
 ## v1.3.1
 
