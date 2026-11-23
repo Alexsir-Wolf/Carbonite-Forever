@@ -32,6 +32,7 @@
 --
 -- Public (Nx.DungeonGuide):
 --   DG:Here()                   { id, name, data } of the current instance
+--   DG.PinsKey(id, name)        DungeonPins key of a game instance id (#251)
 --   DG:Bosses(here)             { { name, npc, floor, x, y, killed }, ... }
 --   DG.NextBoss(list)           index of the first boss alive, or nil
 --   DG.RouteOrder(points, x, y) indexes of points, nearest first from x, y
@@ -57,6 +58,50 @@ local REFRESH = 1
 
 local function Pins()
     return Nx.DungeonPins or { instances = {}, pins = {} }
+end
+
+--------------------------------------------------------------------------------
+-- Forever's new dungeons (#251)
+--------------------------------------------------------------------------------
+
+-- MapUtils keys the art of Forever's new dungeons with stand-in ids
+-- (900001...), and DungeonPins.lua is generated from it; inside, the game
+-- reports the Map.db2 id (the instance keys of Data/camelot/Zones.lua).
+DG.FOREVER_PIN_KEYS = {
+    [2970] = 900001,   -- The Drowned City
+    [3039] = 900002,   -- Krol'dok Stronghold
+    [2994] = 900003,   -- Alcaz Prison
+    [3001] = 900005,   -- The Shaper's Terrace
+}
+
+-- The DungeonPins key of game instance `id`: the id itself, its stand-in,
+-- or, should the game report another id, the stand-in of the Forever
+-- dungeon whose (localized) Carbonite name is `name`.
+function DG.PinsKey(id, name)
+    local instances = Pins().instances
+    if id and instances[id] then return id end
+    local key = id and DG.FOREVER_PIN_KEYS[id]
+    if key and instances[key] then return key end
+    if type(name) == "string" and Nx.Zones then
+        for realId, standIn in pairs(DG.FOREVER_PIN_KEYS) do
+            local row = Nx.Zones[realId]
+            if instances[standIn] and ((row and row:match("^([^|]*)") == name)
+                or L["dungeon:" .. standIn] == name) then
+                return standIn
+            end
+        end
+    end
+    return nil
+end
+
+-- Alcaz Prison has two floors in MapUtils (Main Unit, Maximum Security
+-- Unit); the generated table lists the first only.
+do
+    local alcaz = Pins().instances[900003]
+    if alcaz and alcaz.floors and #alcaz.floors == 1 then
+        alcaz.floors[1].named = true
+        alcaz.floors[2] = { key = "900003_2", named = true }
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -272,7 +317,8 @@ function DG:Here()
         if ok and inside then
             local okInfo, name, _, _, _, _, _, _, id = pcall(GetInstanceInfo)
             if okInfo and type(name) == "string" then
-                value = { id = id, name = name, data = id and Pins().instances[id] or nil }
+                local key = DG.PinsKey(id, name)
+                value = { id = key or id, name = name, data = key and Pins().instances[key] or nil }
             end
         end
     end
