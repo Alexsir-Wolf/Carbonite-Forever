@@ -12,6 +12,10 @@
 --   MapToolBar:Refresh()              - tell the live toolbar to rebuild
 --   MapToolBar:SetVisible(bool)       - mirror of Nx.db.profile.Map.ShowToolBar
 --   MapToolBar:IsVisible()
+--   MapToolBar:RegisterDefaults(silent) - the built-in buttons (DEFAULTS), once
+--
+-- DEFAULTS is the only definition of the built-in buttons (#248): the
+-- map used to carry its own copy, without the 3D toggle.
 --
 -- The actual UI build still happens through the legacy
 -- Nx.Map:CreateToolBar pipeline because the buttons are
@@ -26,26 +30,42 @@ Carbonite.Modules.Map.MapToolBar = MapToolBar
 local registry = {}            -- id -> spec
 local order    = {}            -- ordered list of ids
 
-local function syncToLegacy()
+local function syncToLegacy(silent)
     if not _G.Nx then return end
     local bar = {}
+    local inBar = {}
     for _, id in ipairs(order) do
         local s = registry[id]
-        bar[#bar + 1] = { s.buttonType or id, s.label, s.handler, s.pressed or false }
+        local typeId = s.buttonType or id
+        bar[#bar + 1] = { typeId, s.label, s.handler, s.pressed or false }
+        inBar[typeId] = true
+    end
+    -- Keep what others put straight into Nx.BarData (AddonButtons adopts
+    -- minimap buttons that way); rebuilding from the registry alone
+    -- dropped them (#248).
+    for _, b in ipairs(_G.Nx.BarData or {}) do
+        if not inBar[b[1]] and not registry[b[1]] then
+            bar[#bar + 1] = b
+        end
     end
     _G.Nx.BarData = bar
+    if silent then return end
     -- If the toolbar exists already, prompt a rebuild.
     local mapInst = _G.Nx.Map and _G.Nx.Map.Maps and _G.Nx.Map.Maps[1]
     if mapInst and mapInst.UpdateToolBar then mapInst:UpdateToolBar() end
 end
 
-function MapToolBar:RegisterButton(spec)
-    if not spec or not spec.id then return end
+local function insert(spec)
     if not registry[spec.id] then table.insert(order, spec.id) end
     registry[spec.id] = spec
     table.sort(order, function(a, b)
         return (registry[a].order or 100) < (registry[b].order or 100)
     end)
+end
+
+function MapToolBar:RegisterButton(spec)
+    if not spec or not spec.id then return end
+    insert(spec)
     syncToLegacy()
 end
 
@@ -78,17 +98,31 @@ function MapToolBar:IsVisible()
        and Nx.db.profile.Map.ShowToolBar == true or false
 end
 
--- Seed the legacy default vocabulary so the toolbar still has its
--- baseline buttons even if no module registered any. The actual
--- handlers stay on Nx.Map because they touch instance state.
-Carbonite.Core.EventBus:Subscribe("CARBONITE_LOADED", function()
+-- The built-in buttons: id, label (locale key), Nx.Map handler, order.
+-- The handlers stay on Nx.Map because they touch instance state.
+MapToolBar.DEFAULTS = {
+    { "Map3D",     "3D View",  "OnButToggle3D",     5 },
+    { "MapZIn",    "Zoom In",  "OnButZoomIn",       10 },
+    { "MapZOut",   "Zoom Out", "OnButZoomOut",      20 },
+    { "MapGuide",  "Guide",    "OnButToggleGuide",  30 },
+    { "MapCombat", "Combat",   "OnButToggleCombat", 40 },
+    { "MapEvents", "Events",   "OnButToggleEvent",  50 },
+}
+
+-- Register the built-in buttons (once). `silent` skips the rebuild of a
+-- live toolbar: the map calls this while it is creating its own.
+function MapToolBar:RegisterDefaults(silent)
     local NxMap = _G.Nx and _G.Nx.Map
     if not NxMap then return end
-    local L = _G.Nx and Carbonite:L() or {}
-    MapToolBar:RegisterButton({ id = "Map3D",      label = L["3D View"]  or "3D View",   handler = NxMap.OnButToggle3D,      order = 5 })
-    MapToolBar:RegisterButton({ id = "MapZIn",     label = L["Zoom In"]  or "Zoom In",   handler = NxMap.OnButZoomIn,        order = 10 })
-    MapToolBar:RegisterButton({ id = "MapZOut",    label = L["Zoom Out"] or "Zoom Out",  handler = NxMap.OnButZoomOut,       order = 20 })
-    MapToolBar:RegisterButton({ id = "MapGuide",   label = L["Guide"]    or "Guide",     handler = NxMap.OnButToggleGuide,   order = 30 })
-    MapToolBar:RegisterButton({ id = "MapCombat",  label = L["Combat"]   or "Combat",    handler = NxMap.OnButToggleCombat,  order = 40 })
-    MapToolBar:RegisterButton({ id = "MapEvents",  label = L["Events"]   or "Events",    handler = NxMap.OnButToggleEvent,   order = 50 })
+    local L = Carbonite.L and Carbonite:L() or {}
+    for _, d in ipairs(MapToolBar.DEFAULTS) do
+        if not registry[d[1]] then
+            insert({ id = d[1], label = L[d[2]] or d[2], handler = NxMap[d[3]], order = d[4] })
+        end
+    end
+    syncToLegacy(silent)
+end
+
+Carbonite.Core.EventBus:Subscribe("CARBONITE_LOADED", function()
+    MapToolBar:RegisterDefaults()
 end)
