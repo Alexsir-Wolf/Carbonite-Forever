@@ -2,7 +2,7 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
-## Em desenvolvimento
+## v1.4.3
 
 ### Correções
 - **Quests de masmorra:** clicar no monitor numa quest cujo objetivo fica dentro de uma masmorra traça a rota até a entrada da masmorra. Antes, nada era traçado. Dentro da masmorra, sem posição para o objetivo, o mapa fica como está.
