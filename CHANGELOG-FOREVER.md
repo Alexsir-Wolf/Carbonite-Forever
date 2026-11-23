@@ -2,6 +2,15 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## Em desenvolvimento
+
+### Correções
+- **Plantas das masmorras novas:** dentro da The Drowned City, Krol'dok Stronghold, Alcaz Prison e The Shaper's Terrace, a planta e o painel de chefes abrem sozinhos, sem precisar escolher a masmorra no menu.
+- **Alcaz Prison com os dois andares:** Main Unit e Maximum Security Unit.
+
+### Conhecido
+- Ainda não testado no jogo. Sem o ForeverDungeonJournal, The Shaper's Terrace e o segundo andar da The Drowned City continuam sem chefes, e a Blackmaw Hold sem planta: nenhuma fonte tem esses dados.
+
 ## v1.4.1
 
 ### Correções
