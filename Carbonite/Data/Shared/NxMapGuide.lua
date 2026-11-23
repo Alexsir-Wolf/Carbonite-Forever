@@ -1604,6 +1604,15 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
     list:Update()
 end
 
+-- Guide folders keep bare icon names ("INV_Misc_Map02"); a path with a
+-- backslash (Carbonite's Gfx, other Interface folders) or an "atlas:" name is
+-- used as it is (#243). No name, no texture.
+function Nx.Map.Guide.IconPath(tx)
+    if type(tx) ~= "string" or tx == "" then return nil end
+    if strfind(tx, "\\", 1, true) or strsub(tx, 1, 6) == "atlas:" then return tx end
+    return "Interface\\Icons\\" .. tx
+end
+
 function Nx.Map.Guide:UpdateMapIcons()
     local Nx = Nx
     local Map = Nx.Map
@@ -1642,10 +1651,7 @@ function Nx.Map.Guide:UpdateMapIcons()
     end
     for showType, folder in pairs (self.ShowFolders) do
         local mode = strbyte (showType)
-        local tx = folder.Tx
-        if string.find(tx, "Gfx") == nil then
-            local tx = "Interface\\Icons\\" .. (folder.Tx or "")
-        end
+        local tx = Nx.Map.Guide.IconPath(folder.Tx)
 
         if mode == 36 then
             local typ = strsub (showType, 2, 2)
@@ -1981,9 +1987,6 @@ function Nx.Map.Guide:UpdateMapGeneralIcons (cont, showType, hideFac, tx, name, 
                                     --if showType == "Lightforged Beacon" then
                                     --    icon = map:AddIconPt (iconType, wx, wy, level, nil, "atlas:FlightMaster_Argus-TaxiNode_Neutral")
                                     --else
-                                    if string.find(tx, "Gfx") == nil and string.find(tx, "Icons") == nil then
-                                        tx = "Interface\\Icons\\" .. tx
-                                    end
                                     icon = map:AddIconPt (iconType, wx, wy, level, nil, tx)
                                     --end
                                     if not map:GetMapNameByID(mapId) then
@@ -2054,9 +2057,7 @@ function Nx.Map.Guide:UpdateZonePOIIcons()
         for k, name in ipairs (Nx.GuidePOI) do
             local showType, tx = Nx.Split ("~", name)
             if showType and Nx.db.char.Map.ShowMailboxes then
-                if string.find(tx, "Gfx") == nil then
-                    tx = "Interface\\Icons\\" .. tx
-                end
+                tx = Nx.Map.Guide.IconPath(tx)
                 self:UpdateMapGeneralIcons (cont, showType, hideFac, tx, showType, "!POI", mapId)
             end
         end

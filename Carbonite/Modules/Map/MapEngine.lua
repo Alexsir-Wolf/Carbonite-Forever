@@ -14807,11 +14807,14 @@ function Nx.Map:InitTables()
 
     Nx.ZoneConnections = Nx["ZoneConnections"] or Nx.ZoneConnections    -- Copy unmunged data to munged data
 
-    -- Init zone connections
-        for n = 0, 2999 do
-            local mapId = n
-            local winfo = worldInfo[mapId]
-            if not winfo then
+    self:InitZoneConnections(worldInfo)
+end
+
+-- Zone connections of every numeric map id in worldInfo (#243: no fixed
+-- upper bound, so Forever maps from 3001 on are included).
+function Nx.Map:InitZoneConnections(worldInfo)
+        for mapId, winfo in pairs(worldInfo) do
+            if type(mapId) ~= "number" then
 
             else
 
