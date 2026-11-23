@@ -38,6 +38,8 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
 | **Forever quests from QuestieDB** | Carbonite's quest database is missing about 1,300 Forever quests. Carbonite reads these quests from QuestieDB while you play and shows who gives each quest, where to turn it in and the objectives (where the NPCs and objects are and who drops the items). It follows QuestieDB updates without needing a new release of this edition. Quests Carbonite already has are unchanged. |
 | **Spoken narration in the quest list** | Carbonite hides Blizzard's quest tracker, which is where Spoken puts its narration button. This edition adds the ▶ button next to each quest's icon in Carbonite's list. It only shows on quests Spoken narrates. |
 | **Live minimap in dungeons** | Forever gives no map or position inside dungeons, and Carbonite's map was blank or showed the wrong place. The window now shows Blizzard's live minimap with the dungeon name. The static dungeon map is still in the map menu, under "Dungeon Maps". |
+| **Distance in meters** | With the game in Portuguese, the arrow, the map, the Guide, the destination list and the quest watch show distances in meters and kilometers ("319 m", "1,3 km"). One yard counts as one meter, as in spell ranges. The unit is set in Options > Tracking. |
+| **Current map icons** | Guide points use Blizzard's current icons when the game has them and, for the others, the art without the old frame. The setup assistant asks which look to use: current, classic or, with HandyNotes and MapNotes installed, the MapNotes icons. |
 | **In Portuguese** | Fixed texts of the core, quests, notes, warehouse and info windows translated, plus a first-run assistant with a basic options mode. |
 
 ## What Carbonite does
@@ -55,7 +57,7 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
 
 ### Navigation
 - **Goto:** mark any point on the map, a coordinate (`/carb goto x y`) or an icon. The map adjusts its zoom to show you and the destination; if you change the zoom, it stays as you left it until the route ends.
-- **HUD arrow:** points to the destination and shows its name, distance and estimated time of arrival.
+- **HUD arrow:** points to the destination and shows its name, distance (in meters with the game in Portuguese) and estimated time of arrival.
 - **Destination queue:** Shift+click on Goto adds the destination without clearing the others; when you arrive, the arrow moves to the next one. The Destinations window (`/carb destinos`, Route... > Destinations... in the map menu or a key binding) lists the queue with zone and distance and lets you move up, move down, go now, remove, reverse and clear.
 - **Routes:** path between zones over roads, connections and flight points.
 - **Hearthstone and teleports in the route:** when the hearthstone is ready (or, for mages, a teleport to a capital with the rune in your bags) and gets there well ahead, the route starts with it: "Use Hearthstone (place)" and, from there, the usual path. The hearthstone location is recorded when you talk to the innkeeper. Off by default; turn it on in Options > Maps.
@@ -65,6 +67,7 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
 ### Guide
 - A "GPS" of points of interest: trainers, vendors, innkeepers, banks, auction house, flight points, dungeon entrances and more.
 - Click to show it on the map and go there, or paste its name and coordinates in chat.
+- Blizzard's current icons or the art without the old frame; "Classic icons" in Map Options brings the old look back. With the MapNotes icons picked in the setup assistant, trainers and services show on the map only with its icons, and the Guide list still leads you to them.
 
 ### Quests
 - Replaces Blizzard's quest log with its own window. It has a database tab to look up quests you haven't picked up yet.
