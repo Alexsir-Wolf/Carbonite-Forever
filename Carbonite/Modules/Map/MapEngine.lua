@@ -3002,6 +3002,10 @@ function Nx.Map:MinimapNodeGlowSet(letter)
     if type(self.MMFrm.SetBlipTexture) ~= "function" then
         return
     end
+    -- Blips stay blank while the map is closed in combat.
+    if self.MMBlankedArt then
+        return
+    end
     self.MMFrm:SetBlipTexture("Interface\\AddOns\\Carbonite\\Gfx\\Map\\MMOIcons" .. letter)
 end
 
@@ -3222,17 +3226,60 @@ gatherTrackingEvents:SetScript("OnEvent", function()
     gatherTrackingActive = nil
 end)
 
+local MINIMAP_BLANK_TEX = "Interface\\Addons\\Carbonite\\Gfx\\Map\\32Transparent"
+
+---
+-- The client draws the minimap's player arrow and blips (ore, herbs, quest
+-- points) regardless of the frame's alpha. When the map closes in combat
+-- the protected minimap can only go to alpha 0, so those were left floating
+-- in the middle of the screen. Blank them until it can really hide.
+--
+function Nx.Map:MinimapBlankArt()
+    local mm = self.MMFrm
+    if self.MMBlankedArt or not mm then return end
+    self.MMBlankedArt = true
+    if type(mm.SetPlayerTexture) == "function" then
+        mm:SetPlayerTexture(MINIMAP_BLANK_TEX)
+    end
+    if type(mm.SetBlipTexture) == "function" then
+        mm:SetBlipTexture(MINIMAP_BLANK_TEX)
+    end
+end
+
+function Nx.Map:MinimapRestoreArt()
+    local mm = self.MMFrm
+    if not self.MMBlankedArt or not mm then return end
+    self.MMBlankedArt = nil
+    -- MinimapUpdate sets the player arrow again on its next pass.
+    self.MMArrowName = nil
+    if type(mm.SetPlayerTexture) == "function" then
+        mm:SetPlayerTexture("Interface\\Minimap\\MinimapArrow")
+    end
+    if type(mm.SetBlipTexture) == "function" then
+        local glow = Nx.db and Nx.db.profile.MiniMap.NodeGD or 0
+        if glow > 0 then
+            self:MinimapNodeGlowSet("")
+        else
+            mm:SetBlipTexture("Interface\\Minimap\\ObjectIconsAtlas")
+        end
+    end
+end
+
 function Nx.Map:MinimapSyncVisibility()
     local mm = self.MMFrm
     if not self.MMOwn or not mm then return true end
     local visible = self:MinimapIsHostVisible()
+    local inCombat = InCombatLockdown()
+    if self.MMBlankedArt and (visible or not inCombat) then
+        self:MinimapRestoreArt()
+    end
     if visible and not self.MMHiddenByMap then return true end
 
     -- Reopening waits for a safe positioning pass before showing the map.
     self.MMHiddenByMap = true
-    local inCombat = InCombatLockdown()
     if inCombat and mm.IsProtected and mm:IsProtected() then
         mm:SetAlpha(0)
+        if not visible then self:MinimapBlankArt() end
     elseif mm:IsShown() then
         mm:Hide()
     end
@@ -5232,6 +5279,9 @@ function Nx.Map:OnEvent (event, ...)
             if map.ScenarioWin then map.ScenarioWin:ClearAllPoints() end
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
+        -- A map closed in combat left the minimap at alpha 0 with its art
+        -- blanked; hide it for real and bring the art back.
+        map:MinimapSyncVisibility()
         if Nx.BlobsAvailable then
             map.Arch:SetParent(map.TextScFrm:GetScrollChild())
             map.QuestWin:SetParent(map.TextScFrm:GetScrollChild())
