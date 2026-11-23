@@ -2,6 +2,15 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## v1.3.1
+
+### Correções
+- **Tooltip de missão preso na tela:** o quadro com as linhas de missão ("Missão: ...") que aparece ao passar o mouse em NPCs, itens e objetos fecha quando o mouse sai, em vez de ficar parado na tela.
+- **Seta e pontos do minimapa no meio da tela:** fechar o mapa durante o combate não deixa mais a seta do personagem e os pontos do minimapa (minérios, missões) soltos na tela. Eles voltam quando o combate acaba ou quando o mapa é reaberto.
+
+### Conhecido
+- As duas correções passaram nos testes automatizados, mas ainda não foram testadas no jogo. Se depois de fechar o mapa em combate ainda sobrar alguma seta, abra uma issue com um print.
+
 ## v1.3.0
 
 ### Novidades
