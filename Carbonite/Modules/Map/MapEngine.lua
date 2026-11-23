@@ -39,6 +39,9 @@ local _G = getfenv(0)
 -- Localization library for multi-language support
 local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 
+-- Pan/zoom timing (#246), loaded before this file (Modules.xml).
+local Motion = Carbonite.Modules.Map.Motion
+
 -- 3D view tuning lives in the profile (Nx.db.profile.Map.View3D*), edited
 -- from the Map options panel.
 local function P3D()
@@ -2370,12 +2373,13 @@ end
 --------
 --
 
+-- One step, like a wheel click (#246).
 function Nx.Map:OnButZoomIn()
-    self:SetScaleOverTime (2)
+    self:SetScaleOverTime (1)
 end
 
 function Nx.Map:OnButZoomOut()
-    self:SetScaleOverTime (-2)
+    self:SetScaleOverTime (-1)
 end
 
 function Nx.Map:OnButToggleGuide (but)
@@ -5891,11 +5895,18 @@ end
 -- @param elapsed  Time since last frame
 --
 function Nx.Map.OnUpdate(this, elapsed)
-    -- Throttle update rate
+    -- Throttle update rate: every frame (up to 60/s) while the user drags or
+    -- zooms, the user's mapUpdate otherwise (#246). Following the player
+    -- also animates (StepTime) but stays at the resting rate, so an open
+    -- map costs the same while running.
     ttl = ttl + elapsed
-    if ttl < (Nx.db.profile.Map.mapUpdate or .05) then
+    local m = this.NxMap
+    local moving = m and (m.Scrolling
+        or (m.StepTime ~= 0 and m.ScaleDraw ~= m.Scale)) or false
+    if ttl < Motion.Interval(Nx.db.profile.Map.mapUpdate, moving) then
         return
     end
+    elapsed = ttl    -- time since the last update, not since the last frame
     ttl = 0
 
     -- Keep Blizzard's Reputation panel refreshed on faction / quest-log
@@ -6229,7 +6240,13 @@ function Nx.Map.OnUpdate(this, elapsed)
         title = title..format (" Time %.4f Mem %d %.4f", t, mem, memdif)
     end
 
-    if GetCVar ("scriptProfile") == "1" then
+    -- Read at most once a second; GetCVar on every update was garbage (#246).
+    local now = GetTime()
+    if not map.ScriptProfileAt or now - map.ScriptProfileAt > 1 then
+        map.ScriptProfileAt = now
+        map.ScriptProfileOn = GetCVar ("scriptProfile") == "1"
+    end
+    if map.ScriptProfileOn then
 
         UpdateAddOnCPUUsage()
 
@@ -7175,18 +7192,28 @@ function Nx.Map:Update (elapsed)
             self.ScaleW = 1 / self.Scale
         end
 
-        local st = -self.StepTime
-
-        self.MapPosXDraw = Nx.Util_StepValue (self.MapPosXDraw, self.MapPosX, abs (xDiff) / st)
-        self.MapPosYDraw = Nx.Util_StepValue (self.MapPosYDraw, self.MapPosY, abs (yDiff) / st)
-        self.ScaleDrawW = Nx.Util_StepValue (self.ScaleDrawW, self.ScaleW, abs (self.ScaleDrawW - self.ScaleW) / st)
+        -- By elapsed time, easing out (#246).
+        local f, left = Motion.Step (-self.StepTime, elapsed)
+        if left <= 0 then
+            self.MapPosXDraw = self.MapPosX
+            self.MapPosYDraw = self.MapPosY
+            self.ScaleDrawW = self.ScaleW
+        else
+            self.MapPosXDraw = self.MapPosXDraw + (self.MapPosX - self.MapPosXDraw) * f
+            self.MapPosYDraw = self.MapPosYDraw + (self.MapPosY - self.MapPosYDraw) * f
+            self.ScaleDrawW = self.ScaleDrawW + (self.ScaleW - self.ScaleDrawW) * f
+        end
         self.ScaleDraw = 1 / self.ScaleDrawW
 
 --        Nx.prt ("Map scrl #%d %f %f", self.StepTime, self.MapPosXDraw, self.MapPosX)
 --        Nx.prt ("Map scrl %f %f", self.OCur, self.OEnd)
 --        Nx.prt ("Map scrl %f %f", self.ScaleDraw, self.Scale)
 
-        self.StepTime = self.StepTime + 1
+        self.StepTime = -left
+    elseif self.StepTime ~= 0 then
+        -- Nothing left to animate: stop, so the map drops back to the
+        -- resting update rate (#246).
+        self.StepTime = 0
     end
 
     local _, zx, zy, zw = self:GetWorldZoneInfo (self.Cont, self.Zone)
