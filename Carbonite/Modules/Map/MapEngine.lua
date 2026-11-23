@@ -1571,16 +1571,9 @@ function Nx.Map:CreateToolBar()
         end
     end
 
-    -- Define toolbar button data (shared across instances)
-    if not Nx.BarData then
-        Nx.BarData = {
-            {"MapZIn", L["Zoom In"], self.OnButZoomIn, false},
-            {"MapZOut", L["Zoom Out"], self.OnButZoomOut, false},
-            {"MapGuide", L["Guide"], self.OnButToggleGuide, false},
-            {"MapCombat", L["Combat"], self.OnButToggleCombat, false},
-            {"MapEvents", L["Events"], self.OnButToggleEvent, false},
-        }
-    end
+    -- Toolbar button data (shared across instances): one definition, in
+    -- MapToolBar.DEFAULTS (#248).
+    Carbonite.Modules.Map.MapToolBar:RegisterDefaults(true)
 
     -- Add buttons (limited in free version)
     for i, b in ipairs(Nx.BarData) do

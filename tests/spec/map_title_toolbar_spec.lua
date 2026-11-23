@@ -196,7 +196,7 @@ describe("barra de ferramentas do mapa", function()
     it("a barra mantém a ordem e as funções dos botões", function()
         local src = loader.read("Carbonite/Modules/Map/MapToolBar.lua")
         local ids = {}
-        for id in src:gmatch('RegisterButton%(%{ id = "(%w+)"') do ids[#ids + 1] = id end
+        for id in src:gmatch('%{ "(Map%w+)",%s+"') do ids[#ids + 1] = id end
         expect(table.concat(ids, ",")).toBe("Map3D,MapZIn,MapZOut,MapGuide,MapCombat,MapEvents")
     end)
 end)

@@ -4623,6 +4623,31 @@ Nx.Button.ClientAtlases.TxtGrey = { FileUp = PANEL_UP, FileDn = PANEL_DN, UV = P
 -- only turned a dull olive (#42).
 Nx.Button.ClientAtlases.TxtGreyB = { FileUp = PANEL_UP, FileDn = PANEL_UP, UV = PANEL_UV, Desaturate = true,
     GlowPressed = "Interface\\Buttons\\UI-Panel-Button-Highlight" }
+-- Map tool bar (#248): pictures that say what the button does, instead of
+-- spell icons (charges +/-, question mark, dual wield, note). The first
+-- look this client has wins; the skin's spell icon stays otherwise.
+-- Magnifying glass, combat swords and clock are used by Forever addons.
+Nx.Button.ClientAtlases.MapZIn = {
+    { AtlasUp = "common-icon-zoomin", AtlasDn = "common-icon-zoomin", Untinted = true },
+    { AtlasUp = "UI-HUD-Minimap-Zoom-In", AtlasDn = "UI-HUD-Minimap-Zoom-In-Down", Untinted = true },
+    { FileUp = "Interface\\Minimap\\UI-Minimap-ZoomInButton-Up",
+      FileDn = "Interface\\Minimap\\UI-Minimap-ZoomInButton-Down", UV = { .22, .78, .22, .78 }, Untinted = true },
+}
+Nx.Button.ClientAtlases.MapZOut = {
+    { AtlasUp = "common-icon-zoomout", AtlasDn = "common-icon-zoomout", Untinted = true },
+    { AtlasUp = "UI-HUD-Minimap-Zoom-Out", AtlasDn = "UI-HUD-Minimap-Zoom-Out-Down", Untinted = true },
+    { FileUp = "Interface\\Minimap\\UI-Minimap-ZoomOutButton-Up",
+      FileDn = "Interface\\Minimap\\UI-Minimap-ZoomOutButton-Down", UV = { .22, .78, .22, .78 }, Untinted = true },
+}
+Nx.Button.ClientAtlases.MapGuide = {
+    AtlasUp = "common-search-magnifyingglass", AtlasDn = "common-search-magnifyingglass", Untinted = true,
+}
+Nx.Button.ClientAtlases.MapCombat = {
+    AtlasUp = "UI-HUD-UnitFrame-Player-CombatIcon", AtlasDn = "UI-HUD-UnitFrame-Player-CombatIcon", Untinted = true,
+}
+Nx.Button.ClientAtlases.MapEvents = {
+    AtlasUp = "worldquest-icon-clock", AtlasDn = "worldquest-icon-clock", Untinted = true,
+}
 -- Expand / collapse of a list header (quest log, Notes, Guide), registered
 -- by Carbonite.Quests: minus while open, plus while closed.
 Nx.Button.ClientAtlases.QuestHdr = {

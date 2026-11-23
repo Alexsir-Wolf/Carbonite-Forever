@@ -6,6 +6,7 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 
 ### Novidades
 - **Mapa mais fluido:** arrastar e dar zoom no mapa acompanha o mouse quadro a quadro (até 60 por segundo), e o zoom desacelera suavemente no fim. Parado ou seguindo o personagem, o mapa continua na taxa de atualização das opções, sem custo extra. O botão de zoom da barra dá um passo, igual à roda do mouse.
+- **Barra do mapa com ícones que dizem o que fazem:** zoom com lupa de + e −, Guia com lupa, Combate com as espadas de combate e Eventos com relógio, quando o jogo tem esses ícones; senão, ficam os de antes. O botão 3D aparece sempre, e os botões de outros addons adotados pela barra não somem mais quando ela é refeita.
 
 ### Correções
 - **Zonas novas com nível:** Mount Hyjal (60), Shen'dralas e Riverglades (35-45) mostram a faixa de nível, e Zephras Isle passa a 1-12.
@@ -15,7 +16,7 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 
 ### Conhecido
 - Os voos e as entradas novas vêm do MapUtils, do ForeverDungeonJournal e do Shortest Path Forever e ainda não foram conferidos no jogo. A entrada do The Hall of Thanes é provisória: as fontes divergem.
-- O mapa mais fluido ainda não foi testado no jogo.
+- O mapa mais fluido e os ícones novos da barra ainda não foram testados no jogo.
 
 ## v1.3.1
 
