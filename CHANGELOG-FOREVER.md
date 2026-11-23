@@ -2,6 +2,16 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## Em desenvolvimento
+
+### Correções
+- **Rota até Mount Hyjal e Shen'dralas:** as duas zonas passam a ter ligação a pé com as vizinhas (Felwood e Winterspring; Mulgore, Desolace e Feralas), e a rota consegue chegar lá.
+- **Barco para Southshore:** o The Bravery, que agora passa por Southshore entre Menethil e Auberdine, entra na rota da Aliança.
+- **Portal de Dalaran:** a chegada em Stormwind fica no lugar certo.
+
+### Conhecido
+- As passagens a pé para Hyjal e Shen'dralas são provisórias: vêm do meio de cada borda de zona, não de uma passagem conferida, e podem cruzar uma montanha. Ainda não foram testadas no jogo, nem o barco para Southshore.
+
 ## v1.4.0
 
 ### Novidades

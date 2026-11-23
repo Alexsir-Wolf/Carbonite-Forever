@@ -701,6 +701,7 @@ L["Boat to Stranglethorn Vale"] = true
 L["Boat to Dustwallow Marsh"] = true
 L["Boat to Stormwind City"] = true
 L["Boat to Darkshore"] = true
+L["Boat to Southshore"] = true
 L["Boat to Teldrassil"] = true
 L["Boat to Azuremyst Isle"] = true
 L["Boat to Wetlands"] = true

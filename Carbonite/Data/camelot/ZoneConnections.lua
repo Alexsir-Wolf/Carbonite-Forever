@@ -75,8 +75,26 @@ Nx.ZoneConnections = {
     "5|2|"..L["Zeppelin to Stranglethorn Vale"].."|1411|50.57|12.64|"..L["Zeppelin to Orgrimmar"].."|1434|31.37|30.15", -- [63]
     "7|2|"..L["Boat to Stranglethorn Vale"].."|1413|63.68|38.63|"..L["Boat to The Barrens"].."|1434|26.04|73.24", -- [64]
     "7|2|"..L["Boat to Tanaris"].."|2548|80.1|54.4|"..L["Boat to Riverglades"].."|1446|68.3|23.0",
-    "2|0|"..L["Portal to Stormwind"].."|1416|12.0|56.2|"..L["Portal to Dalaran"].."|1453|50.0|87.0", -- [77]
+    -- Arrival from Shortest Path Forever Data/Portals.lua (GPL-3.0): the
+    -- Stormwind end of the Skyborne portal (#250). The origin stays in
+    -- Alterac: Forever's Dalaran city map has no Carbonite map.
+    "2|0|"..L["Portal to Stormwind"].."|1416|12.0|56.2|"..L["Portal to Dalaran"].."|1453|63.1|73.1", -- [77]
     "3|2|"..L["Boat to Dalaran"].."|2521|65.8|83.4|"..L["Boat to Zephras Isle"].."|1416|12.7|52.0",
     "5|2|"..L["Boat to Mulgore"].."|2521|57.9|80.7|"..L["Boat to Zephras Isle"].."|1412|34.3|25.7",
+
+    -- The Bravery now runs Menethil - Southshore - Auberdine, Alliance only
+    -- (#250). Southshore dock: Shortest Path Forever Data/Routes.lua, route
+    -- 11167, dock 17 (GPL-3.0); Menethil and Auberdine as in [59].
+    "3|2|"..L["Boat to Southshore"].."|1437|4.5|57.7|"..L["Boat to Menethil Harbor"].."|1424|50.6|69.7",
+    "3|2|"..L["Boat to Southshore"].."|1439|32.39|43.82|"..L["Boat to Darkshore"].."|1424|50.6|69.7",
+
+    -- Mount Hyjal and Shen'dralas on foot (#250). PROVISIONAL: the middle
+    -- cell of each zone border in Shortest Path Forever Data/ZoneCells.lua
+    -- (GPL-3.0); no source names the passes. Check in game.
+    "7|1||2482|14.9|42.9||1448|53.6|47.5",   -- Felwood
+    "7|1||2482|92.3|18.0||1452|53.7|55.9",   -- Winterspring
+    "7|1||2652|86.3|55.3||1412|36.1|71.3",   -- Mulgore
+    "7|1||2652|75.4|15.5||1443|83.5|85.5",   -- Desolace
+    "7|1||2652|41.0|95.1||1444|61.3|18.0",   -- Feralas
 }
 
