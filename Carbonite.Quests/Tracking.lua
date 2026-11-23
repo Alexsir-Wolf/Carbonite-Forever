@@ -393,13 +393,15 @@ local function CatalogObjective(self, quest, qObj, px, py)
     if not self:IsUsableObjective (questObj, zone) then
         -- An outdoor zone can be known even when its objective has no usable
         -- coordinates. Only an instance objective should suppress the
-        -- available quest start/end fallback.
-        return nil, IsInstanceZone (zone)
+        -- available quest start/end fallback. The instance is returned, so
+        -- the route can lead to its entrance (#224).
+        return nil, IsInstanceZone (zone) and zone or false
     end
 
     local x, y, closeMapId, inside = self:GetClosestObjectivePos (questObj, loc, zone, px, py)
     if not x or not y or (x == 0 and y == 0) then
-        return nil, IsInstanceZone (closeMapId or zone)
+        local instance = closeMapId or zone
+        return nil, IsInstanceZone (instance) and instance or false
     end
 
     return {
@@ -437,6 +439,19 @@ local function ResolveTrackTarget(self, quest, qId, qObj, useEnd)
         res = CatalogEndpoint (self, quest, useEnd) or LiveTarget (qId)
     end
 
+    -- An objective somewhere inside a dungeon, with no position there: lead
+    -- to the dungeon's entrance from outside (#224). Inside, there is no
+    -- point to give, and the map stays as it is.
+    if not res and inDungeon and not (IsInInstance and IsInInstance()) then
+        local outdoorID, entryX, entryY = resolveDungeonEntrance (inDungeon)
+        if outdoorID then
+            res = {
+                mId = outdoorID, x1 = entryX, y1 = entryY, x2 = entryX, y2 = entryY,
+                entrance = true, source = "entrance",
+            }
+        end
+    end
+
     if not res then
         return nil, inDungeon and "objective is inside a dungeon, no position" or "no position"
     end
@@ -459,6 +474,9 @@ local function ResolveTrackTarget(self, quest, qId, qObj, useEnd)
 
     return res
 end
+
+-- For tests and diagnostics (#224).
+Nx.Quest.ResolveTrackTarget = ResolveTrackTarget
 
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
