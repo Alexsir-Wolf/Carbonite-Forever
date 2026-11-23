@@ -491,6 +491,7 @@ Nx.Defaults = {
             Hide = false,
             HideInBG = false,
             ShowDir = false,
+            DistUnit = "auto",              -- Distance text: auto (game language), yd or m (#245)
             Lock = false,
             AGfx = "Gloss",
             ASize = 44,

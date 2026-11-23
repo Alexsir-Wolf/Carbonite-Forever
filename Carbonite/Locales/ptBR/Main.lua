@@ -129,6 +129,8 @@ L["In Conflict"] = "Em Conflito"			-- NXlINCONFLICT
 L["Everfrost Chip"] = "Chip de Everfrost"		-- NXlEverfrost
 
 L["yds"] = "jd"
+L["m"] = "m"
+L["km"] = "km"
 L["secs"] = "s"
 L["mins"] = "min"
 

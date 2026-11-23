@@ -128,7 +128,7 @@ end
 
 local function distText(yd)
     if not yd then return "" end
-    return format("%d %s", floor(yd + .5), L["yds"])
+    return Carbonite.Util.Distance:Text(yd)
 end
 
 -------------------------------------------------------------------------------

@@ -252,7 +252,7 @@ function HUD:Update(map)
         end
 
         local col = dirDist < 5 and "|cffa0a0ff" or ""
-        local str = format("%s%d " .. L["yds"], col, dist)
+        local str = col .. Carbonite.Util.Distance:Text(dist)
 
         if Nx.db.profile.Track.ShowDir then
             local fmt = dirDist < 1 and L[" %.1f deg"] or L[" %d deg"]

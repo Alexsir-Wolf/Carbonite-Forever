@@ -908,7 +908,7 @@ local function mapConfig()
                         trailDist = {
                             order = 17,
                             type = "range",
-                            name = Nx.Opts.Unit(L["Movement trail distance"], L["yds"]),
+                            name = Nx.Opts.Unit(L["Movement trail distance"], Carbonite.Util.Distance:UnitLabel()),
                             desc = L["sets the distance of movement between the trail marks"],
                             min = .1,
                             max = 20,
@@ -1819,8 +1819,8 @@ local function mapConfig()
                 QuestAlpha = { "%", L["Opacity of the quest objective areas."] },
             },
             mapRoute = {
-                GatherRadius = { L["yds"], L["How close you must get to a gather point of the route to reach it."] },
-                MergeRadius = { L["yds"], L["Gather points closer than this become one route point."] },
+                GatherRadius = { Carbonite.Util.Distance:UnitLabel(), L["How close you must get to a gather point of the route to reach it."] },
+                MergeRadius = { Carbonite.Util.Distance:UnitLabel(), L["Gather points closer than this become one route point."] },
             },
             miniMap = {
                 MMAlpha = { "%", L["Opacity of the minimap."] },
@@ -3220,6 +3220,22 @@ local function trackConfig()
                     set = function()
                         Nx.db.profile.Track.ShowDir = not Nx.db.profile.Track.ShowDir
                         Nx.HUD:UpdateOptions()
+                    end,
+                },
+                distUnit = {
+                    order = 9.5,
+                    type = "select",
+                    name = L["Distance unit"],
+                    desc = L["Automatic follows the game language: meters in Portuguese, yards in the others. One yard counts as one meter, as in spell ranges."],
+                    values = function()
+                        return { auto = L["Automatic"], yd = L["Yards"], m = L["Meters"] }
+                    end,
+                    sorting = { "auto", "yd", "m" },
+                    get = function()
+                        return Nx.db.profile.Track.DistUnit or "auto"
+                    end,
+                    set = function(info, value)
+                        Nx.db.profile.Track.DistUnit = value
                     end,
                 },
                 addTbut = {

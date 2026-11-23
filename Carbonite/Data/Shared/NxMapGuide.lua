@@ -1572,7 +1572,7 @@ function Nx.Map.Guide:UpdateList (list, pathI, listSide)
                                 local yd, mapId = self:NearestOf (add)
                                 if yd then
                                     headers = headers or Nx.GuideHeaders.Nearest
-                                    list:ItemSet (3, format ("%d %s", floor (yd + .5), L["yds"]))
+                                    list:ItemSet (3, Carbonite.Util.Distance:Text(yd))
                                     list:ItemSet (4, Nx.Map:IdToName (mapId))
                                 end
                             end

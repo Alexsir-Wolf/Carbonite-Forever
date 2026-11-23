@@ -117,6 +117,8 @@ L["In Conflict"] = true				-- NXlINCONFLICT
 L["Everfrost Chip"] = true			-- NXlEverfrost
 
 L["yds"] = true
+L["m"] = true
+L["km"] = true
 L["secs"] = true
 L["mins"] = true
 

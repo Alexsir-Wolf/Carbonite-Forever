@@ -6045,7 +6045,7 @@ function Nx.Map.OnUpdate(this, elapsed)
             y = floor (y * 10) / 10
             local dist = ((wx - map.PlyrX) ^ 2 + (wy - map.PlyrY) ^ 2) ^ .5 * 4.575
 
-            cursorLocXY = format ("|cff80b080%.1f %.1f %.0f " .. L["yds"], x, y, dist)
+            cursorLocXY = format ("|cff80b080%.1f %.1f %s", x, y, Carbonite.Util.Distance:Text(dist))
             cursorLocStr = cursorLocXY
 
             -- Check for group members at cursor in instance/BG maps
@@ -9429,16 +9429,6 @@ end
 -- @param n  Distance value
 -- @return   Formatted string
 --
-local function shortendistance(n)
-    if n >= 10 ^ 6 then
-        return string.format("%.2fm", n / 10 ^ 6)
-    elseif n >= 10 ^ 3 then
-        return string.format("%.2fk", n / 10 ^ 3)
-    else
-        return tostring(n)
-    end
-end
-
 ---
 -- Draw tracking arrows and destination icon
 -- @param srcX    Source X position
@@ -13757,7 +13747,7 @@ function Nx.Map:IconOnEnter(motion)
             if onShow then
                 onShow(GameTooltip, target, this);
             elseif onShow ~= false then
-                local str = Nx.Split ("~", format ("%s\n%s " .. L["yds"], target.TargetName or this.TrackName, shortendistance(ceil(target.dist * 4.575))));
+                local str = Nx.Split ("~", format ("%s\n%s", target.TargetName or this.TrackName, Carbonite.Util.Distance:Text(target.dist * 4.575)));
                 Nx:SetTooltipText (str .. Nx.Map.PlyrNamesTipStr);
             end
 
@@ -13858,7 +13848,7 @@ function Nx.Map:IconOnUpdateTooltip()
                     local map = f.NxMap
                     map:BuildPlyrLists()
 
-                    local str = Nx.Split("~", format("%s\n%s " .. L["yds"], target.TargetName or self.TrackName, shortendistance(ceil(target.dist * 4.575))))
+                    local str = Nx.Split("~", format("%s\n%s", target.TargetName or self.TrackName, Carbonite.Util.Distance:Text(target.dist * 4.575)))
                     Nx:SetTooltipText(str .. Nx.Map.PlyrNamesTipStr)
 
                     -- Skip TooltipProcess for quest offer icons to avoid adding wrong quest data
