@@ -2,7 +2,7 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
-## Em desenvolvimento
+## v1.4.1
 
 ### Correções
 - **Rota até Mount Hyjal e Shen'dralas:** as duas zonas passam a ter ligação a pé com as vizinhas (Felwood e Winterspring; Mulgore, Desolace e Feralas), e a rota consegue chegar lá.
