@@ -48,6 +48,7 @@
     <Script file="Map\GuardRoute.lua" />
     <Script file="Map\IconTypes.lua" />
     <Script file="Map\IconStyle.lua" />
+    <Script file="Map\Motion.lua" />
     <Script file="Map\Renderer.lua" />
     <Script file="Map\MinimapGlow.lua" />
     <Script file="Map\MiniMap.lua" />

@@ -4,6 +4,9 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 
 ## Em desenvolvimento
 
+### Novidades
+- **Mapa mais fluido:** arrastar e dar zoom no mapa acompanha o mouse quadro a quadro (até 60 por segundo), e o zoom desacelera suavemente no fim. Parado ou seguindo o personagem, o mapa continua na taxa de atualização das opções, sem custo extra. O botão de zoom da barra dá um passo, igual à roda do mouse.
+
 ### Correções
 - **Zonas novas com nível:** Mount Hyjal (60), Shen'dralas e Riverglades (35-45) mostram a faixa de nível, e Zephras Isle passa a 1-12.
 - **Voos novos:** Rog'mar (Riverglades, Horda), Summit of Eternity e Tainted Foothills (Mount Hyjal) entram no Guia e na rota.
@@ -12,6 +15,7 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 
 ### Conhecido
 - Os voos e as entradas novas vêm do MapUtils, do ForeverDungeonJournal e do Shortest Path Forever e ainda não foram conferidos no jogo. A entrada do The Hall of Thanes é provisória: as fontes divergem.
+- O mapa mais fluido ainda não foi testado no jogo.
 
 ## v1.3.1
 
