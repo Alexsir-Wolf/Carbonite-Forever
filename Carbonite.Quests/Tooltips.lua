@@ -427,6 +427,55 @@ end
 -- Quest tooltips
 -------------------------------------------------------------------------------
 
+-- Read a value from the source tooltip; nil when the call fails or the value
+-- is secret on this client.
+local function SafeRead(source, method)
+    local fn = source[method]
+    if type(fn) ~= "function" then return nil end
+    local ok, a, b = pcall(fn, source)
+    if not ok then return nil end
+    if method == "GetUnit" then a = b end
+    if a == nil or not CanUseValue(a) then return nil end
+    return a
+end
+
+-- What the private tooltip was opened for: the source's owner, its alpha and
+-- whether it describes a unit.
+function Nx.Quest.CaptureQuestTipSource(sourceTip)
+    return {
+        owner = SafeRead(sourceTip, "GetOwner"),
+        alpha = SafeRead(sourceTip, "GetAlpha"),
+        unit = SafeRead(sourceTip, "GetUnit") ~= nil,
+    }
+end
+
+-- Whether the private tooltip no longer matches what is under the mouse.
+-- Blizzard's tooltip stays shown while it fades out and is reused for the
+-- next thing hovered, so "source hidden" alone left the quest lines on
+-- screen.
+function Nx.Quest.QuestTipIsStale(sourceTip, captured)
+    if not sourceTip then return true end
+    local shown = sourceTip:IsShown()
+    if not CanUseValue(shown) or not shown then return true end
+    captured = captured or {}
+
+    local alpha = SafeRead(sourceTip, "GetAlpha")
+    if type(alpha) == "number" and type(captured.alpha) == "number"
+        and alpha < captured.alpha - .05 then
+        return true    -- fading out
+    end
+
+    local owner = SafeRead(sourceTip, "GetOwner")
+    if owner ~= nil and captured.owner ~= nil and owner ~= captured.owner then
+        return true    -- reused for another frame
+    end
+
+    if captured.unit and _G.UnitExists and not _G.UnitExists("mouseover") then
+        return true    -- the mouse left the unit
+    end
+    return false
+end
+
 local function GetQuestTooltipFrame()
     local tip = _G.NxQuestTooltipText
     if tip then
@@ -436,15 +485,10 @@ local function GetQuestTooltipFrame()
     tip = CreateFrame("GameTooltip", "NxQuestTooltipText", UIParent, "GameTooltipTemplate")
     tip:SetFrameStrata("TOOLTIP")
     tip:SetScript("OnUpdate", function(self)
-        local source = self.NxSourceTooltip
-        if not source then
-            self:Hide()
-            return
-        end
-        local shown = source:IsShown()
-        if not CanUseValue(shown) or not shown then
+        if Nx.Quest.QuestTipIsStale(self.NxSourceTooltip, self.NxSourceState) then
             self:Hide()
             self.NxSourceTooltip = nil
+            self.NxSourceState = nil
         end
     end)
     _G.NxQuestTooltipText = tip
@@ -460,6 +504,7 @@ local function PrepareQuestTooltipFrame(sourceTip)
     -- GetNumPoints/GetSize return secret values during AreaPOI cleanup.
     tip:SetOwner(UIParent, "ANCHOR_CURSOR")
     tip.NxSourceTooltip = sourceTip
+    tip.NxSourceState = Nx.Quest.CaptureQuestTipSource(sourceTip)
     return tip
 end
 
