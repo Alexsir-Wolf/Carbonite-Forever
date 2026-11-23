@@ -7,6 +7,9 @@ O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warc
 ### Novidades
 - **Distância em metros:** com o jogo em português, a seta, o mapa, o Guia, a lista de destinos e o monitor de quests mostram a distância em metros ("319 m") e, a partir de 1000, em quilômetros ("1,3 km"). Uma jarda conta como um metro, como no alcance das magias do jogo. Para escolher, use "Unidade de distância" em Opções > Rastreamento (Automática, Jardas ou Metros).
 
+- **Ícones do mapa sem a moldura antiga:** correio, estalagem, banco, leiloeiro, mestre de voo e mestre de estábulo usam os ícones atuais da Blizzard quando o jogo os tem; os outros pontos do Guia (treinadores, nós de coleta) aparecem sem a moldura chanfrada, com o desenho inteiro. Para voltar ao visual antigo, ligue "Ícones clássicos" em Opções do Mapa.
+- **Escolha dos ícones no assistente:** uma página nova pergunta quais ícones usar no mapa: os atuais da Blizzard, os clássicos ou, com o HandyNotes e o HandyNotes: MapNotes instalados, os do MapNotes. Com o MapNotes, os treinadores e os serviços do Guia ficam só com os ícones dele no mapa, sem duplicar; a lista do Guia continua guiando até eles.
+
 ### Correções
 - **Seta ao fechar o RestedXP ou o Zygor:** fechar o guia tira o destino dele do Carbonite, e a seta some se não houver outro. Os seus destinos ficam; reabrir o guia devolve o destino do passo.
 - **Ícone do jogador no mapa:** com o minimapa dentro do mapa, a seta do personagem não fica mais escondida embaixo das setas de rota e dos ícones.

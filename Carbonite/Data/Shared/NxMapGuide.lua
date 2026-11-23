@@ -1613,6 +1613,45 @@ function Nx.Map.Guide.IconPath(tx)
     return "Interface\\Icons\\" .. tx
 end
 
+-- Guide points HandyNotes: MapNotes also draws (#247): the class and
+-- profession trainers (both groups have T "^C") and the town services.
+-- In the MapNotes mode they stay in the Guide list (search, distance,
+-- route) but are not drawn on the map.
+local MAPNOTES_GROUPS = { [L["Class Trainer"]] = true, [L["Trainer"]] = true }
+local MAPNOTES_TYPES = {
+    [L["Stable Master"]] = true, [L["Flight Master"]] = true, [L["Auctioneer"]] = true,
+    [L["Banker"]] = true, [L["Innkeeper"]] = true, [L["Mailbox"]] = true,
+}
+
+local function markMapNotes(folder, inside)
+    if type(folder) ~= "table" then return end
+    inside = inside or (folder.T == "^C" and folder.Name ~= nil and MAPNOTES_GROUPS[folder.Name] == true)
+    if inside or (folder.T and MAPNOTES_TYPES[folder.T]) then folder.MapNotesCovered = true end
+    for _, child in ipairs(folder) do markMapNotes(child, inside) end
+end
+
+local mapNotesMarked = false
+
+function Nx.Map.Guide.MarkMapNotesCovered(info)
+    markMapNotes(info or Nx.GuideInfo, false)
+    mapNotesMarked = true
+end
+
+-- The folders to draw: all of them, or, in the MapNotes mode, those
+-- MapNotes does not draw.
+function Nx.Map.Guide:FoldersToDraw()
+    local IconStyle = Carbonite.Modules.Map and Carbonite.Modules.Map.IconStyle
+    if not (IconStyle and IconStyle.MapNotesActive and IconStyle.MapNotesActive()) then
+        return self.ShowFolders
+    end
+    if not mapNotesMarked then Nx.Map.Guide.MarkMapNotesCovered() end
+    local folders = {}
+    for showType, folder in pairs(self.ShowFolders) do
+        if not folder.MapNotesCovered then folders[showType] = folder end
+    end
+    return folders
+end
+
 function Nx.Map.Guide:UpdateMapIcons()
     local Nx = Nx
     local Map = Nx.Map
@@ -1649,7 +1688,7 @@ function Nx.Map.Guide:UpdateMapIcons()
             cont1, cont2 = 1, 1
         end
     end
-    for showType, folder in pairs (self.ShowFolders) do
+    for showType, folder in pairs (self:FoldersToDraw()) do
         local mode = strbyte (showType)
         local tx = Nx.Map.Guide.IconPath(folder.Tx)
 

@@ -1097,6 +1097,19 @@ local function mapConfig()
                                 Nx.db.profile.Map.ShowPOI = not Nx.db.profile.Map.ShowPOI
                             end,
                         },
+                        classicIcons = {
+                            order = 30.5,
+                            type = "toggle",
+                            name = L["Classic icons"],
+                            width = "full",
+                            desc = L["Shows the map points with the game's framed item icons, as in older versions, instead of the current Blizzard icons and the frameless ones."],
+                            get = function()
+                                return Nx.db.profile.Map.ClassicIcons
+                            end,
+                            set = function()
+                                Nx.db.profile.Map.ClassicIcons = not Nx.db.profile.Map.ClassicIcons
+                            end,
+                        },
                         spacer6 = {
                             order = 31,
                             type = "description",

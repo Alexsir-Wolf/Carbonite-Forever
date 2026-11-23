@@ -17,6 +17,7 @@
 local Carbonite = _G.Carbonite
 local Pin = Carbonite.Modules.Map.Pin
 local Layer = Carbonite.Modules.Map.Layer
+local IconStyle = Carbonite.Modules.Map.IconStyle
 local L = LibStub("AceLocale-3.0"):GetLocale("Carbonite")
 
 local Renderer = {}
@@ -38,6 +39,8 @@ local function applyTexture(tex, fTex, color, c2rgb)
             fTex:SetAtlas(tex:sub(7))
         else
             fTex:SetTexture(tex)
+            -- Item icons: Blizzard atlas or round, not the square frame (#247).
+            if IconStyle then IconStyle:Apply(tex, fTex) end
         end
         if color then fTex:SetVertexColor(c2rgb(color)) end
         return true

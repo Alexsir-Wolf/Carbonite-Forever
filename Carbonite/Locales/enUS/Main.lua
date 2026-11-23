@@ -358,3 +358,10 @@ L["Plans the fastest route (flights, boats, portals, hearthstone) and guides wit
 L["The fastest route by time, with flights, boats, portals and the hearthstone, when chosen to guide."] = true
 L["Shortest Path Forever keeps following RestedXP and Guidelime by itself. For a single arrow, turn that off in its options or choose it here."] = true
 L["Shortest Path Forever did not accept the route (journeys off?). Carbonite's arrow guides this destination."] = true
+L["Map icons"] = true
+L["How the service points (mailbox, inn, bank, trainers) look on the map. The Map options change this later."] = true
+L["Current Blizzard icons"] = true
+L["The game's current icons where it has them; the other points without the old frame."] = true
+L["The framed item icons of older versions."] = true
+L["The icons of the HandyNotes: MapNotes addon on the Carbonite map. Carbonite's own service points are hidden so they do not repeat."] = true
+L["The points of HandyNotes plugins, such as MapNotes, on the Carbonite map."] = true

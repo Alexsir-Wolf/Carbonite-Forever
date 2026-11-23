@@ -6,6 +6,10 @@
 --   map          - M opens the Carbonite map or the game's world map
 --   minimap      - the game minimap inside the Carbonite map, or not
 --   theme        - the game's look (Blizzard) or the dark one
+--   icons        - map icons: current Blizzard ones, classic framed ones or
+--                  those of HandyNotes: MapNotes, shown through the
+--                  HandyNotes integration (#247); MapNotes not installed is
+--                  shown but cannot be picked
 --   givers       - quest givers on the map: all, or only the quests the
 --                  player can take now
 --   navigator    - who guides to the destinations: Carbonite, TomTom or
@@ -16,8 +20,9 @@
 --
 -- Every choice writes the same profile key its option writes (no keys of
 -- its own): Map.MaxOverride, MiniMap.Own (with ButOwn and ShowOldNameplate,
--- as the option does), Skin.Name, Map.QuestGiversAvailable and
--- Track.Navigator. The only keys the assistant owns are the "seen" marks in
+-- as the option does), Skin.Name, Map.QuestGiversAvailable,
+-- Track.Navigator, Map.ClassicIcons with Map.ShowPOI, and Notes.HandyNotes
+-- of the notes module (Nx.fdb). The only keys the assistant owns are the "seen" marks in
 -- the profile: Version.Assistant and Version.AssistantSeen (the addon
 -- version it was last shown for).
 --
@@ -93,6 +98,19 @@ Assistant.PAGES = {
         },
     },
     {
+        id = "icons",
+        title = L["Map icons"],
+        text = L["How the service points (mailbox, inn, bank, trainers) look on the map. The Map options change this later."],
+        choices = {
+            { value = "blizzard", label = L["Current Blizzard icons"],
+              desc = L["The game's current icons where it has them; the other points without the old frame."] },
+            { value = "classic", label = L["Classic icons"],
+              desc = L["The framed item icons of older versions."] },
+            { value = "mapnotes", label = "MapNotes", addon = "HandyNotes_MapNotes",
+              desc = L["The icons of the HandyNotes: MapNotes addon on the Carbonite map. Carbonite's own service points are hidden so they do not repeat."] },
+        },
+    },
+    {
         id = "givers",
         title = L["Quest givers on the map"],
         text = L["Carbonite marks on the map the characters who give quests. The Show menu of the map changes this later."],
@@ -141,6 +159,8 @@ Assistant.INTEGRATIONS = {
       what = L["The destinations other addons send to TomTom go to Carbonite's arrow."] },
     { addon = "ShortestPathForever", global = "ShortestPathForever",
       what = L["The fastest route by time, with flights, boats, portals and the hearthstone, when chosen to guide."] },
+    { addon = "HandyNotes", global = "HandyNotes",
+      what = L["The points of HandyNotes plugins, such as MapNotes, on the Carbonite map."] },
     { addon = "MapUtils", global = "MAUTTAB",
       what = L["Ship and zeppelin departure times shared by other MapUtils players."] },
 }
@@ -203,6 +223,9 @@ end
 
 --- A choice that can be picked: its addon (when it names one) is enabled.
 function Assistant:ChoiceAvailable(id, value)
+    if id == "icons" then
+        return value ~= "mapnotes" or Assistant.MapNotesLoaded()
+    end
     if id ~= "navigator" then return true end
     local nav = navigator()
     return nav ~= nil and nav:Available(value)
@@ -223,6 +246,14 @@ local getters = {
     navigator = function()
         local nav = navigator()
         return nav and nav:Saved() or "carbonite"
+    end,
+    icons = function()
+        local map = section("Map")
+        if map.ShowPOI == false and Assistant.MapNotesLoaded() then
+            local notes = Assistant.NotesProfile()
+            if notes == nil or notes.HandyNotes ~= false then return "mapnotes" end
+        end
+        return map.ClassicIcons and "classic" or "blizzard"
     end,
 }
 
@@ -274,6 +305,18 @@ function setters.navigator(value)
     if nav then nav:Set(value) end
 end
 
+-- Options > Map > Classic icons and Show Map POI; with MapNotes, also
+-- Options > Notes > Display HandyNotes on map (#247).
+function setters.icons(value)
+    local map = section("Map")
+    map.ClassicIcons = value == "classic"
+    map.ShowPOI = value ~= "mapnotes"
+    if value == "mapnotes" then
+        local notes = Assistant.NotesProfile()
+        if notes then notes.HandyNotes = true end
+    end
+end
+
 function Assistant:Choose(id, value)
     local set = setters[id]
     if not set or not profile() then return end
@@ -297,6 +340,17 @@ local function addonLoaded(name)
         return C_AddOns.IsAddOnLoaded(name) and true or false
     end
     return false
+end
+
+-- The notes module keeps its options in its own database (Nx.fdb).
+function Assistant.NotesProfile()
+    local Nx = _G.Nx
+    local fdb = Nx and Nx.fdb
+    return fdb and fdb.profile and fdb.profile.Notes
+end
+
+function Assistant.MapNotesLoaded()
+    return addonLoaded("HandyNotes") and addonLoaded("HandyNotes_MapNotes")
 end
 
 function Assistant:Integrations()
