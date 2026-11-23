@@ -84,12 +84,13 @@ Nx.Zones = {
     [1461] = L["Arathi Basin"] .. "|0|0|3|4||",
 
     -- WoW Forever ("camelot") zones. Fields: name|minLvl|maxLvl|faction|cont|entryId|ex|ey
-    -- Level ranges left at 0|0 and factions at 2 (contested) until we have
-    -- walked them in-game; UiMap of build 1.60.1.69893 carries no ContentTuningID.
-    [2482] = L["Mount Hyjal"] .. "|0|0|2|1||",        -- TODO levels/faction
-    [2652] = L["Shen'dralas"] .. "|0|0|2|1||",        -- TODO levels/faction
-    [2548] = L["Riverglades"] .. "|0|0|2|2||",        -- TODO levels/faction
-    [2521] = L["Zephras Isle"] .. "|1|20|2|3||",
+    -- UiMap of build 1.60.1.69893 carries no ContentTuningID; the level
+    -- ranges come from MapUtils (zonelevels.lua, GPL-3.0, D4KiR) (#244).
+    -- Factions stay contested (2).
+    [2482] = L["Mount Hyjal"] .. "|60|60|2|1||",
+    [2652] = L["Shen'dralas"] .. "|35|45|2|1||",
+    [2548] = L["Riverglades"] .. "|35|45|2|2||",
+    [2521] = L["Zephras Isle"] .. "|1|12|2|3||",
     -- New battleground, same shape as AV/WSG/AB.
     [2524] = L["Darkspear Islands"] .. "|0|0|3|4||",
 
@@ -120,14 +121,14 @@ Nx.Zones = {
     [287] = L["Blackwing Lair"] .. "|60|60|3|5|1428|20.70|35.33|40",
     [319] = L["Temple of Ahn'Qiraj"] .. "|60|60|3|5|1451|29.1|93.8|40",
     [337] = L["Zul'Gurub"] .. "|55|60|3|5|1434|67.2|32.8|5",
-    [2959] = L["City of Dalaran"] .. "|28|33|3|5|1416|9.8|60.6|5",
-    [2998] = L["Excavation Site: Wetlands"] .. "|24|29|3|5|1437|52.3|66.4|5",
-    [2999] = L["Ruins of Lordaeron"] .. "|11|24|3|5|1458|72.9|11.3|5",
-    [3065] = L["The Hall of Thanes"] .. "|13|22|3|5|1455|46.8|52.3|5",
-    [2970] = L["The Drowned City"] .. "|35|40|3|5|1434|20.9|28.1|5",
-    [2974] = L["Blackmaw Hold"] .. "|55|60|3|5|1447|39.6|32.7|5",
-    [2994] = L["Alcaz Prison"] .. "|48|53|3|5|1445|77.5|17.2|5",
-    [3001] = L["The Shaper's Terrace"] .. "|60|60|3|5|1449|49.1|1.0|5",
+    [2959] = L["City of Dalaran"] .. "|28|33|3|5|1416|8.5|59.3|5",
+    [2998] = L["Excavation Site: Wetlands"] .. "|24|29|3|5|1437|47.7|56.2|5",
+    [2999] = L["Ruins of Lordaeron"] .. "|11|24|3|5|1458|72.2|11.5|5",
+    [3065] = L["The Hall of Thanes"] .. "|13|22|3|5|1455|27.9|47.7|5",
+    [2970] = L["The Drowned City"] .. "|35|40|3|5|1434|21.3|27.8|5",
+    [2974] = L["Blackmaw Hold"] .. "|55|60|3|5|1447|38.6|33.2|5",
+    [2994] = L["Alcaz Prison"] .. "|48|53|3|5|1445|75.0|14.7|5",
+    [3001] = L["The Shaper's Terrace"] .. "|60|60|3|5|1449|48.1|6.1|5",
     [3039] = L["Krol'dok Stronghold"] .. "|40|45|3|5|2548|37.5|37.4|5",
 
     -- ---------------------------------------------------------------
@@ -142,17 +143,18 @@ Nx.Zones = {
     -- Keys are the Map.db2 instance IDs: they are unique, they are what
     -- GetInstanceInfo() reports from inside, and no UiMap uses them.
     --
-    --   party:      2959 City of Dalaran           [done: Alterac 9.8, 60.6]
-    --                    That is the sewer door inside Dalaran itself. A second
-    --                    way in sits in Silverpine at 69.3, 45.6; a Carbonite
-    --                    instance is positioned AT its entrance, so only one
-    --                    point per instance can be stored - the spare is kept
-    --                    here. Both still answer "this dungeon is not available"
-    --                    on the beta.
-    --               2998 Excavation Site: Wetlands   [done: Wetlands 52.5, 63.6]
-    --               2999 Ruins of Lordaeron      [done: Undercity 72.9, 11.3]
+    -- Entrances (#244) from MapUtils pins.lua (GPL-3.0, D4KiR), checked
+    -- against ForeverDungeonJournal's DungeonEntrances.lua; where they
+    -- differ, MapUtils marks the door itself. A Carbonite instance is
+    -- positioned AT one entrance, so a second way in is only an icon:
+    -- Nx.InstanceExtraEntrances below.
+    --
+    --   party:      2959 City of Dalaran           Alterac 8.5, 59.3 (+ Silverpine)
+    --               2998 Excavation Site: Wetlands Wetlands 47.7, 56.2
+    --               2999 Ruins of Lordaeron        Undercity 72.2, 11.5 (+ Tirisfal)
     --               3002 Half-Pint Tavern
-    --               3065 The Hall of Thanes       [done: Ironforge 46.8, 52.3]
+    --               3065 The Hall of Thanes        Ironforge 27.9, 47.7, provisional:
+    --                    FDJ points at the path, 43.5, 52.0 (+ that path)
     --               3109 Manor Mistmantle
     --   pvp:        2997 Darkspear Islands (uiMap 2524, added above)
     --               3005 Battle for Gilneas
@@ -168,6 +170,15 @@ Nx.Zones = {
     -- Whelgar's Excavation Site (terrain area 17732 spans Wetlands
     -- 27-51 / 48-72), so it needs no floor map of its own.
     -- ---------------------------------------------------------------
+}
+
+-- Second ways into a Forever dungeon (#244): instance id -> { {mapId, x, y} }.
+-- Drawn as entrance icons by Guide:UpdateInstanceIcons, same tip and click
+-- as the main entrance. Source: MapUtils pins.lua (GPL-3.0, D4KiR).
+Nx.InstanceExtraEntrances = {
+    [2959] = { { 1421, 69.2, 45.5 } },  -- City of Dalaran, Silverpine
+    [2999] = { { 1420, 63.4, 67.4 } },  -- Ruins of Lordaeron, Tirisfal
+    [3065] = { { 1455, 44.0, 51.8 } },  -- The Hall of Thanes, the path (provisional)
 }
 
 

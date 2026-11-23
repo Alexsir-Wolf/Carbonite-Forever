@@ -69,6 +69,11 @@ local FLIGHT_DATA = {
     ["1,1451,50.6,34.4"] = L["Cenarion Hold, Silithus"],
     ["2,1443,21.6,74"] = L["Shadowprey Village, Desolace"],
     ["1,2548,60.6,81.6"] = L["Farholde Keep, Riverglades"],
+    -- Forever nodes (#244): Shortest Path Forever Data/Taxi.lua (GPL-3.0),
+    -- world coordinates converted with the zone rects of NxMapData.lua.
+    ["2,2548,59.6,45.1"] = L["Rog'mar, Riverglades"],
+    ["0,2482,68.6,44.1"] = L["Summit of Eternity, Mount Hyjal"],
+    ["0,2482,55.1,82.5"] = L["Tainted Foothills, Mount Hyjal"],
 }
 local NX_FLIGHT_LOC = { ["1"] = L["Alliance Flight"], ["2"] = L["Horde Flight"], ["0"] = L["Neutral Flight"], }
 Nx.NPCData={}

@@ -2,6 +2,17 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## Em desenvolvimento
+
+### Correções
+- **Zonas novas com nível:** Mount Hyjal (60), Shen'dralas e Riverglades (35-45) mostram a faixa de nível, e Zephras Isle passa a 1-12.
+- **Voos novos:** Rog'mar (Riverglades, Horda), Summit of Eternity e Tainted Foothills (Mount Hyjal) entram no Guia e na rota.
+- **Entradas das masmorras novas:** City of Dalaran, Ruins of Lordaeron, Excavation Site, The Hall of Thanes, Alcaz Prison, The Shaper's Terrace, The Drowned City e Blackmaw Hold apontam para a porta de verdade. Dalaran ganha a entrada de Silverpine e Ruins of Lordaeron a de Tirisfal.
+- **Pedras de encontro:** The Drowned City e Excavation Site aparecem no Guia.
+
+### Conhecido
+- Os voos e as entradas novas vêm do MapUtils, do ForeverDungeonJournal e do Shortest Path Forever e ainda não foram conferidos no jogo. A entrada do The Hall of Thanes é provisória: as fontes divergem.
+
 ## v1.3.1
 
 ### Correções

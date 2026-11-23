@@ -2122,6 +2122,22 @@ function Nx.Map.Guide:UpdateZonePOIIcons()
     end
 end
 
+local NO_ENTRANCES = {}
+
+-- The extra entrances of instance `instId` that sit on map `mapId` (#244).
+function Nx.Map.Guide.ExtraEntrancesOn (instId, mapId)
+    local list = Nx.InstanceExtraEntrances and Nx.InstanceExtraEntrances[instId]
+    if not list then return NO_ENTRANCES end
+    local out
+    for _, e in ipairs (list) do
+        if e[1] == mapId then
+            out = out or {}
+            out[#out + 1] = e
+        end
+    end
+    return out or NO_ENTRANCES
+end
+
 function Nx.Map.Guide:UpdateInstanceIcons (cont)
     local Map = Nx.Map
     local map = self.Map
@@ -2138,6 +2154,13 @@ function Nx.Map.Guide:UpdateInstanceIcons (cont)
             if winfo and winfo.EntryMId == map.MapId then
                 local wx = winfo.X
                 local wy = winfo.Y
+                local icon = map:AddIconPt ("!POIIn", wx, wy, 0, nil, "Interface\\Icons\\INV_Misc_ShadowEgg")
+                map:SetIconTip (icon, folder.InstTip)
+                map:SetIconUserData (icon, folder.InstMapId)
+            end
+            -- Second ways in (#244): same tip and click as the main entrance.
+            for _, e in ipairs (Nx.Map.Guide.ExtraEntrancesOn (mapId, map.MapId)) do
+                local wx, wy = Map:GetWorldPos (e[1], e[2], e[3])
                 local icon = map:AddIconPt ("!POIIn", wx, wy, 0, nil, "Interface\\Icons\\INV_Misc_ShadowEgg")
                 map:SetIconTip (icon, folder.InstTip)
                 map:SetIconUserData (icon, folder.InstMapId)
