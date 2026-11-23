@@ -48,4 +48,5 @@ include_files = {
     "Carbonite/Modules/Map/GroundRoute.lua",
     "Carbonite/Modules/Travel/Teleports.lua",
     "Carbonite/Util/Distance.lua",
+    "Carbonite/Modules/Map/IconStyle.lua",
 }

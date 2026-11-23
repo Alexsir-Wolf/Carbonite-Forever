@@ -108,6 +108,7 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
   - **Spoken** (com o módulo Spoken_Quests): necessário para o botão de narração na lista de quests.
   - **ForeverDungeonJournal** ou **FojjiCore:** planta da masmorra (arte, chefes e a ordem da rota; o FojjiCore também sabe os chefes mortos). Lidos durante o jogo; o Carbonite não copia esses dados.
   - **[GatherLite](https://www.curseforge.com/wow/addons/gatherlite):** traz os dados de terreno usados pela rota a pé que contorna o terreno. Sem ele, a rota segue em linha reta.
+  - **[HandyNotes](https://www.curseforge.com/wow/addons/handynotes)** com **[HandyNotes: MapNotes](https://www.curseforge.com/wow/addons/mapnotes):** os pontos dos plugins do HandyNotes aparecem no mapa do Carbonite. Com o MapNotes, dá para escolher os ícones dele no assistente de configuração. O Carbonite não copia a arte: sem os dois, ficam os ícones do próprio Carbonite.
   - **[MapUtils](https://www.curseforge.com/projects/1463967):** arte das masmorras quando nem o ForeverDungeonJournal nem o FojjiCore têm a masmorra. Sem nenhum dos três, a tecla **M** mostra o minimapa ao vivo e o painel com os chefes (os dados de chefes do Carbonite vêm do MapUtils e não dependem dele instalado).
 
 ## Instalação

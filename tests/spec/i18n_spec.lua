@@ -63,7 +63,7 @@ local ALLOWED = {
     },
     -- Theme id the dark choice saves (Skin.Name); the shown name comes from L.
     -- Addon names of the navigator choice (#222/#223), not translated.
-    ["Carbonite/Modules/Assistant/Assistant.lua"] = { "Modern Dark", "Carbonite", "TomTom", "Shortest Path Forever" },
+    ["Carbonite/Modules/Assistant/Assistant.lua"] = { "Modern Dark", "Carbonite", "TomTom", "Shortest Path Forever", "MapNotes" },
     -- Section ids of the options registry (#64); the shown names come from L.
     ["Carbonite/Modules/Options/Options.lua"] = {
         "Carbonite-Forever", "Quest Module", "Notes Module", "Warehouse Module", "Info Module",

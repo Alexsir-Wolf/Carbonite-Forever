@@ -398,6 +398,7 @@ Nx.Defaults = {
             ShowOthersInZone = true,
             ShowPalsInCities = true,
             ShowPOI = true,
+            ClassicIcons = false,           -- Item icons square and framed, as before #247
             ShowTitleName = true,
             ShowTitleXY = true,
             ShowTitleSpeed = true,

@@ -163,9 +163,9 @@ describe("assistente: cada escolha grava a chave das opções", function()
 end)
 
 describe("assistente: páginas e integrações", function()
-    it("tem de 3 a 6 páginas, cada pergunta com duas ou três escolhas e a última com as integrações", function()
+    it("tem de 3 a 7 páginas, cada pergunta com duas ou três escolhas e a última com as integrações", function()
         local A = load()
-        expect(#A.PAGES >= 3 and #A.PAGES <= 6).toBe(true)
+        expect(#A.PAGES >= 3 and #A.PAGES <= 7).toBe(true)
         for i, page in ipairs(A.PAGES) do
             if i < #A.PAGES then expect(#page.choices >= 2 and #page.choices <= 3).toBe(true) end
         end
@@ -307,5 +307,71 @@ describe("assistente: abre de novo a cada versão", function()
         expect(opened).toBe(1)
         local src = loader.read("Carbonite/Modules/MainUpdater/NXOnUpdate.lua")
         expect(src:find("Assistant.afterFinish = showWhatsNew", 1, true) ~= nil).toBe(true)
+    end)
+end)
+
+describe("assistente: ícones do mapa (#247)", function()
+    local function iconsPage(A)
+        for i, page in ipairs(A.PAGES) do
+            if page.id == "icons" then return page, i end
+        end
+    end
+
+    it("tem a página logo depois da aparência, com Blizzard, clássicos e MapNotes", function()
+        local A = load()
+        local page, index = iconsPage(A)
+        expect(page ~= nil).toBe(true)
+        expect(A.PAGES[index - 1].id).toBe("theme")
+        expect(page.choices[1].value).toBe("blizzard")
+        expect(page.choices[2].value).toBe("classic")
+        expect(page.choices[3].value).toBe("mapnotes")
+    end)
+
+    it("clássicos grava Map.ClassicIcons e mantém os pontos do Carbonite", function()
+        local A, profile = load()
+        A:Open(1)
+        A:Choose("icons", "classic")
+        expect(profile.Map.ClassicIcons).toBe(true)
+        expect(profile.Map.ShowPOI).toBe(true)
+        expect(A:Get("icons")).toBe("classic")
+        A:Choose("icons", "blizzard")
+        expect(profile.Map.ClassicIcons).toBe(false)
+        expect(A:Get("icons")).toBe("blizzard")
+    end)
+
+    it("sem o HandyNotes e o MapNotes, o MapNotes não pode ser escolhido", function()
+        local A, profile = load({ addons = { HandyNotes = true } })
+        A:Open(1)
+        expect(A:ChoiceAvailable("icons", "mapnotes")).toBe(false)
+        A:Choose("icons", "mapnotes")
+        expect(profile.Map.ShowPOI).toBeNil()
+        expect(A:ChoiceAvailable("icons", "classic")).toBe(true)
+    end)
+
+    it("MapNotes liga o HandyNotes no mapa e esconde os pontos do Carbonite", function()
+        local A, profile = load({ addons = { HandyNotes = true, HandyNotes_MapNotes = true } })
+        local notes = { HandyNotes = false }
+        A.NotesProfile = function() return notes end
+        A:Open(1)
+        A:Choose("icons", "mapnotes")
+        expect(notes.HandyNotes).toBe(true)
+        expect(profile.Map.ShowPOI).toBe(false)
+        expect(profile.Map.ClassicIcons).toBe(false)
+        expect(A:Get("icons")).toBe("mapnotes")
+    end)
+
+    it("MapNotes desinstalado depois: a escolha lida volta aos ícones do Carbonite", function()
+        local A, profile = load({ addons = {} })
+        profile.Map.ShowPOI = false
+        expect(A:Get("icons")).toBe("blizzard")
+    end)
+
+    it("o HandyNotes aparece na lista de integrações", function()
+        local A = load({ addons = { HandyNotes = true } })
+        local found
+        for _, item in ipairs(A:Integrations()) do
+            if item.addon == "HandyNotes" then found = item end
+        end
+        expect(found ~= nil and found.active).toBe(true)
     end)
 end)

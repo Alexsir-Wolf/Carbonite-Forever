@@ -456,3 +456,5 @@ L["Automatic follows the game language: meters in Portuguese, yards in the other
 L["Automatic"] = true
 L["Yards"] = true
 L["Meters"] = true
+L["Classic icons"] = true
+L["Shows the map points with the game's framed item icons, as in older versions, instead of the current Blizzard icons and the frameless ones."] = true

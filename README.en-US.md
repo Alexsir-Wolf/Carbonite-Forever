@@ -108,6 +108,7 @@ Carbonite's windows follow the game's own look. New installs start with the Bliz
   - **Spoken** (with the Spoken_Quests module): needed for the narration button in the quest list.
   - **ForeverDungeonJournal** or **FojjiCore:** dungeon plan (art, bosses and route order; FojjiCore also knows which bosses are dead). Read while you play; Carbonite does not copy this data.
   - **[GatherLite](https://www.curseforge.com/wow/addons/gatherlite):** provides the terrain data used by the walking route around the terrain. Without it, the route is a straight line.
+  - **[HandyNotes](https://www.curseforge.com/wow/addons/handynotes)** with **[HandyNotes: MapNotes](https://www.curseforge.com/wow/addons/mapnotes):** the points of HandyNotes plugins show on the Carbonite map. With MapNotes, its icons can be picked in the setup assistant. Carbonite does not copy the art: without both, Carbonite's own icons stay.
   - **[MapUtils](https://www.curseforge.com/projects/1463967):** dungeon art when neither ForeverDungeonJournal nor FojjiCore has the dungeon. Without any of the three, the **M** key shows the live minimap and the boss panel (Carbonite's boss data comes from MapUtils and does not need it installed).
 
 ## Installation
