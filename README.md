@@ -38,6 +38,8 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
 | **Quests do Forever a partir do QuestieDB** | A base de quests do Carbonite não tem cerca de 1.300 quests do Forever. O Carbonite lê essas quests do QuestieDB durante o jogo e mostra quem dá cada quest, onde entregar e os objetivos (onde ficam os NPCs, os objetos e quem dropa os itens). Acompanha as atualizações do QuestieDB sem precisar de uma versão nova desta edição. As quests que o Carbonite já tem não mudam. |
 | **Narração do Spoken na lista de quests** | O Carbonite esconde o rastreador de missões da Blizzard, que é onde o Spoken põe o botão de narração. Esta edição coloca o botão ▶ ao lado do ícone de cada quest na lista do Carbonite. Ele só aparece nas quests que o Spoken narra. |
 | **Minimapa ao vivo em masmorras** | O Forever não informa mapa nem posição dentro de masmorras, e o mapa do Carbonite ficava em branco ou mostrava o lugar errado. Agora a janela mostra o minimapa da Blizzard ao vivo, com o nome da masmorra. O mapa estático da masmorra continua no menu do mapa, em "Dungeon Maps". |
+| **Distância em metros** | Com o jogo em português, a seta, o mapa, o Guia, a lista de destinos e o monitor de quests mostram a distância em metros e quilômetros ("319 m", "1,3 km"). Uma jarda conta como um metro, como no alcance das magias. A unidade se escolhe em Opções > Rastreamento. |
+| **Ícones do mapa atuais** | Os pontos do Guia usam os ícones atuais da Blizzard quando o jogo os tem e, nos outros, o desenho sem a moldura antiga. O assistente pergunta qual visual usar: atual, clássico ou, com o HandyNotes e o MapNotes instalados, os ícones do MapNotes. |
 | **Em português** | Textos fixos do núcleo, das quests, das notas, do armazém e das janelas de informação traduzidos, e um assistente de primeira execução com modo básico de opções. |
 
 ## O que o Carbonite faz
@@ -55,7 +57,7 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
 
 ### Navegação
 - **Goto:** marque qualquer ponto do mapa, uma coordenada (`/carb goto x y`) ou um ícone. O mapa ajusta o zoom para mostrar você e o destino; se você mudar o zoom, ele fica como você deixou até a rota acabar.
-- **Seta HUD:** aponta para o destino e mostra nome, distância e tempo estimado de chegada.
+- **Seta HUD:** aponta para o destino e mostra nome, distância (em metros com o jogo em português) e tempo estimado de chegada.
 - **Fila de destinos:** Shift+clique em Goto adiciona o destino sem apagar os outros; ao chegar, a seta passa ao próximo. A janela Destinos (`/carb destinos`, Rota... > Destinos... no menu do mapa ou um atalho de teclado) lista a fila com zona e distância e permite subir, descer, ir agora, remover, inverter e limpar.
 - **Rotas:** caminho entre zonas por estradas, conexões e pontos de voo.
 - **Pedra de regresso e teleportes na rota:** quando a pedra está pronta (ou, para magos, um teleporte para uma capital com a runa na bolsa) e chega bem antes, a rota começa por ela: "Usar Pedra de Regresso (lugar)" e, dali, o caminho de sempre. O lugar da pedra é gravado quando você fala com o estalajadeiro. Vem desligada por padrão; liga em Opções > Mapas.
@@ -65,6 +67,7 @@ As janelas do Carbonite seguem o visual do próprio jogo. Em instalações novas
 ### Guia
 - Um "GPS" de pontos de interesse: instrutores, vendedores, estalajadeiros, bancos, leilão, pontos de voo, entradas de masmorra e mais.
 - Clique para mostrar no mapa e ir até o ponto, ou cole o nome e as coordenadas no chat.
+- Ícones atuais da Blizzard ou sem a moldura antiga; "Ícones clássicos" em Opções do Mapa volta ao visual antigo. Com os ícones do MapNotes escolhidos no assistente, os treinadores e serviços aparecem no mapa só com os ícones dele, e a lista do Guia continua guiando até eles.
 
 ### Quests
 - Substitui o diário de quests da Blizzard por uma janela própria. Tem uma aba de banco de dados para consultar quests que você ainda não pegou.
