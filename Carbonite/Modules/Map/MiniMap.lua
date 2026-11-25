@@ -177,16 +177,86 @@ function MiniMap:OnMouseUp(frame, button)
     end
 end
 
+-- ---------------------------------------------------------------
+-- Gathering pins under the integrated minimap (#275). With Find
+-- Herbs/Minerals on, Carbonite's herb/ore pins sit one level below
+-- the live minimap so its node blips show (#214); the minimap then
+-- takes the mouse and the pins never get OnEnter. While the cursor
+-- is over the minimap, the pin under it is found by position and
+-- its tooltip shown as if it had been hovered.
+-- ---------------------------------------------------------------
+
+MiniMap.HOVER_INTERVAL = 0.1
+
+-- The gathering pin under the cursor (closest centre wins), or nil.
+function MiniMap:GatherPinAtCursor(map)
+    if not (map and map.MinimapGatherTracking and map:MinimapGatherTracking()) then return nil end
+    local cx, cy = _G.GetCursorPosition()
+    local best, bestD
+    for _, f in ipairs(map.GatherOverlayFrms or {}) do
+        if f.NxGatherOverlayActive and f.NxTip and f:IsShown() and f:IsMouseOver() then
+            local s = f:GetEffectiveScale()
+            if not s or s == 0 then s = 1 end
+            local fx, fy = f:GetCenter()
+            local d = fx and ((cx / s - fx) ^ 2 + (cy / s - fy) ^ 2) or 0
+            if not bestD or d < bestD then best, bestD = f, d end
+        end
+    end
+    return best
+end
+
+local hover
+
+local function setHoveredPin(map, pin)
+    if hover.pin == pin then return end
+    if hover.pin and map.IconOnLeave then map.IconOnLeave(hover.pin) end
+    hover.pin = pin
+    if pin and map.IconOnEnter then map.IconOnEnter(pin) end
+end
+
+function MiniMap:UpdateGatherHover()
+    local map = legacyMap()
+    if not (map and hover) then return end
+    -- A missed OnLeave (docking, map closed) must not keep polling.
+    local mm = map.MMFrm
+    if map.MMZoomType == 0 or not (mm and mm:IsVisible() and mm:IsMouseOver()) then
+        self:StopGatherHover(map)
+        return
+    end
+    setHoveredPin(map, self:GatherPinAtCursor(map))
+end
+
+function MiniMap:StartGatherHover()
+    hover = hover or (_G.CreateFrame and _G.CreateFrame("Frame"))
+    if not hover then return end
+    hover.wait = 0
+    hover:SetScript("OnUpdate", function(_, elapsed)
+        hover.wait = hover.wait - (elapsed or 0)
+        if hover.wait > 0 then return end
+        hover.wait = MiniMap.HOVER_INTERVAL
+        MiniMap:UpdateGatherHover()
+    end)
+end
+
+function MiniMap:StopGatherHover(map)
+    if not hover then return end
+    hover:SetScript("OnUpdate", nil)
+    if map then setHoveredPin(map, nil) end
+    hover.pin = nil
+end
+
 function MiniMap:OnEnter(frame, motion)
     local map = legacyMap()
     if not map or map.MMZoomType == 0 then return end
     frame.NxMap = map
     if map.IconOnEnter then map.IconOnEnter(frame, motion) end
+    self:StartGatherHover()
 end
 
 function MiniMap:OnLeave(frame, motion)
     local map = legacyMap()
     if not map or map.MMZoomType == 0 then return end
+    self:StopGatherHover(map)
     frame.NxMap = map
     if map.IconOnLeave then map.IconOnLeave(frame, motion) end
 end
