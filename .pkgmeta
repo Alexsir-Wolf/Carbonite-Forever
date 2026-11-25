@@ -20,6 +20,7 @@ manual-changelog:
 
 ignore:
   - tests
+  - tools
   - docs
   - .github
   - .luacheckrc
