@@ -409,8 +409,13 @@ end
 function DG:Bosses(here)
     here = here or self:Here()
     if not here then return {} end
+    -- The curated route first (#272), then the chart's order and the rest.
+    local R = Nx.DungeonRoutes
+    local key = R and R:IsLoaded() and R:CurrentKey()
+    local route = key and R:BossList(key)
     local chart = self.ChartBosses
-    local src = chart and chart.id == here.id and chart.list
+    local src = route and route[1] and route
+        or chart and chart.id == here.id and chart.list
         or JournalBosses(here.data) or PinBosses(here.data)
     local list, known = {}, {}
     for i, b in ipairs(src) do
@@ -451,19 +456,31 @@ function DG:ResetKills(id)
     local s = Store()
     if s then
         s.id = id
-        s.names, s.npcs = {}, {}
+        s.names, s.npcs, s.encounters = {}, {}, {}
     end
     self.Version = self.Version + 1
     self.Dirty = true
 end
 
-function DG:NoteKill(name, npc)
+function DG:NoteKill(name, npc, encounter)
     local s = Store()
     if not s then return end
     for _, n in ipairs(Names(name)) do s.names[n] = true end
     if npc then s.npcs[npc] = true end
+    if type(encounter) == "number" then
+        s.encounters = type(s.encounters) == "table" and s.encounters or {}
+        s.encounters[encounter] = true
+    end
     self.Version = self.Version + 1
     self.Dirty = true
+    local R = Nx.DungeonRoutes
+    if type(encounter) == "number" and R and R.Recorder then R.Recorder:OnKill(encounter, name) end
+end
+
+-- A boss fight (ENCOUNTER_END id) won this run (#272).
+function DG:IsEncounterKilled(id)
+    local s = Store()
+    return s and type(s.encounters) == "table" and s.encounters[id] or false
 end
 
 function DG:IsKilled(name, npc)
@@ -630,6 +647,14 @@ end
 -- Panel
 --------------------------------------------------------------------------------
 
+-- "You are in: <room>" while the game names a room of the dungeon (#272).
+function DG:RoomLine()
+    local R = Nx.DungeonRoutes
+    local room = R and R:IsLoaded() and R:Room()
+    if not room then return nil end
+    return "|cff9d9d9d" .. format(L["You are in: %s"], "|r" .. (R.Loc(room, "name") or "?"))
+end
+
 function DG:Lines(here)
     here = here or self:Here()
     if not here then return {} end
@@ -640,6 +665,8 @@ function DG:Lines(here)
     self.Dirty = nil
     local lines = {}
     local bosses = self:Bosses(here)
+    local room = self:RoomLine()
+    if room then lines[#lines + 1] = room end
     lines[#lines + 1] = "|cffffd100" .. L["Bosses (route order)"] .. "|r"
     if not bosses[1] then
         lines[#lines + 1] = "|cff9d9d9d" .. L["No boss data for this dungeon"] .. "|r"
@@ -841,7 +868,10 @@ function DG:UpdatePanel(map, w, h)
         panel.Title:SetText(here.name)
 
         local bosses = self:Bosses(here)
-        panel.Heading:SetText(bosses[1] and L["Bosses (route order)"] or ("|cff9d9d9d" .. L["No boss data for this dungeon"] .. "|r"))
+        local heading = bosses[1] and L["Bosses (route order)"] or ("|cff9d9d9d" .. L["No boss data for this dungeon"] .. "|r")
+        local room = self:RoomLine()
+        if room then heading = room .. "\n\n" .. heading end
+        panel.Heading:SetText(heading)
         FillRows(panel, bosses)
         local mmGap = mmSize > 0 and mmSize + 24 or 0
         panel.Text:ClearAllPoints()
@@ -956,7 +986,7 @@ events:SetScript("OnEvent", function(self, event, ...)
             DG.Dirty = true
         end
     elseif event == "ENCOUNTER_END" then
-        local _, name, _, _, success = ...
-        if success == 1 or success == true then DG:NoteKill(name) end
+        local encounter, name, _, _, success = ...
+        if success == 1 or success == true then DG:NoteKill(name, nil, encounter) end
     end
 end)
