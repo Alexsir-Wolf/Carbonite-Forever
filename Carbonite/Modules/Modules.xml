@@ -89,8 +89,13 @@
          registered before the engine's methods overwrite. -->
     <Script file="Map\MapEngine.lua" />
     <Script file="Map\DungeonPins.lua" />
+    <Script file="Map\DungeonRoutes.lua" />
     <Script file="Map\DungeonGuide.lua" />
     <Script file="Map\DungeonChart.lua" />
+    <Script file="Map\DungeonRouteCodec.lua" />
+    <Script file="Map\DungeonRouteRecorder.lua" />
+    <Script file="Map\DungeonRouteShare.lua" />
+    <Script file="Map\DungeonRouteEditor.lua" />
     <!-- Live-minimap view for instances without a client UI map. -->
     <Script file="Map\UnmappedInstance.lua" />
     <!-- Nx:PackXY / UnpackXY (event-log coord packing) extracted

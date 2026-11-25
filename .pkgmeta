@@ -11,6 +11,7 @@ move-folders:
   Carbonite/Carbonite.Info: Carbonite.Info
   Carbonite/Carbonite.Notes: Carbonite.Notes
   Carbonite/Carbonite.Warehouse: Carbonite.Warehouse
+  Carbonite/Carbonite.Dungeons: Carbonite.Dungeons
   Carbonite/Carbonite: Carbonite
 
 manual-changelog:

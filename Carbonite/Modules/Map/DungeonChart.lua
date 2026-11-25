@@ -98,7 +98,95 @@ local function MU()
     return muApi
 end
 
+local function djFloorByMapID(dj, mapID)
+    for _, data in pairs(dj.DUNGEON_MAPS) do
+        for _, fl in ipairs(data.floors or {}) do
+            if fl.uiMapID == mapID then return fl end
+        end
+    end
+end
+
+-- Curated routes (#272, Nx.DungeonRoutes): ForeverDungeonRoutes' dungeons
+-- in ForeverDungeonJournal's layout. The art of a floor: the journal's for
+-- the same game map, else MapUtils', else the client's minimap pictures
+-- (always on the picture floors of the new dungeons, whose route points
+-- are in the minimap pictures' frame).
+function DC.RouteMap(key)
+    local R = Nx.DungeonRoutes
+    local d = R and R:Dungeon(key)
+    if not d then return nil end
+    local rd = R:Data()
+    local dj = DJ()
+    local P = Nx.DungeonPins
+    local mu = addonLoaded("MapUtils")
+    local data = { id = key, isRoute = true, floors = {}, entrances = {}, transitions = {}, bosses = {} }
+    for i, floor in ipairs(d.floors or {}) do
+        local fl = { fdr = floor, uiMapID = floor, label = R:FloorName(floor), key = R.PinFloorKey(floor),
+            minimap = rd.MinimapArt and rd.MinimapArt[floor] }
+        if not R.PictureMap(floor) then
+            local djfl = dj and djFloorByMapID(dj, floor)
+            if djfl then
+                fl.texture, fl.texRight, fl.texBottom = djfl.texture, djfl.texRight, djfl.texBottom
+                fl.tiles, fl.patches, fl.djFloor = djfl.tiles, djfl.patches, djfl
+            elseif mu and P and P.pins[tostring(floor)] then
+                fl.texture = MU_MEDIA .. floor
+                fl.texBottom = (P.heights and P.heights[tostring(floor)] or 683) / 1024
+            end
+        end
+        data.floors[i] = fl
+    end
+    return data
+end
+
+-- Index in data.floors of the route floor `floor`.
+function DC.FloorIndex(data, floor)
+    for i, fl in ipairs(data.floors or {}) do
+        if fl.fdr == floor then return i end
+    end
+end
+
+-- The floor to open on: the room's, else the next boss alive's, else the first.
+function DC.RouteStartFloor(key, data)
+    local R = Nx.DungeonRoutes
+    local room = R and R:Room()
+    local floor = room and R.RoomMainFloor(room)
+    if not floor then
+        for _, b in ipairs(R and R:BossList(key) or {}) do
+            if not b.killed then floor = b.floor break end
+        end
+    end
+    return floor and DC.FloorIndex(data, floor) or 1
+end
+
+local routesApi
+local function Routes()
+    local R = Nx.DungeonRoutes
+    if not (R and R:IsLoaded()) then return nil end
+    if not routesApi or routesApi.version ~= R.Version then
+        local maps = setmetatable({}, { __index = function(t, key)
+            local data = DC.RouteMap(key)
+            if data then rawset(t, key, data) end
+            return data
+        end })
+        routesApi = {
+            isRoutes = true,
+            version = R.Version,
+            DUNGEON_MAPS = maps,
+            CurrentDungeon = function() return R:CurrentKey() end,
+            LocalizeDungeonName = function(key) return R:KeyName(key) end,
+            DungeonNavList = function() return R:Keys() end,
+            SavedMapFloor = function(key, data) return DC.RouteStartFloor(key, data) end,
+        }
+    end
+    return routesApi
+end
+DC.Routes = Routes
+
 local function source()
+    local routes = Routes()
+    if routes and (DC.Browse and DC.Browse.src == "routes" or not DC.Browse and routes.CurrentDungeon()) then
+        return "routes", routes
+    end
     local fojji, dj = Fojji(), DJ()
     if dj and (prefs().DungeonChartUseDJ or not fojji) then return "dj", dj end
     if fojji then return "fojji", fojji end
@@ -177,8 +265,10 @@ function DC:Refresh()
     end
     local mu = MU()
     if mu then here.mu = mu.CurrentDungeon() end
+    local routes = Routes()
+    if routes then here.routes = routes.CurrentDungeon() end
     local old = self.Here or {}
-    if here.fojji ~= old.fojji or here.dj ~= old.dj or here.mu ~= old.mu then
+    if here.fojji ~= old.fojji or here.dj ~= old.dj or here.mu ~= old.mu or here.routes ~= old.routes then
         self.Dismissed = nil
     end
     self.Here = here
@@ -216,7 +306,13 @@ function DC:Close()
 end
 
 function DC:OpenPicker()
-    local src, api = source()
+    local R = Nx.DungeonRoutes
+    local src, api
+    if R and R:Load() and Routes() then
+        src, api = "routes", Routes()
+    else
+        src, api = source()
+    end
     if not src then
         Nx.prt(L["No dungeon map addon is loaded"])
         return
@@ -313,8 +409,12 @@ function DC:Build(map)
     pick:SetPoint("LEFT", 2, 0)
     local close = makeButton(bar, "X", 20, function() DC:Close() end)
     close:SetPoint("RIGHT", -2, 0)
+    -- Routes menu (#272): shown on the route view only.
+    f.RouteBtn = makeButton(bar, L["Routes"], 56, function() DC:OpenRouteMenu() end)
+    f.RouteBtn:SetPoint("RIGHT", close, "LEFT", -6, 0)
+    f.RouteBtn:Hide()
     f.Next = makeButton(bar, ">", 20, function() DC:SetFloor((DC.Floor or 1) + 1) end)
-    f.Next:SetPoint("RIGHT", close, "LEFT", -6, 0)
+    f.Next:SetPoint("RIGHT", f.RouteBtn, "LEFT", -6, 0)
     f.Prev = makeButton(bar, "<", 20, function() DC:SetFloor((DC.Floor or 1) - 1) end)
     f.Prev:SetPoint("RIGHT", f.Next, "LEFT", -2, 0)
     local text = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -329,14 +429,6 @@ function DC:Build(map)
     holder:SetPoint("BOTTOMRIGHT")
     f.Holder = holder
     return f
-end
-
-local function djFloorByMapID(dj, mapID)
-    for _, data in pairs(dj.DUNGEON_MAPS) do
-        for _, fl in ipairs(data.floors or {}) do
-            if fl.uiMapID == mapID then return fl end
-        end
-    end
 end
 
 local function fixFojjiTiles(chart, fojji)
@@ -398,8 +490,9 @@ function DC:BuildDJ(f)
     view.Pins = {}
     view:SetScript("OnMouseWheel", function(_, delta) DC:ZoomAt(delta > 0 and 1.25 or 0.8) end)
     view:SetScript("OnMouseDown", function(_, button)
+        DC.DownX, DC.DownY = GetCursorPosition()
         if button ~= "LeftButton" then return end
-        DC.DragX, DC.DragY = GetCursorPosition()
+        DC.DragX, DC.DragY = DC.DownX, DC.DownY
         view:SetScript("OnUpdate", function()
             local cx, cy = GetCursorPosition()
             local s = view:GetEffectiveScale()
@@ -411,6 +504,23 @@ function DC:BuildDJ(f)
     end)
     view:SetScript("OnMouseUp", function(_, button)
         view:SetScript("OnUpdate", nil)
+        -- Route editor (#272): a click (under 4 px of movement) on the map.
+        local E = Nx.DungeonRouteEditor
+        if E and E:IsActive() and (button == "LeftButton" or button == "RightButton") then
+            local cx, cy = GetCursorPosition()
+            local s = view:GetEffectiveScale()
+            local c = view.Canvas
+            if abs(cx - (DC.DownX or cx)) < 4 and abs(cy - (DC.DownY or cy)) < 4 and c:GetLeft() and c:GetWidth() > 0 then
+                local x = (cx / s - c:GetLeft()) / c:GetWidth()
+                local y = (c:GetTop() - cy / s) / c:GetHeight()
+                local fl = DC.Api and DC.Api.DUNGEON_MAPS and DC.Shown and DC.Api.DUNGEON_MAPS[DC.Shown]
+                fl = fl and fl.floors and fl.floors[DC.Floor or 1]
+                if fl and fl.fdr and x >= 0 and x <= 1 and y >= 0 and y <= 1 then
+                    E:OnMapClick(button, fl.fdr, x, y, IsShiftKeyDown and IsShiftKeyDown())
+                end
+            end
+            return
+        end
         if button == "RightButton" and f.Map.OpenMenu then
             f.Map:OpenMenu()
         elseif button == "MiddleButton" then
@@ -463,8 +573,38 @@ local function tile(view, i)
     return t
 end
 
+-- The client's minimap pictures of a floor (#272): { file, x, y, width,
+-- height, 8 texture coordinates, sublevel } in pixels of the 1002x668 map.
+local function drawMinimapArt(view, parts, w)
+    view.MiniTiles = view.MiniTiles or {}
+    local k = w / ART_W
+    for i, part in ipairs(parts) do
+        local t = view.MiniTiles[i]
+        if not t then
+            t = view.Canvas:CreateTexture(nil, "BACKGROUND")
+            view.MiniTiles[i] = t
+        end
+        t:SetTexture(part[1], "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE", "TRILINEAR")
+        t:SetTexCoord(part[6], part[7], part[8], part[9], part[10], part[11], part[12], part[13])
+        t:SetDrawLayer("BACKGROUND", max(-8, min(7, part[14] or 0)))
+        t:SetSize(part[4] * k, part[5] * k)
+        t:ClearAllPoints()
+        t:SetPoint("TOPLEFT", view.Canvas, "TOPLEFT", part[2] * k, -part[3] * k)
+        t:Show()
+    end
+end
+
 local function drawDJArt(view, dj, fl, w, h)
     for _, t in ipairs(view.Tiles) do t:Hide() end
+    for _, t in ipairs(view.MiniTiles or {}) do t:Hide() end
+    if fl.minimap and (not (fl.texture or fl.tiles) or Nx.DungeonRoutes and Nx.DungeonRoutes.PictureMap(fl.fdr)) then
+        local back = tile(view, 1)
+        back:SetAllPoints(view.Canvas)
+        back:SetColorTexture(0, 0, 0, 1)
+        back:SetDrawLayer("BACKGROUND", -8)
+        drawMinimapArt(view, fl.minimap, w)
+        return
+    end
     if fl.texture then
         local t = tile(view, 1)
         t:SetAllPoints(view.Canvas)
@@ -493,12 +633,17 @@ local function drawDJArt(view, dj, fl, w, h)
         end
         return
     end
-    local copy = dj.MapArtCopy and dj.MapArtCopy(fl)
+    local journal = fl.djFloor and DJ() or dj
+    local copy = journal.MapArtCopy and journal.MapArtCopy(fl.djFloor or fl)
     local t = tile(view, 1)
     t:SetAllPoints(view.Canvas)
     if copy then
         t:SetTexture(copy)
         t:SetTexCoord(0, 1002 / 1024, 0, 668 / 1024)
+    elseif fl.minimap then
+        t:SetColorTexture(0, 0, 0, 1)
+        t:SetDrawLayer("BACKGROUND", -8)
+        drawMinimapArt(view, fl.minimap, w)
     else
         t:SetColorTexture(.42, .33, .2, 1)
     end
@@ -533,7 +678,15 @@ local function pin(view, i)
         p.Label:SetPoint("RIGHT", p, "LEFT", -4, 0)
         p:SetScript("OnEnter", function(self) showTip(self, self.Tip) end)
         p:SetScript("OnLeave", hideTip)
-        p:SetScript("OnClick", function(self) if self.ToFloor then DC:SetFloor(self.ToFloor) end end)
+        p:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        p:SetScript("OnClick", function(self, button)
+            local E = Nx.DungeonRouteEditor
+            if self.EditRef and E and E:IsActive() then
+                E:OnPinClick(self.EditRef, button)
+            elseif self.ToFloor and button == "LeftButton" then
+                DC:SetFloor(self.ToFloor)
+            end
+        end)
         view.Pins[i] = p
     end
     p:Show()
@@ -618,6 +771,7 @@ local LEG_STYLE = {
     done = { .5, .5, .5, .45, 2 },
     next = { .25, 1, .25, .95, 4 },
     ahead = { 1, .82, 0, .6, 2 },
+    side = { .4, .8, 1, .55, 1.5 },
 }
 
 local function drawRoute(view, legs, w, h)
@@ -645,13 +799,14 @@ local PIN_QUEST = {
     item = "Interface\\Icons\\INV_Misc_Bag_08",
 }
 
-local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests)
+local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests, extras)
     for _, p in ipairs(view.Pins) do p:Hide() end
     local n = 0
     local size = max(14, min(26, 18 * scale))
     local function add(tex, x, y, tip, num, toFloor, color, grow)
         n = n + 1
         local p = pin(view, n)
+        p.EditRef = nil
         -- tex false keeps the boss portrait already drawn on this pin.
         if tex ~= false then
             p.Icon:SetTexture(tex)
@@ -684,7 +839,9 @@ local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests)
             -- portrait for the skull, so the icons blinked on zoom and clicks.
             local tex = PIN_BOSS
             if keep then tex = false end
+            if b.note then tip[#tip + 1] = b.note end
             local p = add(tex, b.x, b.y, tip, nil, nil, nil, state == "next" and 1.9 or 1.6)
+            p.EditRef = b.editRef
             if not keep then
                 p.PortraitNpc = b.npc
                 p.PortraitOK = DG and b.npc and DG.SetBossPortrait(p.Icon, b.npc) or false
@@ -727,6 +884,85 @@ local function drawDJPins(view, dj, data, floorN, w, h, scale, bosses, quests)
     for _, q in ipairs(quests or {}) do
         add(PIN_QUEST[q.kind], q.x, q.y, { q.tip })
     end
+    -- Route stops other than bosses, notes and floor links (#272).
+    for _, e in ipairs(extras or {}) do
+        local p = add(e.tex, e.x, e.y, e.tip, e.num, e.toFloor, e.color, e.grow)
+        p.EditRef = e.editRef
+        if e.label then p.Label:SetText(e.label) end
+    end
+end
+
+local PIN_OPTIONAL = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1"
+local PIN_RARE = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_3"
+DC.PIN_NOTE, DC.PIN_LINK = PIN_NOTE, PIN_LINK
+
+-- The active route of dungeon `key` on chart floor floorN: its bosses (for
+-- the boss pins and the guide panel, floor = chart index), the other pins
+-- and the lines.
+function DC.RouteView(key, data, floorN)
+    local R = Nx.DungeonRoutes
+    local route = R:ActiveRoute(key)
+    local fl = data.floors[floorN]
+    if not route or not fl then return nil end
+    local killed, bosses, extras = {}, {}, {}
+    local labels = R.StopLabels(route)
+    local editing = Nx.DungeonRouteEditor and Nx.DungeonRouteEditor:IsEditing(key, route)
+    for i, stop in ipairs(route.stops or {}) do
+        killed[i] = R:StopKilled(stop)
+        local name = R:StopName(stop)
+        local note = R.Loc(stop, "note")
+        if stop.kind == "boss" then
+            bosses[#bosses + 1] = { name = name, npc = DC.NpcByName(DJ(), stop.name), floor = DC.FloorIndex(data, stop.floor) or 0,
+                x = stop.x, y = stop.y, killed = killed[i], note = note, editRef = editing and { kind = "stop", index = i } or nil }
+        elseif stop.floor == fl.fdr then
+            local tip = { name, killed[i] and L["Killed"] or nil, note }
+            extras[#extras + 1] = { tex = stop.kind == "rare" and PIN_RARE or PIN_OPTIONAL, x = stop.x, y = stop.y,
+                tip = tip, num = labels[i], color = killed[i] and false or nil, grow = 1.1,
+                editRef = editing and { kind = "stop", index = i } or nil }
+        end
+    end
+    for i, note in ipairs(route.notes or {}) do
+        if note.floor == fl.fdr then
+            extras[#extras + 1] = { tex = PIN_NOTE, x = note.x, y = note.y, tip = { R.Loc(note, "text") or "" },
+                editRef = editing and { kind = "note", index = i } or nil }
+        end
+    end
+    for _, link in ipairs(route.links or {}) do
+        local to = DC.FloorIndex(data, link.to)
+        if link.floor == fl.fdr and to then
+            local label = (data.floors[to].label or format("%s %d", LEVEL, to))
+            extras[#extras + 1] = { tex = PIN_LINK, x = link.x, y = link.y, tip = { label }, toFloor = to }
+        end
+    end
+    return { route = route, bosses = bosses, extras = extras, legs = R.Legs(route, fl.fdr, killed) }
+end
+
+-- The room the player is in, glowing on the chart: one thick line along
+-- each box of the room on this floor (ForeverDungeonRoutes' Rooms.lua).
+local function drawRoom(view, room, floor, w)
+    view.RoomLines = view.RoomLines or {}
+    for _, line in ipairs(view.RoomLines) do line:Hide() end
+    if not room or not view.Canvas.CreateLine then return end
+    local k = w / ART_W
+    local n = 0
+    for _, box in ipairs(room.boxes or {}) do
+        if box[1] == floor then
+            n = n + 1
+            local line = view.RoomLines[n]
+            if not line then
+                line = view.Canvas:CreateLine(nil, "BORDER")
+                line:SetColorTexture(1, .82, 0, .28)
+                view.RoomLines[n] = line
+            end
+            local cx, cy = box[2] * w, box[3] * w * ART_H / ART_W
+            local half = box[4] * k / 2
+            local dx, dy = math.cos(box[6]) * half, math.sin(box[6]) * half
+            line:SetStartPoint("TOPLEFT", view.Canvas, cx - dx, -(cy - dy))
+            line:SetEndPoint("TOPLEFT", view.Canvas, cx + dx, -(cy + dy))
+            line:SetThickness(max(2, box[5] * k))
+            line:Show()
+        end
+    end
 end
 
 -- The MapUtils floor (DungeonPins.lua) drawn by this chart floor: its own
@@ -756,6 +992,18 @@ function DC:UpdateDJ(f, dj, name, W, H)
         self.Floor = dj.SavedMapFloor and dj.SavedMapFloor(name, data) or 1
         self.Zoom, self.PanX, self.PanY = 1, 0, 0
     end
+    -- A new room the game names: its floor (#272). A floor chosen by hand
+    -- stays until the next room.
+    local R = Nx.DungeonRoutes
+    if dj.isRoutes and R and self.RoomSeen ~= R.RoomVersion then
+        self.RoomSeen = R.RoomVersion
+        local room = not self.Browse and R:Room()
+        local idx = room and DC.FloorIndex(data, R.RoomMainFloor(room))
+        if idx and idx ~= self.Floor then
+            self.Floor = idx
+            self.Zoom, self.PanX, self.PanY = 1, 0, 0
+        end
+    end
     local floorN = max(1, min(#floors, self.Floor or 1))
     self.Floor = floorN
     local fl = floors[floorN]
@@ -771,17 +1019,22 @@ function DC:UpdateDJ(f, dj, name, W, H)
     view.Canvas:ClearAllPoints()
     view.Canvas:SetPoint("CENTER", view, "CENTER", self.PanX, -self.PanY)
     drawDJArt(view, dj, fl, cw, ch)
-    local bosses = DC.BossList(dj, data)
-    drawRoute(view, DC.RouteLegs(data, bosses, floorN), cw, ch)
+    local rv = dj.isRoutes and DC.RouteView(name, data, floorN)
+    local bosses = rv and rv.bosses or DC.BossList(dj, data)
+    drawRoute(view, rv and rv.legs or DC.RouteLegs(data, bosses, floorN), cw, ch)
+    drawRoom(view, rv and not self.Browse and R:Room() or nil, fl.fdr, cw)
     local DG = Nx.DungeonGuide
     local here = DG and not self.Browse and DG:Here()
     -- Not browsing: the chart shows the dungeon the player is in.
     local quests = DG and DG:FloorPins(DC.PinKey(data, floorN, here or nil))
-    drawDJPins(view, dj, data, floorN, cw, ch, fit * zoom, bosses, quests)
-    self:ShareBosses(bosses)
+    drawDJPins(view, dj, data, floorN, cw, ch, fit * zoom, bosses, quests, rv and rv.extras)
+    if not rv then self:ShareBosses(bosses) end
 
     local title = djName(dj, name)
+    if rv and #R:Routes(name) > 1 then title = title .. "  |cffffd100" .. R:RouteName(rv.route) .. "|r" end
     if #floors > 1 then title = title .. "  |cff9d9d9d" .. floorLabel(dj, data, floorN) end
+    f.RouteBtn:SetShown(rv and true or false)
+    if Nx.DungeonRouteEditor then Nx.DungeonRouteEditor:UpdateBar(f, rv and name) end
     f.Title:SetText(title)
     f.Prev:SetShown(#floors > 1)
     f.Next:SetShown(#floors > 1)
@@ -896,12 +1149,16 @@ end
 function DC:AddMenu(menu, parentFrm)
     local hasFojji = loadable("FojjiCore_DungeonJournal") or Fojji() ~= nil
     local hasDJ = loadable("ForeverDungeonJournal") or DJ() ~= nil
-    if not (hasFojji or hasDJ or MU()) then return end
+    local hasRoutes = loadable(Nx.DungeonRoutes and Nx.DungeonRoutes.ADDON or "Carbonite.Dungeons") or Routes() ~= nil
+    if not (hasFojji or hasDJ or hasRoutes or MU()) then return end
     local sub = Nx.Menu:Create(parentFrm, 240)
     menu:AddSubMenu(sub, L["Dungeon Maps..."])
     local item = sub:AddItem(0, L["Show In Dungeons"], function() DC.Dirty = true end)
     item:SetChecked(prefs(), "DungeonChartAuto")
     sub:AddItem(0, L["Choose Dungeon..."], function() DC:OpenPicker() end)
+    if hasRoutes then
+        sub:AddItem(0, L["Dungeon Routes..."], function() DC:OpenRouteMenu() end)
+    end
     if hasFojji and hasDJ then
         local use = sub:AddItem(0, L["Use DungeonJournal Maps"], function()
             DC.Browse, DC.Shown, DC.Floor, DC.Sig = nil, nil, nil, nil

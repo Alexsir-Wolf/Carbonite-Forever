@@ -2,6 +2,19 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## Em desenvolvimento
+
+### Novidades
+- **Rotas das masmorras:** nas 41 masmorras e raides do Forever (as novas incluídas), a planta mostra a rota curada andar por andar, com caminhos laterais, chefes opcionais e raros, notas e ligações entre andares. O painel de chefes segue a ordem da rota, e os chefes se marcam sozinhos pelo fim do encontro.
+- **Sala atual:** o jogo não dá posição dentro da masmorra, mas dá o nome da sala. O painel mostra "Você está em: …", a planta troca de andar sozinha e destaca a sala.
+- **Planta sem outro addon:** sem ForeverDungeonJournal, FojjiCore ou MapUtils, a planta usa as imagens do minimapa do próprio cliente.
+- **Suas rotas:** no botão **Rotas** da planta, crie uma rota a partir da run (salas e chefes mortos), edite (caminho, caminho lateral, paradas, notas, desfazer), renomeie, exclua, exporte e importe no formato `!FDR1!` do ForeverDungeonRoutes.
+- **Compartilhar:** envie a rota ao grupo ou à guilda (sempre com pergunta a quem recebe) ou a ordem dos chefes no chat. Funciona entre Carbonite e ForeverDungeonRoutes.
+- Os dados vêm do ForeverDungeonRoutes, de Checkov23 (MIT), no addon interno **Carbonite.Dungeons**, carregado só dentro de masmorras. O ForeverDungeonRoutes não precisa estar instalado.
+
+### Conhecido
+- Ainda não testado no jogo. Nas masmorras clássicas com arte do MapUtils, o alinhamento da rota com a arte não foi conferido.
+
 ## v1.4.3
 
 ### Correções

@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: Carbonite-Forever Dungeons
+## Title-ptBR: Carbonite-Forever Masmorras
+## Version: @project-version@
+## Author: Alexsir-Wolf (Forever edition); route data by Checkov23 (ForeverDungeonRoutes, MIT)
+## Notes: Dungeon routes, rooms and maps for Carbonite, loaded inside dungeons only
+## Notes-ptBR: Rotas, salas e mapas das masmorras para o Carbonite, carregados só dentro delas
+## X-License: MIT (data from ForeverDungeonRoutes)
+## DefaultState: Enabled
+## LoadOnDemand: 1
+## RequiredDeps: Carbonite
+## IconTexture: Interface\AddOns\Carbonite\Gfx\Logo.tga
+
+Data\Dungeons.lua
+Data\Floors.lua
+Data\Encounters.lua
+Data\DefaultRoutes.lua
+Data\Rooms.lua
+Data\Pictures.lua
+Data\Minimaps.lua
+Data\Entrances.lua
+Load.lua
