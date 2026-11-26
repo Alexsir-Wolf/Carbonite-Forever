@@ -178,23 +178,31 @@ function MiniMap:OnMouseUp(frame, button)
 end
 
 -- ---------------------------------------------------------------
--- Gathering pins under the integrated minimap (#275). With Find
--- Herbs/Minerals on, Carbonite's herb/ore pins sit one level below
--- the live minimap so its node blips show (#214); the minimap then
--- takes the mouse and the pins never get OnEnter. While the cursor
--- is over the minimap, the pin under it is found by position and
--- its tooltip shown as if it had been hovered.
+-- Gathering nodes under the integrated minimap (#275, #279). With Find
+-- Herbs/Minerals on, the live minimap sits over Carbonite's icons
+-- so its node blips show (#214), and it takes the mouse: Carbonite's
+-- herb/ore icons (its own and GatherLite's) never get OnEnter, and
+-- the game gives the blips no tooltip at all. While the cursor is
+-- over the minimap:
+--   1. the Carbonite icon under the cursor shows its own tooltip;
+--   2. else the GatherLite node nearest the cursor names the blip.
 -- ---------------------------------------------------------------
 
 MiniMap.HOVER_INTERVAL = 0.1
+MiniMap.BLIP_RADIUS = 8          -- pixels around the cursor
 
--- The gathering pin under the cursor (closest centre wins), or nil.
-function MiniMap:GatherPinAtCursor(map)
-    if not (map and map.MinimapGatherTracking and map:MinimapGatherTracking()) then return nil end
-    local cx, cy = _G.GetCursorPosition()
-    local best, bestD
-    for _, f in ipairs(map.GatherOverlayFrms or {}) do
-        if f.NxGatherOverlayActive and f.NxTip and f:IsShown() and f:IsMouseOver() then
+local function tracking(map)
+    return map and map.MinimapGatherTracking and map:MinimapGatherTracking() or false
+end
+
+-- Shown icon frames with a tooltip under the cursor, from pool `frms`
+-- (its first Next - 1 frames are the ones in use).
+local function scanPool(frms, cx, cy, best, bestD)
+    if not frms then return best, bestD end
+    local used = (frms.Next or (#frms + 1)) - 1
+    for i = 1, math.min(used, #frms) do
+        local f = frms[i]
+        if f and f.NxTip and f:IsShown() and f:IsMouseOver() then
             local s = f:GetEffectiveScale()
             if not s or s == 0 then s = 1 end
             local fx, fy = f:GetCenter()
@@ -202,16 +210,64 @@ function MiniMap:GatherPinAtCursor(map)
             if not bestD or d < bestD then best, bestD = f, d end
         end
     end
-    return best
+    return best, bestD
 end
 
-local hover
+-- The Carbonite icon under the cursor (closest centre wins), or nil.
+function MiniMap:IconAtCursor(map)
+    if not tracking(map) then return nil end
+    local cx, cy = _G.GetCursorPosition()
+    local best, bestD = scanPool(map.IconStaticFrms, cx, cy)
+    best = scanPool(map.IconFrms, cx, cy, best, bestD)
+    return best
+end
+MiniMap.GatherPinAtCursor = MiniMap.IconAtCursor
 
-local function setHoveredPin(map, pin)
-    if hover.pin == pin then return end
-    if hover.pin and map.IconOnLeave then map.IconOnLeave(hover.pin) end
-    hover.pin = pin
-    if pin and map.IconOnEnter then map.IconOnEnter(pin) end
+-- World position under the cursor on the Carbonite map, or nil.
+function MiniMap:CursorWorldPos(map)
+    local frm = map and map.Frm
+    local over = _G.Nx and _G.Nx.Util_IsMouseOver
+    if not (frm and over and map.FramePosToWorldPos) then return nil end
+    local mx, my = over(frm)
+    if not mx then return nil end
+    my = frm:GetHeight() - my
+    if my < (map.TitleH or 0) then return nil end
+    return map:FramePosToWorldPos(mx, my)
+end
+
+-- Tooltip text for the game's blip under the cursor, or nil.
+function MiniMap:BlipTipAtCursor(map)
+    if not tracking(map) then return nil end
+    local notes = _G.Nx and _G.Nx.Notes
+    if not (notes and notes.GatherLiteTipAt and map.GetCurrentMapId) then return nil end
+    local wx, wy = self:CursorWorldPos(map)
+    local scale = map.MapScale
+    if not (wx and scale and scale > 0) then return nil end
+    return notes:GatherLiteTipAt(map:GetCurrentMapId(), wx, wy, self.BLIP_RADIUS / 10.02 / scale)
+end
+
+local hover, blipAnchor
+
+-- A tiny shown frame that owns the blip tooltip (the tooltip anchors
+-- to the cursor; a hidden owner would hide it).
+local function anchorFor(map)
+    if not blipAnchor then
+        local parent = _G.UIParent
+        blipAnchor = _G.CreateFrame("Frame", nil, parent)
+        blipAnchor:SetSize(1, 1)
+        blipAnchor:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 0, 0)
+        blipAnchor:Show()
+    end
+    blipAnchor.NxMap = map
+    return blipAnchor
+end
+
+local function setHovered(map, target, tip)
+    if hover.target == target and hover.tip == tip then return end
+    if hover.target and map.IconOnLeave then map.IconOnLeave(hover.target) end
+    hover.target, hover.tip = target, tip
+    if tip then target.NxTip = tip end    -- after the old one left
+    if target and map.IconOnEnter then map.IconOnEnter(target) end
 end
 
 function MiniMap:UpdateGatherHover()
@@ -223,7 +279,17 @@ function MiniMap:UpdateGatherHover()
         self:StopGatherHover(map)
         return
     end
-    setHoveredPin(map, self:GatherPinAtCursor(map))
+    local icon = self:IconAtCursor(map)
+    if icon then
+        setHovered(map, icon)
+        return
+    end
+    local tip = self:BlipTipAtCursor(map)
+    if tip then
+        setHovered(map, anchorFor(map), tip)
+    else
+        setHovered(map, nil)
+    end
 end
 
 function MiniMap:StartGatherHover()
@@ -241,8 +307,8 @@ end
 function MiniMap:StopGatherHover(map)
     if not hover then return end
     hover:SetScript("OnUpdate", nil)
-    if map then setHoveredPin(map, nil) end
-    hover.pin = nil
+    if map then setHovered(map, nil) end
+    hover.target, hover.tip = nil, nil
 end
 
 function MiniMap:OnEnter(frame, motion)
