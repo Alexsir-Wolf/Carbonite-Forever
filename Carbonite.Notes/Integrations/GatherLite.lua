@@ -104,6 +104,48 @@ local function buildTip(GL, node, object, color)
     return table.concat(lines, "\n")
 end
 
+-- The game gives no tooltip for its own Find Herbs/Minerals blips, so the
+-- GatherLite node nearest to world point (wx, wy) of map `mapId`, within
+-- `radius` world units, names it (#279). Returns its tooltip text or nil.
+-- Node positions are cached per map and GatherLite change.
+local TIP_KINDS = { "mining", "herbalism", "containers" }
+local tipCache = {}
+
+function Nx.Notes:GatherLiteTipAt(mapId, wx, wy, radius)
+    if not (mapId and wx and wy and radius) or not self:GatherLiteActive() then return nil end
+    local GL = _G.GatherLite
+    if not GL:IsLoaded() then return nil end
+    local usePredef = GL.db.global.usePredefined and true or false
+    if tipCache.mapId ~= mapId or tipCache.version ~= self.GLVersion or tipCache.predef ~= usePredef then
+        ensureHooks()
+        tipCache = { mapId = mapId, version = self.GLVersion, predef = usePredef }
+        for _, kind in ipairs(TIP_KINDS) do
+            local nodes = GL:GetNodesForMap(kind, mapId) or {}
+            for i = 1, #nodes do
+                local node = nodes[i]
+                if (usePredef or not node.predefined) and node.posX and node.posY
+                        and not GL:IsIgnored(node.object) then
+                    local nx, ny = Nx.Map:GetWorldPos(mapId, node.posX * 100, node.posY * 100)
+                    if nx and ny then
+                        tipCache[#tipCache + 1] = { x = nx, y = ny, node = node, kind = kind }
+                    end
+                end
+            end
+        end
+    end
+    local best, bestD = nil, radius * radius
+    for i = 1, #tipCache do
+        local e = tipCache[i]
+        local d = (e.x - wx) ^ 2 + (e.y - wy) ^ 2
+        if d <= bestD then best, bestD = e, d end
+    end
+    if not best then return nil end
+    local object = GL:GetNodeObject(best.node.object)
+    if not object then return nil end
+    local color = self:GatherSkillColor(object.levels, SkillRanks()[best.kind])
+    return buildTip(GL, best.node, object, color)
+end
+
 function Nx.Notes:GatherLite(mapId)
     if not Nx.fdb.profile.Notes.GatherLite then return end
     if not self:IsGatherLiteAvailable() then return end
