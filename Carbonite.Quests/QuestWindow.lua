@@ -532,33 +532,7 @@ function Nx.Quest.List:Open()
                 -- Setting the same id that's already active -> toggle off.
                 if qID == Nx.Quest._stLastSet
                    and qID == (Nx.Quest.ActiveQID or 0) then
-                    -- Secure clear + the flags it depends on go through
-                    -- SuperTrackSafe (deferred in combat — the tainted
-                    -- SUPER_TRACKING_CHANGED chain trips the protected
-                    -- SetPassThroughButtons). The blob hide rides along:
-                    -- WorldMapBlobFrame refuses insecure calls in combat.
-                    Nx.SuperTrackSafe(function()
-                        Nx.Quest.UserClearedActive = true
-                        Nx.SetSuperTrackedQuestIDSafe(0)
-                        -- Blizzard quest area blob is drawn into a
-                        -- separate WorldMapBlobFrame (QMap.QuestWin) and
-                        -- doesn't auto-hide on super-track clear; do it
-                        -- explicitly so the area stops shading the map.
-                        if Nx.Quest.UpdateQuestBlob then
-                            Nx.Quest:UpdateQuestBlob (nil)
-                        end
-                    end)
-                    Nx.Quest.ActiveQID = 0
-                    Nx.Quest.ActiveObjI = 0
-                    if Nx.Quest.Tracking then
-                        Nx.Quest.Tracking[qID] = nil
-                    end
-                    if Nx.Map and Nx.Map.Maps and Nx.Map.Maps[1] then
-                        local m1 = Nx.Map.Maps[1]
-                        if m1.ClearTargets then m1:ClearTargets() end
-                    end
-                    Nx.Quest._stLastSet = 0
-                    Nx.Quest._stLockoutUntil = now + 0.6
+                    Nx.Quest:ToggleOffActive(qID)
                 else
                     Nx.Quest._stLastSet = qID
                 end
