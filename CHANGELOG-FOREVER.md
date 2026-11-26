@@ -2,6 +2,11 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## v1.5.2
+
+### Correções
+- **Desmarcar missão no Monitor:** clicar de novo no "..." do título de uma missão rastreada volta a desmarcá-la, e a rota sai do minimapa. Com a seta do jogo escondida, o segundo clique não chegava a desmarcar.
+
 ## v1.5.1
 
 ### Correções
