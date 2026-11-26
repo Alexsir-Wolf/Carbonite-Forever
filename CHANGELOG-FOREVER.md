@@ -2,6 +2,11 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## v1.5.3
+
+### Correções
+- **Tooltip dos pontos de erva e minério no minimapa:** com Encontrar Ervas ou Encontrar Minérios ligado, passar o mouse num ponto amarelo do jogo ou num ícone do GatherLite mostra o nome do nó e a perícia. O jogo não dá tooltip aos próprios pontos; o nome vem do nó do GatherLite mais perto.
+
 ## v1.5.2
 
 ### Correções
