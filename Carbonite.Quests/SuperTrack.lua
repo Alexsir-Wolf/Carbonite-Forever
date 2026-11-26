@@ -499,6 +499,48 @@ Nx.Quest.ActiveQID = 0
 
 local USER_PICK_TTL = 1.0
 
+-- A second click on the active quest: it stops being tracked, its route
+-- and target go away, and for 0.6 s the game cannot put the super-track
+-- back on its own (see the SetSuperTrackedQuestID hook).
+function Nx.Quest:ToggleOffActive(qID)
+    local now = GetTime and GetTime() or 0
+    -- Secure clear + the flags it depends on go through SuperTrackSafe
+    -- (deferred in combat: the tainted SUPER_TRACKING_CHANGED chain trips
+    -- the protected SetPassThroughButtons). The blob hide rides along:
+    -- WorldMapBlobFrame refuses insecure calls in combat.
+    Nx.SuperTrackSafe(function()
+        Nx.Quest.UserClearedActive = true
+        Nx.SetSuperTrackedQuestIDSafe(0)
+        -- The quest area blob is drawn into a separate WorldMapBlobFrame
+        -- and does not hide on a super-track clear.
+        if Nx.Quest.UpdateQuestBlob then
+            Nx.Quest:UpdateQuestBlob (nil)
+        end
+    end)
+    self.ActiveQID = 0
+    self.ActiveObjI = 0
+    if self.Tracking then
+        self.Tracking[qID] = nil
+    end
+    if Nx.Map and Nx.Map.Maps and Nx.Map.Maps[1] then
+        local m1 = Nx.Map.Maps[1]
+        if m1.ClearTargets then m1:ClearTargets() end
+    end
+    self._stLastSet = 0
+    self._stLockoutUntil = now + 0.6
+end
+
+-- Title button of quest qId (live id liveQID) in the watch list: when it is
+-- the active quest, untracks it and returns true (#278).
+function Nx.Quest:UntrackOnWatchClick(qId, liveQID)
+    local active = self.ActiveQID or 0
+    if active == 0 or (active ~= liveQID and active ~= qId) then return false end
+    local tracked = Nx.GetSuperTrackedQID and Nx.GetSuperTrackedQID() or 0
+    if tracked ~= active and tracked ~= 0 then return false end
+    self:ToggleOffActive(active)
+    return true
+end
+
 function Nx.Quest:GetUserObjPick(qId)
     local pick = self.UserObjPick
     if not pick then return nil end

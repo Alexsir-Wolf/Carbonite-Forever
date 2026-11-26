@@ -163,6 +163,12 @@ local function client(opts)
             nx.SetSuperTrackedQuestIDSafe(q)
         end)
     end
+    -- The title button of a watch row (WatchWindow.lua OnListEvent): a second
+    -- click on the active quest untracks it, else the secure trio (#278).
+    function actions.watchTitle(q)
+        if quest:UntrackOnWatchClick(q, q) then return end
+        actions.watch(q)
+    end
     function actions.list(q) quest.List:ToggleWatch(q, 0, 0, false) end
     function actions.icon(q) map:QuestIconClick({ NXData = { QId = q, QI = 0 }, NXType = 9000 }) end
     function actions.blizzard(q) env.C_SuperTrack.SetSuperTrackedQuestID(q) end
@@ -211,6 +217,19 @@ describe("seta de quest: mesma rota de antes, sem seta", function()
     it("clicar de novo no Monitor mantém a rota", function()
         local on = sameAsWithout({ { "watch", 11 }, { "watch", 11 }, { "watch", 11 } })
         expect(on.route).toBe(11)
+    end)
+
+    it("botão do título no Monitor desmarca no segundo clique (#278)", function()
+        local on, off = sameAsWithout({ { "watchTitle", 11 }, { "watchTitle", 11 } })
+        expect(on.route).toBe(nil)
+        expect(off.route).toBe(nil)
+        expect(on.Quest.ActiveQID).toBe(0)
+    end)
+
+    it("botão do título no Monitor troca de quest e marca de novo depois de desmarcar", function()
+        local on = sameAsWithout({ { "watchTitle", 11 }, { "watchTitle", 22 }, { "watchTitle", 22 },
+            { "watchTitle", 22 } })
+        expect(on.route).toBe(22)
     end)
 
     it("troca pelo diário e desmarca no segundo clique", function()

@@ -3201,22 +3201,33 @@ function Nx.Quest.Watch:OnListEvent (eventName, val1, val2, click, but)
 
                     Quest:PatchQuestFromBlizzard(liveQID)
 
+                    -- Title button of the quest already tracked: a second
+                    -- click untracks it. SetSuperTrackedQuestIDSafe skips
+                    -- the game call when the quest is already tracked (and
+                    -- with the arrow hidden the game tracks nothing), so the
+                    -- hook's toggle-off never ran and the route stayed (#278).
+                    if typ.WatchTip and Quest:UntrackOnWatchClick(qId, liveQID) then
+                        _wasToggledOff = true
+                    end
+
                     -- Combat-defer the secure trio: the tainted
                     -- SUPER_TRACKING_CHANGED chain trips the protected
                     -- SetPassThroughButtons in combat. Out of combat the
                     -- closure runs synchronously, preserving the
                     -- toggle-off detection just below.
-                    Nx.SuperTrackSafe(function()
-                        Nx.SetSuperTrackedUserWaypointSafe(false)
-                        Nx.ClearNonQuestSuperTrackSafe()
-                        -- Will trigger our SetSuperTrackedQuestID hook. If that
-                        -- hook toggles off (clicking the active quest again), it
-                        -- clears ActiveQID + the goto arrow + the blob. We have
-                        -- to remember the toggle happened so the rest of this
-                        -- handler doesn't immediately re-add tracking via
-                        -- Watch:Set (which would put the arrow right back).
-                        Nx.SetSuperTrackedQuestIDSafe(liveQID)
-                    end)
+                    if not _wasToggledOff then
+                        Nx.SuperTrackSafe(function()
+                            Nx.SetSuperTrackedUserWaypointSafe(false)
+                            Nx.ClearNonQuestSuperTrackSafe()
+                            -- Will trigger our SetSuperTrackedQuestID hook. If that
+                            -- hook toggles off (clicking the active quest again), it
+                            -- clears ActiveQID + the goto arrow + the blob. We have
+                            -- to remember the toggle happened so the rest of this
+                            -- handler doesn't immediately re-add tracking via
+                            -- Watch:Set (which would put the arrow right back).
+                            Nx.SetSuperTrackedQuestIDSafe(liveQID)
+                        end)
+                    end
                     if Quest._stLockoutUntil and GetTime
                        and GetTime() < Quest._stLockoutUntil then
                         _wasToggledOff = true
