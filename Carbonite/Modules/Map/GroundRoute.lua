@@ -290,7 +290,43 @@ end
 
 -- SPF's waypoints -> Carbonite world points, endpoints dropped. Each
 -- waypoint names its own map: a walking map can span several zones.
-local function spfToWorld(waypoints)
+--
+-- SPF names the most specific map the client knows for each point, which
+-- can be one Carbonite has no world position for; converted as is, the point
+-- went to the world origin and the route there and back (#291). Such a point
+-- is placed again on the leg's own maps through the client's world position;
+-- one that still cannot be placed is left out.
+local unknownMaps = {}
+
+local function reproject(p, maps)
+    local CM = _G.C_Map
+    if not (CM and CM.GetWorldPosFromMapPos and CM.GetMapPosFromWorldPos and _G.CreateVector2D) then
+        return nil
+    end
+    local ok, inst, world = pcall(CM.GetWorldPosFromMapPos, p.map, _G.CreateVector2D(p.x, p.y))
+    if not (ok and inst and world) then
+        return nil
+    end
+    local firstMap, firstX, firstY
+    for _, mapId in ipairs(maps) do
+        local ok2, _, pos = pcall(CM.GetMapPosFromWorldPos, inst, world, mapId)
+        local x, y
+        if ok2 and pos then
+            x, y = pos:GetXY()
+        end
+        if x and y then
+            if x >= 0 and x <= 1 and y >= 0 and y <= 1 then
+                return mapId, x, y
+            end
+            if not firstMap then
+                firstMap, firstX, firstY = mapId, x, y
+            end
+        end
+    end
+    return firstMap, firstX, firstY
+end
+
+local function spfToWorld(waypoints, legMaps)
     local c = coords()
     if not c then
         return nil
@@ -298,16 +334,40 @@ local function spfToWorld(waypoints)
     local out = {}
     for i = 2, #waypoints - 1 do
         local p = waypoints[i]
-        local wx, wy
-        if type(p) == "table" and p.map and p.x and p.y then
-            wx, wy = c:WorldFromZone(p.map, p.x * 100, p.y * 100)
-        end
-        if not wx then
+        if type(p) ~= "table" or not (p.map and p.x and p.y) then
             return nil
         end
-        out[#out + 1] = { X = wx, Y = wy }
+        local mapId, x, y = p.map, p.x, p.y
+        if c.HasMap and not c:HasMap(mapId) then
+            mapId, x, y = reproject(p, legMaps or {})
+            if not unknownMaps[p.map] then
+                unknownMaps[p.map] = true
+                debugLog("SPF waypoint on map %s, which has no world position; placed on %s",
+                    tostring(p.map), tostring(mapId))
+            end
+        end
+        if mapId then
+            local wx, wy = c:WorldFromZone(mapId, x * 100, y * 100)
+            if not wx then
+                return nil
+            end
+            out[#out + 1] = { X = wx, Y = wy }
+        end
     end
     return out
+end
+
+-- The leg's maps Carbonite knows, source first.
+local function legMapsOf(spec)
+    local c = coords()
+    local leg = spec and spec.leg
+    local maps = {}
+    for _, mapId in ipairs({ leg and leg.srcMap or spec and spec.mapId, leg and leg.dstMap }) do
+        if mapId and mapId ~= maps[1] and (not (c and c.HasMap) or c:HasMap(mapId)) then
+            maps[#maps + 1] = mapId
+        end
+    end
+    return maps
 end
 
 -- SPF had no path for the leg: the GroundNav search takes it, or it fails.
@@ -327,7 +387,7 @@ local function finishSPF(path, reason)
     local key, spec = job.key, job.spec
     job = nil
     if type(path) == "table" and type(path.waypoints) == "table" and #path.waypoints >= 2 then
-        local world = spfToWorld(path.waypoints)
+        local world = spfToWorld(path.waypoints, legMapsOf(spec))
         if world then
             remember(key, {
                 points = world, srcX = spec.srcX, srcY = spec.srcY,
