@@ -2,7 +2,7 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
-## Em desenvolvimento
+## v1.5.5
 
 ### Correções
 - **Tooltip dos pontos de rastreamento no minimapa:** no minimapa integrado ao mapa, passar o mouse num ponto de Rastrear Feras, Humanoides e afins mostra o nome da criatura, como no minimapa do jogo. O Carbonite substituía os scripts de passar o mouse do minimapa em vez de rodar junto com eles.
