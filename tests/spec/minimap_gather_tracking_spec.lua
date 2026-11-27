@@ -12,33 +12,50 @@ describe("minimapa integrado com Localizar Plantas/Minérios", function()
 
     it("tem opção própria, padrão 60%", function()
         expect(has(engine, "NXMMTrackAlpha = .6,")).toBe(true)
-        expect(has(options, 'mapRange(101.5, L["Transparency While Tracking Herbs or Minerals"], 0, 1, .01, mapSettings, "NXMMTrackAlpha")')).toBe(true)
+        expect(has(options, 'mapRange(101.5, L["Transparency While Tracking on the Minimap"], 0, 1, .01, mapSettings, "NXMMTrackAlpha")')).toBe(true)
     end)
 
     it("sobe a opacidade só no integrado, sem passar por cima do acoplado nem do Ctrl", function()
-        expect(engine:find("elseif self:MinimapGatherTracking%(%) then.-al = math%.max%(al, lOpts%.NXMMTrackAlpha or %.6%)")).toBeTruthy()
+        expect(engine:find("elseif self:MinimapBlipTracking%(%) then.-al = math%.max%(al, lOpts%.NXMMTrackAlpha or %.6%)")).toBeTruthy()
         local track = engine:find("al = math.max(al, lOpts.NXMMTrackAlpha or .6)", 1, true)
         local ctrl = engine:find("al = IsAltKeyDown() and 1 or .8", 1, true)
         expect(track < ctrl).toBe(true)
     end)
 
     it("reconhece as magias de coleta e atualiza no evento de rastreamento", function()
-        expect(has(engine, "local GATHER_TRACKING_SPELLS = { 2383, 2580, 2481, 43308 }")).toBe(true)
-        expect(has(engine, 'gatherTrackingEvents:RegisterEvent("MINIMAP_UPDATE_TRACKING")')).toBe(true)
+        expect(has(engine, "2383, 2580, 2481, 43308,")).toBe(true)
+        expect(has(engine, 'blipTrackingEvents:RegisterEvent("MINIMAP_UPDATE_TRACKING")')).toBe(true)
+    end)
+end)
+
+describe("rastreamentos de caçador e de outras classes (#284)", function()
+    local engine = loader.read("Carbonite/Modules/Map/MapEngine.lua")
+    local list = engine:match("local BLIP_TRACKING_SPELLS = (%b{})")
+
+    it("entram na lista dos que sobem o minimapa integrado", function()
+        expect(list ~= nil).toBe(true)
+        for _, id in ipairs({ 1494, 19883, 19884, 19885, 19880, 19878, 19882, 19879, 5225, 5502, 5500 }) do
+            expect(list:find("%f[%d]" .. id .. "%f[%D]") ~= nil).toBe(true)
+        end
+    end)
+
+    it("deixa de fora os rastreamentos de cidade, sem pontos no minimapa", function()
+        expect(engine:find("GetNumTrackingTypes() or 0 do", 1, true) ~= nil).toBe(true)
+        expect(engine:find("if active and (blipTrackingNames[name] or blipTrackingTex[tex]) then", 1, true) ~= nil).toBe(true)
     end)
 end)
 
 describe("ícones de coleta do Carbonite com rastreamento ativo", function()
     it("ficam abaixo do minimapa para o ponto do rastreamento aparecer", function()
         local engine = loader.read("Carbonite/Modules/Map/MapEngine.lua")
-        expect(engine:find("if self:MinimapGatherTracking%(%) then\r?\n%s*frame:SetFrameLevel%(math%.max%(level %- 1, 0%)%)")).toBeTruthy()
+        expect(engine:find("if self:MinimapBlipTracking%(%) then\r?\n%s*frame:SetFrameLevel%(math%.max%(level %- 1, 0%)%)")).toBeTruthy()
     end)
 end)
 
 describe("minimapa integrado acima da janela com rastreamento ativo", function()
     it("sobe um strata acima da janela do mapa", function()
         local engine = loader.read("Carbonite/Modules/Map/MapEngine.lua")
-        expect(engine:find("lvl = self:MinimapSyncLayer(lvl, above and 15 or 1, self:MinimapGatherTracking())", 1, true) ~= nil).toBe(true)
+        expect(engine:find("lvl = self:MinimapSyncLayer(lvl, above and 15 or 1, self:MinimapBlipTracking())", 1, true) ~= nil).toBe(true)
     end)
 end)
 

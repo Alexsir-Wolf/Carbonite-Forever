@@ -140,11 +140,11 @@ L["When enabled, Carbonite will combine the minimap into itself to create a more
 L["Minimap is drawn above icons"] = true
 L["When enabled, Carbonite will draw the minimap above your map icons, you can use the CTRL key on your keyboard to toggle which layer is top"] = true
 L["Minimap Icon Scale"] = true
-L["Icon Scale While Tracking Herbs or Minerals"] = true
+L["Icon Scale While Tracking on the Minimap"] = true
 L["Hide the quest arrow"] = true
 L["With the minimap on the Carbonite map, the game's gold quest arrow is hidden and Carbonite's route stays. The game's own 3D marker and highlight of that quest are hidden too. In combat the arrow can show until it ends."] = true
-L["Hide the minimap terrain while tracking herbs or minerals"] = true
-L["With Find Herbs or Find Minerals on, the minimap on the map shows only the node dots, without its terrain and circle."] = true
+L["Hide the minimap terrain while tracking"] = true
+L["With a tracking that draws minimap dots on (Find Herbs, Find Minerals, Track Beasts...), the minimap on the map shows only the dots, without its terrain and circle."] = true
 L["Scale of the minimap icons on the map while Find Herbs or Find Minerals is on, so the nodes stand out."] = true
 L["Sets the scale of the icons drawn in the minimap portion of the map"] = true
 L["Docked Minimap Icon Scale"] = true

@@ -1321,8 +1321,8 @@ local function mapConfig()
                             order = 5.4,
                             type = "toggle",
                             width = "full",
-                            name = L["Hide the minimap terrain while tracking herbs or minerals"],
-                            desc = L["With Find Herbs or Find Minerals on, the minimap on the map shows only the node dots, without its terrain and circle."],
+                            name = L["Hide the minimap terrain while tracking"],
+                            desc = L["With a tracking that draws minimap dots on (Find Herbs, Find Minerals, Track Beasts...), the minimap on the map shows only the dots, without its terrain and circle."],
                             get = function()
                                 return Nx.db.profile.MiniMap.TrackHideTerrain ~= false
                             end,
@@ -1333,7 +1333,7 @@ local function mapConfig()
                         MMTrackIconScale = {
                             order = 5.5,
                             type = "range",
-                            name = Nx.Opts.Unit(L["Icon Scale While Tracking Herbs or Minerals"], "×"),
+                            name = Nx.Opts.Unit(L["Icon Scale While Tracking on the Minimap"], "×"),
                             desc = L["Scale of the minimap icons on the map while Find Herbs or Find Minerals is on, so the nodes stand out."],
                             min = .1,
                             max = 10,
@@ -1596,7 +1596,7 @@ local function mapConfig()
                             hidden = noMiniMap,
                         },
                         MMAlpha = mapRange(101, L["Transparency"], 0, 1, .01, mapSettings, "NXMMAlpha"),
-                        MMTrackAlpha = mapRange(101.5, L["Transparency While Tracking Herbs or Minerals"], 0, 1, .01, mapSettings, "NXMMTrackAlpha"),
+                        MMTrackAlpha = mapRange(101.5, L["Transparency While Tracking on the Minimap"], 0, 1, .01, mapSettings, "NXMMTrackAlpha"),
                         MMDockScale = mapRange(102, L["Docked Scale"], .01, 3, .01, mapSettings, "NXMMDockScale", mmZoomChanged),
                         MMDockScaleBG = mapRange(103, L["Docked Scale In BG"], .01, 3, .01, mapSettings, "NXMMDockScaleBG", mmZoomChanged),
                         MMDockAlpha = mapRange(104, L["Docked Transparency"], 0, 1, .01, mapSettings, "NXMMDockAlpha"),

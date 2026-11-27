@@ -40,7 +40,7 @@ local function setup(tracking)
     local map = {
         MMZoomType = 1,
         MMFrm = { IsVisible = function() return true end, IsMouseOver = function() return mmOver end },
-        MinimapGatherTracking = function() return tracking end,
+        MinimapBlipTracking = function() return tracking end,
         IconStaticFrms = pool(), IconFrms = pool(),
         IconOnEnter = function(f) log[#log + 1] = "enter " .. tostring(f.NxTip) end,
         IconOnLeave = function(f) log[#log + 1] = "leave " .. tostring(f.NxTip) end,

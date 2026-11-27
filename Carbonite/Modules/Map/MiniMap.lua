@@ -178,8 +178,8 @@ function MiniMap:OnMouseUp(frame, button)
 end
 
 -- ---------------------------------------------------------------
--- Gathering nodes under the integrated minimap (#275, #279). With Find
--- Herbs/Minerals on, the live minimap sits over Carbonite's icons
+-- Gathering nodes under the integrated minimap (#275, #279). With a blip
+-- tracking on (herbs, beasts... #284), the live minimap sits over Carbonite's icons
 -- so its node blips show (#214), and it takes the mouse: Carbonite's
 -- herb/ore icons (its own and GatherLite's) never get OnEnter, and
 -- the game gives the blips no tooltip at all. While the cursor is
@@ -192,7 +192,7 @@ MiniMap.HOVER_INTERVAL = 0.1
 MiniMap.BLIP_RADIUS = 8          -- pixels around the cursor
 
 local function tracking(map)
-    return map and map.MinimapGatherTracking and map:MinimapGatherTracking() or false
+    return map and map.MinimapBlipTracking and map:MinimapBlipTracking() or false
 end
 
 -- Shown icon frames with a tooltip under the cursor, from pool `frms`

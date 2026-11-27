@@ -104,7 +104,7 @@ NxMapOptsDefaults = {
     -- Minimap settings
     NXMMFull = false,               -- Minimap full size mode
     NXMMAlpha = .1,                 -- Minimap transparency
-    NXMMTrackAlpha = .6,            -- Minimap transparency while tracking herbs/minerals
+    NXMMTrackAlpha = .6,            -- Minimap transparency while a tracking draws minimap blips
     NXMMDockScale = .4,             -- Minimap docked scale
     NXMMDockScaleBG = .4,           -- Minimap docked scale in battlegrounds
     NXMMDockAlpha = 1,              -- Minimap docked transparency
@@ -3158,16 +3158,22 @@ function Nx.Map:MinimapIsHostVisible()
         and self.Frm and self.Frm:IsVisible() or false
 end
 
--- Gathering tracking spells whose nodes show only as minimap blips:
--- Find Herbs, Find Minerals, Find Treasure and Find Fish.
-local GATHER_TRACKING_SPELLS = { 2383, 2580, 2481, 43308 }
-local gatherTrackingNames, gatherTrackingTex
-local gatherTrackingActive
+-- Tracking spells whose targets show only as minimap blips. Town trackings
+-- (Banker, Auctioneer...) are left out: they draw no blips. Matched by name
+-- or icon, so a different spell ID on the client still matches by name.
+local BLIP_TRACKING_SPELLS = {
+    2383, 2580, 2481, 43308,                        -- Find Herbs, Minerals, Treasure, Fish
+    1494, 19883, 19884, 19885,                      -- Track Beasts, Humanoids, Undead, Hidden
+    19880, 19878, 19882, 19879,                     -- Track Elementals, Demons, Giants, Dragonkin
+    5225, 5502, 5500,                               -- Druid Track Humanoids, Sense Undead, Sense Demons
+}
+local blipTrackingNames, blipTrackingTex
+local blipTrackingActive
 
-local function GatherTrackingLookup()
-    if gatherTrackingNames then return end
-    gatherTrackingNames, gatherTrackingTex = {}, {}
-    for _, id in ipairs(GATHER_TRACKING_SPELLS) do
+local function BlipTrackingLookup()
+    if blipTrackingNames then return end
+    blipTrackingNames, blipTrackingTex = {}, {}
+    for _, id in ipairs(BLIP_TRACKING_SPELLS) do
         local name, tex
         if C_Spell and C_Spell.GetSpellInfo then
             local info = C_Spell.GetSpellInfo(id)
@@ -3176,25 +3182,25 @@ local function GatherTrackingLookup()
             local n, _, t = GetSpellInfo(id)
             name, tex = n, t
         end
-        if name then gatherTrackingNames[name] = true end
-        if tex then gatherTrackingTex[tex] = true end
+        if name then blipTrackingNames[name] = true end
+        if tex then blipTrackingTex[tex] = true end
     end
 end
 
--- With gathering tracking on, the integrated minimap can drop its terrain
+-- With blip tracking on, the integrated minimap can drop its terrain
 -- and circle and leave only the node blips over the map art (option).
 function Nx.Map:MinimapHidesTerrain()
     return Nx.db.profile.MiniMap.TrackHideTerrain ~= false
-        and self:MinimapGatherTracking() or false
+        and self:MinimapBlipTracking() or false
 end
 
--- Whether a gathering tracking (GATHER_TRACKING_SPELLS) is on. Cached and
+-- Whether a blip tracking (BLIP_TRACKING_SPELLS) is on. Cached and
 -- refreshed by MINIMAP_UPDATE_TRACKING, since the minimap update runs often.
-function Nx.Map:MinimapGatherTracking()
-    if gatherTrackingActive ~= nil then
-        return gatherTrackingActive
+function Nx.Map:MinimapBlipTracking()
+    if blipTrackingActive ~= nil then
+        return blipTrackingActive
     end
-    GatherTrackingLookup()
+    BlipTrackingLookup()
     local on = false
     local mm = C_Minimap
     if mm and mm.GetNumTrackingTypes and mm.GetTrackingInfo then
@@ -3203,24 +3209,24 @@ function Nx.Map:MinimapGatherTracking()
             if type(name) == "table" then
                 name, tex, active = name.name, name.texture, name.active
             end
-            if active and (gatherTrackingNames[name] or gatherTrackingTex[tex]) then
+            if active and (blipTrackingNames[name] or blipTrackingTex[tex]) then
                 on = true
                 break
             end
         end
     elseif GetTrackingTexture then
         local tex = GetTrackingTexture()
-        on = tex and gatherTrackingTex[tex] and true or false
+        on = tex and blipTrackingTex[tex] and true or false
     end
-    gatherTrackingActive = on
+    blipTrackingActive = on
     return on
 end
 
-local gatherTrackingEvents = CreateFrame("Frame")
-gatherTrackingEvents:RegisterEvent("MINIMAP_UPDATE_TRACKING")
-gatherTrackingEvents:RegisterEvent("PLAYER_ENTERING_WORLD")
-gatherTrackingEvents:SetScript("OnEvent", function()
-    gatherTrackingActive = nil
+local blipTrackingEvents = CreateFrame("Frame")
+blipTrackingEvents:RegisterEvent("MINIMAP_UPDATE_TRACKING")
+blipTrackingEvents:RegisterEvent("PLAYER_ENTERING_WORLD")
+blipTrackingEvents:SetScript("OnEvent", function()
+    blipTrackingActive = nil
 end)
 
 local MINIMAP_BLANK_TEX = "Interface\\Addons\\Carbonite\\Gfx\\Map\\32Transparent"
@@ -3523,10 +3529,10 @@ function Nx.Map:MinimapSyncGatherFrame(frame, minimapLevel)
 
     local level = type(minimapLevel) == "number"
         and minimapLevel or mm:GetFrameLevel()
-    -- With Find Herbs/Minerals on, the live node blips sit right under
+    -- With blip tracking on (herbs, beasts...), the live blips sit right under
     -- these (larger) pins: put the pins just below the minimap instead, so
     -- the blips show over them (#214).
-    if self:MinimapGatherTracking() then
+    if self:MinimapBlipTracking() then
         frame:SetFrameLevel(math.max(level - 1, 0))
     else
         frame:SetFrameLevel(level + 1)
@@ -3736,8 +3742,8 @@ function Nx.Map:MinimapUpdate()
         -- It used to be forced to 1, so that slider did nothing.
         if zoomType == 0 then
             al = lOpts.NXMMDockAlpha or 1
-        elseif self:MinimapGatherTracking() then
-            -- Find Herbs/Minerals nodes are minimap blips, drawn at the
+        elseif self:MinimapBlipTracking() then
+            -- Tracking targets (herbs, beasts...) are minimap blips, drawn at the
             -- minimap's own alpha: at the 10% default they vanish over the
             -- map art (#214). Tracking raises the integrated minimap.
             al = math.max(al, lOpts.NXMMTrackAlpha or .6)
@@ -3816,10 +3822,10 @@ function Nx.Map:MinimapUpdate()
             lvl = lvl + 15
         end
 
-        -- Find Herbs/Minerals on: the live minimap draws one strata above
+        -- Blip tracking on (herbs, beasts...): the live minimap draws one strata above
         -- the map window, or the window's art and backdrop (same strata,
         -- higher levels) hide its node blips entirely (#214).
-        lvl = self:MinimapSyncLayer(lvl, above and 15 or 1, self:MinimapGatherTracking())
+        lvl = self:MinimapSyncLayer(lvl, above and 15 or 1, self:MinimapBlipTracking())
         self:MinimapUpdateDetachedFrms(lvl + 1)
         if above then
             self.Level = self.Level + 2
@@ -11599,9 +11605,9 @@ function Nx.Map:ClipMMW (frm, bx, by, w, h)
     self.MMFScale = sc
 
     local isc = Nx.db.profile.MiniMap.IScale
-    -- Find Herbs/Minerals on: larger minimap icons so the node blips
+    -- Blip tracking on (herbs, beasts...): larger minimap icons so the node blips
     -- stand out; the client cannot restyle blips (#214).
-    if self:MinimapGatherTracking() then
+    if self:MinimapBlipTracking() then
         isc = math.max(isc, Nx.db.profile.MiniMap.TrackIScale or 1.8)
     end
     self:MinimapSetScale (sc, isc)
