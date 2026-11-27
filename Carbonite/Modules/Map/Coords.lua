@@ -40,6 +40,13 @@ function Coords:GetScale(mapID)
     return (row and row.Scale) or DEFAULT_SCALE
 end
 
+-- Whether mapID has a world position. WorldFromZone answers 0, 0 for a map
+-- it does not know, which is a real place on the world map (#291).
+function Coords:HasMap(mapID)
+    local row = rowFor(mapID)
+    return row and row.Scale and row[4] and row[5] and true or false
+end
+
 -- Map (zone) -> world. (mapID, x in 0..100, y in 0..100) -> (wx, wy)
 function Coords:WorldFromZone(mapID, mapX, mapY)
     if mapID == 9000 then return 0, 0 end

@@ -2,6 +2,11 @@
 
 O Carbonite-Forever é a edição não oficial do Carbonite para o World of Warcraft: Forever. Veja o [README](https://github.com/Alexsir-Wolf/Carbonite-Forever#readme) para saber o que o addon faz e como instalar.
 
+## Em desenvolvimento
+
+### Correções
+- **Rota pela Ilha de Zefra:** com o caminho a pé do Shortest Path Forever, a rota até um alvo próximo não vai mais até a Ilha de Zefra e volta. Alguns pontos do caminho vinham num mapa que o Carbonite não conhecia e caíam na origem do mundo; agora eles são recolocados no mapa do trecho, e a rota segue as curvas do terreno.
+
 ## v1.5.6
 
 ### Correções

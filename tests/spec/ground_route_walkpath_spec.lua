@@ -9,8 +9,18 @@ end
 local function fakeCMap()
     return {
         GetWorldPosFromMapPos = function(mapId, pos)
+            local u, v = pos.x, pos.y
+            if mapId == 9999 then
+                -- A sub-map Carbonite does not know: 1429's x 0.4-0.6, y 0-0.2.
+                u, v = 0.4 + 0.2 * pos.x, 0.2 * pos.y
+            elseif mapId ~= 1429 then
+                return nil
+            end
+            return 0, vector(1000 - 2000 * v, 500 - 3000 * u)
+        end,
+        GetMapPosFromWorldPos = function(_, world, mapId)
             if mapId ~= 1429 then return nil end
-            return 0, vector(1000 - 2000 * pos.y, 500 - 3000 * pos.x)
+            return 1429, vector((500 - world.y) / 3000, (1000 - world.x) / 2000)
         end,
     }
 end
@@ -19,6 +29,8 @@ end
 local coords = {
     ZoneFromWorld = function(_, _, wx, wy) return wx, wy end,
     WorldFromZone = function(_, _, x, y) return x, y end,
+    -- 9999 stands for a uiMap Carbonite has no world position for.
+    HasMap = function(_, id) return id ~= 9999 and id ~= 8888 end,
 }
 
 -- GroundNav: a search that takes two frames and bends through one corner.
@@ -171,5 +183,42 @@ describe("GroundRoute com o Shortest Path Forever", function()
         expect(#ground:Expand(map, { dest })).toBe(1)
         ground._pump()
         expect(#spf.requests).toBe(2)
+    end)
+    it("ponto do SPF num mapa que o Carbonite não conhece volta ao mapa da perna (#291)", function()
+        local ground, map, spf = setup()
+        local dest = target(60, 10)
+        ground:Expand(map, { dest })
+        ground._pump()
+        spf.requests[1].cb({ waypoints = {
+            { map = 1429, x = 0.1, y = 0.1 },
+            { map = 1429, x = 0.3, y = 0.02 },
+            { map = 9999, x = 0.25, y = 0.15 },
+            { map = 1429, x = 0.5, y = 0.05 },
+            { map = 1429, x = 0.6, y = 0.1 },
+        }, yards = 300, navVersion = "nav-1" })
+
+        local out = ground:Expand(map, { dest })
+        expect(#out).toBe(4)                            -- three steps + the target, no detour
+        expect(math.abs(out[1].TargetMX - 30) < 1e-9).toBe(true)
+        expect(math.abs(out[2].TargetMX - 45) < 1e-6).toBe(true)   -- 9999 (0.25, 0.15) = 1429 (0.45, 0.03)
+        expect(math.abs(out[2].TargetMY - 3) < 1e-6).toBe(true)
+        expect(math.abs(out[3].TargetMX - 50) < 1e-9).toBe(true)
+        expect(out[4]).toBe(dest)
+    end)
+
+    it("ponto que nem o cliente consegue situar fica de fora (#291)", function()
+        local ground, map, spf = setup()
+        local dest = target(60, 10)
+        ground:Expand(map, { dest })
+        ground._pump()
+        spf.requests[1].cb({ waypoints = {
+            { map = 1429, x = 0.1, y = 0.1 },
+            { map = 8888, x = 0.5, y = 0.5 },
+            { map = 1429, x = 0.5, y = 0.05 },
+            { map = 1429, x = 0.6, y = 0.1 },
+        }, yards = 300, navVersion = "nav-1" })
+        local out = ground:Expand(map, { dest })
+        expect(#out).toBe(2)
+        expect(math.abs(out[1].TargetMX - 50) < 1e-9).toBe(true)
     end)
 end)
