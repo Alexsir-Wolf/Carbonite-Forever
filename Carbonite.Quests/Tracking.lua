@@ -133,7 +133,8 @@ local function questBlobMap()
     return QMap
 end
 
-function Nx.Quest:UpdateQuestBlob (qId)
+-- mapId: the quest target's map; the displayed zone when absent.
+function Nx.Quest:UpdateQuestBlob (qId, mapId)
 
     if InCombatLockdown() then
         tdbg ("  blob(%s): skip - combat lockdown", tostring(qId))
@@ -184,13 +185,23 @@ function Nx.Quest:UpdateQuestBlob (qId)
         return
     end
 
+    -- The blob belongs to the quest's own map. On the displayed zone it
+    -- landed wherever that zone was, and wandered as the view moved (#294).
+    local cont, zone = QMap.Cont, QMap.Zone
+    if mapId and QMap.IdToContZone then
+        local c, z = QMap:IdToContZone (mapId)
+        if c and z then
+            cont, zone = c, z
+        end
+    end
+
     QMap.QuestWin:DrawBlob (qId, true)
     QMap.QuestWin:SetFrameLevel (QMap.Level)
     QMap.QuestWin:SetFillAlpha (255 * QMap.QuestAlpha)
     QMap.QuestWin:SetBorderAlpha (255 * QMap.QuestAlpha)
-    QMap.QuestWin:SetMapID (QMap.Zone)
+    QMap.QuestWin:SetMapID (zone)
     QMap.QuestWin:Show()
-    QMap:ClipZoneFrm (QMap.Cont, QMap.Zone, QMap.QuestWin, 1)
+    QMap:ClipZoneFrm (cont, zone, QMap.QuestWin, 1)
 
     tdbg ("  blob(%s): DRAW on displayed zone %s (cont %s), was=%s",
         tostring(qId), tostring(QMap.Zone), tostring(QMap.Cont),
@@ -652,6 +663,12 @@ function Nx.Quest:TrackOnMap (qId, qObj, useEnd, target, skipSame)
     if track <= 0 then
         tdbg ("  tracking bit not set -> clear own target (tbits=0x%x)", tbits)
         clearOwnTarget()
+        -- The blob goes with the quest even when another destination took
+        -- the map target meanwhile (#294).
+        local QMapOff = _G.NxMap1 and _G.NxMap1.NxMap
+        if tbits == 0 and QMapOff and QMapOff.QuestBlobQId == qId then
+            Quest:UpdateQuestBlob (nil)
+        end
         return
     end
 
@@ -683,7 +700,7 @@ function Nx.Quest:TrackOnMap (qId, qObj, useEnd, target, skipSame)
         Quest.Watch:SyncBlizzardWatch (qId, BlizIndex, true)
     end
     local curBlob = self.QIds[qId]
-    Quest:UpdateQuestBlob ((curBlob and not curBlob.Complete) and qId or nil)
+    Quest:UpdateQuestBlob ((curBlob and not curBlob.Complete) and qId or nil, res.mId)
 
     if not target then
         tdbg ("  no target requested (target=false) - blob only")
