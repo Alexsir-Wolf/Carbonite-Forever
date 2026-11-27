@@ -2760,9 +2760,31 @@ function Nx.Map:MinimapSetInputMode(mode, force)
         setScript("OnLeave", self.MMHoverScripts.OnLeave)
     end
 
+    self:MinimapShowBlobRings(mode ~= "carbonite")
+
     self.MMInputMode = mode
     self.MMPendingInputMode = nil
     return true
+end
+
+---
+-- Show or hide the rings the live minimap draws around quest, task and
+-- digsite areas. On the integrated minimap Carbonite draws its own quest
+-- areas, and the game's ring showed over them once tracking raised the
+-- minimap to full alpha (#284). Docked and Blizzard modes keep the ring.
+--
+function Nx.Map:MinimapShowBlobRings(show)
+    local mm = self.MMFrm
+    if not mm or self.MMBlobRingsShown == show then
+        return
+    end
+    self.MMBlobRingsShown = show
+    local alpha = show and 1 or 0
+    for _, method in ipairs({ "SetQuestBlobRingAlpha", "SetTaskBlobRingAlpha", "SetArchBlobRingAlpha" }) do
+        if type(mm[method]) == "function" then
+            mm[method](mm, alpha)
+        end
+    end
 end
 
 -------------------------------------------------------------------------------

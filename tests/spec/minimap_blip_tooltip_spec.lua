@@ -17,3 +17,16 @@ describe("tooltip dos pontos de rastreamento no minimapa integrado", function()
         expect(engine:find('setScript("OnEnter", self.MinimapOnEnter)', 1, true)).toBe(nil)
     end)
 end)
+
+describe("anel da área de missão do minimapa no modo integrado (#284)", function()
+    local engine = loader.read("Carbonite/Modules/Map/MapEngine.lua")
+
+    it("esconde o anel só no integrado e o devolve nos outros modos", function()
+        expect(engine:find('self:MinimapShowBlobRings(mode ~= "carbonite")', 1, true) ~= nil).toBe(true)
+    end)
+
+    it("zera o alpha dos anéis de missão, tarefa e escavação que o cliente tiver", function()
+        expect(engine:find('{ "SetQuestBlobRingAlpha", "SetTaskBlobRingAlpha", "SetArchBlobRingAlpha" }', 1, true) ~= nil).toBe(true)
+        expect(engine:find('if type(mm[method]) == "function" then', 1, true) ~= nil).toBe(true)
+    end)
+end)
