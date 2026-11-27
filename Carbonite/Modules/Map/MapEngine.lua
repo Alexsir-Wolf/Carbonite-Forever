@@ -2740,8 +2740,24 @@ function Nx.Map:MinimapSetInputMode(mode, force)
         setScript("OnMouseDown", self.MinimapOnMouseDown)
         setScript("OnMouseUp", self.MinimapOnMouseUp)
         setScript("OnMouseWheel", self.MinimapOnMouseWheel)
-        setScript("OnEnter", self.MinimapOnEnter)
-        setScript("OnLeave", self.MinimapOnLeave)
+        -- The original hover scripts show the tooltip of the game's own
+        -- tracking blips (beasts, herbs...): run them first, then
+        -- Carbonite's, so its icon tooltips still win (#284).
+        if not self.MMHoverScripts then
+            local map = self
+            self.MMHoverScripts = {
+                OnEnter = function(frame, motion)
+                    if original.OnEnter then original.OnEnter(frame, motion) end
+                    map.MinimapOnEnter(frame, motion)
+                end,
+                OnLeave = function(frame, motion)
+                    if original.OnLeave then original.OnLeave(frame, motion) end
+                    map.MinimapOnLeave(frame, motion)
+                end,
+            }
+        end
+        setScript("OnEnter", self.MMHoverScripts.OnEnter)
+        setScript("OnLeave", self.MMHoverScripts.OnLeave)
     end
 
     self.MMInputMode = mode
